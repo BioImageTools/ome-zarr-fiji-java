@@ -6,12 +6,12 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>34.1.0</version>
+		<version>38.0.1</version>
 	</parent>
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>ome-zarr-fiji-ui</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.1.1-SNAPSHOT</version>
 
 	<name>OME.Zarr Fiji UI and I/O</name>
 	<description>GUI Dialog to show structure of an ome.zarr dataset and to allow the user to cherry-pick image of interest, in Fiji.</description>
@@ -89,7 +89,7 @@
 			<plugin>
 				<groupId>pl.project13.maven</groupId>
 				<artifactId>git-commit-id-plugin</artifactId>
-				<version>2.2.4</version>
+				<version>4.9.10</version>
 				<executions>
 					<execution>
 						<phase>validate</phase>
@@ -109,26 +109,27 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
 					<execution>
 						<phase>generate-sources</phase>
 						<goals>
-							<goal>exec</goal>
+							<goal>run</goal>
 						</goals>
 					</execution>
 				</executions>
 				<configuration>
-					<executable>sh</executable>
-					<arguments>
-						<argument>-c</argument>
-						<!--suppress UnresolvedMavenProperty -->
-						<argument>rm -v ${project.build.outputDirectory}/COMMITrev_*; touch ${project.build.outputDirectory}/COMMITrev_${git.commit.id.abbrev};</argument>
-					</arguments>
+					<target>
+						<!-- make sure no COMMITrev tag files are floating around from some previous runs -->
+						<!-- NB: this task is redundant whenever 'mvn clean' is executed... -->
+						<delete><fileset dir="${project.build.outputDirectory}" includes="COMMITrev_*" /></delete>
+						<touch file="${project.build.outputDirectory}/COMMITrev_${git.commit.id.abbrev}_${project.artifactId}" />
+					</target>
 				</configuration>
 			</plugin>
 		</plugins>
+
 		<!-- later for example data ...
 		<resources>
 			<resource>
@@ -154,10 +155,6 @@
 		<license.projectName>OME.Zarr Fiji UI and I/O</license.projectName>
 		<license.organizationName>SciJava</license.organizationName>
 		<license.copyrightOwners>SciJava developers</license.copyrightOwners>
-
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<java.version>11</java.version>
-		<maven.compiler.release>8</maven.compiler.release>
 	</properties>
 
 	<repositories>
@@ -172,27 +169,20 @@
 	</repositories>
 
 	<dependencies>
-		<!-- environment/framework stuff -->
 		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>fiji</artifactId>
-		</dependency>
-		<!-- remove 'imagej-legacy' later when PR#296 gets merged -->
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej-legacy</artifactId>
-			<version>1.1.1-SNAPSHOT</version>
-		</dependency>
-
-		<!-- vizu stuff -->
-		<dependency>
-			<groupId>org.embl.mobie</groupId>
-			<artifactId>mobie-io</artifactId>
-			<version>1.2.13-SNAPSHOT-wZarr</version>
+			<groupId>org.janelia.saalfeldlab</groupId>
+			<artifactId>n5-ij</artifactId>
+			<version>4.3.0</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-vistools</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>
