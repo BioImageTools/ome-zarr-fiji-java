@@ -10,12 +10,13 @@
 	</parent>
 
 	<groupId>sc.fiji</groupId>
-	<artifactId>ome-zarr-fiji-ui</artifactId>
-	<version>0.1.1-SNAPSHOT</version>
+	<artifactId>ome-zarr-fiji-java</artifactId>
+	<version>0.2.0-SNAPSHOT</version>
 
-	<name>OME.Zarr Fiji UI and I/O</name>
-	<description>GUI Dialog to show structure of an ome.zarr dataset and to allow the user to cherry-pick image of interest, in Fiji.</description>
-	<url>https://github.com/xulman/ome-zarr-fiji-ui</url>
+	<name>OME-Zarr additional interfaces for Fiji</name>
+	<description>As of now, drag-and-drop scijava (Fiji) handler that opens N5 Importer dialog or BigDataViewer right-away.</description>
+	<url>https://github.com/BioImageTools/ome-zarr-fiji-java</url>
+
 	<inceptionYear>2022</inceptionYear>
 
 	<licenses>
@@ -32,9 +33,9 @@
 
 	<developers>
 		<developer>
-			<id>TBA</id>
-			<name>TBA</name>
-			<url>www.somewhere.net</url>
+			<id>xulman</id>
+			<name>Vladimir Ulman</name>
+			<url>https://imagej.net/people/xulman</url>
 			<roles>
 				<role>founder</role>
 				<role>lead</role>
@@ -42,6 +43,28 @@
 				<role>debugger</role>
 				<role>reviewer</role>
 				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>ksugar</id>
+			<name>Ko Sugawara</name>
+			<url>https://imagej.net/people/ksugar</url>
+			<roles>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>bogovicj</id>
+			<name>John Bogovic</name>
+			<url>https://imagej.net/people/bogovicj</url>
+			<roles>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
 				<role>maintainer</role>
 			</roles>
 		</developer>
@@ -57,32 +80,25 @@
 	<mailingLists>
 		<mailingList>
 			<name>Image.sc Forum</name>
-				<archive>https://forum.image.sc/</archive>
+				<archive>https://forum.image.sc/tag/ome-zarr</archive>
 		</mailingList>
 	</mailingLists>
 
 	<!-- ====================================== -->
 
 	<scm>
-		<connection>scm:git:git://github.com/xulman/ome-zarr-fiji-ui</connection>
-		<developerConnection>scm:git:git@github.com:xulman/ome-zarr-fiji-ui</developerConnection>
+		<connection>scm:git:git://github.com/BioImageTools/ome-zarr-fiji-java</connection>
+		<developerConnection>scm:git:git@github.com:BioImageTools/ome-zarr-fiji-java</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/xulman/ome-zarr-fiji-ui</url>
+		<url>https://github.com/BioImageTools/ome-zarr-fiji-java</url>
 	</scm>
 	<issueManagement>
-		<system>GitHub</system>
-		<url>https://github.com/xulman/ome-zarr-fiji-ui/issues</url>
+		<system>GitHub Issues</system>
+		<url>https://github.com/BioImageTools/ome-zarr-fiji-java/issues</url>
 	</issueManagement>
 	<ciManagement>
 		<system>none</system>
 	</ciManagement>
-
-	<distributionManagement>
-		<repository>
-			<id>it4i</id>
-			<url>https://artifactory.cs.vsb.cz/it4i/</url>
-		</repository>
-	</distributionManagement>
 
 	<build>
 		<plugins>
@@ -129,19 +145,6 @@
 				</configuration>
 			</plugin>
 		</plugins>
-
-		<!-- later for example data ...
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>false</filtering>
-			</resource>
-			<resource>
-				<directory>src/main/resources-${stage}</directory>
-				<filtering>true</filtering>
-			</resource>
-		</resources>
-		... later for example data -->
 	</build>
 
 	<packaging>jar</packaging>
@@ -152,7 +155,7 @@
 		<package-name>sc.fiji.ome.zarr.fiji.ui</package-name>
 
 		<license.licenseName>bsd_2</license.licenseName>
-		<license.projectName>OME.Zarr Fiji UI and I/O</license.projectName>
+		<license.projectName>OME-Zarr extras for Fiji</license.projectName>
 		<license.organizationName>SciJava</license.organizationName>
 		<license.copyrightOwners>SciJava developers</license.copyrightOwners>
 	</properties>
@@ -161,10 +164,6 @@
 		<repository>
 			<id>scijava.public</id>
 			<url>https://maven.scijava.org/content/groups/public</url>
-		</repository>
-		<repository>
-			<id>it4i</id>
-			<url>https://artifactory.cs.vsb.cz/it4i/</url>
 		</repository>
 	</repositories>
 
