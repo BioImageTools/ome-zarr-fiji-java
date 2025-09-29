@@ -1,6 +1,11 @@
 package sc.fiji.zarr;
 
 import net.imglib2.RandomAccess;
+import net.imglib2.img.cell.Cell;
+import net.imglib2.img.cell.CellRandomAccess;
+import net.imglib2.img.cell.LazyCellImg;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.volatiles.VolatileUnsignedShortType;
 import org.janelia.saalfeldlab.n5.*;
 import org.janelia.saalfeldlab.n5.s3.N5AmazonS3Reader;
 import org.janelia.saalfeldlab.n5.zarr.*;
@@ -205,9 +210,19 @@ public class BigStitcherStyleOMEZarrReader {
         /**
          * Open a specific resolution level as a lazy ImgLib2 image.
          * This is the key method - it returns a lazy RandomAccessibleInterval.
+         *
+         * Note: While other methods seem to report in Python/numpy order [t,c,z,y,x],
+         * the order of axes in the returned image is "normal" --- that is, the opposite
+         * to what is listed in e.g. this.getAxisNames().
          */
         public <T extends RealType<T> & NativeType<T>> 
         RandomAccessibleInterval<T> openScale(int scaleLevel) throws IOException {
+            String datasetPath = getScalePath(scaleLevel);
+            return N5Utils.open(n5, datasetPath);
+        }
+        
+        public <T extends RealType<T> & NativeType<T>>
+        LazyCellImg<T,?> openScaleLazy(int scaleLevel) throws IOException {
             String datasetPath = getScalePath(scaleLevel);
             return N5Utils.open(n5, datasetPath);
         }
@@ -233,31 +248,32 @@ public class BigStitcherStyleOMEZarrReader {
     public static void main(String[] args) {
         try {
             // Example 1: Open local OME-Zarr
-            String localPath = "/path/to/data.ome.zarr";
+            String localPath = "/home/ulman/data/Mette_moreEmbryos/embryo4_first_tp/dataset.ome.zarr/s0-t0.zarr";
             OMEZarrContainer container = openOMEZarr(localPath);
-            
+
             System.out.println("Number of resolution levels: " + container.getNumScales());
             System.out.println("Axis names: " + Arrays.toString(container.getAxisNames()));
-            
+
             // Open highest resolution (level 0) lazily
             RandomAccessibleInterval<UnsignedShortType> level0 = container.openScale(0);
-            System.out.println("Level 0 dimensions: " + 
+            System.out.println("Level 0 dimensions: " +
                 Arrays.toString(level0.dimensionsAsLongArray()));
-            
+
             // Get voxel size
             double[] voxelSize = container.getVoxelSize(0);
             System.out.println("Level 0 voxel size: " + Arrays.toString(voxelSize));
-            
+
             // Open lower resolution levels (for multi-scale visualization like BigDataViewer)
             for (int level = 0; level < container.getNumScales(); level++) {
                 RandomAccessibleInterval<UnsignedShortType> img = container.openScale(level);
                 double[] scale = container.getVoxelSize(level);
-                
-                System.out.println("Level " + level + ": " + 
-                    Arrays.toString(img.dimensionsAsLongArray()) + 
+
+                System.out.println("Level " + level + ": " +
+                    Arrays.toString(img.dimensionsAsLongArray()) +
                     " @ scale " + Arrays.toString(scale));
             }
-            
+
+            /*
             // Example 2: Open from S3 (like BigStitcher-Spark does)
             String s3Path = "s3://my-bucket/data.ome.zarr";
             OMEZarrContainer s3Container = openOMEZarr(s3Path);
@@ -303,17 +319,30 @@ public class BigStitcherStyleOMEZarrReader {
                     }
                 }
             }
-            
+            */
+
             // Example 4: Work with the data lazily
             // This is the key advantage - no data is loaded until accessed
             RandomAccessibleInterval<UnsignedShortType> lazyImage = container.openScale(0);
             
             // Only when you access pixels does data get loaded from disk/S3
             RandomAccess<UnsignedShortType> ra = lazyImage.randomAccess();
-            ra.setPosition(new long[]{0, 0, 50, 256, 256}); // t, c, z, y, x
+            ra.setPosition(new long[]{256, 256, 50, 0, 0}); // "normal" order!!
             int pixelValue = ra.get().get();
             System.out.println("Pixel value at position: " + pixelValue);
-            
+
+            System.out.println("-----------");
+            for (int x=200; x < 220; ++x) System.out.println( lazyImage.getAt(x,257,50,0,0) );
+            System.out.println("===========");
+            for (int x=200; x < 220; ++x) System.out.println( lazyImage.getAt(x,257,50,0,0) );
+            System.out.println("+++++++++++");
+
+            ImageJFunctions.show(lazyImage);
+            lazyImage = container.openScale(1);
+            ImageJFunctions.show(lazyImage);
+            lazyImage = container.openScale(2);
+            ImageJFunctions.show(lazyImage);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
