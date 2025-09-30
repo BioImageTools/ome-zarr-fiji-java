@@ -248,7 +248,8 @@ public class BigStitcherStyleOMEZarrReader {
     public static void main(String[] args) {
         try {
             // Example 1: Open local OME-Zarr
-            String localPath = "/home/ulman/data/Mette_moreEmbryos/embryo4_first_tp/dataset.ome.zarr/s0-t0.zarr";
+            //String localPath = "/home/ulman/data/Mette_moreEmbryos/embryo4_first_tp/dataset.ome.zarr/s0-t0.zarr";
+            String localPath = "/temp/output2.ome.zarr";
             OMEZarrContainer container = openOMEZarr(localPath);
 
             System.out.println("Number of resolution levels: " + container.getNumScales());
@@ -342,6 +343,7 @@ public class BigStitcherStyleOMEZarrReader {
             ImageJFunctions.show(lazyImage);
             lazyImage = container.openScale(2);
             ImageJFunctions.show(lazyImage);
+            System.out.println(lazyImage);
 
         } catch (IOException e) {
             e.printStackTrace();
