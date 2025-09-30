@@ -49,7 +49,7 @@ public class BigStitcherStyleOMEZarrWriter {
                     keyPrefix
                 );
             } else {
-                this.n5 = new N5ZarrWriter(zarrPath);
+                this.n5 = new N5ZarrWriter(zarrPath, "/", false);
             }
         }
         
@@ -191,13 +191,14 @@ public class BigStitcherStyleOMEZarrWriter {
                 // For production use, consider using imglib2-algorithm's Gauss + subsample
                 long[] downsampledDims = new long[current.numDimensions()];
                 for (int d = 0; d < downsampledDims.length; d++) {
-                    // Typically don't downsample time (dim 0) or channel (dim 1)
-                    if (d < 2) {
+                    // Typically don't downsample the last two dimensions: time and channel
+                    if (d >= (downsampledDims.length-2)) {
                         downsampledDims[d] = current.dimension(d);
                     } else {
                         downsampledDims[d] = current.dimension(d) / 2;
                     }
                 }
+                System.out.println("Level "+level+" pyramid size: "+downsampledDims);
                 
                 // Create downsampled image using simple subsampling
                 // For better quality, use Gaussian blur before subsampling
@@ -238,10 +239,8 @@ public class BigStitcherStyleOMEZarrWriter {
                 targetCursor.localize(sourcePos);
                 
                 // Scale position to source coordinates
-                for (int d = 0; d < sourcePos.length; d++) {
-                    if (d >= 2) { // Only scale spatial dimensions
-                        sourcePos[d] *= 2;
-                    }
+                for (int d = 0; d < sourcePos.length-2; d++) {
+                    sourcePos[d] *= 2;
                 }
                 
                 sourceAccess.setPosition(sourcePos);
@@ -262,7 +261,8 @@ public class BigStitcherStyleOMEZarrWriter {
     public static void main(String[] args) {
         try {
             // Create example 5D data (t, c, z, y, x) - typical OME-Zarr format
-            long[] dimensions = {1, 3, 50, 512, 512}; // 1 timepoint, 3 channels, 50 z-slices
+            //long[] dimensions = {1, 3, 50, 512, 512}; // 1 timepoint, 3 channels, 50 z-slices
+            long[] dimensions = {512,512,50, 3,1}; // "normal" order!!
             RandomAccessibleInterval<UnsignedShortType> sourceImage = 
                 net.imglib2.img.array.ArrayImgs.unsignedShorts(dimensions);
             
@@ -274,7 +274,7 @@ public class BigStitcherStyleOMEZarrWriter {
             }
             
             // Example 1: Write to local filesystem
-            String localPath = "/path/to/output.ome.zarr";
+            String localPath = "/temp/output2.ome.zarr";
             OMEZarrWriter writer = new OMEZarrWriter(localPath, 3); // 3 resolution levels
             
             // Create multi-scale pyramid
@@ -284,16 +284,16 @@ public class BigStitcherStyleOMEZarrWriter {
             
             // Define block sizes for each level
             int[][] blockSizes = {
-                {1, 1, 32, 64, 64},   // Level 0: highest resolution
-                {1, 1, 32, 64, 64},   // Level 1: 2x downsampled
-                {1, 1, 32, 64, 64}    // Level 2: 4x downsampled
+                {64, 64, 32, 1, 1},   // Level 0: highest resolution
+                {64, 64, 32, 1, 1},   // Level 1: 2x downsampled
+                {64, 64, 32, 1, 1}    // Level 2: 4x downsampled
             };
             
             // Define voxel sizes for each level (in micrometers)
             double[][] voxelSizes = {
-                {1.0, 1.0, 1.0, 0.5, 0.5},     // Level 0
+                {0.5, 0.5, 1.0, 1.0, 1.0},     // Level 0
                 {1.0, 1.0, 1.0, 1.0, 1.0},     // Level 1 (2x in x,y)
-                {1.0, 1.0, 1.0, 2.0, 2.0}      // Level 2 (4x in x,y)
+                {2.0, 2.0, 1.0, 1.0, 1.0}      // Level 2 (4x in x,y)
             };
             
             // Define axes following OME-NGFF convention
@@ -343,7 +343,8 @@ public class BigStitcherStyleOMEZarrWriter {
             );
             
             System.out.println("Successfully written OME-Zarr to: " + localPath);
-            
+
+            /*
             // Example 2: Write to S3 (like BigStitcher-Spark does)
             String s3Path = "s3://my-bucket/output.ome.zarr";
             OMEZarrWriter s3Writer = new OMEZarrWriter(s3Path, 3);
@@ -414,7 +415,8 @@ public class BigStitcherStyleOMEZarrWriter {
                     metadata
                 );
             }
-            
+            */
+
         } catch (IOException e) {
             e.printStackTrace();
         }
