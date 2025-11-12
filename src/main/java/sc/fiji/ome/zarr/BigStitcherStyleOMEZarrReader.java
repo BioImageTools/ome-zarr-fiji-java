@@ -1,4 +1,4 @@
-package sc.fiji.zarr;
+package sc.fiji.ome.zarr;
 
 import net.imglib2.RandomAccess;
 import net.imglib2.img.cell.Cell;

@@ -1,4 +1,4 @@
-package sc.fiji.zarr;
+package sc.fiji.ome.zarr;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;

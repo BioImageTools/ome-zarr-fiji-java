@@ -1,4 +1,4 @@
-package sc.fiji.zarr;
+package sc.fiji.ome.zarr;
 
 import net.imglib2.view.Views;
 import org.janelia.saalfeldlab.n5.*;
@@ -12,7 +12,6 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import com.google.gson.*;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
