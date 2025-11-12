@@ -113,53 +113,6 @@
 		<system>none</system>
 	</ciManagement>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>pl.project13.maven</groupId>
-				<artifactId>git-commit-id-plugin</artifactId>
-				<version>4.9.10</version>
-				<executions>
-					<execution>
-						<phase>validate</phase>
-						<goals>
-							<goal>revision</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
-					<generateGitPropertiesFile>true</generateGitPropertiesFile>
-					<generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
-					<includeOnlyProperties>
-						<includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
-						<includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
-					</includeOnlyProperties>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<target>
-						<!-- make sure no COMMITrev tag files are floating around from some previous runs -->
-						<!-- NB: this task is redundant whenever 'mvn clean' is executed... -->
-						<delete><fileset dir="${project.build.outputDirectory}" includes="COMMITrev_*" /></delete>
-						<touch file="${project.build.outputDirectory}/COMMITrev_${git.commit.id.abbrev}_${project.artifactId}" />
-					</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
 	<packaging>jar</packaging>
 
 	<!-- ====================================== -->
