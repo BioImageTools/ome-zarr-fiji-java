@@ -52,7 +52,7 @@ public class ContextMenuAroundMouse extends JFrame {
 
         // Create panel with two buttons
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-        panel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        //panel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
 
         JButton button1 = new JButton("Option 1");
         JButton button2 = new JButton("Option 2");
