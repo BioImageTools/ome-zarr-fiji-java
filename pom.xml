@@ -191,6 +191,10 @@
 			<version>2.4.0-alpha-6</version> <!-- 2.3.0 -->
 		</dependency>
 		<dependency>
+			<groupId>org.janelia.saalfeldlab</groupId>
+			<artifactId>n5-ij</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-vistools</artifactId>
 		</dependency>
