@@ -1,0 +1,12 @@
+[workspace]
+authors = ["Vladimír Ulman <ulman@fi.muni.cz>"]
+channels = ["conda-forge"]
+name = "openjdk21"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+openjdk = "21.*"
+maven = ">=3.9.11,<4"

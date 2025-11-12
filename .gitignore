@@ -60,3 +60,7 @@ build/
 
 # VIM editor #
 .*.sw*
+
+# pixi environments
+.pixi
+pixi.lock
