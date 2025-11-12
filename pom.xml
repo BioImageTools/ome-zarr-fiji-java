@@ -1,10 +1,13 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>38.0.1</version>
+		<version>43.0.0</version>
 	</parent>
 
 	<groupId>sc.fiji</groupId>
@@ -66,6 +69,18 @@
 				<role>maintainer</role>
 			</roles>
 		</developer>
+		<developer>
+			<id>stefanhahmann</id>
+			<name>Stefan Hahmann</name>
+			<email>stefan.hahmann@tu-dresden.de</email>
+			<organization>TU Dresden (Physics of Life)</organization>
+			<organizationUrl>https://physics-of-life.tu-dresden.de/</organizationUrl>
+			<roles>
+				<role>lead</role>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<!-- TODO add Tischi and Tobias -->
 	</developers>
 
 	<contributors>
@@ -150,6 +165,10 @@
 	<!-- ====================================== -->
 
 	<properties>
+		<maven.compiler.source>21</maven.compiler.source>
+		<maven.compiler.target>21</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
 		<package-name>sc.fiji.ome.zarr.fiji.ui</package-name>
 
 		<license.licenseName>bsd_2</license.licenseName>
@@ -168,8 +187,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>
-			<artifactId>n5-ij</artifactId>
-			<version>4.3.0</version>
+			<artifactId>n5-universe</artifactId>
+			<version>2.4.0-alpha-6</version> <!-- 2.3.0 -->
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

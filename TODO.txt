@@ -1,0 +1,113 @@
+- Go the BigStitcher-way of doing zarr
+- review and cleanup the code, unite the "multiscale represenation class",
+  - check with what has been proposed during Hackathon 2019(?) in Prague
+
+- test S3 connections, reading, writing
+
+- update to the pom.xml "scijava standard" :)
+
+- writer:
+  - currently sampling (pyramids creating) uses own code with many issues
+    - hard-coded 2x downsampling, no matter what is stored in the metadata
+    - own downsampling stupid code - replace with Views! (also no extra memory!)
+    - hard-coded that there are always two non-spatial dimensions/axes.. consider metadata!
+
+
+- reader:
+  - current naive showing to ImageJ/Fiji ignores metadata, it sends naked Imglib2 class
+    and Fiji has its own assumptions about the order of axes
+  - N5 general importer, however, shows an zarr-chosen-scale image correctly,
+    there's gotta be a code for massaging this, find it, re-use it!
+
+
+- figure out how to add channels (change __non-spatial__ geometry) to an existing ome-zarr
+
+- drag and drop of ome-zarr could open a short context menu asking how to open...
+  e.g.: "N5 import dialog", "BDV with multi-scales"
+
+
+
+====================================================================
+- create: an util Java library that's ome-zarr centric
+  (which would be its main difference to n5-util)
+
+- have pyramidal image representation (aka class_above)
+  - should have a step-by-step builder,
+    builds into DEFINED
+
+  - internal states (of increasing capabilities)
+    - DEFINED (built, no attached reader or writer)
+    - DEFINED_WITH_RO_ACCESS
+    - DEFINED_WITH_RW_ACCESS
+    - methods to move between the states that return a clone() of the desired setup
+
+  - only (metadata) information associated with a particular N5 reader/writer,
+    no pixels explicitly, but instead should offer lazy accessors to the pixels
+  - keeps also path/URL
+
+  - and "add_N_channels(N)" modifier
+
+  - (lazy) read full scale
+  - (progressively, I hope) write full scale - current demos of mine
+
+  - read ROI into fixed non-spatial dimensions
+    (does View.interval on lazy-full-image-reader)
+
+  - write ROI into fixed non-spatial dimensions
+    (does progressive writes into respective blocks)
+
+  - read BLOCK into fixed non-spatial dimensions
+  - write BLOCK into fixed non-spatial dimensions
+    (both translate into particular ROI and reach out to the their ROI-based siblings)
+
+
+- (lazy) open ome-zarr for reading/writing/both
+  - returns the class_above with DEFINED_WITH_RO_ACCESS or DEFINED_WITH_RW_ACCESS
+
+- create empty (from the class_above) ome-zarr for reading/writing/both
+  - returns the class_above with DEFINED_WITH_RO_ACCESS or DEFINED_WITH_RW_ACCESS
+  - returns the same given class_above with the new state if the original state was just DEFINED,
+    returns a copy of the input class_above otherwise
+
+
+- create: a singleton class and wrapping Fiji (scijava) service to obtain "currently opened" class_above
+  - basically a dictionary URL -> { class_above, valid_no_longer_after_time_stamp }
+  - opening/introducing a new class_above happens with a validity timeout (provided as a relative time period)
+
+- create: suite of Fiji plugins that
+  - wrap around the functionalities of the class_above
+  - internally reach out to the singleton_above, key'ed on the operating URL
+
+
+
+
+====================================================================
+what's possible today:
+
+N5-native (n5-ij) tooling:
+------------
+- opening a particular ome-zarr at a particular scale can be macro-recorded,
+  and thus the N5 importer could be commanded from scripts
+
+  - while the N5 dialog can do crop, it cannot be macro-recorded and thus used in scripts (*)
+  (*) it, of course, can be achieved with scripts if you know Jython and very well the N5 importer codebase
+  - that said: no easy tool to read a full ImageJ image as a ROI from an existing ome-zarr
+
+  - the macro-dialog from scripts has a way of telling scale (by appending '?2' - scale 2, for example),
+    we could extend the syntax (no), or create a new suite of scripts (yes)
+
+  - eventually, also opening a full ome-zarr could end up in the suite too
+    (despite some functionality is duplicated)
+
+- writing also possible, take full image and save it as a full ome-zarr, macro-recorded, script-able
+  - no easy tool to write a full ImageJ img as a ROI into existing ome-zarr
+
+
+BigStitcher tooling:
+------------
+- very nice, seems to me to be pretty similar to "N5 native" (n5-ij) tooling
+  in what is made available from the GUI, and scripts
+- main difference: BigStitcher-based tools operate on 'dataset.xml' -- that's the entry point here
+
+- I actually like better this one, and how & what ome-zarrs it is producing
+

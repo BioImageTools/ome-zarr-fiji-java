@@ -4,9 +4,6 @@
 # Log file
 *.log
 
-# BlueJ files
-*.ctxt
-
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
@@ -20,22 +17,46 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-
 # Maven #
-/target/
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
 # Eclipse #
-/.classpath
-/.project
-/.settings/
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans #
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
 # IntelliJ #
 /.idea/
-/*.iml
-/*.Iml
+*.iws
+*.iml
+*.Iml
+*.ipr
+
+# BlueJ files
+*.ctxt
+
+# VS Code #
+.vscode/
 
 # Apple #
 .DS_Store
 
 # VIM editor #
-.*.swp
+.*.sw*
