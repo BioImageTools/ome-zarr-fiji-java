@@ -53,7 +53,7 @@ import java.util.List;
  * An OME-Zarr backed pyramidal 5D image
  * that can be visualised in ImageJ in various ways.
  *
- * 5D refers to: x,y,z,t,running_dim (aka channels)
+ * 5D refers to: x,y,z,t,channels (or simply the dimension in which all images are stacked)
  * The {@link EuclideanSpace} brings in only the `numDimensions()`.
  *
  * @param <T> Type of the pixels
@@ -183,14 +183,17 @@ public class DefaultPyramidal5DImageData<
 		return null;
 	}
 
-	private synchronized ImgPlus< T > imgPlus()
+	/**
+	 * The purpose is to create the internal {@link DefaultPyramidal5DImageData#imgPlus}
+	 * just once.
+	 */
+	private synchronized void imgPlus()
 	{
-		if ( imgPlus != null ) return null;
+		if ( imgPlus != null ) return;
 
 		imgPlus = new ImgPlus<>( multiscaleImage.getImg( 0 ) );
 		imgPlus.setName( getName() );
 		updateImgAxes();
-		return imgPlus;
 	}
 
 	/**
@@ -206,30 +209,8 @@ public class DefaultPyramidal5DImageData<
 		// The axes, which are valid for all resolutions.
 		final List< Multiscales.Axis > axes = multiscales.getAxes();
 
-		// The global transformations that
-		// should be applied to all resolutions.
-		final Multiscales.CoordinateTransformations[] globalCoordinateTransformations = multiscales.getCoordinateTransformations();
-
-		// The transformations that should
-		// only be applied to the highest resolution,
-		// which is the one we are concerned with here.
-		final Multiscales.CoordinateTransformations[] coordinateTransformations = multiscales.getDatasets()[ 0 ].coordinateTransformations;
-
 		// Concatenate all scaling transformations
-		final double[] scales = new double[ numDimensions ];
-		Arrays.fill( scales, 1.0 );
-		if ( globalCoordinateTransformations != null )
-			for ( Multiscales.CoordinateTransformations transformation : globalCoordinateTransformations )
-				for ( int d = 0; d < numDimensions; d++ )
-					scales[ d ] *= transformation.scale[ d ];
-
-		if ( coordinateTransformations != null )
-			for ( Multiscales.CoordinateTransformations transformation : coordinateTransformations )
-				for ( int d = 0; d < numDimensions; d++ )
-					scales[ d ] *= transformation.scale[ d ];
-
-		// Add translations?
-
+		final double[] scales = multiscales.getScales()[ 0 ].scaleFactors;
 
 		// Create the imgAxes
 		final ArrayList< CalibratedAxis > imgAxes = new ArrayList<>();
@@ -258,7 +239,7 @@ public class DefaultPyramidal5DImageData<
 		}
 
 		// T
-		final int tAxisIndex = multiscales.getTimePointAxisIndex();
+		final int tAxisIndex = multiscales.getTimepointAxisIndex();
 		if ( tAxisIndex >= 0 )
 		{
 			imgAxes.add( createAxis( tAxisIndex, Axes.TIME, axes, scales ) );

@@ -2,7 +2,6 @@ package sc.fiji.ome.zarr;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
-import mpicbg.spim.data.sequence.VoxelDimensions;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,8 +20,8 @@ public class Multiscales
     private String name;
     private String type;
     private Axis[] axes; // from v0.4+ within JSON
-    private Dataset[] datasets;
-    private CoordinateTransformations[] coordinateTransformations; // from v0.4+ within JSON
+    private Scale[] scales;
+    private CoordinateTransformation[] coordinateTransformations; // from v0.4+ within JSON
 
     // Runtime
 
@@ -35,16 +34,22 @@ public class Multiscales
     public Multiscales() {
     }
 
-    public static class Dataset {
+    /**
+     * This is a representation of a single scale, typically this
+     * is one image of a resolution pyramid. Just note that a chain
+     * of transformations could be provided.
+     *
+     * The lengths of the both
+     */
+    public static class Scale {
         public String path;
-        public CoordinateTransformations[] coordinateTransformations;
+        public double[] scaleFactors;
+        public double[] offsets;
     }
 
-    public static class CoordinateTransformations {
-        public String type;
+    public static class CoordinateTransformation {
         public double[] scale;
         public double[] translation;
-        public String path;
     }
 
     public static class Axis
@@ -97,7 +102,7 @@ public class Multiscales
         return -1;
     }
 
-    public int getTimePointAxisIndex()
+    public int getTimepointAxisIndex()
     {
         for ( int d = 0; d < numDimensions; d++ )
             if ( axisList.get( d ).type.equals( Axis.TIME_TYPE ) )
@@ -119,14 +124,14 @@ public class Multiscales
         return axisList;
     }
 
-    public CoordinateTransformations[] getCoordinateTransformations()
+    public CoordinateTransformation[] getCoordinateTransformations()
     {
         return coordinateTransformations;
     }
 
-    public Dataset[] getDatasets()
+    public Scale[] getScales()
     {
-        return datasets;
+        return scales;
     }
 
     public int numDimensions()
