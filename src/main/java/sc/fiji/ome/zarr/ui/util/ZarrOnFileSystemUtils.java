@@ -116,12 +116,26 @@ public class ZarrOnFileSystemUtils {
 		return diffPathElems;
 	}
 
+    /**
+     * Checks if the current OS is Windows.
+     *
+     * @return True if the OS is Windows, false otherwise.
+     */
     public static boolean isWindows() {
         final String myOS = System.getProperty("os.name").toLowerCase();
         return !( myOS.contains( "mac" ) || myOS.contains( "nux" ) || myOS.contains( "nix" ) );
     }
 
 
+    /**
+     * Resolves the root path of an OME Zarr dataset given a path pointing inside the dataset.
+     * The method ensures compatibility with different operating systems by formatting the path accordingly.
+     * If the provided path is null, the method returns null.
+     *
+     * @param path the file system path pointing to a location inside an OME Zarr dataset
+     * @return the absolute path to the root of the Zarr dataset formatted as a string,
+     *         or null if the provided path is null
+     */
     public static String getZarrRootPath(final Path path) {
         if (path != null) {
             final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder(path);
