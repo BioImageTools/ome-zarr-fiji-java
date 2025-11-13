@@ -34,6 +34,7 @@ import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
+import org.scijava.Context;
 import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -96,14 +97,18 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 		this.droppedInPath = fsource.getFile().toPath();
 		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
 
-		ApplicationFrame frame = this.context().getService(UIService.class).getDefaultUI().getApplicationFrame();
-        logger.info("Obtained this frame: {}", frame);
-		if (frame instanceof LegacyApplicationFrame) {
-            logger.debug("Going for DND submenu2");
-			LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
-			ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath);
-			actionChooser.show();
-		}
+        try(final Context context = this.context())
+        {
+            ApplicationFrame frame = context.getService(UIService.class).getDefaultUI().getApplicationFrame();
+            logger.info("Obtained this frame: {}", frame);
+            if (frame instanceof LegacyApplicationFrame) {
+                logger.debug("Show Action chooser for DND submenu2");
+                LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
+                ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath);
+                actionChooser.show();
+            }
+        }
+
 		//not going to display anything now, we instead start a thread that delays itself a bit
 		//and only opens after a waiting period; the waiting period is used to detect whether
 		//the ALT key has been released (that is, if it had been pressed during the drag-and-drop operation)
