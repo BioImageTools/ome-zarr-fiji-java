@@ -1,11 +1,8 @@
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.examples;
 
 import net.imglib2.RandomAccess;
-import net.imglib2.img.cell.Cell;
-import net.imglib2.img.cell.CellRandomAccess;
 import net.imglib2.img.cell.LazyCellImg;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.volatiles.VolatileUnsignedShortType;
 import org.janelia.saalfeldlab.n5.*;
 import org.janelia.saalfeldlab.n5.s3.N5AmazonS3Reader;
 import org.janelia.saalfeldlab.n5.zarr.*;
@@ -13,9 +10,7 @@ import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import net.imglib2.*;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
 import com.google.gson.*;
 
 import java.io.IOException;

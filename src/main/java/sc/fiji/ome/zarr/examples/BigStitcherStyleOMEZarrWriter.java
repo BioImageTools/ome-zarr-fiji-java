@@ -1,10 +1,8 @@
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.examples;
 
 import net.imglib2.RandomAccess;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.array.ArrayImgs;
 import org.janelia.saalfeldlab.n5.*;
-import org.janelia.saalfeldlab.n5.blosc.BloscCompression;
 import org.janelia.saalfeldlab.n5.s3.N5AmazonS3Writer;
 import org.janelia.saalfeldlab.n5.zarr.*;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;

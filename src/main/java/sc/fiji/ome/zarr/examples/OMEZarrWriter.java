@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.examples;
 
 import net.imglib2.view.Views;
 import org.janelia.saalfeldlab.n5.*;
