@@ -42,11 +42,12 @@ import net.imglib2.EuclideanSpace;
 import net.imglib2.Volatile;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.jetbrains.annotations.NotNull;
 import org.scijava.Context;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -105,8 +106,9 @@ public class DefaultPyramidal5DImageData<
 	//private OMEZarrAxes omeZarrAxes;
 
 	//these act as caches not to create them again and again
-	private ImgPlus< T > imgPlus;
-	private Dataset ijDataset;
+	private final ImgPlus< T > imgPlus;
+	private final Dataset ijDataset;
+
 	private List< SourceAndConverter< T > > sources;
 	private SpimData spimData;
 
@@ -131,6 +133,21 @@ public class DefaultPyramidal5DImageData<
 		numResolutions = multiscaleImage.numResolutions();;
 		dimensions = multiscaleImage.dimensions();
 		numDimensions = dimensions.length;
+
+		imgPlus = new ImgPlus<>(multiscaleImage.getImg(0));
+		imgPlus.setName(getName());
+		updateImgPlusAxes();
+
+		final DatasetService datasetService = context.getService(DatasetService.class);
+		ijDataset = datasetService.create(imgPlus);
+		ijDataset.setName(imgPlus.getName());
+		ijDataset.setRGBMerged(false);
+	}
+	
+	public void REMOVEME() {
+		N5Metadata a = N5DatasetDiscoverer.discover(null).getMetadata();
+		//TODO fetch v0.5 NGFF Metadata -> ask John
+		//there was supposed to be some class for it
 	}
 
 	@Override
@@ -142,19 +159,7 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public Dataset asDataset()
 	{
-		imgPlus();
-
-		synchronized ( imgPlus )
-		{
-			if ( ijDataset == null )
-			{
-				final DatasetService datasetService = context.getService( DatasetService.class );
-				ijDataset = datasetService.create( imgPlus );
-				ijDataset.setName( imgPlus.getName() );
-				ijDataset.setRGBMerged( false );
-			}
-			return ijDataset;
-		}
+		return ijDataset;
 	}
 
 	@Override
@@ -189,28 +194,23 @@ public class DefaultPyramidal5DImageData<
 	 */
 	private synchronized void imgPlus()
 	{
-		if ( imgPlus != null ) return;
-
-		imgPlus = new ImgPlus<>( multiscaleImage.getImg( 0 ) );
-		imgPlus.setName( getName() );
-		updateImgAxes();
 	}
 
 	/**
-	 * Create/update calibrated axes for ImgPlus.
+	 * Create/update calibrated axes for ImgPlus {@link DefaultPyramidal5DImageData#imgPlus}.
 	 *
 	 * This only needs to consider
 	 * the highest resolution dataset and metadata.
 	 */
-	private void updateImgAxes()
+	private void updateImgPlusAxes()
 	{
 		final Multiscales multiscales = multiscaleImage.getMultiscales();
 
 		// The axes, which are valid for all resolutions.
 		final List< Multiscales.Axis > axes = multiscales.getAxes();
 
-		// Concatenate all scaling transformations
-		final double[] scales = multiscales.getScales()[ 0 ].scaleFactors;
+		// The scale factors of the resolution level 0
+		final double[] scaleFactors = multiscales.getScales().get( 0 ).scaleFactors;
 
 		// Create the imgAxes
 		final ArrayList< CalibratedAxis > imgAxes = new ArrayList<>();
@@ -218,23 +218,23 @@ public class DefaultPyramidal5DImageData<
 		// X
 		final int xAxisIndex = multiscales.getSpatialAxisIndex( Multiscales.Axis.X_AXIS_NAME );
 		if ( xAxisIndex >= 0 )
-			imgAxes.add( createAxis( xAxisIndex, Axes.X, axes, scales ) );
+			imgAxes.add( createAxis( xAxisIndex, Axes.X, axes, scaleFactors ) );
 
 		// Y
 		final int yAxisIndex = multiscales.getSpatialAxisIndex( Multiscales.Axis.Y_AXIS_NAME );
 		if ( yAxisIndex >= 0 )
-			imgAxes.add( createAxis( yAxisIndex, Axes.Y, axes, scales ) );
+			imgAxes.add( createAxis( yAxisIndex, Axes.Y, axes, scaleFactors ) );
 
 		// Z
 		final int zAxisIndex = multiscales.getSpatialAxisIndex( Multiscales.Axis.Z_AXIS_NAME );
 		if ( zAxisIndex >= 0 )
-			imgAxes.add( createAxis( zAxisIndex, Axes.Z, axes, scales ) );
+			imgAxes.add( createAxis( zAxisIndex, Axes.Z, axes, scaleFactors ) );
 
 		// C
 		final int cAxisIndex = multiscales.getChannelAxisIndex();
 		if ( cAxisIndex >= 0 )
 		{
-			imgAxes.add( createAxis( cAxisIndex, Axes.CHANNEL, axes, scales ) );
+			imgAxes.add( createAxis( cAxisIndex, Axes.CHANNEL, axes, scaleFactors ) );
 			numChannels = (int) dimensions[ cAxisIndex ];
 		}
 
@@ -242,7 +242,7 @@ public class DefaultPyramidal5DImageData<
 		final int tAxisIndex = multiscales.getTimepointAxisIndex();
 		if ( tAxisIndex >= 0 )
 		{
-			imgAxes.add( createAxis( tAxisIndex, Axes.TIME, axes, scales ) );
+			imgAxes.add( createAxis( tAxisIndex, Axes.TIME, axes, scaleFactors ) );
 			numTimePoints = (int) dimensions[ tAxisIndex ];
 		}
 
