@@ -6,6 +6,9 @@ import java.awt.event.*;
 
 public class ContextMenuAroundMouse extends JFrame {
     private JWindow submenuWindow;
+    private final ImageIcon iconBDV = new CreateIcon("https://avatars.githubusercontent.com/u/9824453?s=200&v=4").getIcon();
+    private final ImageIcon iconImageJ = new CreateIcon("https://imagej.net/media/icons/imagej2.png").getIcon();
+
     private boolean shouldShowCustomItems = false;
 
     public ContextMenuAroundMouse() {
@@ -77,10 +80,15 @@ public class ContextMenuAroundMouse extends JFrame {
             ));
 */
 
-            JButton button1 = new JButton("Option 1");
-            JButton button2 = new JButton("Option 2");
+            JButton button1 = new JButton(iconImageJ);
+            JButton button2 = new JButton(iconBDV);
             JButton button3 = new JButton("Option 3");
             JButton button4 = new JButton("Option 4");
+
+            button2.addActionListener(e -> {
+                System.out.println("closing submenu");
+                submenuWindow.dispose();
+            });
 
             panel.add(button1);
             panel.add(button2);
@@ -91,8 +99,13 @@ public class ContextMenuAroundMouse extends JFrame {
             panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
             //panel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
 
-            JButton button1 = new JButton("Option 1");
-            JButton button2 = new JButton("Option 2");
+            JButton button1 = new JButton(iconImageJ);
+            JButton button2 = new JButton(iconBDV);
+
+            button2.addActionListener(e -> {
+                System.out.println("closing submenu");
+                submenuWindow.dispose();
+            });
 
             panel.add(button1);
             panel.add(button2);
