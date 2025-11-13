@@ -46,7 +46,7 @@ public class ExamineContextMenuAroundMouse {
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			final JFrame mainFrame = new JFrame();
-			final ContextMenuAroundMouse menu = new ContextMenuAroundMouse(mainFrame);
+			final ContextMenuAroundMouse menu = new ContextMenuAroundMouse(mainFrame, null);
 			setupFrame(mainFrame, menu);
 		});
 	}
