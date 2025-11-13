@@ -25,7 +25,6 @@ public class ContextMenuAroundMouse {
 
     private boolean shouldShowCustomItems = false;
 
-    public ContextMenuAroundMouse(Frame parentFrame) {
     public ContextMenuAroundMouse(final Frame parentFrame, final Path path) {
         this.parentFrame = parentFrame;
         this.droppedInPath = path;
