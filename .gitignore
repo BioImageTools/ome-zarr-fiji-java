@@ -43,7 +43,7 @@ build/
 !**/src/test/**/build/
 
 # IntelliJ #
-/.idea/
+.idea
 *.iws
 *.iml
 *.Iml
@@ -60,3 +60,7 @@ build/
 
 # VIM editor #
 .*.sw*
+
+# pixi environments
+.pixi
+pixi.lock
