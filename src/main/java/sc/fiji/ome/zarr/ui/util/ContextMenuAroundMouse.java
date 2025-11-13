@@ -31,8 +31,6 @@ public class ContextMenuAroundMouse {
         this.toggleCustomItems();
 	}
 
-
-
     public void showSubmenu() {
         final Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
 
@@ -40,6 +38,7 @@ public class ContextMenuAroundMouse {
         submenuDialog.setUndecorated(true);
         submenuDialog.setModal(false);
         submenuDialog.setAlwaysOnTop(true);
+        submenuDialog.setOpacity(1.0f); // full visible initially
 
 		// Create panel with the buttons, two layouts supported
 		JPanel panel;
@@ -94,9 +93,8 @@ public class ContextMenuAroundMouse {
             Point mouse = pointerInfo.getLocation();
             Rectangle bounds = submenuDialog.getBounds();
             if (!bounds.contains(mouse)) {
-                logger.debug("Mouse left submenu area → closing");
-                submenuDialog.dispose();
                 ((Timer) e.getSource()).stop();
+                startFadeOut(submenuDialog);
             }
         });
 
@@ -111,5 +109,34 @@ public class ContextMenuAroundMouse {
 
 		submenuDialog.setVisible(true);
         submenuDialog.requestFocus();
-	}
+    }
+
+    /**
+     * Smoothly fades out the given dialog before disposing it.
+     */
+    private void startFadeOut(final JDialog dialog) {
+        logger.debug("Starting fade-out animation");
+
+        final float[] opacity = {1.0f};
+        final int fadeSteps = 10;          // total steps
+        final int fadeDuration = 300;      // ms total duration
+        final int interval = fadeDuration / fadeSteps; // ms per step
+
+        Timer fadeTimer = new Timer(interval, e -> {
+            opacity[0] -= 1.0f / fadeSteps;
+            if (opacity[0] <= 0f) {
+                ((Timer) e.getSource()).stop();
+                dialog.dispose();
+            } else {
+                try {
+                    dialog.setOpacity(opacity[0]);
+                } catch (UnsupportedOperationException ex) {
+                    // setOpacity not supported on all systems
+                    dialog.dispose();
+                    ((Timer) e.getSource()).stop();
+                }
+            }
+        });
+        fadeTimer.start();
+    }
 }
