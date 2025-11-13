@@ -29,16 +29,16 @@ public class ContextMenuAroundMouse {
     private final ImageIcon iconScript = CreateIcon.getAndResizeIcon("script_icon.png");
     private final ImageIcon iconBDVAdd = CreateIcon.getAndResizeIcon("bdv_add_icon.png");
 
-    private boolean shouldShowCustomItems = false;
+    private boolean extendedVersion;
 
     public ContextMenuAroundMouse(final Frame parentFrame, final Path path) {
         this.parentFrame = parentFrame;
         this.droppedInPath = path;
-        this.shouldShowCustomItems = true;
+        this.extendedVersion = true;
     }
 
-    public void setShowCustomItems(boolean show) {
-        this.shouldShowCustomItems = show;
+    public void setShowExtendedVersion(boolean show) {
+        this.extendedVersion = show;
         logger.debug("Large submenu: {}", show);
     }
 
@@ -79,7 +79,7 @@ public class ContextMenuAroundMouse {
 
     private JPanel createPanel(JDialog dialog) {
         JPanel panel;
-        if (shouldShowCustomItems) {
+        if (extendedVersion) {
             panel = new JPanel(new GridLayout(2,2,5,5));
             JButton button1 = new JButton(iconZarr);
             JButton button2 = new JButton(iconBDV);
