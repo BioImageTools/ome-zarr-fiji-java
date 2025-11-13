@@ -1,11 +1,18 @@
 package sc.fiji.ome.zarr.ui.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.invoke.MethodHandles;
 
 public class ContextMenuAroundMouse {
+
+    private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
 	private final Frame parentFrame;
 	private JWindow submenuWindow;
 
@@ -16,7 +23,7 @@ public class ContextMenuAroundMouse {
 
 	public void toggleCustomItems() {
 		shouldShowCustomItems = !shouldShowCustomItems;
-		System.out.println("Large submenu: "+shouldShowCustomItems);
+        logger.debug("Large submenu: {} ", shouldShowCustomItems);
 	}
 
 	public ContextMenuAroundMouse(Frame parentFrame) {
@@ -49,7 +56,7 @@ public class ContextMenuAroundMouse {
 			JButton button4 = new JButton("Option 4");
 
 			button2.addActionListener(e -> {
-				System.out.println("closing submenu");
+                logger.debug("closing submenu");
 				submenuWindow.dispose();
 			});
 
@@ -65,7 +72,7 @@ public class ContextMenuAroundMouse {
 			JButton button2 = new JButton(iconBDV);
 
 			button2.addActionListener(e -> {
-				System.out.println("closing submenu");
+                logger.debug("closing submenu");
 				submenuWindow.dispose();
 			});
 

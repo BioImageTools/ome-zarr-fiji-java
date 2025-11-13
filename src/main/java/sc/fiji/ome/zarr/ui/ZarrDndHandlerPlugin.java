@@ -45,6 +45,8 @@ import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
 import org.scijava.ui.ApplicationFrame;
 import org.scijava.ui.UIService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.ui.util.ContextMenuAroundMouse;
 import sc.fiji.ome.zarr.ui.util.ZarrOnFSutils;
 import org.scijava.ui.swing.SwingApplicationFrame;
@@ -54,12 +56,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
 @Plugin(type = IOPlugin.class, attrs = @Attr(name = "eager"))
 public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	// ========================= logging stuff =========================
 	@Parameter
@@ -93,16 +98,16 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
 
 		ApplicationFrame frame = this.context().getService(UIService.class).getDefaultUI().getApplicationFrame();
-		System.out.println("Obtained this frame: "+frame);
+        logger.info("Obtained this frame: {}", frame);
 		if (frame instanceof SwingApplicationFrame) {
-			System.out.println("Going for DND submenu");
+            logger.debug("Going for DND submenu");
 			SwingUtilities.invokeLater(() -> {
-				System.out.println("Starting DND submenu");
+                logger.info("DND submenu started");
 				ContextMenuAroundMouse a = new ContextMenuAroundMouse((SwingApplicationFrame) frame);
 				a.showSubmenu();
 			});
 		} else if (frame instanceof LegacyApplicationFrame) {
-			System.out.println("Going for DND submenu 2");
+            logger.debug("Going for DND submenu2");
 			LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
 			ContextMenuAroundMouse a = new ContextMenuAroundMouse(lFrame.getComponent());
 			a.showSubmenu();
