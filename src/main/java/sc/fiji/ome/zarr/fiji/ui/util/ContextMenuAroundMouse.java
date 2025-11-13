@@ -10,7 +10,7 @@ public class ContextMenuAroundMouse {
 	private JWindow submenuWindow;
 
 	private final ImageIcon iconBDV = CreateIcon.fetchAndResizeIcon("https://avatars.githubusercontent.com/u/9824453?s=200&v=4");
-	private final ImageIcon iconImageJ = CreateIcon.fetchAndResizeIcon("https://imagej.net/media/icons/imagej2.png");
+	private final ImageIcon iconImageJ = CreateIcon.fetchAndResizeIcon("https://zarr-specs.readthedocs.io/en/latest/_static/logo.png");
 
 	private boolean shouldShowCustomItems = false;
 
