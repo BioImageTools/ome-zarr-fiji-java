@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.fiji.ui.util;
+package sc.fiji.ome.zarr.ui.util;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

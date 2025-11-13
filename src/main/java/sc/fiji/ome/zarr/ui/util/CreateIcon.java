@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.fiji.ui.util;
+package sc.fiji.ome.zarr.ui.util;
 
 import java.net.URL;
 import java.awt.Image;

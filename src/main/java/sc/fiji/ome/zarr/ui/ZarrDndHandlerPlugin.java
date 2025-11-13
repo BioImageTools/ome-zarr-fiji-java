@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.fiji.ui;
+package sc.fiji.ome.zarr.ui;
 
 import bdv.util.BdvFunctions;
 import net.imglib2.img.Img;
@@ -45,8 +45,8 @@ import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
 import org.scijava.ui.ApplicationFrame;
 import org.scijava.ui.UIService;
-import sc.fiji.ome.zarr.fiji.ui.util.ContextMenuAroundMouse;
-import sc.fiji.ome.zarr.fiji.ui.util.ZarrOnFSutils;
+import sc.fiji.ome.zarr.ui.util.ContextMenuAroundMouse;
+import sc.fiji.ome.zarr.ui.util.ZarrOnFSutils;
 import org.scijava.ui.swing.SwingApplicationFrame;
 import net.imagej.legacy.ui.LegacyApplicationFrame;
 
