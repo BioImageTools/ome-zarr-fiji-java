@@ -73,14 +73,47 @@
 			<id>stefanhahmann</id>
 			<name>Stefan Hahmann</name>
 			<email>stefan.hahmann@tu-dresden.de</email>
-			<organization>TU Dresden (Physics of Life)</organization>
-			<organizationUrl>https://physics-of-life.tu-dresden.de/</organizationUrl>
+			<organization>MPI CBG</organization>
+			<organizationUrl>https://www.mpi-cbg.de/</organizationUrl>
 			<roles>
 				<role>lead</role>
 				<role>developer</role>
+                <role>reviewer</role>
+                <role>maintainer</role>
 			</roles>
 		</developer>
-		<!-- TODO add Tischi and Tobias -->
+        <developer>
+            <id>tpietzsch</id>
+            <name>Tobias Pietzsch</name>
+            <email>pietzsch@mpi-cbg.de</email>
+            <url>https://imagej.net/User:Pietzsch</url>
+            <roles>
+                <role>developer</role>
+                <role>reviewer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>tpietzsch</id>
+            <name>Tobias Pietzsch</name>
+            <email>pietzsch@mpi-cbg.de</email>
+            <url>https://imagej.net/User:Pietzsch</url>
+            <roles>
+                <role>developer</role>
+                <role>reviewer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>tischi</id>
+            <name>Christian Tischer</name>
+            <roles>
+                <role>lead</role>
+                <role>developer</role>
+                <role>debugger</role>
+                <role>reviewer</role>
+                <role>support</role>
+                <role>maintainer</role>
+            </roles>
+        </developer>
 	</developers>
 
 	<contributors>
