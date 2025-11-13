@@ -101,7 +101,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 		if (frame instanceof LegacyApplicationFrame) {
             logger.debug("Going for DND submenu2");
 			LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
-			ContextMenuAroundMouse a = new ContextMenuAroundMouse(lFrame.getComponent());
+			ContextMenuAroundMouse a = new ContextMenuAroundMouse(lFrame.getComponent(), droppedInPath);
 			a.showSubmenu();
 		}
 		//not going to display anything now, we instead start a thread that delays itself a bit
