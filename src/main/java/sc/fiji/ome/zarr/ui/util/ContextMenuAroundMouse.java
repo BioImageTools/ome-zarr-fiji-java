@@ -15,8 +15,11 @@ public class ContextMenuAroundMouse {
 
     private final Frame parentFrame;
 
-    private final ImageIcon iconBDV = CreateIcon.getAndResizeIcon("bdv_icon.png");
+    private final Path droppedInPath;
+
     private final ImageIcon iconZarr = CreateIcon.getAndResizeIcon("zarr_icon.png");
+    private final ImageIcon iconBDV = CreateIcon.getAndResizeIcon("bdv_icon.png");
+    private final ImageIcon iconScript = CreateIcon.getAndResizeIcon("script_icon.png");
     private final ImageIcon iconBDVAdd = CreateIcon.getAndResizeIcon("bdv_add_icon.png");
 
     private boolean shouldShowCustomItems = false;
