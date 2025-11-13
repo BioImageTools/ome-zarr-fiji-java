@@ -6,7 +6,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public class ContextMenuAroundMouse {
-	private final JFrame parentFrame;
+	private final Frame parentFrame;
 	private JWindow submenuWindow;
 
 	private final ImageIcon iconBDV = CreateIcon.fetchAndResizeIcon("https://avatars.githubusercontent.com/u/9824453?s=200&v=4");
@@ -19,7 +19,7 @@ public class ContextMenuAroundMouse {
 		System.out.println("Large submenu: "+shouldShowCustomItems);
 	}
 
-	public ContextMenuAroundMouse(JFrame parentFrame) {
+	public ContextMenuAroundMouse(Frame parentFrame) {
 		this.parentFrame = parentFrame;
 	}
 
