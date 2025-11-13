@@ -110,7 +110,7 @@ public class ActionChooser {
         buttonBDVAdd.addActionListener(e -> dialog.dispose());
 
         setupKeyboardClose(dialog);
-        setupMouseLeaveClose(dialog);
+        setupCloseOnMouseLeave(dialog);
     }
 
     private Point getMouseLocation() {
@@ -162,7 +162,7 @@ public class ActionChooser {
         );
     }
 
-    private void setupMouseLeaveClose(final JDialog dialog) {
+    private void setupCloseOnMouseLeave(final JDialog dialog) {
         final Timer checkMouse = new Timer(200, e -> {
             PointerInfo pi = MouseInfo.getPointerInfo();
             if (pi == null) return;
