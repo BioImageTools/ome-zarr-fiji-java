@@ -6,7 +6,7 @@ import java.awt.event.*;
 
 public class ContextMenuAroundMouse extends JFrame {
     private JWindow submenuWindow;
-    private boolean shouldShowCustomItems = false; // Toggle this to test both layouts
+    private boolean shouldShowCustomItems = false;
 
     public ContextMenuAroundMouse() {
         setTitle("Keyboard Submenu Example");
@@ -37,6 +37,18 @@ public class ContextMenuAroundMouse extends JFrame {
                 showSubmenu();
             }
         });
+
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_L, 0), "changeSubmenu");
+
+        //rootPane.getActionMap().put("changeSubmenu", (e) -> shouldShowCustomItems ^= true );
+        rootPane.getActionMap().put("changeSubmenu", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shouldShowCustomItems = !shouldShowCustomItems;
+                System.out.println("Large submenu: "+shouldShowCustomItems);
+            }
+        } );
     }
 
     private void showSubmenu() {
