@@ -68,7 +68,7 @@ public class OMEZarrData
 	{
 		// Create a Java object from the first
 		// multiscale metadata in the container.
-		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePaths[ 0 ], queue );
+		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePaths[ 0 ] );
 
 		// Convert it to something that ImageJ
 		// can understand.

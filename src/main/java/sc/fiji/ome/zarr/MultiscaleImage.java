@@ -64,8 +64,6 @@ public class MultiscaleImage<
 	private static final String MULTI_SCALE_KEY = "multiscales";
 	private final String multiscalePath;
 
-	private final SharedQueue queue;
-
 	private int numResolutions;
 
 	private long[] dimensions;
@@ -86,11 +84,9 @@ public class MultiscaleImage<
 	 * TODO
 	 */
 	public MultiscaleImage(
-			final String multiscalePath,
-			@Nullable final SharedQueue queue )
+			final String multiscalePath )
 	{
 		this.multiscalePath = multiscalePath;
-		this.queue = queue;
 	}
 
 	private void init()

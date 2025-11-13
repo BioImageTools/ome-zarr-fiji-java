@@ -7,7 +7,7 @@ public class TestMultiscaleImage {
 	{
 		final String multiscalePath = "/Users/tischer/Desktop/testNew.zarr";
 
-		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath, null );
+		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath );
 		multiscaleImage.dimensions();
 
 		// Show as imagePlus
