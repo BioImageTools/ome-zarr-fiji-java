@@ -14,7 +14,6 @@ public class ContextMenuAroundMouse {
     private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	private final Frame parentFrame;
-	private JWindow submenuWindow;
 
 	private final ImageIcon iconBDV = CreateIcon.getAndResizeIcon("bdv_icon.png");
 	private final ImageIcon iconZarr = CreateIcon.getAndResizeIcon("zarr_icon.png");
@@ -32,18 +31,15 @@ public class ContextMenuAroundMouse {
         this.toggleCustomItems();
 	}
 
-	public void showSubmenu() {
-		// Close existing submenu if there is one,
-		// as we want to rebuild because user settings may have changed
-		if (submenuWindow != null && submenuWindow.isVisible()) {
-			submenuWindow.dispose();
-		}
 
-		// Get current mouse position ASAP
-		final Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
 
-		// Create undecorated window (no title bar, borders, etc.)
-		submenuWindow = new JWindow(parentFrame);
+    public void showSubmenu() {
+        final Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+
+        final JDialog submenuDialog = new JDialog(parentFrame);
+        submenuDialog.setUndecorated(true);
+        submenuDialog.setModal(false);
+        submenuDialog.setAlwaysOnTop(true);
 
 		// Create panel with the buttons, two layouts supported
 		JPanel panel;
@@ -59,7 +55,7 @@ public class ContextMenuAroundMouse {
 
 			button2.addActionListener(e -> {
                 logger.debug("closing submenu");
-				submenuWindow.dispose();
+                submenuDialog.dispose();
 			});
 
 			panel.add(button1);
@@ -75,30 +71,45 @@ public class ContextMenuAroundMouse {
 
 			button2.addActionListener(e -> {
                 logger.debug("closing submenu");
-				submenuWindow.dispose();
+                submenuDialog.dispose();
 			});
 
 			panel.add(button1);
 			panel.add(button2);
 		}
 
-		submenuWindow.add(panel);
-		submenuWindow.pack();
+        submenuDialog.getContentPane().add(panel);
+        submenuDialog.pack();
 
 		// Position at mouse cursor
-		final Dimension windowSize = submenuWindow.getSize();
+		final Dimension windowSize = submenuDialog.getSize();
 		int centeredX = mouseLocation.x - (windowSize.width / 2);
 		int centeredY = mouseLocation.y - (windowSize.height / 2);
-		submenuWindow.setLocation(centeredX, centeredY);
+        submenuDialog.setLocation(centeredX, centeredY);
 
-		// Make it close when focus is lost
-		submenuWindow.addWindowFocusListener(new WindowAdapter() {
-			@Override
-			public void windowLostFocus(WindowEvent e) {
-				submenuWindow.dispose();
-			}
-		});
+        // --- Mouse leave detection using Timer ---
+        final Timer closeTimer = new Timer(200, e -> {
+            PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+            if (pointerInfo == null) return;
+            Point mouse = pointerInfo.getLocation();
+            Rectangle bounds = submenuDialog.getBounds();
+            if (!bounds.contains(mouse)) {
+                logger.debug("Mouse left submenu area → closing");
+                submenuDialog.dispose();
+                ((Timer) e.getSource()).stop();
+            }
+        });
 
-		submenuWindow.setVisible(true);
+        closeTimer.start();
+
+        submenuDialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                closeTimer.stop();
+            }
+        });
+
+		submenuDialog.setVisible(true);
+        submenuDialog.requestFocus();
 	}
 }
