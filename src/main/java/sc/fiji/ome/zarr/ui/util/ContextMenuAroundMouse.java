@@ -34,13 +34,12 @@ public class ContextMenuAroundMouse {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private final Frame parentFrame;
-
     private final Path droppedInPath;
 
-    private final ImageIcon iconZarr = CreateIcon.getAndResizeIcon("zarr_icon.png");
-    private final ImageIcon iconBDV = CreateIcon.getAndResizeIcon("bdv_icon.png");
-    private final ImageIcon iconScript = CreateIcon.getAndResizeIcon("script_icon.png");
-    private final ImageIcon iconBDVAdd = CreateIcon.getAndResizeIcon("bdv_add_icon.png");
+    private final JButton buttonZarr;
+    private final JButton buttonBDV;
+    private final JButton buttonScript;
+    private final JButton buttonBDVAdd;
 
     private boolean extendedVersion;
 
@@ -48,6 +47,15 @@ public class ContextMenuAroundMouse {
         this.parentFrame = parentFrame;
         this.droppedInPath = path;
         this.extendedVersion = true;
+
+        ImageIcon iconZarr = CreateIcon.getAndResizeIcon("zarr_icon.png");
+        buttonZarr = new JButton(iconZarr);
+        ImageIcon iconBDV = CreateIcon.getAndResizeIcon("bdv_icon.png");
+        buttonBDV = new JButton(iconBDV);
+        ImageIcon iconScript = CreateIcon.getAndResizeIcon("script_icon.png");
+        buttonScript = new JButton(iconScript);
+        ImageIcon iconBDVAdd = CreateIcon.getAndResizeIcon("bdv_add_icon.png");
+        buttonBDVAdd = new JButton(iconBDVAdd);
     }
 
     public void setShowExtendedVersion(boolean show) {
@@ -60,16 +68,49 @@ public class ContextMenuAroundMouse {
         if (mouseLocation == null) return;
 
         final JDialog dialog = createDialog();
-        final JPanel panel = createPanel(dialog);
+        final JPanel panel = initLayout();
+        initBehaviour(dialog);
+
         dialog.getContentPane().add(panel);
         dialog.pack();
         positionDialog(dialog, mouseLocation);
 
-        setupKeyboardClose(dialog);
-        setupMouseLeaveClose(dialog);
-
         dialog.setVisible(true);
         dialog.requestFocus();
+    }
+
+    /** Creates the layout and adds the pre-initialized buttons. */
+    private JPanel initLayout() {
+        JPanel panel;
+        if (extendedVersion) {
+            panel = new JPanel(new GridLayout(2, 2, 5, 5));
+            panel.add(buttonZarr);
+            panel.add(buttonBDV);
+            panel.add(buttonScript);
+            panel.add(buttonBDVAdd);
+        } else {
+            panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+            panel.add(buttonZarr);
+            panel.add(buttonBDV);
+        }
+        return panel;
+    }
+
+
+    /** Adds listeners and global behaviour (keyboard, fade, etc.). */
+    private void initBehaviour(final JDialog dialog) {
+
+        // Add action listeners
+        buttonZarr.addActionListener(e -> openN5ImporterDialog());
+        buttonBDV.addActionListener(e -> {
+            openBDVAtSpecificResolutionLevel();
+            dialog.dispose();
+        });
+        buttonScript.addActionListener(e -> dialog.dispose());
+        buttonBDVAdd.addActionListener(e -> dialog.dispose());
+
+        setupKeyboardClose(dialog);
+        setupMouseLeaveClose(dialog);
     }
 
     private Point getMouseLocation() {
@@ -90,59 +131,31 @@ public class ContextMenuAroundMouse {
         return dialog;
     }
 
-    private JPanel createPanel(JDialog dialog) {
-        JPanel panel;
-        if (extendedVersion) {
-            panel = new JPanel(new GridLayout(2,2,5,5));
-            JButton button1 = new JButton(iconZarr);
-            JButton button2 = new JButton(iconBDV);
-            JButton button3 = new JButton(iconScript);
-            JButton button4 = new JButton(iconBDVAdd);
-            button1.addActionListener(e -> openDialog());
-            button2.addActionListener(e -> openBDV());
-            button2.addActionListener(e -> dialog.dispose());
-            panel.add(button1);
-            panel.add(button2);
-            panel.add(button3);
-            panel.add(button4);
-        } else {
-            panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            JButton button1 = new JButton(iconZarr);
-            JButton button2 = new JButton(iconBDV);
-            button2.addActionListener(e -> dialog.dispose());
-            panel.add(button1); panel.add(button2);
-        }
-        return panel;
-    }
-
-    private String getZarrRootPath (final Path path)
-    {
+    private String getZarrRootPath(final Path path) {
         if (path != null) {
             final Path zarrRootPath = ZarrOnFSutils.findRootFolder(path);
             final String zarrRootPathAsStr = (ZarrOnFSutils.isWindows() ? "/" : "")
-                    + zarrRootPath.toAbsolutePath().toString().replace("\\\\","/");
+                    + zarrRootPath.toAbsolutePath().toString().replace("\\\\", "/");
             logger.info("zarrRootPath: {}", zarrRootPathAsStr);
             return zarrRootPathAsStr;
         }
         return null;
     }
 
-    private void openDialog()
-    {
+    private void openN5ImporterDialog() {
         final String zarrRootPathAsStr = getZarrRootPath(droppedInPath);
         final Path zarrRootPath = ZarrOnFSutils.findRootFolder(droppedInPath);
         new N5Importer().runWithDialog(zarrRootPathAsStr,
                 ZarrOnFSutils.listPathDifferences(droppedInPath, zarrRootPath));
-        logger.info("opened zarr at {}", zarrRootPathAsStr);
+        logger.info("opened zarr opener dialog at {}", zarrRootPathAsStr);
     }
 
-    private void openBDV()
-    {
+    private void openBDVAtSpecificResolutionLevel() {
         final String zarrRootPathAsStr = getZarrRootPath(droppedInPath);
         N5Reader reader = new N5Factory().openReader(zarrRootPathAsStr);
-        String dataset = ZarrOnFSutils.findHighestResByName( reader.deepListDatasets("") );
+        String dataset = ZarrOnFSutils.findHighestResByName(reader.deepListDatasets(""));
         BdvFunctions.show((Img<?>) N5Utils.open(reader, dataset), dataset);
-        logger.info("opened zarr at {}", zarrRootPathAsStr);
+        logger.info("opened big data viewer with zarr at {}", zarrRootPathAsStr);
     }
 
     private void positionDialog(JDialog dialog, Point mouseLocation) {
@@ -152,7 +165,7 @@ public class ContextMenuAroundMouse {
         dialog.setLocation(x, y);
     }
 
-    private void setupKeyboardClose(JDialog dialog) {
+    private void setupKeyboardClose(final JDialog dialog) {
         dialog.getRootPane().registerKeyboardAction(
                 e -> dialog.dispose(),
                 KeyStroke.getKeyStroke("ESCAPE"),
@@ -160,7 +173,7 @@ public class ContextMenuAroundMouse {
         );
     }
 
-    private void setupMouseLeaveClose(JDialog dialog) {
+    private void setupMouseLeaveClose(final JDialog dialog) {
         final Timer checkMouse = new Timer(200, e -> {
             PointerInfo pi = MouseInfo.getPointerInfo();
             if (pi == null) return;
@@ -181,19 +194,23 @@ public class ContextMenuAroundMouse {
     }
 
     private void startFadeOut(final JDialog dialog) {
-        final float[] opacity = {1.0f};
+        final float[] opacity = new float[]{1.0f};
         final int steps = 10;
         final int duration = 300;
         final int interval = duration / steps;
 
-        Timer fade = new Timer(interval, e -> {
+        final Timer fade = new Timer(interval, e -> {
             opacity[0] -= 1.0f / steps;
             if (opacity[0] <= 0f) {
                 ((Timer) e.getSource()).stop();
                 dialog.dispose();
             } else {
-                try { dialog.setOpacity(opacity[0]); }
-                catch (UnsupportedOperationException ex) { dialog.dispose(); ((Timer) e.getSource()).stop(); }
+                try {
+                    dialog.setOpacity(opacity[0]);
+                } catch (UnsupportedOperationException ex) {
+                    dialog.dispose();
+                    ((Timer) e.getSource()).stop();
+                }
             }
         });
         fade.start();
