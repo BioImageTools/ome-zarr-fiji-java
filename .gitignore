@@ -43,7 +43,7 @@ build/
 !**/src/test/**/build/
 
 # IntelliJ #
-/.idea/
+.idea
 *.iws
 *.iml
 *.Iml
