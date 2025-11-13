@@ -26,7 +26,7 @@ public class ActionChooserDemo {
 		rootPane.getActionMap().put("showSubmenu", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				menu.showSubmenu();
+				menu.show();
 			}
 		});
 

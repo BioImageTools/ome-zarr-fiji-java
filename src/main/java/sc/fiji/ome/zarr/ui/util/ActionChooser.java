@@ -63,7 +63,7 @@ public class ActionChooser {
         logger.debug("Show extended version: {}", show);
     }
 
-    public void showSubmenu() {
+    public void show() {
         final Point mouseLocation = getMouseLocation();
         if (mouseLocation == null) return;
 

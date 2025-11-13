@@ -101,8 +101,8 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 		if (frame instanceof LegacyApplicationFrame) {
             logger.debug("Going for DND submenu2");
 			LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
-			ActionChooser a = new ActionChooser(lFrame.getComponent(), droppedInPath);
-			a.showSubmenu();
+			ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath);
+			actionChooser.show();
 		}
 		//not going to display anything now, we instead start a thread that delays itself a bit
 		//and only opens after a waiting period; the waiting period is used to detect whether
