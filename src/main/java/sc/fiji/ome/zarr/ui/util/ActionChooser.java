@@ -29,7 +29,7 @@ import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 
-public class ContextMenuAroundMouse {
+public class ActionChooser {
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -43,7 +43,7 @@ public class ContextMenuAroundMouse {
 
     private boolean extendedVersion;
 
-    public ContextMenuAroundMouse(final Frame parentFrame, final Path path) {
+    public ActionChooser(final Frame parentFrame, final Path path) {
         this.parentFrame = parentFrame;
         this.droppedInPath = path;
         this.extendedVersion = true;

@@ -4,9 +4,9 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-public class ContextMenuAroundMouseDemo {
+public class ActionChooserDemo {
 
-	private static void setupFrame(JFrame frame, ContextMenuAroundMouse menu) {
+	private static void setupFrame(JFrame frame, ActionChooser menu) {
 		frame.setTitle("Keyboard Submenu Example");
 		frame.setSize(600, 400);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -46,7 +46,7 @@ public class ContextMenuAroundMouseDemo {
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			final JFrame mainFrame = new JFrame();
-			final ContextMenuAroundMouse menu = new ContextMenuAroundMouse(mainFrame, null);
+			final ActionChooser menu = new ActionChooser(mainFrame, null);
 			setupFrame(mainFrame, menu);
 		});
 	}

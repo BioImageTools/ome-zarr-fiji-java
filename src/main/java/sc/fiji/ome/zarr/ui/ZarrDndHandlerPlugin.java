@@ -47,7 +47,7 @@ import org.scijava.ui.ApplicationFrame;
 import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sc.fiji.ome.zarr.ui.util.ContextMenuAroundMouse;
+import sc.fiji.ome.zarr.ui.util.ActionChooser;
 import sc.fiji.ome.zarr.ui.util.ZarrOnFSutils;
 import net.imagej.legacy.ui.LegacyApplicationFrame;
 
@@ -101,7 +101,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 		if (frame instanceof LegacyApplicationFrame) {
             logger.debug("Going for DND submenu2");
 			LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
-			ContextMenuAroundMouse a = new ContextMenuAroundMouse(lFrame.getComponent(), droppedInPath);
+			ActionChooser a = new ActionChooser(lFrame.getComponent(), droppedInPath);
 			a.showSubmenu();
 		}
 		//not going to display anything now, we instead start a thread that delays itself a bit
