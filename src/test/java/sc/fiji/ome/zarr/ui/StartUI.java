@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.fiji.ui;
+package sc.fiji.ome.zarr.ui;
 
 import net.imagej.ImageJ;
 
