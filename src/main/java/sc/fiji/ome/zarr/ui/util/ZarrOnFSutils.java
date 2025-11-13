@@ -34,6 +34,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ZarrOnFSutils {
+
+    private ZarrOnFSutils() {
+        // prevent instantiation
+    }
+
 	/**
 	 * Checks if under the given folder there exists any of
 	 * the files: .zgroup, .zarray or zarr.json.
@@ -104,4 +109,9 @@ public class ZarrOnFSutils {
 		}
 		return diffPathElems;
 	}
+
+    public static boolean isWindows() {
+        final String myOS = System.getProperty("os.name").toLowerCase();
+        return !( myOS.contains( "mac" ) || myOS.contains( "nux" ) || myOS.contains( "nix" ) );
+    }
 }
