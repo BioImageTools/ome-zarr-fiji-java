@@ -52,7 +52,7 @@ public class ContextMenuAroundMouse {
 
     public void setShowExtendedVersion(boolean show) {
         this.extendedVersion = show;
-        logger.debug("Large submenu: {}", show);
+        logger.debug("Show extended version: {}", show);
     }
 
     public void showSubmenu() {
