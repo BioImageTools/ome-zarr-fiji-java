@@ -249,11 +249,6 @@ public class MultiscaleImage<
 		return volatileType;
 	}
 
-	public SharedQueue getSharedQueue()
-	{
-		return queue;
-	}
-
 	public int numDimensions()
 	{
 		return dimensions.length;
