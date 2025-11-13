@@ -33,9 +33,9 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ZarrOnFSutils {
+public class ZarrOnFileSystemUtils {
 
-    private ZarrOnFSutils() {
+    private ZarrOnFileSystemUtils() {
         // prevent instantiation
     }
 
@@ -53,7 +53,7 @@ public class ZarrOnFSutils {
 	}
 
 	/**
-	 * Traverses up the folders tree as long as {@link ZarrOnFSutils#isZarrFolder(Path)}
+	 * Traverses up the folders tree as long as {@link ZarrOnFileSystemUtils#isZarrFolder(Path)}
 	 * says we are inside a Zarr dataset. The last such folder is returned, which is
 	 * supposed to be the top-level/root folder of the pointed at dataset.
 	 *

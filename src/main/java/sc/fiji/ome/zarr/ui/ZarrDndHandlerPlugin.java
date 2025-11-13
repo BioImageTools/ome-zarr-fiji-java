@@ -48,7 +48,7 @@ import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.ui.util.ActionChooser;
-import sc.fiji.ome.zarr.ui.util.ZarrOnFSutils;
+import sc.fiji.ome.zarr.ui.util.ZarrOnFileSystemUtils;
 import net.imagej.legacy.ui.LegacyApplicationFrame;
 
 import javax.swing.*;
@@ -80,7 +80,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 		log.message("was questioned: "+sourcePath);
 
 		if (!(source instanceof FileLocation)) return false;
-		if (!ZarrOnFSutils.isZarrFolder( Paths.get(source.getURI()) )) return false;
+		if (!ZarrOnFileSystemUtils.isZarrFolder( Paths.get(source.getURI()) )) return false;
 		return true;
 	}
 
@@ -91,7 +91,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 
 		//debugging the DnD a bit.... but both tests should never fail
 		if (fsource == null) return null;
-		if (!ZarrOnFSutils.isZarrFolder(fsource.getFile().toPath())) return null;
+		if (!ZarrOnFileSystemUtils.isZarrFolder(fsource.getFile().toPath())) return null;
 
 		this.droppedInPath = fsource.getFile().toPath();
 		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
@@ -125,18 +125,18 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 	private void openRecentlyDroppedPath() {
 		//do anything only when the argument is valid
 		if (droppedInPath != null) {
-			final Path zarrRootPath = ZarrOnFSutils.findRootFolder(droppedInPath);
-			final String zarrRootPathAsStr = (ZarrOnFSutils.isWindows() ? "/" : "")
+			final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder(droppedInPath);
+			final String zarrRootPathAsStr = (ZarrOnFileSystemUtils.isWindows() ? "/" : "")
 					+ zarrRootPath.toAbsolutePath().toString().replaceAll("\\\\","/");
 			log.message("is opening now: " + zarrRootPathAsStr);
 
 			if (wasAltKeyDown) {
 				N5Reader reader = new N5Factory().openReader(zarrRootPathAsStr);
-				String dataset = ZarrOnFSutils.findHighestResByName( reader.deepListDatasets("") );
+				String dataset = ZarrOnFileSystemUtils.findHighestResByName( reader.deepListDatasets("") );
 				BdvFunctions.show((Img<?>)N5Utils.open(reader, dataset), dataset);
 			} else {
 				new N5Importer().runWithDialog(zarrRootPathAsStr,
-						ZarrOnFSutils.listPathDifferences(droppedInPath, zarrRootPath));
+						ZarrOnFileSystemUtils.listPathDifferences(droppedInPath, zarrRootPath));
 			}
 			log.message("opened.");
 		}
