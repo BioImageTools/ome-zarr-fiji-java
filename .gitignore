@@ -64,3 +64,4 @@ build/
 # pixi environments
 .pixi
 pixi.lock
+/build_environments
