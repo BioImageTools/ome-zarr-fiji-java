@@ -6,6 +6,7 @@ import java.awt.event.*;
 
 public class ContextMenuAroundMouse extends JFrame {
     private JWindow submenuWindow;
+    private boolean shouldShowCustomItems = false; // Toggle this to test both layouts
 
     public ContextMenuAroundMouse() {
         setTitle("Keyboard Submenu Example");
@@ -39,43 +40,60 @@ public class ContextMenuAroundMouse extends JFrame {
     }
 
     private void showSubmenu() {
-        // Close existing submenu if open
+        // Close existing submenu if there is one,
+        // as we want to rebuild because user settings may have changed
         if (submenuWindow != null && submenuWindow.isVisible()) {
             submenuWindow.dispose();
         }
 
-        // Get current mouse position
-        Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+        // Get current mouse position ASAP
+        final Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
 
         // Create undecorated window (no title bar, borders, etc.)
         submenuWindow = new JWindow(this);
 
-        // Create panel with two buttons
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-        //panel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        // Create panel with the buttons, two layouts supported
+        JPanel panel;
 
-        JButton button1 = new JButton("Option 1");
-        JButton button2 = new JButton("Option 2");
+        if (shouldShowCustomItems) {
+            // 2x2 grid layout
+            panel = new JPanel(new GridLayout(2, 2, 5, 5));
+/*
+            panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.GRAY, 1),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+            ));
+*/
 
-        // Add action listeners to buttons
-        button1.addActionListener(e -> {
-            System.out.println("Option 1 clicked");
-            submenuWindow.dispose();
-        });
+            JButton button1 = new JButton("Option 1");
+            JButton button2 = new JButton("Option 2");
+            JButton button3 = new JButton("Option 3");
+            JButton button4 = new JButton("Option 4");
 
-        button2.addActionListener(e -> {
-            System.out.println("Option 2 clicked");
-            submenuWindow.dispose();
-        });
+            panel.add(button1);
+            panel.add(button2);
+            panel.add(button3);
+            panel.add(button4);
+        } else {
+            // 2x1 horizontal layout
+            panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+            //panel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
 
-        panel.add(button1);
-        panel.add(button2);
+            JButton button1 = new JButton("Option 1");
+            JButton button2 = new JButton("Option 2");
+
+            panel.add(button1);
+            panel.add(button2);
+        }
 
         submenuWindow.add(panel);
-        submenuWindow.pack(); // Size to fit contents
+        submenuWindow.pack();
 
         // Position at mouse cursor
-        submenuWindow.setLocation(mouseLocation);
+        final Dimension windowSize = submenuWindow.getSize();
+        int centeredX = mouseLocation.x - (windowSize.width / 2);
+        int centeredY = mouseLocation.y - (windowSize.height / 2);
+        submenuWindow.setLocation(centeredX, centeredY);
 
         // Make it close when focus is lost
         submenuWindow.addWindowFocusListener(new WindowAdapter() {
