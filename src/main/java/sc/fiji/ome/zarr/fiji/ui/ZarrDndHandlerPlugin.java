@@ -43,7 +43,12 @@ import org.scijava.io.IOPlugin;
 import org.scijava.io.AbstractIOPlugin;
 import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
+import org.scijava.ui.ApplicationFrame;
+import org.scijava.ui.UIService;
+import sc.fiji.ome.zarr.fiji.ui.util.ContextMenuAroundMouse;
 import sc.fiji.ome.zarr.fiji.ui.util.ZarrOnFSutils;
+import org.scijava.ui.swing.SwingApplicationFrame;
+import net.imagej.legacy.ui.LegacyApplicationFrame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -87,10 +92,25 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 		this.droppedInPath = fsource.getFile().toPath();
 		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
 
+		ApplicationFrame frame = this.context().getService(UIService.class).getDefaultUI().getApplicationFrame();
+		System.out.println("Obtained this frame: "+frame);
+		if (frame instanceof SwingApplicationFrame) {
+			System.out.println("Going for DND submenu");
+			SwingUtilities.invokeLater(() -> {
+				System.out.println("Starting DND submenu");
+				ContextMenuAroundMouse a = new ContextMenuAroundMouse((SwingApplicationFrame) frame);
+				a.showSubmenu();
+			});
+		} else if (frame instanceof LegacyApplicationFrame) {
+			System.out.println("Going for DND submenu 2");
+			LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
+			ContextMenuAroundMouse a = new ContextMenuAroundMouse(lFrame.getComponent());
+			a.showSubmenu();
+		}
 		//not going to display anything now, we instead start a thread that delays itself a bit
 		//and only opens after a waiting period; the waiting period is used to detect whether
 		//the ALT key has been released (that is, if it had been pressed during the drag-and-drop operation)
-		new Thread(this).start();
+		//new Thread(this).start();
 		return FAKE_INPUT;
 	}
 
