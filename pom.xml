@@ -11,7 +11,7 @@
 	</parent>
 
 	<groupId>sc.fiji</groupId>
-	<artifactId>ome-zarr-fiji-java</artifactId>
+	<artifactId>ome-zarr-fiji</artifactId>
 	<version>0.2.1-SNAPSHOT</version>
 
 	<name>OME-Zarr additional interfaces for Fiji</name>
