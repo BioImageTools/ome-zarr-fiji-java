@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-public class ExamineContextMenuAroundMouse {
+public class ContextMenuAroundMouseDemo {
 
 	private static void setupFrame(JFrame frame, ContextMenuAroundMouse menu) {
 		frame.setTitle("Keyboard Submenu Example");
@@ -37,7 +37,7 @@ public class ExamineContextMenuAroundMouse {
 		rootPane.getActionMap().put("changeSubmenu", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				menu.setShowCustomItems(false);
+				menu.setShowExtendedVersion(false);
 			}
 		} );
 	}
