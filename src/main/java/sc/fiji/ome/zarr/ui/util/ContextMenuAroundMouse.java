@@ -16,8 +16,9 @@ public class ContextMenuAroundMouse {
 	private final Frame parentFrame;
 	private JWindow submenuWindow;
 
-	private final ImageIcon iconBDV = CreateIcon.fetchAndResizeIcon("https://avatars.githubusercontent.com/u/9824453?s=200&v=4");
-	private final ImageIcon iconImageJ = CreateIcon.fetchAndResizeIcon("https://zarr-specs.readthedocs.io/en/latest/_static/logo.png");
+	private final ImageIcon iconBDV = CreateIcon.getAndResizeIcon("bdv_icon.png");
+	private final ImageIcon iconZarr = CreateIcon.getAndResizeIcon("zarr_icon.png");
+    private final ImageIcon iconBDVAdd = CreateIcon.getAndResizeIcon("bdv_add_icon.png");
 
 	private boolean shouldShowCustomItems = false;
 
@@ -28,6 +29,7 @@ public class ContextMenuAroundMouse {
 
 	public ContextMenuAroundMouse(Frame parentFrame) {
 		this.parentFrame = parentFrame;
+        this.toggleCustomItems();
 	}
 
 	public void showSubmenu() {
@@ -50,10 +52,10 @@ public class ContextMenuAroundMouse {
 			// 2x2 grid layout
 			panel = new JPanel(new GridLayout(2, 2, 5, 5));
 
-			JButton button1 = new JButton(iconImageJ);
+			JButton button1 = new JButton(iconZarr);
 			JButton button2 = new JButton(iconBDV);
 			JButton button3 = new JButton("Option 3");
-			JButton button4 = new JButton("Option 4");
+			JButton button4 = new JButton(iconBDVAdd);
 
 			button2.addActionListener(e -> {
                 logger.debug("closing submenu");
@@ -68,7 +70,7 @@ public class ContextMenuAroundMouse {
 			// 2x1 horizontal layout
 			panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
-			JButton button1 = new JButton(iconImageJ);
+			JButton button1 = new JButton(iconZarr);
 			JButton button2 = new JButton(iconBDV);
 
 			button2.addActionListener(e -> {
