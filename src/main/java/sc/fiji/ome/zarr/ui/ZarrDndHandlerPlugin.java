@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.fiji.ui;
+package sc.fiji.ome.zarr.ui;
 
 import bdv.util.BdvFunctions;
 import net.imglib2.img.Img;
@@ -43,7 +43,7 @@ import org.scijava.io.IOPlugin;
 import org.scijava.io.AbstractIOPlugin;
 import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
-import sc.fiji.ome.zarr.fiji.ui.util.ZarrOnFSutils;
+import sc.fiji.ome.zarr.ui.util.ZarrOnFSutils;
 
 import javax.swing.*;
 import java.awt.*;

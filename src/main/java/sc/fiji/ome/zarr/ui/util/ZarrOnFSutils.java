@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.fiji.ui.util;
+package sc.fiji.ome.zarr.ui.util;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

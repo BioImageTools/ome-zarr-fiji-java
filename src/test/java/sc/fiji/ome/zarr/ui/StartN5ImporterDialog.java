@@ -26,10 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.fiji.ui;
+package sc.fiji.ome.zarr.ui;
 
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
-import sc.fiji.ome.zarr.fiji.ui.util.ZarrOnFSutils;
+import sc.fiji.ome.zarr.ui.util.ZarrOnFSutils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
