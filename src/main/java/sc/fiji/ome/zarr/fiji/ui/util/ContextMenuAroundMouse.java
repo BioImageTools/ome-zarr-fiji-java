@@ -9,8 +9,8 @@ public class ContextMenuAroundMouse {
 	private final JFrame parentFrame;
 	private JWindow submenuWindow;
 
-	private final ImageIcon iconBDV = new CreateIcon("https://avatars.githubusercontent.com/u/9824453?s=200&v=4").getIcon();
-	private final ImageIcon iconImageJ = new CreateIcon("https://imagej.net/media/icons/imagej2.png").getIcon();
+	private final ImageIcon iconBDV = CreateIcon.fetchAndResizeIcon("https://avatars.githubusercontent.com/u/9824453?s=200&v=4");
+	private final ImageIcon iconImageJ = CreateIcon.fetchAndResizeIcon("https://imagej.net/media/icons/imagej2.png");
 
 	private boolean shouldShowCustomItems = false;
 
