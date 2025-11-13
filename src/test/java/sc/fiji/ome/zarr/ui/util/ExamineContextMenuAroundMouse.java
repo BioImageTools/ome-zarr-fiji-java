@@ -37,7 +37,7 @@ public class ExamineContextMenuAroundMouse {
 		rootPane.getActionMap().put("changeSubmenu", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				menu.toggleCustomItems();
+				menu.setShowCustomItems(false);
 			}
 		} );
 	}
