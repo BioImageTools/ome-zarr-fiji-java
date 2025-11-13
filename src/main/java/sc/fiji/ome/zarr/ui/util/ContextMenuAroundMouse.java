@@ -1,5 +1,11 @@
 package sc.fiji.ome.zarr.ui.util;
 
+import bdv.util.BdvFunctions;
+import net.imglib2.img.Img;
+import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.ij.N5Importer;
+import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
+import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,10 +83,15 @@ public class ContextMenuAroundMouse {
             panel = new JPanel(new GridLayout(2,2,5,5));
             JButton button1 = new JButton(iconZarr);
             JButton button2 = new JButton(iconBDV);
-            JButton button3 = new JButton("Option 3");
+            JButton button3 = new JButton(iconScript);
             JButton button4 = new JButton(iconBDVAdd);
+            button1.addActionListener(e -> openDialog());
+            button2.addActionListener(e -> openBDV());
             button2.addActionListener(e -> dialog.dispose());
-            panel.add(button1); panel.add(button2); panel.add(button3); panel.add(button4);
+            panel.add(button1);
+            panel.add(button2);
+            panel.add(button3);
+            panel.add(button4);
         } else {
             panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
             JButton button1 = new JButton(iconZarr);
@@ -89,6 +100,36 @@ public class ContextMenuAroundMouse {
             panel.add(button1); panel.add(button2);
         }
         return panel;
+    }
+
+    private String getZarrRootPath (final Path path)
+    {
+        if (path != null) {
+            final Path zarrRootPath = ZarrOnFSutils.findRootFolder(path);
+            final String zarrRootPathAsStr = (ZarrOnFSutils.isWindows() ? "/" : "")
+                    + zarrRootPath.toAbsolutePath().toString().replaceAll("\\\\","/");
+            logger.info("zarrRootPath: {}", zarrRootPathAsStr);
+            return zarrRootPathAsStr;
+        }
+        return null;
+    }
+
+    private void openDialog()
+    {
+        final String zarrRootPathAsStr = getZarrRootPath(droppedInPath);
+        final Path zarrRootPath = ZarrOnFSutils.findRootFolder(droppedInPath);
+        new N5Importer().runWithDialog(zarrRootPathAsStr,
+                ZarrOnFSutils.listPathDifferences(droppedInPath, zarrRootPath));
+        logger.info("opened zarr at {}", zarrRootPathAsStr);
+    }
+
+    private void openBDV()
+    {
+        final String zarrRootPathAsStr = getZarrRootPath(droppedInPath);
+        N5Reader reader = new N5Factory().openReader(zarrRootPathAsStr);
+        String dataset = ZarrOnFSutils.findHighestResByName( reader.deepListDatasets("") );
+        BdvFunctions.show((Img<?>) N5Utils.open(reader, dataset), dataset);
+        logger.info("opened zarr at {}", zarrRootPathAsStr);
     }
 
     private void positionDialog(JDialog dialog, Point mouseLocation) {
