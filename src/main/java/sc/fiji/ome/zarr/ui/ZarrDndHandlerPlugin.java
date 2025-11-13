@@ -49,7 +49,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.ui.util.ContextMenuAroundMouse;
 import sc.fiji.ome.zarr.ui.util.ZarrOnFSutils;
-import org.scijava.ui.swing.SwingApplicationFrame;
 import net.imagej.legacy.ui.LegacyApplicationFrame;
 
 import javax.swing.*;
@@ -99,14 +98,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 
 		ApplicationFrame frame = this.context().getService(UIService.class).getDefaultUI().getApplicationFrame();
         logger.info("Obtained this frame: {}", frame);
-		if (frame instanceof SwingApplicationFrame) {
-            logger.debug("Going for DND submenu");
-			SwingUtilities.invokeLater(() -> {
-                logger.info("DND submenu started");
-				ContextMenuAroundMouse a = new ContextMenuAroundMouse((SwingApplicationFrame) frame);
-				a.showSubmenu();
-			});
-		} else if (frame instanceof LegacyApplicationFrame) {
+		if (frame instanceof LegacyApplicationFrame) {
             logger.debug("Going for DND submenu2");
 			LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
 			ContextMenuAroundMouse a = new ContextMenuAroundMouse(lFrame.getComponent());
