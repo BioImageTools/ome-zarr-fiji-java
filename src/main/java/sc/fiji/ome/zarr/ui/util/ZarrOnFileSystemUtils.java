@@ -28,12 +28,18 @@
  */
 package sc.fiji.ome.zarr.ui.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 
 public class ZarrOnFileSystemUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private ZarrOnFileSystemUtils() {
         // prevent instantiation
@@ -113,5 +119,17 @@ public class ZarrOnFileSystemUtils {
     public static boolean isWindows() {
         final String myOS = System.getProperty("os.name").toLowerCase();
         return !( myOS.contains( "mac" ) || myOS.contains( "nux" ) || myOS.contains( "nix" ) );
+    }
+
+
+    public static String getZarrRootPath(final Path path) {
+        if (path != null) {
+            final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder(path);
+            final String zarrRootPathAsStr = (ZarrOnFileSystemUtils.isWindows() ? "/" : "")
+                    + zarrRootPath.toAbsolutePath().toString().replace("\\\\", "/");
+            logger.info("zarrRootPath: {}", zarrRootPathAsStr);
+            return zarrRootPathAsStr;
+        }
+        return null;
     }
 }

@@ -131,19 +131,8 @@ public class ActionChooser {
         return dialog;
     }
 
-    private String getZarrRootPath(final Path path) {
-        if (path != null) {
-            final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder(path);
-            final String zarrRootPathAsStr = (ZarrOnFileSystemUtils.isWindows() ? "/" : "")
-                    + zarrRootPath.toAbsolutePath().toString().replace("\\\\", "/");
-            logger.info("zarrRootPath: {}", zarrRootPathAsStr);
-            return zarrRootPathAsStr;
-        }
-        return null;
-    }
-
     private void openN5ImporterDialog() {
-        final String zarrRootPathAsStr = getZarrRootPath(droppedInPath);
+        final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath(droppedInPath);
         final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder(droppedInPath);
         new N5Importer().runWithDialog(zarrRootPathAsStr,
                 ZarrOnFileSystemUtils.listPathDifferences(droppedInPath, zarrRootPath));
@@ -151,7 +140,7 @@ public class ActionChooser {
     }
 
     private void openBDVAtSpecificResolutionLevel() {
-        final String zarrRootPathAsStr = getZarrRootPath(droppedInPath);
+        final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath(droppedInPath);
         N5Reader reader = new N5Factory().openReader(zarrRootPathAsStr);
         String dataset = ZarrOnFileSystemUtils.findHighestResByName(reader.deepListDatasets(""));
         BdvFunctions.show((Img<?>) N5Utils.open(reader, dataset), dataset);
