@@ -109,7 +109,7 @@ public class ActionChooser {
         buttonScript.addActionListener(e -> dialog.dispose());
         buttonBDVAdd.addActionListener(e -> dialog.dispose());
 
-        setupKeyboardClose(dialog);
+        setupCloseOnKeyboard(dialog);
         setupCloseOnMouseLeave(dialog);
     }
 
@@ -154,7 +154,7 @@ public class ActionChooser {
         dialog.setLocation(x, y);
     }
 
-    private void setupKeyboardClose(final JDialog dialog) {
+    private void setupCloseOnKeyboard(final JDialog dialog) {
         dialog.getRootPane().registerKeyboardAction(
                 e -> dialog.dispose(),
                 KeyStroke.getKeyStroke("ESCAPE"),
