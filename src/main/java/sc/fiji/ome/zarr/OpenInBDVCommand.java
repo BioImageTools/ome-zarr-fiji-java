@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package org.embl.mobie.io.ome.zarr.hackathon;
+package sc.fiji.ome.zarr;
 
 import net.imagej.Dataset;
 import org.scijava.command.Command;

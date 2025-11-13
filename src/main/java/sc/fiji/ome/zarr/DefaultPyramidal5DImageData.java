@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package org.embl.mobie.io.ome.zarr.hackathon;
+package sc.fiji.ome.zarr;
 
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.SpimData;
@@ -42,7 +42,6 @@ import net.imglib2.EuclideanSpace;
 import net.imglib2.Volatile;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import org.embl.mobie.io.ome.zarr.util.OMEZarrAxes;
 import org.jetbrains.annotations.NotNull;
 import org.scijava.Context;
 
@@ -82,7 +81,8 @@ public class DefaultPyramidal5DImageData< T extends NativeType< T > & RealType< 
 
 	private SpimData spimData;
 
-	private OMEZarrAxes omeZarrAxes;
+	//TODO:
+	//private OMEZarrAxes omeZarrAxes;
 
 	private int numDimensions;
 

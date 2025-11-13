@@ -1,4 +1,4 @@
-package org.embl.mobie.io.ome.zarr.hackathon;
+package sc.fiji.ome.zarr;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;

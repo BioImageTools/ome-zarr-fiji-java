@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package org.embl.mobie.io.ome.zarr.hackathon;
+package sc.fiji.ome.zarr;
 
 import bdv.img.cache.VolatileCachedCellImg;
 import bdv.util.volatiles.SharedQueue;
@@ -34,7 +34,6 @@ import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.util.volatiles.VolatileViews;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
-import net.imagej.ImageJ;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -58,10 +57,11 @@ import org.janelia.saalfeldlab.n5.zarr.N5ZarrReader;
 
 import javax.annotation.Nullable;
 
-import static org.embl.mobie.io.ome.zarr.util.OmeZarrMultiscales.MULTI_SCALE_KEY;
-
-public class MultiscaleImage< T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
+public class MultiscaleImage<
+		  T extends NativeType< T > & RealType< T >,
+		  V extends Volatile< T > & NativeType< V > & RealType< V > >
 {
+	private static final String MULTI_SCALE_KEY = "multiscales";
 	private final String multiscalePath;
 
 	private final SharedQueue queue;
@@ -96,6 +96,9 @@ public class MultiscaleImage< T extends NativeType< T > & RealType< T >, V exten
 	private void init()
 	{
 		if ( imgs != null ) return;
+
+		//TODO: re-use the code from N5Importer and fill local attributes from that
+		/*
 
 		try
 		{
@@ -164,6 +167,7 @@ public class MultiscaleImage< T extends NativeType< T > & RealType< T >, V exten
 			e.printStackTrace();
 			throw new RuntimeException( e );
 		}
+		*/
 	}
 
 	private void initTypes( DataType dataType )
@@ -257,22 +261,5 @@ public class MultiscaleImage< T extends NativeType< T > & RealType< T >, V exten
 	public int numDimensions()
 	{
 		return dimensions.length;
-	}
-
-	public static void main( String[] args )
-	{
-		final String multiscalePath = "/Users/tischer/Desktop/testNew.zarr";
-
-		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath, null );
-		multiscaleImage.dimensions();
-
-		// Show as imagePlus
-		final ImageJ imageJ = new ImageJ();
-		imageJ.ui().showUI();
-		final DefaultPyramidal5DImageData< ?, ? > dataset = new DefaultPyramidal5DImageData<>( imageJ.context(), "image", multiscaleImage );
-		imageJ.ui().show( dataset.asPyramidalDataset() );
-
-		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true );
 	}
 }
