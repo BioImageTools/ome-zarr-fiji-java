@@ -53,40 +53,63 @@ import java.util.List;
  * An OME-Zarr backed pyramidal 5D image
  * that can be visualised in ImageJ in various ways.
  *
+ * 5D refers to: x,y,z,t,running_dim (aka channels)
+ * The {@link EuclideanSpace} brings in only the `numDimensions()`.
+ *
  * @param <T> Type of the pixels
  * @param <V> Volatile type of the pixels
  */
-public class DefaultPyramidal5DImageData< T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > > implements EuclideanSpace, Pyramidal5DImageData< T >
+public class DefaultPyramidal5DImageData<
+		  T extends NativeType< T > & RealType< T >,
+		  V extends Volatile< T > & NativeType< V > & RealType< V > >
+		  implements EuclideanSpace, Pyramidal5DImageData< T >
 {
-	/**
-	 * The scijava context. This is needed (only) for creating {@link #ijDataset}.
-	 */
+	/** The scijava context. This is needed (only) for creating {@link #ijDataset}. */
 	private final Context context;
 
+	/**
+	 * Name of the dataset, likely the URI (or "basename" of it) when
+	 * opening an existing image; or user-provided when creating a new one
+	 * (note that one can create only in-memory new image and thus URI need
+	 * not be available at the construction time).
+	 */
 	private final String name;
 
+	/**
+	 * Basically a list of individual images<T,V>, each of which
+	 * showing the same content but at different spatial resolution.
+	 * This is where the 'pyramids' are held.
+	 *
+	 * Note that none of the individual images knows its pixel resolution,
+	 * or any other metadata.
+	 */
 	private final MultiscaleImage< T, V > multiscaleImage;
 
-	private int numChannels = 1;
-
-	private int numTimePoints = 1;
-
+	/**
+	 * Only a shortcut as this information is otherwise also available
+	 * in the {@link DefaultPyramidal5DImageData#multiscaleImage}.
+	 */
 	private int numResolutions;
 
-	private ImgPlus< T > imgPlus;
 
-	private Dataset ijDataset;
+	/** The fourth dimension size... */
+	private int numTimePoints = 1;
 
-	private List< SourceAndConverter< T > > sources;
+	/** The fifth dimension size... */
+	private int numChannels = 1;
 
-	private SpimData spimData;
-
-	//TODO:
+	/** TODO: Should be 4 or 5, no??? */
+	private int numDimensions;
+	private long[] dimensions;
+	//TODO: -- knows resolution along the dimensions
 	//private OMEZarrAxes omeZarrAxes;
 
-	private int numDimensions;
+	//these act as caches not to create them again and again
+	private ImgPlus< T > imgPlus;
+	private Dataset ijDataset;
+	private List< SourceAndConverter< T > > sources;
+	private SpimData spimData;
 
-	private long[] dimensions;
 
 	/**
 	 * Build a dataset from a single {@code PyramidalOMEZarrArray},
