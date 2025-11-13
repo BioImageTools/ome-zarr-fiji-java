@@ -120,7 +120,7 @@ public class ContextMenuAroundMouse {
         if (path != null) {
             final Path zarrRootPath = ZarrOnFSutils.findRootFolder(path);
             final String zarrRootPathAsStr = (ZarrOnFSutils.isWindows() ? "/" : "")
-                    + zarrRootPath.toAbsolutePath().toString().replaceAll("\\\\","/");
+                    + zarrRootPath.toAbsolutePath().toString().replace("\\\\","/");
             logger.info("zarrRootPath: {}", zarrRootPathAsStr);
             return zarrRootPathAsStr;
         }
