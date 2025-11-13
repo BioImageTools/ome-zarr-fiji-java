@@ -137,7 +137,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 
 			if (wasAltKeyDown) {
 				N5Reader reader = new N5Factory().openReader(zarrRootPathAsStr);
-				String dataset = ZarrOnFileSystemUtils.findHighestResByName( reader.deepListDatasets("") );
+				String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets("") );
 				BdvFunctions.show((Img<?>)N5Utils.open(reader, dataset), dataset);
 			} else {
 				new N5Importer().runWithDialog(zarrRootPathAsStr,

@@ -89,7 +89,7 @@ public class ZarrOnFileSystemUtils {
 	 * @param datasets Non-null (not test thought!) array with "s?" endings.
 	 * @return First array item with "s0" or just the first array item.
 	 */
-	public static String findHighestResByName(final String[] datasets) {
+	public static String findHighestResolutionByName(final String[] datasets) {
 		for (String s : datasets) {
 			if (s.endsWith("s0")) return s;
 		}
