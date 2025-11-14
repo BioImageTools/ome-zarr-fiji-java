@@ -1,7 +1,9 @@
 package sc.fiji.ome.zarr.ui.util;
 
 import bdv.util.BdvFunctions;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
@@ -137,7 +139,10 @@ public class ActionChooser {
         zarrToBDVDialog.setToolTipText("Open Zarr/N5 BDV Viewer dialog");
 
         // FIJI button
-        zarrIJHighestResolution.addActionListener(e -> dialog.dispose());
+        zarrIJHighestResolution.addActionListener(e -> {
+            openIJAtSpecificResolutionLevel();
+            dialog.dispose();
+        });
         zarrIJHighestResolution.setToolTipText("Open Zarr/N5 in ImageJ at highest resolution level");
 
         // BDV button
@@ -211,6 +216,14 @@ public class ActionChooser {
         // this.bdvHandleService.openNewBdv(N5Utils.open(reader, dataset), dataset);
         BdvFunctions.show((Img<?>) N5Utils.open(reader, dataset), dataset);
         logger.info("open big data viewer with zarr at {}", zarrRootPathAsStr);
+    }
+
+    private void openIJAtSpecificResolutionLevel() {
+        final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath(droppedInPath).toString();
+        N5Reader reader = new N5Factory().openReader(zarrRootPathAsStr);
+        String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName(reader.deepListDatasets(""));
+        ImageJFunctions.show((RandomAccessibleInterval) N5Utils.open(reader, dataset), dataset);
+        logger.info("open imageJ with zarr at {}", zarrRootPathAsStr);
     }
 
     private void runScript()
