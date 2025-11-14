@@ -136,7 +136,7 @@ public class ActionChooser {
         });
         zarrBDVHighestResolution.setToolTipText("Open Zarr/N5 in BDV at highest resolution level");
         zarrIJHighestResolution.addActionListener(e -> dialog.dispose());
-        zarrIJHighestResolution.setToolTipText("Open Zarr/N5 in ImageJ at highest resolution level (not implemented yet)");
+        zarrIJHighestResolution.setToolTipText("Open Zarr/N5 in ImageJ at highest resolution level");
         zarrScript.addActionListener(e -> dialog.dispose());
         String labels = ScriptsUtil.getButtonLabel(context);
         zarrScript.setToolTipText("Open Zarr/N5 Script:\n\n" + labels);
