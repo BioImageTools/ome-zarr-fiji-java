@@ -3,6 +3,7 @@ package sc.fiji.ome.zarr.ui.util;
 import bdv.util.BdvFunctions;
 import net.imglib2.img.Img;
 import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
@@ -27,6 +28,7 @@ import java.awt.PointerInfo;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
+import java.net.URI;
 import java.nio.file.Path;
 
 public class ActionChooser {
