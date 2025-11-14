@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -136,11 +137,10 @@ public class ZarrOnFileSystemUtils {
      * @return the absolute path to the root of the Zarr dataset formatted as a string,
      *         or null if the provided path is null
      */
-    public static String getZarrRootPath(final Path path) {
+    public static URI getZarrRootPath(final Path path) {
         if (path != null) {
             final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder(path);
-            final String zarrRootPathAsStr = (ZarrOnFileSystemUtils.isWindows() ? "/" : "")
-                    + zarrRootPath.toAbsolutePath().toString().replace("\\\\", "/");
+            final URI zarrRootPathAsStr = zarrRootPath.toUri();
             logger.info("zarrRootPath: {}", zarrRootPathAsStr);
             return zarrRootPathAsStr;
         }
