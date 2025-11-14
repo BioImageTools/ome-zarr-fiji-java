@@ -111,9 +111,16 @@ public class ActionChooser {
     private void initBehaviour(final JDialog dialog) {
 
         // Add action listeners
-        zarrToIJDialog.addActionListener(e -> openN5ImporterDialog());
+        zarrToIJDialog.addActionListener(e -> {
+            openN5ImporterDialog();
+            dialog.dispose();
+        });
         zarrToBDVDialog.addActionListener(e -> {
             openN5ViewerDialog();
+            dialog.dispose();
+        });
+        zarrBDVHighestResolution.addActionListener(e -> {
+            openBDVAtSpecificResolutionLevel();
             dialog.dispose();
         });
         zarrIJHighestResolution.addActionListener(e -> {dialog.dispose();});
