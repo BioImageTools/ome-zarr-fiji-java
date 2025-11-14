@@ -84,7 +84,7 @@ public class ScriptsUtil {
 
 	private static String templateScriptItself() {
 		return
-			"# RESAVE THIS SCRIPT AND POINT Fiji -> Plugins -> Preset DragAndDrop User Script ON IT\n"+
+			"# RESAVE THIS SCRIPT AND POINT Fiji -> Plugins -> NGFF OME-Zarr -> Preset DragAndDrop User Script ON IT\n"+
 			"\n"+
 			"#@ String path\n" +
 			"\n" +
