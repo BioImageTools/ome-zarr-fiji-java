@@ -145,7 +145,7 @@ public class ActionChooser {
             dialog.dispose();
         });
         help.addActionListener(e -> dialog.dispose());
-        help.setToolTipText("Add Zarr/N5 to an existing BDV window (not implemented yet)");
+        help.setToolTipText("Help about Zarr/N5 actions");
 
         setupCloseOnKeyboard(dialog);
         setupCloseOnMouseLeave(dialog);
