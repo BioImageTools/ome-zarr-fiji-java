@@ -11,7 +11,7 @@ import java.io.File;
 		name = "DndUserScript", headless = true)
 public class PluginPresetDndScript implements Command {
 
-	@Parameter(label = "Button first line text (max 10 chars):")
+	@Parameter(label = "Tooltip text:")
 	String line;
 
 	@Parameter(label = "Script to be executed:", style = FileWidget.OPEN_STYLE)
