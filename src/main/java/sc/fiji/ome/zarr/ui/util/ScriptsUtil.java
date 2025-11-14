@@ -16,11 +16,12 @@ import java.nio.file.Paths;
 
 public class ScriptsUtil {
 
-	public static final String BTN_LINE1_DEFAULT = "Set Own";
-	public static final String BTN_LINE2_DEFAULT = "Script";
     private ScriptsUtil() {
         //prevent instantiation
     }
+
+	private static final String BTN_LINE1_DEFAULT = "Set Own";
+	private static final String BTN_LINE2_DEFAULT = "Script";
 
 	/**
 	 * @return A two-item array for the upper and bottom row of the "run script" DnD button.
