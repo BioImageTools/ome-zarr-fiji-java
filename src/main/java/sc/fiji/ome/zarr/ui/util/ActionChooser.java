@@ -119,17 +119,23 @@ public class ActionChooser {
             openN5ImporterDialog();
             dialog.dispose();
         });
+        zarrToIJDialog.setToolTipText("Open Zarr/N5 Importer dialog");
         zarrToBDVDialog.addActionListener(e -> {
             openN5ViewerDialog();
             dialog.dispose();
         });
+        zarrToBDVDialog.setToolTipText("Open Zarr/N5 BDV Viewer dialog");
         zarrBDVHighestResolution.addActionListener(e -> {
             openBDVAtSpecificResolutionLevel();
             dialog.dispose();
         });
+        zarrBDVHighestResolution.setToolTipText("Open Zarr/N5 in BDV at highest resolution level");
         zarrIJHighestResolution.addActionListener(e -> dialog.dispose());
+        zarrIJHighestResolution.setToolTipText("Open Zarr/N5 in ImageJ at highest resolution level (not implemented yet)");
         zarrScript.addActionListener(e -> dialog.dispose());
+        zarrScript.setToolTipText("Open Zarr/N5 Script\n" + String.join("\n\n", labels));
         bdvAdd.addActionListener(e -> dialog.dispose());
+        bdvAdd.setToolTipText("");
 
         setupCloseOnKeyboard(dialog);
         setupCloseOnMouseLeave(dialog);
