@@ -97,16 +97,13 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 		this.droppedInPath = fsource.getFile().toPath();
 		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
 
-        try(final Context context = this.context())
-        {
-            ApplicationFrame frame = context.getService(UIService.class).getDefaultUI().getApplicationFrame();
-            logger.info("Obtained this frame: {}", frame);
-            if (frame instanceof LegacyApplicationFrame) {
-                logger.debug("Show Action chooser for DND submenu2");
-                LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
-                ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath);
-                actionChooser.show();
-            }
+        ApplicationFrame frame = this.context().getService(UIService.class).getDefaultUI().getApplicationFrame();
+        logger.info("Obtained this frame: {}", frame);
+        if (frame instanceof LegacyApplicationFrame) {
+            logger.debug("Show Action chooser for DND submenu2");
+            LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
+            ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath);
+            actionChooser.show();
         }
 
 		//not going to display anything now, we instead start a thread that delays itself a bit
