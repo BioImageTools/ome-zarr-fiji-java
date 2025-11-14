@@ -135,6 +135,10 @@ public class ActionChooser {
         zarrScript.addActionListener(e -> dialog.dispose());
         String[] labels = ScriptsUtil.getButtonLabels(context);
         zarrScript.setToolTipText("Open Zarr/N5 Script\n" + String.join("\n\n", labels));
+        zarrScript.addActionListener(e -> {
+            runScript();
+            dialog.dispose();
+        });
         bdvAdd.addActionListener(e -> dialog.dispose());
         bdvAdd.setToolTipText("Add Zarr/N5 to an existing BDV window (not implemented yet)");
 
