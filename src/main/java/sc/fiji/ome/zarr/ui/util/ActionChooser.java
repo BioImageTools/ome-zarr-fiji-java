@@ -122,31 +122,39 @@ public class ActionChooser {
     /** Adds listeners and global behaviour (keyboard, fade, etc.). */
     private void initBehaviour(final JDialog dialog) {
 
-        // Add action listeners
+        // zarr to FIJI importer button
         zarrToIJDialog.addActionListener(e -> {
             openN5ImporterDialog();
             dialog.dispose();
         });
         zarrToIJDialog.setToolTipText("Open Zarr/N5 Importer dialog");
+
+        // zarr to BDV viewer button
         zarrToBDVDialog.addActionListener(e -> {
             openN5ViewerDialog();
             dialog.dispose();
         });
         zarrToBDVDialog.setToolTipText("Open Zarr/N5 BDV Viewer dialog");
+
+        // FIJI button
+        zarrIJHighestResolution.addActionListener(e -> dialog.dispose());
+        zarrIJHighestResolution.setToolTipText("Open Zarr/N5 in ImageJ at highest resolution level");
+
+        // BDV button
         zarrBDVHighestResolution.addActionListener(e -> {
             openBDVAtSpecificResolutionLevel();
             dialog.dispose();
         });
         zarrBDVHighestResolution.setToolTipText("Open Zarr/N5 in BDV at highest resolution level");
-        zarrIJHighestResolution.addActionListener(e -> dialog.dispose());
-        zarrIJHighestResolution.setToolTipText("Open Zarr/N5 in ImageJ at highest resolution level");
-        zarrScript.addActionListener(e -> dialog.dispose());
+
+        // script button
         String labels = ScriptsUtil.getButtonLabel(context);
         zarrScript.setToolTipText("Open Zarr/N5 Script:\n\n" + labels);
         zarrScript.addActionListener(e -> {
             runScript();
             dialog.dispose();
         });
+        // help button
         help.addActionListener(e -> dialog.dispose());
         help.setToolTipText("Help about Zarr/N5 actions");
         help.addActionListener(e -> {
