@@ -7,10 +7,8 @@ public class DemoScriptsUtil {
 		ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
-		System.out.println("Button labels as two lines: ");
-		for (String s : ScriptsUtil.getButtonLabels(ij.context())) {
-			System.out.println("LINE: "+s);
-		}
+		System.out.println("Button label: ");
+        System.out.println(ScriptsUtil.getButtonLabel(ij.context()));
 
 		final String inputPath = "/home/ulman/Documents/talks/CEITEC/2025_11_ZarrSymposium_Zurich/data/MitoEM_fixedRes.zarr/MitoEM_fixedRes";
 		System.out.println("\nLet's run the script... on String param: "+inputPath);

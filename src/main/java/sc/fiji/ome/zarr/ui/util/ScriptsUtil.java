@@ -25,25 +25,22 @@ public class ScriptsUtil {
         //prevent instantiation
     }
 
-	private static final String BTN_LINE1_DEFAULT = "Set Own";
-	private static final String BTN_LINE2_DEFAULT = "Script";
+	private static final String BTN_LINE_DEFAULT = "My Script";
 
 	/**
 	 * @return A two-item array for the upper and bottom row of the "run script" DnD button.
 	 */
-	public static String[] getButtonLabels(Context ctx) {
-        if (ctx == null) {
-            return new String[] {BTN_LINE1_DEFAULT, BTN_LINE2_DEFAULT};
+	public static String getButtonLabel(final Context context) {
+        if (context == null) {
+            return BTN_LINE_DEFAULT;
         }
-		PrefService prefService = ctx.getService(PrefService.class);
+		PrefService prefService = context.getService(PrefService.class);
 		if (prefService == null) {
 			//can't retrieve user labels, go with the defaults then...
-			return new String[] {BTN_LINE1_DEFAULT, BTN_LINE2_DEFAULT};
+			return BTN_LINE_DEFAULT;
 		}
 
-		final String line1 = prefService.get(PluginPresetDndScript.class, "line1", BTN_LINE1_DEFAULT);
-		final String line2 = prefService.get(PluginPresetDndScript.class, "line2", BTN_LINE2_DEFAULT);
-		return new String[] {line1, line2};
+        return prefService.get(PluginPresetDndScript.class, "line", BTN_LINE_DEFAULT);
 	}
 
 

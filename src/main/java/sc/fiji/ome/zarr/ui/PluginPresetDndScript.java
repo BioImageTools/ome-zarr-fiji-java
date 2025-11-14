@@ -12,10 +12,7 @@ import java.io.File;
 public class PluginPresetDndScript implements Command {
 
 	@Parameter(label = "Button first line text (max 10 chars):")
-	String line1;
-
-	@Parameter(label = "Button second line text (max 10 chars):")
-	String line2;
+	String line;
 
 	@Parameter(label = "Script to be executed:", style = FileWidget.OPEN_STYLE)
 	File scriptPath;
