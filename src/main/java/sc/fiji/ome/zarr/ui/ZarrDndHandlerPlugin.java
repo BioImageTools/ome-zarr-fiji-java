@@ -34,7 +34,6 @@ import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
-import org.scijava.Context;
 import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -70,24 +69,25 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 	@Parameter
 	private LogService logService;
 
-	//NB: Change _only_ here to the wanted log level: info() vs. debug()
-	private final Reporter log = (msg) -> logService.info(this.getClass().getName()+" "+msg);
+
 	private interface Reporter { void message(String msg); }
 
 	// ========================= IOPlugin stuff =========================
 	@Override
 	public boolean supportsOpen(Location source) {
 		final String sourcePath = source.getURI().getPath();
-		log.message("was questioned: "+sourcePath);
+		logger.info("was questioned if this path supports open: {}", sourcePath);
 
-		if (!(source instanceof FileLocation)) return false;
-		if (!ZarrOnFileSystemUtils.isZarrFolder( Paths.get(source.getURI()) )) return false;
-		return true;
-	}
+		if (!(source instanceof FileLocation))
+        {
+            return false;
+        }
+        return ZarrOnFileSystemUtils.isZarrFolder(Paths.get(source.getURI()));
+    }
 
 	@Override
 	public Object open(Location source) throws IOException {
-		log.message("was asked to open: "+source.getURI().getPath());
+		logger.info("was asked to open: {}", source.getURI().getPath());
 		final FileLocation fsource = source instanceof FileLocation ? (FileLocation)source : null;
 
 		//debugging the DnD a bit.... but both tests should never fail
@@ -130,7 +130,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 			final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder(droppedInPath);
 			final String zarrRootPathAsStr = (ZarrOnFileSystemUtils.isWindows() ? "/" : "")
 					+ zarrRootPath.toAbsolutePath().toString().replaceAll("\\\\","/");
-			log.message("is opening now: " + zarrRootPathAsStr);
+			logger.info("is opening now: {}", zarrRootPathAsStr);
 
 			if (wasAltKeyDown) {
 				N5Reader reader = new N5Factory().openReader(zarrRootPathAsStr);
@@ -140,7 +140,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 				new N5Importer().runWithDialog(zarrRootPathAsStr,
 						ZarrOnFileSystemUtils.listPathDifferences(droppedInPath, zarrRootPath));
 			}
-			log.message("opened.");
+            logger.info("Done opening.");
 		}
 
 		//flag that this argument is processed
