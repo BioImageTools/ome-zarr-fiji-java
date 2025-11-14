@@ -47,6 +47,7 @@ import org.scijava.ui.ApplicationFrame;
 import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sc.fiji.ome.zarr.BdvHandleService;
 import sc.fiji.ome.zarr.ui.util.ActionChooser;
 import sc.fiji.ome.zarr.ui.util.ZarrOnFileSystemUtils;
 import net.imagej.legacy.ui.LegacyApplicationFrame;
@@ -64,6 +65,9 @@ import java.util.ArrayList;
 public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+    //@Parameter
+    //private BdvHandleService bdvHandleService;
 
 	// ========================= logging stuff =========================
 	@Parameter
@@ -99,7 +103,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
         if (frame instanceof LegacyApplicationFrame) {
             logger.debug("Show Action chooser for DND submenu2");
             LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
-            ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath, this.context());
+            ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath, this.context(), null);
             actionChooser.show();
         }
 

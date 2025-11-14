@@ -10,7 +10,9 @@ import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.scijava.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sc.fiji.ome.zarr.BdvHandleService;
 
+import javax.annotation.Nullable;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -39,6 +41,8 @@ public class ActionChooser {
     private final Frame parentFrame;
     private final Path droppedInPath;
     private final Context context;
+    @Nullable
+    private final BdvHandleService bdvHandleService;
 
     private final JButton zarrToIJDialog;
     private final JButton zarrToBDVDialog;
@@ -49,10 +53,11 @@ public class ActionChooser {
 
     private boolean extendedVersion;
 
-    public ActionChooser(final Frame parentFrame, final Path path, final Context context) {
+    public ActionChooser(final Frame parentFrame, final Path path, final Context context, @Nullable final BdvHandleService bdvHandleService) {
         this.parentFrame = parentFrame;
         this.droppedInPath = path;
         this.context = context;
+        this.bdvHandleService = bdvHandleService;
 
         this.extendedVersion = true;
 
@@ -184,6 +189,7 @@ public class ActionChooser {
         final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath(droppedInPath).toString();
         N5Reader reader = new N5Factory().openReader(zarrRootPathAsStr);
         String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName(reader.deepListDatasets(""));
+        // this.bdvHandleService.openNewBdv(N5Utils.open(reader, dataset), dataset);
         BdvFunctions.show((Img<?>) N5Utils.open(reader, dataset), dataset);
         logger.info("open big data viewer with zarr at {}", zarrRootPathAsStr);
     }
