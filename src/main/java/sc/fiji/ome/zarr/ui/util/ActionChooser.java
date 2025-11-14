@@ -170,7 +170,7 @@ public class ActionChooser {
         N5Reader reader = new N5Factory().openReader(zarrRootPathAsStr);
         String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName(reader.deepListDatasets(""));
         BdvFunctions.show((Img<?>) N5Utils.open(reader, dataset), dataset);
-        logger.info("opened big data viewer with zarr at {}", zarrRootPathAsStr);
+        logger.info("open big data viewer with zarr at {}", zarrRootPathAsStr);
     }
 
     private void positionDialog(JDialog dialog, Point mouseLocation) {
