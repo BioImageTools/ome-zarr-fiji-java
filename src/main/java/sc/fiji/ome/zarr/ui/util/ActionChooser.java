@@ -133,9 +133,10 @@ public class ActionChooser {
         zarrIJHighestResolution.addActionListener(e -> dialog.dispose());
         zarrIJHighestResolution.setToolTipText("Open Zarr/N5 in ImageJ at highest resolution level (not implemented yet)");
         zarrScript.addActionListener(e -> dialog.dispose());
+        String[] labels = ScriptsUtil.getButtonLabels(context);
         zarrScript.setToolTipText("Open Zarr/N5 Script\n" + String.join("\n\n", labels));
         bdvAdd.addActionListener(e -> dialog.dispose());
-        bdvAdd.setToolTipText("");
+        bdvAdd.setToolTipText("Add Zarr/N5 to an existing BDV window (not implemented yet)");
 
         setupCloseOnKeyboard(dialog);
         setupCloseOnMouseLeave(dialog);
