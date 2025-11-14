@@ -66,8 +66,8 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 
     private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-    //@Parameter
-    //private BdvHandleService bdvHandleService;
+    @Parameter
+    private BdvHandleService bdvHandleService;
 
 	// ========================= logging stuff =========================
 	@Parameter
@@ -103,7 +103,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
         if (frame instanceof LegacyApplicationFrame) {
             logger.debug("Show Action chooser for DND submenu2");
             LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
-            ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath, this.context(), null);
+            ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath, this.context(), bdvHandleService);
             actionChooser.show();
         }
 
