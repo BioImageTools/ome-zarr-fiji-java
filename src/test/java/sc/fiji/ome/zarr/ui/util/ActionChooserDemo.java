@@ -46,7 +46,7 @@ public class ActionChooserDemo {
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			final JFrame mainFrame = new JFrame();
-			final ActionChooser menu = new ActionChooser(mainFrame, null);
+			final ActionChooser menu = new ActionChooser(mainFrame, null, null);
 			setupFrame(mainFrame, menu);
 		});
 	}

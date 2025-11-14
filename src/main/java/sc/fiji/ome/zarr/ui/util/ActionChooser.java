@@ -7,6 +7,7 @@ import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
+import org.scijava.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ public class ActionChooser {
 
     private final Frame parentFrame;
     private final Path droppedInPath;
+    private final Context context;
 
     private final JButton zarrToIJDialog;
     private final JButton zarrToBDVDialog;
@@ -47,9 +49,11 @@ public class ActionChooser {
 
     private boolean extendedVersion;
 
-    public ActionChooser(final Frame parentFrame, final Path path) {
+    public ActionChooser(final Frame parentFrame, final Path path, final Context context) {
         this.parentFrame = parentFrame;
         this.droppedInPath = path;
+        this.context = context;
+
         this.extendedVersion = true;
 
         ImageIcon zarrIJIcon = CreateIcon.getAndResizeIcon("zarr_ij_icon.png");

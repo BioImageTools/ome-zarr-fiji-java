@@ -102,7 +102,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
         if (frame instanceof LegacyApplicationFrame) {
             logger.debug("Show Action chooser for DND submenu2");
             LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
-            ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath);
+            ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath, this.context());
             actionChooser.show();
         }
 
