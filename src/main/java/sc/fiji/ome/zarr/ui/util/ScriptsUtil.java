@@ -75,7 +75,7 @@ public class ScriptsUtil {
 	}
 
 
-	public static String templateScriptItself() {
+	private static String templateScriptItself() {
 		return
 			"# RESAVE THIS SCRIPT AND POINT Fiji -> Plugins -> Preset DragAndDrop User Script ON IT\n"+
 			"\n"+
