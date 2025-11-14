@@ -116,6 +116,7 @@ public class ActionChooser {
             openN5ViewerDialog();
             dialog.dispose();
         });
+        zarrIJHighestResolution.addActionListener(e -> {dialog.dispose();});
         zarrScript.addActionListener(e -> dialog.dispose());
         bdvAdd.addActionListener(e -> dialog.dispose());
 
