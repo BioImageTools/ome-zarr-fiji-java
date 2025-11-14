@@ -81,7 +81,10 @@ public class ScriptsUtil {
 
 	private static String templateScriptItself() {
 		return
-			"# RESAVE THIS SCRIPT AND POINT Fiji -> Plugins -> NGFF OME-Zarr -> Preset DragAndDrop User Script ON IT\n"+
+			"# RESAVE THIS SCRIPT AND OPEN IN THE MENU\n"+
+			"# Fiji -> Plugins -> NGFF OME-Zarr -> Preset DragAndDrop User Script\n"+
+			"# to have this available among the drag-and-drop choices.\n"+
+			"# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"+
 			"\n"+
 			"#@ String path\n" +
 			"\n" +
