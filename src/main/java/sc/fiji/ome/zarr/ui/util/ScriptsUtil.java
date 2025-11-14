@@ -7,14 +7,19 @@ import org.scijava.module.ModuleService;
 import org.scijava.prefs.PrefService;
 import org.scijava.script.ScriptInfo;
 import org.scijava.script.ScriptService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.ui.PluginPresetDndScript;
 
 import java.io.File;
 import java.io.StringReader;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class ScriptsUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private ScriptsUtil() {
         //prevent instantiation
@@ -61,15 +66,13 @@ public class ScriptsUtil {
 			try {
 				final Module module = moduleService.createModule( scriptService.getScript( new File(scriptPath) ) );
 				module.setInput("path", inputPath);
-				//
-				System.out.println("==> Executing external script: "+scriptPath);
-				System.out.println("==> on String parameter: "+inputPath);
+
+                logger.info("Executing script: {}", scriptPath);
+                logger.info("on String parameter: {}", inputPath);
 				module.run();
-				System.out.println("==> External script finished now.");
+                logger.info("External script finished now.");
 			} catch (Exception e) {
-				//TODO: turn into warning log
-				System.out.println("SOME WENT WRONG EXECUTING THE SCRIPT: "+scriptPath);
-				System.out.println(e.getMessage());
+                logger.warn(" Something went wrong executing the script: {}. Message: {}", scriptPath, e.getMessage());
 			}
 		} else {
 			//the filepath is not functional, let's show a template script
