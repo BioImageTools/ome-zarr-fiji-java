@@ -8,11 +8,11 @@ import net.imglib2.RandomAccessibleInterval;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.service.AbstractService;
-import org.scijava.service.Service;
+import org.scijava.service.SciJavaService;
 import org.scijava.log.LogService;
 
-@Plugin(type = Service.class)
-public class BdvHandleService extends AbstractService {
+@Plugin(type = SciJavaService.class)
+public class BdvHandleService extends AbstractService implements SciJavaService {
 	@Parameter
 	private LogService logService;
 
