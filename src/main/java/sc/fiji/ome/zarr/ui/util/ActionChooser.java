@@ -49,7 +49,7 @@ public class ActionChooser {
     private final JButton zarrIJHighestResolution;
     private final JButton zarrBDVHighestResolution;
     private final JButton zarrScript;
-    private final JButton bdvAdd;
+    private final JButton help;
 
     private boolean extendedVersion;
 
@@ -71,8 +71,8 @@ public class ActionChooser {
         zarrBDVHighestResolution = new JButton(bdvIcon);
         ImageIcon scriptIcon = CreateIcon.getAndResizeIcon("script_icon.png");
         zarrScript = new JButton(scriptIcon);
-        ImageIcon bdvAddIcon = CreateIcon.getAndResizeIcon("bdv_add_icon.png");
-        bdvAdd = new JButton(bdvAddIcon);
+        ImageIcon helpIcon = CreateIcon.getAndResizeIcon("help_icon.png");
+        help = new JButton(helpIcon);
     }
 
     public void setShowExtendedVersion(boolean show) {
@@ -106,7 +106,7 @@ public class ActionChooser {
             panel.add(zarrIJHighestResolution);
             panel.add(zarrBDVHighestResolution);
             panel.add(zarrScript);
-            panel.add(bdvAdd);
+            panel.add(help);
         } else {
             panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
             panel.add(zarrToIJDialog);
@@ -144,8 +144,8 @@ public class ActionChooser {
             runScript();
             dialog.dispose();
         });
-        bdvAdd.addActionListener(e -> dialog.dispose());
-        bdvAdd.setToolTipText("Add Zarr/N5 to an existing BDV window (not implemented yet)");
+        help.addActionListener(e -> dialog.dispose());
+        help.setToolTipText("Add Zarr/N5 to an existing BDV window (not implemented yet)");
 
         setupCloseOnKeyboard(dialog);
         setupCloseOnMouseLeave(dialog);
