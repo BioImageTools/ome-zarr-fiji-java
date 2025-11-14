@@ -74,37 +74,16 @@ public class ScriptsUtil {
 
 	public static String templateScriptItself() {
 		return
-			"# RESAVE THIS SEEDS SCRIPT AND POINT THE BDV_WITH_SEEDS DIALOG ON IT\n"+
+			"# RESAVE THIS SCRIPT AND POINT Fiji -> Plugins -> Preset DragAndDrop User Script ON IT\n"+
 			"\n"+
-			"#@ ImagePlus imp\n"+
-			"#@ float contrast_min\n"+
-			"#@ float contrast_max\n"+
-			"\n"+
-			"# It is important that seeds (any non-zero pixels) are stored directly into the input 'imp' image!\n"+
-			"\n"+
-			"# The 'contrast_min' and 'contrast_max' report the current BDV display (contrast) setting\n"+
-			"# used with the displayed input image (from which the 'imp' is cropped out). You may want\n"+
-			"# (but need not) to consider this for the seeds extraction...\n"+
-			"\n"+
-			"from ij import IJ\n"+
-			"\n"+
-			"# It is possible to report from this script, it will appear in Fiji console.\n"+
-			"print(\"contrast:\",contrast_min,contrast_max)\n"+
-			"\n"+
-			"# Example threshold function that thresholds _inplace_\n"+
-			"def threshold(thres_val):\n"+
-			"    pxs = imp.getProcessor().getPixels()\n"+
-			"    for i in range(len(pxs)):\n"+
-			"        pxs[i] = 1 if pxs[i] > thres_val else 0\n"+
-			"\n"+
-			"# Example of using a standard Fiji plugin \n"+
-			"IJ.run(imp, \"Maximum...\", \"radius=1\")\n"+
-			"threshold(0.65)\n"+
-			"\n"+
-			"# Don't use the updateAndRepaintWindow() in conjunction with BDV+SAMJ,\n"+
-			"# but it is useful when running (debugging) this script directly from Fiji\n"+
-			"# (e.g. on some of the debug crop-out that came from BDV+SAMJ).\n"+
-			"#\n"+
-			"# imp.updateAndRepaintWindow()";
+			"#@ String path\n" +
+			"\n" +
+			"from org.janelia.saalfeldlab.n5.bdv import N5Viewer\n" +
+			"N5Viewer.show(path)\n" +
+			"\n" +
+			"print(\"Started BDV on a path: \"+path)\n" +
+			"\n" +
+			"# from https://forum.image.sc/t/ome-zarr-viewer-supporting-private-s3-buckets/106235/15\n" +
+			"# credit: John Bogovic\n";
 	}
 }
