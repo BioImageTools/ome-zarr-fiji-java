@@ -38,10 +38,12 @@ public class ActionChooser {
     private final Frame parentFrame;
     private final Path droppedInPath;
 
-    private final JButton buttonZarr;
-    private final JButton buttonBDV;
-    private final JButton buttonScript;
-    private final JButton buttonBDVAdd;
+    private final JButton zarrToIJDialog;
+    private final JButton zarrToBDVDialog;
+    private final JButton zarrIJHighestResolution;
+    private final JButton zarrBDVHighestResolution;
+    private final JButton zarrScript;
+    private final JButton bdvAdd;
 
     private boolean extendedVersion;
 
@@ -50,14 +52,18 @@ public class ActionChooser {
         this.droppedInPath = path;
         this.extendedVersion = true;
 
-        ImageIcon iconZarr = CreateIcon.getAndResizeIcon("zarr_icon.png");
-        buttonZarr = new JButton(iconZarr);
-        ImageIcon iconBDV = CreateIcon.getAndResizeIcon("bdv_icon.png");
-        buttonBDV = new JButton(iconBDV);
-        ImageIcon iconScript = CreateIcon.getAndResizeIcon("script_icon.png");
-        buttonScript = new JButton(iconScript);
-        ImageIcon iconBDVAdd = CreateIcon.getAndResizeIcon("bdv_add_icon.png");
-        buttonBDVAdd = new JButton(iconBDVAdd);
+        ImageIcon zarrIJIcon = CreateIcon.getAndResizeIcon("zarr_ij_icon.png");
+        zarrToIJDialog = new JButton(zarrIJIcon);
+        ImageIcon zarrBDVIcon = CreateIcon.getAndResizeIcon("zarr_bdv_icon.png");
+        zarrToBDVDialog = new JButton(zarrBDVIcon);
+        ImageIcon ijIcon = CreateIcon.getAndResizeIcon("ij_icon.png");
+        zarrIJHighestResolution = new JButton(ijIcon);
+        ImageIcon bdvIcon = CreateIcon.getAndResizeIcon("bdv_icon.png");
+        zarrBDVHighestResolution = new JButton(bdvIcon);
+        ImageIcon scriptIcon = CreateIcon.getAndResizeIcon("script_icon.png");
+        zarrScript = new JButton(scriptIcon);
+        ImageIcon bdvAddIcon = CreateIcon.getAndResizeIcon("bdv_add_icon.png");
+        bdvAdd = new JButton(bdvAddIcon);
     }
 
     public void setShowExtendedVersion(boolean show) {
@@ -85,15 +91,17 @@ public class ActionChooser {
     private JPanel initLayout() {
         JPanel panel;
         if (extendedVersion) {
-            panel = new JPanel(new GridLayout(2, 2, 5, 5));
-            panel.add(buttonZarr);
-            panel.add(buttonBDV);
-            panel.add(buttonScript);
-            panel.add(buttonBDVAdd);
+            panel = new JPanel(new GridLayout(3, 2, 5, 5));
+            panel.add(zarrToIJDialog);
+            panel.add(zarrToBDVDialog);
+            panel.add(zarrIJHighestResolution);
+            panel.add(zarrBDVHighestResolution);
+            panel.add(zarrScript);
+            panel.add(bdvAdd);
         } else {
             panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            panel.add(buttonZarr);
-            panel.add(buttonBDV);
+            panel.add(zarrToIJDialog);
+            panel.add(zarrToBDVDialog);
         }
         return panel;
     }
@@ -103,13 +111,13 @@ public class ActionChooser {
     private void initBehaviour(final JDialog dialog) {
 
         // Add action listeners
-        buttonZarr.addActionListener(e -> openN5ImporterDialog());
-        buttonBDV.addActionListener(e -> {
+        zarrToIJDialog.addActionListener(e -> openN5ImporterDialog());
+        zarrToBDVDialog.addActionListener(e -> {
             openBDVAtSpecificResolutionLevel();
             dialog.dispose();
         });
-        buttonScript.addActionListener(e -> dialog.dispose());
-        buttonBDVAdd.addActionListener(e -> dialog.dispose());
+        zarrScript.addActionListener(e -> dialog.dispose());
+        bdvAdd.addActionListener(e -> dialog.dispose());
 
         setupCloseOnKeyboard(dialog);
         setupCloseOnMouseLeave(dialog);
