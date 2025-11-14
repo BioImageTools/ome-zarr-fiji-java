@@ -123,7 +123,7 @@ public class ActionChooser {
             openBDVAtSpecificResolutionLevel();
             dialog.dispose();
         });
-        zarrIJHighestResolution.addActionListener(e -> {dialog.dispose();});
+        zarrIJHighestResolution.addActionListener(e -> dialog.dispose());
         zarrScript.addActionListener(e -> dialog.dispose());
         bdvAdd.addActionListener(e -> dialog.dispose());
 
