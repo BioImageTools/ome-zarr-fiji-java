@@ -21,6 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import java.awt.AWTError;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -37,6 +38,8 @@ import java.nio.file.Path;
 public class ActionChooser {
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+    private static final String HELP_URL = "https://github.com/BioImageTools/ome-zarr-fiji-java/";
 
     private final Frame parentFrame;
     private final Path droppedInPath;
@@ -146,6 +149,14 @@ public class ActionChooser {
         });
         help.addActionListener(e -> dialog.dispose());
         help.setToolTipText("Help about Zarr/N5 actions");
+        help.addActionListener(e -> {
+            try {
+                Desktop.getDesktop().browse(new URI(HELP_URL));
+            } catch (Exception ex) {
+                logger.warn("Cannot open help link: {}", ex.getMessage());
+            }
+        });
+
 
         setupCloseOnKeyboard(dialog);
         setupCloseOnMouseLeave(dialog);
