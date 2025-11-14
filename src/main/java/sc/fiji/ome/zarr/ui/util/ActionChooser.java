@@ -132,11 +132,11 @@ public class ActionChooser {
     }
 
     private void openN5ImporterDialog() {
-        final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath(droppedInPath);
+        final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getZarrRootPath(droppedInPath);
         final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder(droppedInPath);
-        new N5Importer().runWithDialog(zarrRootPathAsStr,
+        new N5Importer().runWithDialog(zarrRootPathAsURI.toString(),
                 ZarrOnFileSystemUtils.listPathDifferences(droppedInPath, zarrRootPath));
-        logger.info("opened zarr opener dialog at {}", zarrRootPathAsStr);
+        logger.info("opened zarr importer dialog at {}", zarrRootPathAsURI);
     }
 
     private void openBDVAtSpecificResolutionLevel() {
