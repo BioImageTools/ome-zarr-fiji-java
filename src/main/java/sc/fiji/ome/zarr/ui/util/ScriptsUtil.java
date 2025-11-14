@@ -23,6 +23,9 @@ public class ScriptsUtil {
 	 * @return A two-item array for the upper and bottom row of the "run script" DnD button.
 	 */
 	public static String[] getButtonLabels(Context ctx) {
+        if (ctx == null) {
+            return new String[] {BTN_LINE1_DEFAULT, BTN_LINE2_DEFAULT};
+        }
 		PrefService prefService = ctx.getService(PrefService.class);
 		if (prefService == null) {
 			//can't retrieve user labels, go with the defaults then...
