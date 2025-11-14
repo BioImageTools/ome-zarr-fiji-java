@@ -188,6 +188,13 @@ public class ActionChooser {
         logger.info("open big data viewer with zarr at {}", zarrRootPathAsStr);
     }
 
+    private void runScript()
+    {
+        final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath(droppedInPath).toString();
+        logger.info("run script with zarr root path at {}", zarrRootPathAsStr);
+        ScriptsUtil.executePresetScript(context, zarrRootPathAsStr);
+    }
+
     private void positionDialog(JDialog dialog, Point mouseLocation) {
         Dimension size = dialog.getSize();
         int x = mouseLocation.x - size.width / 2;
