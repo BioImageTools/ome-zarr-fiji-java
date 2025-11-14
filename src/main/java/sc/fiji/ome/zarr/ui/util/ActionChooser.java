@@ -113,7 +113,7 @@ public class ActionChooser {
         // Add action listeners
         zarrToIJDialog.addActionListener(e -> openN5ImporterDialog());
         zarrToBDVDialog.addActionListener(e -> {
-            openBDVAtSpecificResolutionLevel();
+            openN5ViewerDialog();
             dialog.dispose();
         });
         zarrScript.addActionListener(e -> dialog.dispose());
