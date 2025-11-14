@@ -69,9 +69,6 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 	@Parameter
 	private LogService logService;
 
-
-	private interface Reporter { void message(String msg); }
-
 	// ========================= IOPlugin stuff =========================
 	@Override
 	public boolean supportsOpen(Location source) {
