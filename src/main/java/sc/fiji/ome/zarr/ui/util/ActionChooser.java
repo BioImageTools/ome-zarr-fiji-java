@@ -148,7 +148,7 @@ public class ActionChooser {
     }
 
     private void openBDVAtSpecificResolutionLevel() {
-        final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath(droppedInPath);
+        final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath(droppedInPath).toString();
         N5Reader reader = new N5Factory().openReader(zarrRootPathAsStr);
         String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName(reader.deepListDatasets(""));
         BdvFunctions.show((Img<?>) N5Utils.open(reader, dataset), dataset);
