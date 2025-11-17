@@ -10,8 +10,10 @@ import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.scijava.Context;
+import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.ui.util.CreateIcon;
 import sc.fiji.ome.zarr.util.ScriptUtils;
@@ -156,8 +158,8 @@ public class DnDActionChooser {
         zarrBDVHighestResolution.setToolTipText("Open Zarr/N5 in BDV at highest resolution level");
 
         // script button
-        String labels = ScriptUtils.getButtonLabel(context);
-        zarrScript.setToolTipText("Open Zarr/N5 Script:\n\n" + labels);
+        String scriptName = getScriptName(context);
+        zarrScript.setToolTipText("Open Zarr/N5 Script:\n\n" + scriptName);
         zarrScript.addActionListener(e -> {
             runScript();
             dialog.dispose();
@@ -296,5 +298,22 @@ public class DnDActionChooser {
             }
         });
         fade.start();
+    }
+
+    private static final String DEFAULT_SCRIPT_NAME = "My Script";
+
+    /**
+     * @return the name of the script to run from preferences, or a default name if not set.
+     */
+    private String getScriptName(final Context context) {
+        if (context == null) {
+            return DEFAULT_SCRIPT_NAME;
+        }
+        PrefService prefService = context.getService(PrefService.class);
+        if (prefService == null) {
+            return DEFAULT_SCRIPT_NAME;
+        }
+
+        return prefService.get(PresetScriptPlugin.class, "scriptName", DEFAULT_SCRIPT_NAME);
     }
 }

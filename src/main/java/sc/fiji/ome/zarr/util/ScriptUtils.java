@@ -25,25 +25,6 @@ public class ScriptUtils {
         //prevent instantiation
     }
 
-	private static final String BTN_LINE_DEFAULT = "My Script";
-
-	/**
-	 * @return A two-item array for the upper and bottom row of the "run script" DnD button.
-	 */
-	public static String getButtonLabel(final Context context) {
-        if (context == null) {
-            return BTN_LINE_DEFAULT;
-        }
-		PrefService prefService = context.getService(PrefService.class);
-		if (prefService == null) {
-			//can't retrieve user labels, go with the defaults then...
-			return BTN_LINE_DEFAULT;
-		}
-
-        return prefService.get(PresetScriptPlugin.class, "line", BTN_LINE_DEFAULT);
-	}
-
-
 	/**
 	 * Executes either a preset script and passes 'inputPath' arg to it provided
 	 * the preset script is a valid file; otherwise it opens a script editor

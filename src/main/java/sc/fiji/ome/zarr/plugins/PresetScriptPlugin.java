@@ -1,9 +1,11 @@
 package sc.fiji.ome.zarr.plugins;
 
+import org.scijava.Context;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
+import org.scijava.prefs.PrefService;
 import org.scijava.widget.FileWidget;
 import java.io.File;
 
