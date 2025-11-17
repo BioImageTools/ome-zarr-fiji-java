@@ -38,13 +38,15 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ZarrOnFileSystemUtils {
+public class ZarrOnFileSystemUtils
+{
 
-    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-    private ZarrOnFileSystemUtils() {
-        // prevent instantiation
-    }
+	private ZarrOnFileSystemUtils()
+	{
+		// prevent instantiation
+	}
 
 	/**
 	 * Checks if under the given folder there exists any of
@@ -53,10 +55,11 @@ public class ZarrOnFileSystemUtils {
 	 * @param zarrFolder Supposedly the top-level Zarr folder.
 	 * @return True if some of the three files is found.
 	 */
-	public static boolean isZarrFolder(final Path zarrFolder) {
+	public static boolean isZarrFolder( final Path zarrFolder )
+	{
 		return ( Files.exists( zarrFolder.resolve( ".zgroup" ) ) || //Zarr v2
-				  Files.exists( zarrFolder.resolve( ".zarray" ) ) || //Zarr v2
-				  Files.exists( zarrFolder.resolve("zarr.json") ) ); //Zarr v3
+				Files.exists( zarrFolder.resolve( ".zarray" ) ) || //Zarr v2
+				Files.exists( zarrFolder.resolve( "zarr.json" ) ) ); //Zarr v3
 	}
 
 	/**
@@ -67,11 +70,13 @@ public class ZarrOnFileSystemUtils {
 	 * @param somewhereInZarrFolder Pointer (folder) to somewhere inside an OME Zarr.
 	 * @return Root of that OME Zarr, or NULL if the provided path is NOT within an OME Zarr.
 	 */
-	public static Path findRootFolder(final Path somewhereInZarrFolder) {
+	public static Path findRootFolder( final Path somewhereInZarrFolder )
+	{
 		Path parentFolder = somewhereInZarrFolder;
 		Path lastValidFolder = null;
 
-		while (isZarrFolder(parentFolder)) {
+		while ( isZarrFolder( parentFolder ) )
+		{
 			lastValidFolder = parentFolder;
 			parentFolder = parentFolder.getParent();
 		}
@@ -90,11 +95,14 @@ public class ZarrOnFileSystemUtils {
 	 * @param datasets Non-null (not test thought!) array with "s?" endings.
 	 * @return First array item with "s0" or just the first array item.
 	 */
-	public static String findHighestResolutionByName(final String[] datasets) {
-		for (String s : datasets) {
-			if (s.endsWith("s0")) return s;
+	public static String findHighestResolutionByName( final String[] datasets )
+	{
+		for ( String s : datasets )
+		{
+			if ( s.endsWith( "s0" ) )
+				return s;
 		}
-		return datasets[0];
+		return datasets[ 0 ];
 	}
 
 	/**
@@ -106,44 +114,48 @@ public class ZarrOnFileSystemUtils {
 	 * @param shorterPath Starting path, under which folders need to be opened to reach the 'longerPath'.
 	 * @return An ordered list of folders, or an empty list if no solution was found.
 	 */
-	public static List<String> listPathDifferences(final Path longerPath, final Path shorterPath) {
-		List<String> diffPathElems = new LinkedList<>();
+	public static List< String > listPathDifferences( final Path longerPath, final Path shorterPath )
+	{
+		List< String > diffPathElems = new LinkedList<>();
 		Path currPath = longerPath;
-		while ( !currPath.equals(shorterPath) ) {
-			diffPathElems.add(0, currPath.getFileName().toString());
+		while ( !currPath.equals( shorterPath ) )
+		{
+			diffPathElems.add( 0, currPath.getFileName().toString() );
 			currPath = currPath.getParent();
 			//NB: OS-agnostic finding of the difference of the folders
 		}
 		return diffPathElems;
 	}
 
-    /**
-     * Checks if the current OS is Windows.
-     *
-     * @return True if the OS is Windows, false otherwise.
-     */
-    public static boolean isWindows() {
-        final String myOS = System.getProperty("os.name").toLowerCase();
-        return !( myOS.contains( "mac" ) || myOS.contains( "nux" ) || myOS.contains( "nix" ) );
-    }
+	/**
+	 * Checks if the current OS is Windows.
+	 *
+	 * @return True if the OS is Windows, false otherwise.
+	 */
+	public static boolean isWindows()
+	{
+		final String myOS = System.getProperty( "os.name" ).toLowerCase();
+		return !( myOS.contains( "mac" ) || myOS.contains( "nux" ) || myOS.contains( "nix" ) );
+	}
 
-
-    /**
-     * Resolves the root path of an OME Zarr dataset given a path pointing inside the dataset.
-     * The method ensures compatibility with different operating systems by formatting the path accordingly.
-     * If the provided path is null, the method returns null.
-     *
-     * @param path the file system path pointing to a location inside an OME Zarr dataset
-     * @return the absolute path to the root of the Zarr dataset formatted as a string,
-     *         or null if the provided path is null
-     */
-    public static URI getZarrRootPath(final Path path) {
-        if (path != null) {
-            final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder(path);
-            final URI zarrRootPathAsStr = zarrRootPath.toUri();
-            logger.info("zarrRootPath: {}", zarrRootPathAsStr);
-            return zarrRootPathAsStr;
-        }
-        return null;
-    }
+	/**
+	 * Resolves the root path of an OME Zarr dataset given a path pointing inside the dataset.
+	 * The method ensures compatibility with different operating systems by formatting the path accordingly.
+	 * If the provided path is null, the method returns null.
+	 *
+	 * @param path the file system path pointing to a location inside an OME Zarr dataset
+	 * @return the absolute path to the root of the Zarr dataset formatted as a string,
+	 *         or null if the provided path is null
+	 */
+	public static URI getZarrRootPath( final Path path )
+	{
+		if ( path != null )
+		{
+			final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( path );
+			final URI zarrRootPathAsStr = zarrRootPath.toUri();
+			logger.info( "zarrRootPath: {}", zarrRootPathAsStr );
+			return zarrRootPathAsStr;
+		}
+		return null;
+	}
 }
