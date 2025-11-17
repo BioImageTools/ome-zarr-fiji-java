@@ -1,9 +1,8 @@
-package sc.fiji.ome.zarr.ui.util;
+package sc.fiji.ome.zarr.util;
 
 import net.imagej.ImageJ;
-import sc.fiji.ome.zarr.util.ScriptUtils;
 
-public class DemoScriptsUtil {
+public class ScriptUtilsDemo {
 	public static void main(String[] args) {
 		ImageJ ij = new ImageJ();
 		ij.ui().showUI();

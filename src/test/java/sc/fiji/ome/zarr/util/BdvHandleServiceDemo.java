@@ -1,14 +1,13 @@
-package sc.fiji.ome.zarr.ui.util;
+package sc.fiji.ome.zarr.util;
 
 import net.imagej.ImageJ;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import sc.fiji.ome.zarr.util.BdvHandleService;
 
 import java.util.Random;
 
-public class TestBdvSession {
+public class BdvHandleServiceDemo {
 	public static void main(String[] args) {
 		ImageJ ij = new ImageJ();
 		BdvHandleService bdvService = ij.context().getService(BdvHandleService.class);

@@ -1,11 +1,8 @@
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.pyramid;
 
 import net.imagej.ImageJ;
-import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
-import sc.fiji.ome.zarr.pyramid.MultiscaleImage;
-import sc.fiji.ome.zarr.pyramid.OpenInBDVCommand;
 
-public class TestMultiscaleImage {
+public class MultiscaleImageDemo {
 	public static void main( String[] args )
 	{
 		final String multiscalePath = "/Users/tischer/Desktop/testNew.zarr";

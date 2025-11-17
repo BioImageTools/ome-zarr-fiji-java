@@ -1,12 +1,10 @@
-package sc.fiji.ome.zarr.ui.util;
-
-import sc.fiji.ome.zarr.ui.DnDActionChooser;
+package sc.fiji.ome.zarr.ui;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-public class ActionChooserDemo {
+public class DnDActionChooserDemo {
 
 	private static void setupFrame(JFrame frame, DnDActionChooser menu) {
 		frame.setTitle("Keyboard Submenu Example");
