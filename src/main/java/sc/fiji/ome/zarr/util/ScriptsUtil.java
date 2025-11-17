@@ -9,7 +9,7 @@ import org.scijava.script.ScriptInfo;
 import org.scijava.script.ScriptService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sc.fiji.ome.zarr.plugins.PresetDnDScriptPlugin;
+import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 
 import java.io.File;
 import java.io.StringReader;
@@ -40,7 +40,7 @@ public class ScriptsUtil {
 			return BTN_LINE_DEFAULT;
 		}
 
-        return prefService.get(PresetDnDScriptPlugin.class, "line", BTN_LINE_DEFAULT);
+        return prefService.get(PresetScriptPlugin.class, "line", BTN_LINE_DEFAULT);
 	}
 
 
@@ -56,7 +56,7 @@ public class ScriptsUtil {
 		if (scriptService == null || moduleService == null || prefService == null) return;
 
 		//retrieve the path to the preset script
-		final String scriptPath = prefService.get(PresetDnDScriptPlugin.class, "scriptPath", "--none--");
+		final String scriptPath = prefService.get(PresetScriptPlugin.class, "scriptPath", "--none--");
 
 		if (Files.exists( Paths.get(scriptPath).toAbsolutePath() )) {
 			//the filepath is viable, let's run the script

@@ -9,7 +9,7 @@ import java.io.File;
 
 @Plugin(type = Command.class, menuPath = "Plugins>NGFF OME-Zarr>Preset DragAndDrop User Script",
 		name = "DnDUserScript", headless = true)
-public class PresetDnDScriptPlugin implements Command {
+public class PresetScriptPlugin implements Command {
 
 	@Parameter(label = "Tooltip text:")
 	String line;
