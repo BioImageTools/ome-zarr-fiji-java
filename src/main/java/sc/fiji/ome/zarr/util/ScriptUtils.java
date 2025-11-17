@@ -17,11 +17,11 @@ import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class ScriptsUtil {
+public class ScriptUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private ScriptsUtil() {
+    private ScriptUtils() {
         //prevent instantiation
     }
 
@@ -47,7 +47,7 @@ public class ScriptsUtil {
 	/**
 	 * Executes either a preset script and passes 'inputPath' arg to it provided
 	 * the preset script is a valid file; otherwise it opens a script editor
-	 * on a default example script provided in {@link ScriptsUtil#templateScriptItself()}.
+	 * on a default example script provided in {@link ScriptUtils#getTemplate()}.
 	 */
 	public static void executePresetScript(Context ctx, String inputPath) {
 		ScriptService scriptService = ctx.getService(ScriptService.class);
@@ -73,13 +73,13 @@ public class ScriptsUtil {
 			}
 		} else {
 			//the filepath is not functional, let's show a template script
-			ScriptInfo s = new ScriptInfo(ctx, "open_ome_zarr_my_way.py", new StringReader(templateScriptItself()));
+			ScriptInfo s = new ScriptInfo(ctx, "open_ome_zarr_my_way.py", new StringReader(getTemplate()));
 			ctx.getService(LegacyService.class).openScriptInTextEditor(s);
 		}
 	}
 
 
-	private static String templateScriptItself() {
+	private static String getTemplate() {
 		return
 			"# RESAVE THIS SCRIPT AND OPEN IN THE MENU\n"+
 			"# Fiji -> Plugins -> NGFF OME-Zarr -> Preset DragAndDrop User Script\n"+

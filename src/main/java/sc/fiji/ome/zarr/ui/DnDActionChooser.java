@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.ui.util.CreateIcon;
-import sc.fiji.ome.zarr.util.ScriptsUtil;
+import sc.fiji.ome.zarr.util.ScriptUtils;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 import javax.annotation.Nullable;
@@ -156,7 +156,7 @@ public class DnDActionChooser {
         zarrBDVHighestResolution.setToolTipText("Open Zarr/N5 in BDV at highest resolution level");
 
         // script button
-        String labels = ScriptsUtil.getButtonLabel(context);
+        String labels = ScriptUtils.getButtonLabel(context);
         zarrScript.setToolTipText("Open Zarr/N5 Script:\n\n" + labels);
         zarrScript.addActionListener(e -> {
             runScript();
@@ -237,7 +237,7 @@ public class DnDActionChooser {
     {
         final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath(droppedInPath).toString();
         logger.info("run script with zarr root path at {}", zarrRootPathAsStr);
-        ScriptsUtil.executePresetScript(context, zarrRootPathAsStr);
+        ScriptUtils.executePresetScript(context, zarrRootPathAsStr);
     }
 
     private void positionDialog(JDialog dialog, Point mouseLocation) {
