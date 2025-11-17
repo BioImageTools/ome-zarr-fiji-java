@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.pyramid;
 
 import bdv.util.volatiles.SharedQueue;
 import org.scijava.Context;

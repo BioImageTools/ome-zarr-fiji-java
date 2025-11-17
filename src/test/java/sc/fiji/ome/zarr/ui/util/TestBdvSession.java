@@ -4,7 +4,7 @@ import net.imagej.ImageJ;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import sc.fiji.ome.zarr.BdvHandleService;
+import sc.fiji.ome.zarr.util.BdvHandleService;
 
 import java.util.Random;
 

@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.pyramid;
 
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.SpimData;
@@ -42,10 +42,7 @@ import net.imglib2.EuclideanSpace;
 import net.imglib2.Volatile;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import org.janelia.saalfeldlab.n5.N5FSReader;
 import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.ij.N5Importer;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;

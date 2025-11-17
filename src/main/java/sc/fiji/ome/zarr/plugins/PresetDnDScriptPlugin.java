@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.ui;
+package sc.fiji.ome.zarr.plugins;
 
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -8,8 +8,8 @@ import org.scijava.widget.FileWidget;
 import java.io.File;
 
 @Plugin(type = Command.class, menuPath = "Plugins>NGFF OME-Zarr>Preset DragAndDrop User Script",
-		name = "DndUserScript", headless = true)
-public class PluginPresetDndScript implements Command {
+		name = "DnDUserScript", headless = true)
+public class PresetDnDScriptPlugin implements Command {
 
 	@Parameter(label = "Tooltip text:")
 	String line;

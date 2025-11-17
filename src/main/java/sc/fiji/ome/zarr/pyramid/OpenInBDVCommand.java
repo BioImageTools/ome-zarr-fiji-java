@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.pyramid;
 
 import net.imagej.Dataset;
 import org.scijava.command.Command;
@@ -46,7 +46,7 @@ public class OpenInBDVCommand implements Command
 	@Override
 	public void run()
 	{
-		if ( dataset instanceof PyramidalDataset )
+		if ( dataset instanceof PyramidalDataset)
 		{
 			logService.log( 0 , "Opening " + dataset.getClass().toString() + " in BDV...");
 			//BdvFunctions.show( ( ( PyramidalDataset<?> ) dataset ).asSpimData() );

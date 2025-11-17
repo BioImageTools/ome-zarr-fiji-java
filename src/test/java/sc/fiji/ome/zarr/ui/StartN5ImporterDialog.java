@@ -29,7 +29,7 @@
 package sc.fiji.ome.zarr.ui;
 
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
-import sc.fiji.ome.zarr.ui.util.ZarrOnFileSystemUtils;
+import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

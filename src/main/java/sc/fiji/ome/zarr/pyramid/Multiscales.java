@@ -1,9 +1,5 @@
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.pyramid;
 
-import com.google.common.collect.Lists;
-import com.google.gson.JsonElement;
-
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 

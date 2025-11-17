@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.ui.util;
+package sc.fiji.ome.zarr.util;
 
 import net.imagej.legacy.LegacyService;
 import org.scijava.Context;
@@ -9,7 +9,7 @@ import org.scijava.script.ScriptInfo;
 import org.scijava.script.ScriptService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sc.fiji.ome.zarr.ui.PluginPresetDndScript;
+import sc.fiji.ome.zarr.plugins.PresetDnDScriptPlugin;
 
 import java.io.File;
 import java.io.StringReader;
@@ -40,7 +40,7 @@ public class ScriptsUtil {
 			return BTN_LINE_DEFAULT;
 		}
 
-        return prefService.get(PluginPresetDndScript.class, "line", BTN_LINE_DEFAULT);
+        return prefService.get(PresetDnDScriptPlugin.class, "line", BTN_LINE_DEFAULT);
 	}
 
 
@@ -56,7 +56,7 @@ public class ScriptsUtil {
 		if (scriptService == null || moduleService == null || prefService == null) return;
 
 		//retrieve the path to the preset script
-		final String scriptPath = prefService.get(PluginPresetDndScript.class, "scriptPath", "--none--");
+		final String scriptPath = prefService.get(PresetDnDScriptPlugin.class, "scriptPath", "--none--");
 
 		if (Files.exists( Paths.get(scriptPath).toAbsolutePath() )) {
 			//the filepath is viable, let's run the script

@@ -1,6 +1,7 @@
 package sc.fiji.ome.zarr.ui.util;
 
 import net.imagej.ImageJ;
+import sc.fiji.ome.zarr.util.ScriptsUtil;
 
 public class DemoScriptsUtil {
 	public static void main(String[] args) {

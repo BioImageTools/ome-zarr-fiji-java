@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.ui;
+package sc.fiji.ome.zarr.plugins;
 
 import bdv.util.BdvFunctions;
 import net.imglib2.img.Img;
@@ -47,9 +47,9 @@ import org.scijava.ui.ApplicationFrame;
 import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sc.fiji.ome.zarr.BdvHandleService;
-import sc.fiji.ome.zarr.ui.util.ActionChooser;
-import sc.fiji.ome.zarr.ui.util.ZarrOnFileSystemUtils;
+import sc.fiji.ome.zarr.util.BdvHandleService;
+import sc.fiji.ome.zarr.ui.DnDActionChooser;
+import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 import net.imagej.legacy.ui.LegacyApplicationFrame;
 
 import javax.swing.*;
@@ -62,7 +62,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 @Plugin(type = IOPlugin.class, attrs = @Attr(name = "eager"))
-public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Runnable {
+public class DnDHandlerPlugin extends AbstractIOPlugin<Object> implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -103,7 +103,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
         if (frame instanceof LegacyApplicationFrame) {
             logger.debug("Show Action chooser for DND submenu2");
             LegacyApplicationFrame lFrame = (LegacyApplicationFrame) frame;
-            ActionChooser actionChooser = new ActionChooser(lFrame.getComponent(), droppedInPath, this.context(), bdvHandleService);
+            DnDActionChooser actionChooser = new DnDActionChooser(lFrame.getComponent(), droppedInPath, this.context(), bdvHandleService);
             actionChooser.show();
         }
 
@@ -155,7 +155,7 @@ public class ZarrDndHandlerPlugin extends AbstractIOPlugin<Object> implements Ru
 	// ------------------------- keyboard monitor -------------------------
 	private static boolean isAlreadyRegisteredKeyHandler = false;
 
-	public ZarrDndHandlerPlugin() {
+	public DnDHandlerPlugin() {
 		super();
 
 		//install a keyboard events monitor, but only once!

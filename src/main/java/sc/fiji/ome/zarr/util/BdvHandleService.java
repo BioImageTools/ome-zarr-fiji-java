@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.util;
 
 import bdv.util.BdvFunctions;
 import bdv.util.BdvOptions;

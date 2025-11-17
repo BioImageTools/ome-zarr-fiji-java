@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.pyramid;
 
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.SpimData;

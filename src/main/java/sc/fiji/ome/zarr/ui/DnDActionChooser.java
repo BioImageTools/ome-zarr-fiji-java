@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.ui.util;
+package sc.fiji.ome.zarr.ui;
 
 import bdv.util.BdvFunctions;
 import net.imglib2.RandomAccessibleInterval;
@@ -12,7 +12,10 @@ import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.scijava.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sc.fiji.ome.zarr.BdvHandleService;
+import sc.fiji.ome.zarr.util.BdvHandleService;
+import sc.fiji.ome.zarr.ui.util.CreateIcon;
+import sc.fiji.ome.zarr.util.ScriptsUtil;
+import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 import javax.annotation.Nullable;
 import javax.swing.ImageIcon;
@@ -37,7 +40,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
 
-public class ActionChooser {
+public class DnDActionChooser {
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -58,7 +61,7 @@ public class ActionChooser {
 
     private boolean extendedVersion;
 
-    public ActionChooser(final Frame parentFrame, final Path path, final Context context, @Nullable final BdvHandleService bdvHandleService) {
+    public DnDActionChooser(final Frame parentFrame, final Path path, final Context context, @Nullable final BdvHandleService bdvHandleService) {
         this.parentFrame = parentFrame;
         this.droppedInPath = path;
         this.context = context;

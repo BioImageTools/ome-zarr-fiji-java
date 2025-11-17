@@ -1,12 +1,14 @@
 package sc.fiji.ome.zarr.ui.util;
 
+import sc.fiji.ome.zarr.ui.DnDActionChooser;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 public class ActionChooserDemo {
 
-	private static void setupFrame(JFrame frame, ActionChooser menu) {
+	private static void setupFrame(JFrame frame, DnDActionChooser menu) {
 		frame.setTitle("Keyboard Submenu Example");
 		frame.setSize(600, 400);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -46,7 +48,7 @@ public class ActionChooserDemo {
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			final JFrame mainFrame = new JFrame();
-			final ActionChooser menu = new ActionChooser(mainFrame, null, null, null);
+			final DnDActionChooser menu = new DnDActionChooser(mainFrame, null, null, null);
 			setupFrame(mainFrame, menu);
 		});
 	}

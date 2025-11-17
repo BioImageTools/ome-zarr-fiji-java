@@ -26,14 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr;
+package sc.fiji.ome.zarr.pyramid;
 
-import bdv.img.cache.VolatileCachedCellImg;
-import bdv.util.volatiles.SharedQueue;
 import bdv.util.volatiles.VolatileTypeMatcher;
-import bdv.util.volatiles.VolatileViews;
-import com.google.common.collect.Lists;
-import com.google.gson.JsonArray;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -51,11 +46,6 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
 import org.janelia.saalfeldlab.n5.DataType;
-import org.janelia.saalfeldlab.n5.DatasetAttributes;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
-import org.janelia.saalfeldlab.n5.zarr.N5ZarrReader;
-
-import javax.annotation.Nullable;
 
 public class MultiscaleImage<
 		  T extends NativeType< T > & RealType< T >,

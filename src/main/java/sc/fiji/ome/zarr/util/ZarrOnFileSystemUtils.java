@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.ui.util;
+package sc.fiji.ome.zarr.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
