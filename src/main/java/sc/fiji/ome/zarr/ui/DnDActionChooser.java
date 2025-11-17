@@ -249,13 +249,9 @@ public class DnDActionChooser
 		N5Reader reader = new N5Factory().openReader( zarrRootPathAsStr );
 		String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
 		if ( bdvHandleService == null )
-		{
 			BdvFunctions.show( ( Img< ? > ) N5Utils.open( reader, dataset ), dataset );
-		}
 		else
-		{
-			this.bdvHandleService.openNewBdv( N5Utils.open( reader, dataset ), dataset );
-		}
+			bdvHandleService.openNewBdv( N5Utils.open( reader, dataset ), dataset );
 		logger.info( "open big data viewer with zarr at {}", zarrRootPathAsStr );
 	}
 

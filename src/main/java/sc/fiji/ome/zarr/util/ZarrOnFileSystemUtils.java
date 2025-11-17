@@ -49,21 +49,21 @@ public class ZarrOnFileSystemUtils
 	}
 
 	/**
-	 * Checks if under the given folder there exists any of
-	 * the files: .zgroup, .zarray or zarr.json.
+	 * Checks if within the given folder there exists any of
+	 * these files: .zgroup, .zarray or zarr.json.
 	 *
-	 * @param zarrFolder Supposedly the top-level Zarr folder.
-	 * @return True if some of the three files is found.
+	 * @param folder the folder to check.
+	 * @return @{@code true} if at least one of the three files is found, {@code false} otherwise.
 	 */
-	public static boolean isZarrFolder( final Path zarrFolder )
+	public static boolean isZarrFolder( final Path folder )
 	{
-		return ( Files.exists( zarrFolder.resolve( ".zgroup" ) ) || //Zarr v2
-				Files.exists( zarrFolder.resolve( ".zarray" ) ) || //Zarr v2
-				Files.exists( zarrFolder.resolve( "zarr.json" ) ) ); //Zarr v3
+		return ( Files.exists( folder.resolve( ".zgroup" ) ) || //Zarr v2
+				Files.exists( folder.resolve( ".zarray" ) ) || //Zarr v2
+				Files.exists( folder.resolve( "zarr.json" ) ) ); //Zarr v3
 	}
 
 	/**
-	 * Traverses up the folders tree as long as {@link ZarrOnFileSystemUtils#isZarrFolder(Path)}
+	 * Traverses up the folder tree as long as {@link #isZarrFolder(Path)}
 	 * says we are inside a Zarr dataset. The last such folder is returned, which is
 	 * supposed to be the top-level/root folder of the pointed at dataset.
 	 *
@@ -112,7 +112,7 @@ public class ZarrOnFileSystemUtils
 	 *
 	 * @param longerPath Target path, presumably the top-level OME Zarr folder.
 	 * @param shorterPath Starting path, under which folders need to be opened to reach the 'longerPath'.
-	 * @return An ordered list of folders, or an empty list if no solution was found.
+	 * @return An ordered list of folders or an empty list if no solution was found.
 	 */
 	public static List< String > listPathDifferences( final Path longerPath, final Path shorterPath )
 	{
@@ -151,7 +151,7 @@ public class ZarrOnFileSystemUtils
 	{
 		if ( path != null )
 		{
-			final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( path );
+			final Path zarrRootPath = findRootFolder( path );
 			final URI zarrRootPathAsStr = zarrRootPath.toUri();
 			logger.info( "zarrRootPath: {}", zarrRootPathAsStr );
 			return zarrRootPathAsStr;
