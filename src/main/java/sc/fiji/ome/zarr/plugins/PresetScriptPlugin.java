@@ -8,7 +8,7 @@ import org.scijava.widget.FileWidget;
 
 import java.io.File;
 
-@Plugin( type = Command.class, menuPath = "Plugins>NGFF OME-Zarr>Preset DragAndDrop User Script", name = "DnDUserScript", headless = true )
+@Plugin( type = Command.class, menuPath = "Plugins>OME-Zarr>Preset DragAndDrop User Script", name = "DnDUserScript", headless = true )
 public class PresetScriptPlugin implements Command
 {
 
