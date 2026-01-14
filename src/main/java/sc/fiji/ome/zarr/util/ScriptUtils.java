@@ -1,18 +1,16 @@
 package sc.fiji.ome.zarr.util;
 
-import net.imagej.legacy.LegacyService;
 import org.scijava.Context;
 import org.scijava.module.Module;
 import org.scijava.module.ModuleService;
 import org.scijava.prefs.PrefService;
-import org.scijava.script.ScriptInfo;
 import org.scijava.script.ScriptService;
+import org.scijava.ui.swing.script.TextEditor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 
 import java.io.File;
-import java.io.StringReader;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -63,9 +61,11 @@ public class ScriptUtils
 		}
 		else
 		{
-			//the filepath is not functional, let's show a template script
-			ScriptInfo s = new ScriptInfo( ctx, "open_ome_zarr_my_way.py", new StringReader( getTemplate() ) );
-			ctx.getService( LegacyService.class ).openScriptInTextEditor( s );
+			//this opens an _always new_ window with the template script,
+			//...at least the user is more likely to notice that this "help" came up
+			final TextEditor editor = new TextEditor(ctx);
+			editor.createNewDocument("open_ome_zarr_my_way.py", getTemplate());
+			editor.setVisible(true);
 		}
 	}
 

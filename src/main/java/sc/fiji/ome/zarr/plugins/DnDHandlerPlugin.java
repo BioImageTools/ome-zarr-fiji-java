@@ -29,7 +29,6 @@
 package sc.fiji.ome.zarr.plugins;
 
 import bdv.util.BdvFunctions;
-import net.imagej.legacy.ui.LegacyApplicationFrame;
 import net.imglib2.img.Img;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
@@ -43,8 +42,6 @@ import org.scijava.log.LogService;
 import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.ui.ApplicationFrame;
-import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
@@ -139,15 +136,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object > implements Runn
 		this.droppedInPath = fsource.getFile().toPath();
 		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
 
-		ApplicationFrame frame = this.context().getService( UIService.class ).getDefaultUI().getApplicationFrame();
-		logger.info( "Obtained this frame: {}", frame );
-		if ( frame instanceof LegacyApplicationFrame )
-		{
-			logger.debug( "Show Action chooser for DND submenu2" );
-			LegacyApplicationFrame lFrame = ( LegacyApplicationFrame ) frame;
-			DnDActionChooser actionChooser = new DnDActionChooser( lFrame.getComponent(), droppedInPath, this.context(), bdvHandleService );
-			actionChooser.show();
-		}
+		new DnDActionChooser( null, droppedInPath, this.context(), bdvHandleService ).show();
 
 		//not going to display anything now, we instead start a thread that delays itself a bit
 		//and only opens after a waiting period; the waiting period is used to detect whether
