@@ -169,6 +169,13 @@
         <n5-universe.version>2.4.0-alpha-7-SNAPSHOT</n5-universe.version>
         <n5-zarr.version>2.0.0-alpha-5-SNAPSHOT</n5-zarr.version>
         <n5-zstandard.version>2.0.0-alpha-4</n5-zstandard.version>
+
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+		<sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.language>java</sonar.language>
+		<sonar.verbose>false</sonar.verbose>
 	</properties>
 
 	<repositories>
