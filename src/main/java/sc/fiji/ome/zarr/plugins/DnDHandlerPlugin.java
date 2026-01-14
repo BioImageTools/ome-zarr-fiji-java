@@ -60,7 +60,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
-public class DnDHandlerPlugin extends AbstractIOPlugin< Object > implements Runnable
+public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 {
 
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
@@ -68,13 +68,6 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object > implements Runn
 	//the "innocent" product of the (hypothetical) file reading... which Fiji will not display
 	private static final Object FAKE_INPUT = new ArrayList<>( 0 );
 
-	private static final long PERIOD_FOR_DETECTING_ALT_KEY = 2000; //millis
-
-	private static boolean wasAltKeyDown = false;
-
-	// ========================= stuff to detect if ALT was pressed during the drag-and-drop =========================
-	// ------------------------- keyboard monitor -------------------------
-	private static boolean isAlreadyRegisteredKeyHandler = false;
 
 	@Parameter
 	private BdvHandleService bdvHandleService;
@@ -86,26 +79,6 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object > implements Runn
 	// ========================= the actual opening of the dropped-in path =========================
 	private Path droppedInPath = null;
 
-	private JFrame notificationWindow = null;
-
-	public DnDHandlerPlugin()
-	{
-		super();
-
-		//install a keyboard events monitor, but only once!
-		if ( !isAlreadyRegisteredKeyHandler )
-		{
-			KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher( e -> {
-				if ( e.getKeyCode() == KeyEvent.VK_ALT )
-				{
-					//...monitor only if the ALT key did some action
-					wasAltKeyDown = e.getID() == KeyEvent.KEY_RELEASED;
-				}
-				return false;
-			} );
-			isAlreadyRegisteredKeyHandler = true;
-		}
-	}
 
 	// ========================= IOPlugin stuff =========================
 	@Override
@@ -149,79 +122,5 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object > implements Runn
 	public Class< Object > getDataType()
 	{
 		return Object.class;
-	}
-
-	private void openRecentlyDroppedPath()
-	{
-		//do anything only when the argument is valid
-		if ( droppedInPath != null )
-		{
-			final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
-			final String zarrRootPathAsStr = ( ZarrOnFileSystemUtils.isWindows() ? "/" : "" )
-					+ zarrRootPath.toAbsolutePath().toString().replaceAll( "\\\\", "/" );
-			logger.info( "is opening now: {}", zarrRootPathAsStr );
-
-			if ( wasAltKeyDown )
-			{
-				N5Reader reader = new N5Factory().openReader( zarrRootPathAsStr );
-				String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
-				BdvFunctions.show( ( Img< ? > ) N5Utils.open( reader, dataset ), dataset );
-			}
-			else
-			{
-				new N5Importer().runWithDialog( zarrRootPathAsStr,
-						ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath ) );
-			}
-			logger.info( "Done opening." );
-		}
-
-		//flag that this argument is processed
-		droppedInPath = null;
-	}
-
-	// ========================= stuff to detect if ALT was pressed during the drag-and-drop =========================
-	// ------------------------- separate thread that fires GUI to keep application's focus to
-	//                           allow its keyboard monitor to read-out anything while waiting a bit -------------------------
-	@Override
-	public void run()
-	{
-		wasAltKeyDown = false;
-		//NB: this waiting period below is here only to give keyboard events
-		//    a chance to notify us that the ALT key has been released
-		openNotificationWindow();
-		try
-		{
-			Thread.sleep( PERIOD_FOR_DETECTING_ALT_KEY );
-		}
-		catch ( InterruptedException e )
-		{ /* empty */ }
-		closeNotificationWindow();
-		openRecentlyDroppedPath();
-	}
-
-	private void openNotificationWindow()
-	{
-		if ( notificationWindow == null )
-		{
-			notificationWindow = new JFrame( "Zarr Drag-and-Drop" );
-			notificationWindow.add( new JLabel(
-					"<html><br/><center><i>Opening...</i></center><br/>( <b>Alt+DnD</b> opens in <b>BigDataViewer</b> directly. )<br/></html>" ) );
-			notificationWindow.pack();
-
-			//window placement
-			final Rectangle currentScreenSize = notificationWindow.getGraphicsConfiguration().getBounds();
-			notificationWindow.setLocation(
-					( int ) currentScreenSize.getCenterX() - notificationWindow.getSize().width / 2,
-					( int ) currentScreenSize.getCenterY() - notificationWindow.getSize().height / 2
-			);
-			if ( notificationWindow.isAlwaysOnTopSupported() )
-				notificationWindow.setAlwaysOnTop( true );
-		}
-		notificationWindow.setVisible( true );
-	}
-
-	private void closeNotificationWindow()
-	{
-		notificationWindow.setVisible( false );
 	}
 }
