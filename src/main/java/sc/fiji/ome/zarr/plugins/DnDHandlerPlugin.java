@@ -62,8 +62,8 @@ import java.util.ArrayList;
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
 public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 {
-
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+	//TODO: consider using the official scijava: private LogService logService;
 
 	//the "innocent" product of the (hypothetical) file reading... which Fiji will not display
 	private static final Object FAKE_INPUT = new ArrayList<>( 0 );
@@ -72,10 +72,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	@Parameter
 	private BdvHandleService bdvHandleService;
 
-	// ========================= logging stuff =========================
 	@Parameter
-	private LogService logService;
-
 	// ========================= the actual opening of the dropped-in path =========================
 	private Path droppedInPath = null;
 
