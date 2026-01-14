@@ -73,8 +73,6 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	private BdvHandleService bdvHandleService;
 
 	@Parameter
-	// ========================= the actual opening of the dropped-in path =========================
-	private Path droppedInPath = null;
 
 
 	// ========================= IOPlugin stuff =========================
@@ -102,7 +100,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 			return null;
 		}
 
-		this.droppedInPath = fsource.getFile().toPath();
+		final Path droppedInPath = fsource.getFile().toPath();
 		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
 
 		new DnDActionChooser( null, droppedInPath, this.context(), bdvHandleService ).show();
