@@ -143,7 +143,8 @@
 		<url>https://github.com/BioImageTools/ome-zarr-fiji-java/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<system>none</system>
+		<system>GitHub Actions</system>
+		<url>https://github.com/BioImageTools/ome-zarr-fiji-java/actions</url>
 	</ciManagement>
 
 	<packaging>jar</packaging>
