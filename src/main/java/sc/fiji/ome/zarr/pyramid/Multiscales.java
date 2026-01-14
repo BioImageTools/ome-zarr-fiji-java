@@ -46,6 +46,8 @@ public class Multiscales
         public static final String Y_AXIS_NAME = "y";
         public static final String Z_AXIS_NAME = "z";
 
+        
+
         public String name;
         public String type;
         public String unit;
