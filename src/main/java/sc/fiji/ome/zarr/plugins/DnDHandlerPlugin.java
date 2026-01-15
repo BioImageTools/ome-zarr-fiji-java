@@ -28,17 +28,10 @@
  */
 package sc.fiji.ome.zarr.plugins;
 
-import bdv.util.BdvFunctions;
-import net.imglib2.img.Img;
-import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.ij.N5Importer;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
-import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.scijava.io.AbstractIOPlugin;
 import org.scijava.io.IOPlugin;
 import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
-import org.scijava.log.LogService;
 import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -48,11 +41,6 @@ import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import java.awt.KeyboardFocusManager;
-import java.awt.Rectangle;
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
@@ -68,12 +56,8 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	//the "innocent" product of the (hypothetical) file reading... which Fiji will not display
 	private static final Object FAKE_INPUT = new ArrayList<>( 0 );
 
-
 	@Parameter
-	private BdvHandleService bdvHandleService;
-
-	@Parameter
-
+	private BdvHandleService bdvHandleService; //TODO, is it really used down-stream?
 
 	// ========================= IOPlugin stuff =========================
 	@Override
@@ -87,6 +71,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		}
 		return ZarrOnFileSystemUtils.isZarrFolder( Paths.get( source.getURI() ) );
 	}
+
 
 	@Override
 	public Object open( Location source ) throws IOException
@@ -113,6 +98,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		// (While our DnDActionChoose window will still be up there...)
 		return FAKE_INPUT;
 	}
+
 
 	@Override
 	public Class< Object > getDataType()
