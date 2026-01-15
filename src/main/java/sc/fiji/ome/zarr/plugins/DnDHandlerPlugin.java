@@ -81,8 +81,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	@Override
 	public boolean supportsOpen( Location source )
 	{
-		final String sourcePath = source.getURI().getPath();
-		logger.info( "was questioned if this path supports open: {}", sourcePath );
+		logger.info( "Zarr DND plugin: Was questioned if this path supports open: {}", source.getURI().getPath() ); //TODO: should be debug()
 
 		if ( !( source instanceof FileLocation ) )
 		{
@@ -94,14 +93,14 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	@Override
 	public Object open( Location source ) throws IOException
 	{
-		logger.info( "was asked to open: {}", source.getURI().getPath() );
+		logger.info( "Zarr DND plugin: Was asked to open: {}", source.getURI().getPath() ); //TODO: should be debug()
 		final FileLocation fsource = source instanceof FileLocation ? ( FileLocation ) source : null;
 
 		//debugging the DnD a bit.... but both tests should never fail
-		if ( fsource == null )
+		if ( fsource == null || !ZarrOnFileSystemUtils.isZarrFolder( fsource.getFile().toPath() ) ) {
+			logger.error("Zarr DND plugin: Sanity check failed. Something is very wrong, bailing out.");
 			return null;
-		if ( !ZarrOnFileSystemUtils.isZarrFolder( fsource.getFile().toPath() ) )
-			return null;
+		}
 
 		this.droppedInPath = fsource.getFile().toPath();
 		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
