@@ -13,7 +13,7 @@ public class PresetScriptPlugin implements Command
 {
 
 	@Parameter( label = "Tooltip text:" )
-	String line;
+	String scriptTitle;
 
 	@Parameter( label = "Script to be executed:", style = FileWidget.OPEN_STYLE )
 	File scriptPath;

@@ -49,8 +49,6 @@ public class DnDActionChooser
 
 	private static final String HELP_URL = "https://github.com/BioImageTools/ome-zarr-fiji-java/";
 
-	private static final String DEFAULT_SCRIPT_NAME = "My Script";
-
 	private final Frame parentFrame;
 
 	private final Path droppedInPath;
@@ -178,7 +176,7 @@ public class DnDActionChooser
 		zarrBDVHighestResolution.setToolTipText( "Open Zarr/N5 in BDV at highest resolution level" );
 
 		// script button
-		String scriptName = getScriptName( context );
+		String scriptName = ScriptUtils.getTooltipText( context );
 		zarrScript.setToolTipText( "Open Zarr/N5 Script:\n\n" + scriptName );
 		zarrScript.addActionListener( e -> {
 			runScript();
@@ -341,23 +339,5 @@ public class DnDActionChooser
 			}
 		} );
 		fade.start();
-	}
-
-	/**
-	 * @return the name of the script to run from preferences, or a default name if not set.
-	 */
-	private String getScriptName( final Context context )
-	{
-		if ( context == null )
-		{
-			return DEFAULT_SCRIPT_NAME;
-		}
-		PrefService prefService = context.getService( PrefService.class );
-		if ( prefService == null )
-		{
-			return DEFAULT_SCRIPT_NAME;
-		}
-
-		return prefService.get( PresetScriptPlugin.class, "scriptName", DEFAULT_SCRIPT_NAME );
 	}
 }
