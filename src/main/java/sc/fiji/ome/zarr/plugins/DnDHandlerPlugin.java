@@ -103,12 +103,14 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		final Path droppedInPath = fsource.getFile().toPath();
 		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
 
+		//TODO: this should ideally go into a separate thread... as an independent follow-up story after the DnD event is over
 		new DnDActionChooser( null, droppedInPath, this.context(), bdvHandleService ).show();
 
-		//not going to display anything now, we instead start a thread that delays itself a bit
-		//and only opens after a waiting period; the waiting period is used to detect whether
-		//the ALT key has been released (that is, if it had been pressed during the drag-and-drop operation)
-		//new Thread(this).start();
+		// Returning such an object makes Scijava's DnD subsystem believe that the dropped object
+		// has been already fully loaded, and Scijava (Fiji) will attempt to display it now (and
+		// will realize that it doesn't know how to display it and will silently not display, which
+		// is exactly what is desired now). The processing of this DnD event will then finish finally.
+		// (While our DnDActionChoose window will still be up there...)
 		return FAKE_INPUT;
 	}
 
