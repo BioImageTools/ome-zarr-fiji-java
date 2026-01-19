@@ -139,23 +139,19 @@ public class ZarrOnFileSystemUtils
 	}
 
 	/**
-	 * Resolves the root path of an OME Zarr dataset given a path pointing inside the dataset.
 	 * The method ensures compatibility with different operating systems by formatting the path accordingly.
 	 * If the provided path is null, the method returns null.
 	 *
-	 * @param path the file system path pointing to a location inside an OME Zarr dataset
-	 * @return the absolute path to the root of the Zarr dataset formatted as a string,
+	 * @param path the file system path pointing anywhere
+	 * @return the absolute path formatted as a string,
 	 *         or null if the provided path is null
 	 */
-	public static URI getZarrRootPath( final Path path )
+	public static URI getUriFromPath(final Path path )
 	{
-		if ( path != null )
-		{
-			final Path zarrRootPath = findRootFolder( path );
-			final URI zarrRootPathAsStr = zarrRootPath.toUri();
-			logger.info( "zarrRootPath: {}", zarrRootPathAsStr );
-			return zarrRootPathAsStr;
-		}
-		return null;
+		if (path == null) return null;
+
+		final URI pathAsStr = path.toUri();
+		logger.info( "URI: {}", pathAsStr );
+		return pathAsStr;
 	}
 }
