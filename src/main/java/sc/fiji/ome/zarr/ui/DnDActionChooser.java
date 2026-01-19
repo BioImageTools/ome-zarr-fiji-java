@@ -2,9 +2,11 @@ package sc.fiji.ome.zarr.ui;
 
 import bdv.util.BdvFunctions;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.bdv.N5Viewer;
 import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
@@ -39,7 +41,10 @@ import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DnDActionChooser
 {
@@ -268,16 +273,102 @@ public class DnDActionChooser
 		logger.info( "Opening zarr viewer dialog at {}", ze.rootFolderAsString );
 	}
 
-	private void openBDVAtSpecificResolutionLevel()
+	private void openBDVAtTopFolderLevel(ZarrEntry ze)
 	{
-		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath ).toString();
-		N5Reader reader = new N5Factory().openReader( zarrRootPathAsStr );
-		String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
+		logger.info("TOP LEVEL BDV: starting with {}", ze.rootFolderAsString);
+		N5Reader reader = new N5Factory().openReader( ze.rootFolderAsString );
+		String[] datasets = reader.deepListDatasets("");
+		if (datasets.length == 0) return;
+
+		Set<String> grossDatasets = new HashSet<>(20);
+		Arrays.stream(datasets).forEach( ds -> grossDatasets.add( ds.split("/")[0] ) );
+
+		Object previousBDV = null;
+		ze.openedSubFolders.add( 0, "" );
+		for (String ds : grossDatasets) {
+			ze.openedSubFolders.set( 0, ds );
+			previousBDV = openBDVAtDatasetLevel(ze, previousBDV);
+		}
+	}
+
+	private Object openBDVAtDatasetLevel(ZarrEntry ze)
+	{
+		return openBDVAtDatasetLevel(ze, null);
+	}
+
+	private Object openBDVAtDatasetLevel(ZarrEntry ze, Object previousBDV)
+	{
+		logger.info("{}", ze);
+		logger.info("DATASET BDV: multisources from {} (starting new? {})", ze.openedSubFolders.get(0), previousBDV == null);
+
+		//N5Reader reader = new N5Factory().openReader( ze.rootFolderAsString );
+		//N5Viewer.show( reader, ze.openedSubFolders.get(0) ); //NB: the length of openedSubFolders is expected to be 1
+		N5Viewer.show( ze.rootFolderAsString, ze.openedSubFolders.get(0) );
+/*
+		this is not parsing the metadata well
+		String uri = droppedInPath.toAbsolutePath().toString();
+		logger.info("DATASET BDV: full path: {}", uri);
+		N5Viewer.show( uri );
+*/
+		return new int[0];
+	}
+
+	private void openBDVAtSubDatasetLevel(ZarrEntry ze)
+	{
+		String datasetPath = String.join( "/", ze.openedSubFolders );
+		logger.info("DATASET BDV: sublevel, individual image at {}", datasetPath);
+
+		String uri = droppedInPath.toAbsolutePath().toString();
+		logger.info("DATASET BDV: full path: {}", uri);
+		N5Viewer.show( uri );
+
+/*
+		N5Reader reader = new N5Factory().openReader( ze.rootFolderAsString );
+		Img<?> lazyView = N5Utils.open(reader, datasetPath);
 		if ( bdvHandleService == null )
-			BdvFunctions.show( ( Img< ? > ) N5Utils.open( reader, dataset ), dataset );
+			BdvFunctions.show( lazyView, datasetPath );
 		else
-			bdvHandleService.openNewBdv( N5Utils.open( reader, dataset ), dataset );
-		logger.info( "open big data viewer with zarr at {}", zarrRootPathAsStr );
+			bdvHandleService.openNewBdv( lazyView, datasetPath );
+*/
+	}
+
+	private void openBDVAtSpecificResolutionLevel() //TODO: rename
+	{
+		ZarrEntry ze = inspectDroppedPath();
+		switch (ze.openedSubFolders.size()) {
+			case 0:
+				openBDVAtTopFolderLevel(ze);
+				break;
+			case 1:
+				openBDVAtDatasetLevel(ze);
+				break;
+			default:
+				openBDVAtSubDatasetLevel(ze);
+		}
+/*
+		N5Reader reader = new N5Factory().openReader( ze.rootFolderAsString );
+		String datasetPath = String.join( "/", ze.openedSubFolders );
+		logger.info( "Opening a sub-path: {}", datasetPath);
+		Img<?> lazyView = N5Utils.open(reader, datasetPath);
+*/
+/*
+		final Path zarrDatasetPath = ZarrOnFileSystemUtils.findImageRootFolder( droppedInPath );
+		if (zarrDatasetPath == null) {
+			logger.error("TODO: List all datasets and open them as individual sources.");
+			logger.error("TODO: This can be done iteratively e.g. via the BdvHandleService...");
+			return;
+		}
+		final String zarrDatasetPathAsStr = ZarrOnFileSystemUtils.getUriFromPath( zarrDatasetPath ).toString();
+		N5Reader reader = new N5Factory().openReader( zarrDatasetPathAsStr );
+		String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
+*/
+/*
+		if ( bdvHandleService == null )
+			BdvFunctions.show( lazyView, datasetPath );
+		else
+			bdvHandleService.openNewBdv( lazyView, datasetPath );
+		logger.info( "open big data viewer with zarr at {}///{}", ze.rootFolderAsString, datasetPath );
+*/
 	}
 
 	private void openIJAtSpecificResolutionLevel()
