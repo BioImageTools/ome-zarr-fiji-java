@@ -250,20 +250,22 @@ public class DnDActionChooser
 
 	private void openN5ImporterDialog()
 	{
-		final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath );
-		final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
-		new N5Importer().runWithDialog( zarrRootPathAsURI.toString(),
-				ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath ) );
-		logger.info( "opened zarr importer dialog at {}", zarrRootPathAsURI );
+		ZarrEntry ze = inspectDroppedPath();
+		ze.openedSubFolders.add( 0, "" ); //NB: this seems to be helpful for the N5 dialog
+		logger.info("{}", ze); //hmm, this makes SonarQube happy
+		//
+		new N5Importer().runWithDialog( ze.rootFolderAsString, ze.openedSubFolders );
+		logger.info( "Opening zarr importer dialog at {}", ze.rootFolderAsString );
 	}
 
 	private void openN5ViewerDialog()
 	{
-		final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath );
-		final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
-		new N5ViewerCreator().runWithDialog( zarrRootPathAsURI.toString(),
-				ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath ) );
-		logger.info( "opened zarr viewer dialog at {}", zarrRootPathAsURI );
+		ZarrEntry ze = inspectDroppedPath();
+		ze.openedSubFolders.add( 0, "" ); //NB: this seems to be helpful for the N5 dialog
+		logger.info("{}", ze);
+		//
+		new N5ViewerCreator().runWithDialog( ze.rootFolderAsString, ze.openedSubFolders );
+		logger.info( "Opening zarr viewer dialog at {}", ze.rootFolderAsString );
 	}
 
 	private void openBDVAtSpecificResolutionLevel()
