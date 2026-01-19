@@ -39,6 +39,7 @@ import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.List;
 
 public class DnDActionChooser
 {
@@ -220,6 +221,32 @@ public class DnDActionChooser
 		dialog.setOpacity( 1.0f );
 		return dialog;
 	}
+
+
+	private static class ZarrEntry {
+		Path rootFolderAsPath;
+		String rootFolderAsString;
+		List<String> openedSubFolders;
+
+		@Override
+		public String toString()
+		{
+			StringBuilder sb = new StringBuilder( "ZarrEntry details:\n" );
+			sb.append( "  root path: "+rootFolderAsString+"\n" );
+			openedSubFolders.forEach(p -> sb.append( "  unfolding over: "+p+"\n" ));
+			return sb.toString();
+		}
+	}
+
+	private ZarrEntry inspectDroppedPath()
+	{
+		final ZarrEntry ze = new ZarrEntry();
+		ze.rootFolderAsPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
+		ze.rootFolderAsString = ZarrOnFileSystemUtils.getUriFromPath( ze.rootFolderAsPath ).toString();
+		ze.openedSubFolders = ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, ze.rootFolderAsPath );
+		return ze;
+	}
+
 
 	private void openN5ImporterDialog()
 	{
