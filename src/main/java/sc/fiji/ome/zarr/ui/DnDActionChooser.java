@@ -282,18 +282,35 @@ public class DnDActionChooser
 
 	private void openIJAtSpecificResolutionLevel()
 	{
-		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath ).toString();
-		N5Reader reader = new N5Factory().openReader( zarrRootPathAsStr );
+		ZarrEntry ze = inspectDroppedPath();
+		final Path zarrDatasetPath = ZarrOnFileSystemUtils.findImageRootFolder( droppedInPath );
+		if (zarrDatasetPath == null) {
+			errorReportAmbiguousZarrPath();
+			return;
+		}
+		final String zarrDatasetPathAsStr = ZarrOnFileSystemUtils.getUriFromPath( zarrDatasetPath ).toString();
+		N5Reader reader = new N5Factory().openReader( zarrDatasetPathAsStr );
 		String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
 		ImageJFunctions.show( ( RandomAccessibleInterval ) N5Utils.open( reader, dataset ), dataset );
-		logger.info( "open imageJ with zarr at {}", zarrRootPathAsStr );
+		logger.info( "open imageJ with zarr at {}", zarrDatasetPathAsStr );
 	}
 
 	private void runScript()
 	{
-		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath ).toString();
-		logger.info( "run script with zarr root path at {}", zarrRootPathAsStr );
-		ScriptUtils.executePresetScript( context, zarrRootPathAsStr );
+		final Path zarrDatasetPath = ZarrOnFileSystemUtils.findImageRootFolder( droppedInPath );
+		if (zarrDatasetPath == null) {
+			errorReportAmbiguousZarrPath();
+			return;
+		}
+		final String zarrDatasetPathAsStr = ZarrOnFileSystemUtils.getUriFromPath( zarrDatasetPath ).toString();
+		logger.info( "run script with zarr root path at {}", zarrDatasetPathAsStr );
+		ScriptUtils.executePresetScript( context, zarrDatasetPathAsStr );
+	}
+
+	private void errorReportAmbiguousZarrPath() {
+		logger.error("Was given a top-level folder of a multi-dataset zarr, don't know which single dataset to open.");
+		logger.error("Bailing out. Next time, please, drag-in a particular dataset, which is any sub-folder of the");
+		logger.error("now dropped path ({}).", droppedInPath);
 	}
 
 	private void positionDialog( JDialog dialog, Point mouseLocation )
