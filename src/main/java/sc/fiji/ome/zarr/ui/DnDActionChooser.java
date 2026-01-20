@@ -225,7 +225,7 @@ public class DnDActionChooser
 
 	private void openN5ImporterDialog()
 	{
-		final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath );
+		final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath );
 		final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
 		new N5Importer().runWithDialog( zarrRootPathAsURI.toString(),
 				ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath ) );
@@ -234,7 +234,7 @@ public class DnDActionChooser
 
 	private void openN5ViewerDialog()
 	{
-		final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath );
+		final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath );
 		final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
 		new N5ViewerCreator().runWithDialog( zarrRootPathAsURI.toString(),
 				ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath ) );
@@ -243,7 +243,7 @@ public class DnDActionChooser
 
 	private void openBDVAtSpecificResolutionLevel()
 	{
-		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath ).toString();
+		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
 		N5Reader reader = new N5Factory().openReader( zarrRootPathAsStr );
 		String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
 		if ( bdvHandleService == null )
@@ -255,7 +255,7 @@ public class DnDActionChooser
 
 	private void openIJAtSpecificResolutionLevel()
 	{
-		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath ).toString();
+		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
 		N5Reader reader = new N5Factory().openReader( zarrRootPathAsStr );
 		String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
 		ImageJFunctions.show( ( RandomAccessibleInterval ) N5Utils.open( reader, dataset ), dataset );
@@ -264,7 +264,7 @@ public class DnDActionChooser
 
 	private void runScript()
 	{
-		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath ).toString();
+		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
 		logger.info( "run script with zarr root path at {}", zarrRootPathAsStr );
 		ScriptUtils.executePresetScript( context, zarrRootPathAsStr );
 	}
