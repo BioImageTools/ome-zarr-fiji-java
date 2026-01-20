@@ -51,11 +51,19 @@ public class ZarrOnFileSystemUtils
 	}
 
 	/**
-	 * Checks if within the given folder there exists any of
-	 * these files: .zgroup, .zarray or zarr.json.
+	 * Determines whether the given path appears to be the root of a Zarr dataset.
+	 * <p>
+	 * The method checks for the presence of well-known Zarr metadata files:
+	 * <ul>
+	 *   <li>{@code .zgroup}, {@code .zattrs} or {@code .zarray} for Zarr v2</li>
+	 *   <li>{@code zarr.json} for Zarr v3</li>
+	 * </ul>
+	 * The existence of any one of these files is considered sufficient to
+	 * identify the folder as a Zarr dataset folder.
 	 *
-	 * @param folder the folder to check.
-	 * @return @{@code true} if at least one of the three files is found, {@code false} otherwise.
+	 * @param folder the path to the directory to check
+	 * @return {@code true} if the folder contains Zarr metadata files indicating
+	 *         a Zarr v2 or v3 dataset, {@code false} otherwise
 	 */
 	public static boolean isZarrFolder( final Path folder )
 	{
