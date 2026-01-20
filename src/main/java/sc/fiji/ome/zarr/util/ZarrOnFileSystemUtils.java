@@ -38,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ZarrOnFileSystemUtils
 {
@@ -86,45 +87,66 @@ public class ZarrOnFileSystemUtils
 	}
 
 	/**
-	 * Traverses to parent folders as long as they are Zarr folders. And returns the last visited folder just one below,
-	 * if there was such. If the traversing started already with the top-level folder, it would return one folder below
-	 * if there is exactly one. Otherwise, it returns null.
+	 * Attempts to locate the root image folder for a given starting path within a Zarr dataset.
+	 * <p>
+	 * The method works as follows:
+	 * <ol>
+	 *     <li>Starts at the given {@code startingFolder} and traverses upward through parent folders
+	 *     as long as each folder qualifies as a Zarr folder according to {@link #isZarrFolder(Path)}.</li>
+	 *     <li>The top-most Zarr folder found is considered the "top-level Zarr folder".</li>
+	 *     <li>If a folder below the top-level Zarr folder was visited during traversal, it is returned
+	 *     as the image folder.</li>
+	 *     <li>If no such folder exists, the method inspects the top-level Zarr folder. If it contains
+	 *     <b>exactly one</b> subfolder (excluding any folder named "OME"), that subfolder is returned as
+	 *     the image folder.</li>
+	 *     <li>If no suitable candidate folder is found or an I/O error occurs while listing subfolders,
+	 *     the method returns {@code null}.</li>
+	 * </ol>
+	 *
+	 * @param startingFolder the folder path somewhere within a Zarr dataset to start the search from; must not be {@code null}
+	 * @return the path to the candidate image folder below the top-level Zarr folder, or {@code null} if no suitable folder is found
 	 */
-	public static Path findImageRootFolder( final Path somewhereInZarrFolder )
+	public static Path findImageRootFolder( final Path startingFolder )
 	{
-		Path currFolder = somewhereInZarrFolder;
-		Path prevFolder = null;
-		Path prevprevFolder = null;
+		Path currentFolder = startingFolder;
+		Path topLevelZarrFolder = null;
+		Path imageFolder = null;
 
-		while ( isZarrFolder( currFolder ) )
+		// Traverse up the folder tree as long as we're inside a Zarr folder
+		while ( isZarrFolder( currentFolder ) )
 		{
-			prevprevFolder = prevFolder;
-			prevFolder = currFolder;
-			currFolder = currFolder.getParent();
+			imageFolder = topLevelZarrFolder; // last visited folder just below potential top-level Zarr
+			topLevelZarrFolder = currentFolder;
+			currentFolder = currentFolder.getParent();
 		}
 
-		// ever found a top-level zarr?
-		if ( prevFolder == null) return null;
+		// If no Zarr folder was ever found
+		if ( topLevelZarrFolder == null )
+			return null;
 
-		// prevFolder is now the top-level zarr, and
-		// prevprevFolder is the last visited one just below (if there is such)
-		if ( prevprevFolder != null) return prevprevFolder;
+		// If there was a folder below top-level Zarr while traversing up, return it
+		if ( imageFolder != null )
+			return imageFolder;
 
-		//see if there's only one image subfolder, and choose it possibly
-		try {
-			//Files.list(prevFolder).forEach(p -> System.out.println("sub-item: "+p));
-			Path[] subFolders = Files.list(prevFolder)
-					  .filter(Files::isDirectory)
-					  .filter(p -> !p.getFileName().toString().equals("OME"))
-					  .limit(2)
-					  .toArray(Path[]::new);
-			if (subFolders.length == 1) prevprevFolder = subFolders[0];
-		} catch (IOException e) {
-			//if anything went wrong, signal giving up...
+		// Otherwise, check if top-level Zarr has only one suitable subfolder
+		try (Stream< Path > stream = Files.list( topLevelZarrFolder ))
+		{
+			Path[] subFolders = stream
+					.filter( Files::isDirectory )
+					.filter( path -> !path.getFileName().toString().equals( "OME" ) )
+					.limit( 2 )
+					.toArray( Path[]::new );
+
+			if ( subFolders.length == 1 )
+				imageFolder = subFolders[ 0 ];
+		}
+		catch ( IOException e )
+		{
+			// If anything went wrong, give up
 			return null;
 		}
 
-		return prevprevFolder;
+		return imageFolder;
 	}
 
 	/**
