@@ -60,6 +60,7 @@ public class ZarrOnFileSystemUtils
 	public static boolean isZarrFolder( final Path folder )
 	{
 		return ( Files.exists( folder.resolve( ".zgroup" ) ) || //Zarr v2
+				Files.exists( folder.resolve( ".zattrs" ) ) || //Zarr v2. // NB: .zattrs should not normally appear without .zgroup
 				Files.exists( folder.resolve( ".zarray" ) ) || //Zarr v2
 				Files.exists( folder.resolve( "zarr.json" ) ) ); //Zarr v3
 	}
