@@ -52,7 +52,7 @@ jobs:
         run: |
           export DISPLAY=:99
           sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
-          mvn -B verify --file pom.xml -Pcoverage sonar:sonar -Dsonar.projectKey=BioImageTools_ome-zarr-fiji-java -Dsonar.organization=bioimagetools
+          mvn -B verify --file pom.xml -Pcoverage sonar:sonar -Dsonar.coverage.jacoco.xmlReportPaths=/target/site/jacoco/jacoco.xml -Dsonar.projectKey=BioImageTools_ome-zarr-fiji-java -Dsonar.organization=bioimagetools
 
       - name: Upload artifacts for subsequent review
         uses: actions/upload-artifact@master
