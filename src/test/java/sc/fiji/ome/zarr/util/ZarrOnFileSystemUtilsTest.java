@@ -1,8 +1,10 @@
 package sc.fiji.ome.zarr.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -70,6 +72,41 @@ class ZarrOnFileSystemUtilsTest
 			Path result = ZarrOnFileSystemUtils.findImageRootFolder( startPath );
 
 			assertEquals( expectedPath, result, "Expected image root folder for: " + example );
+		}
+	}
+
+	@Test
+	void testIsZarrFolder_validZarrFolders() throws URISyntaxException
+	{
+		String[] examples = {
+				"sc/fiji/ome/zarr/util/ome_zarr_v4_example",
+				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0",
+				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0/image",
+				"sc/fiji/ome/zarr/util/ome_zarr_v5_example",
+				"sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0",
+				"sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0/image"
+		};
+
+		for ( String example : examples )
+		{
+			Path path = resourcePath( example );
+			assertTrue( ZarrOnFileSystemUtils.isZarrFolder( path ) );
+		}
+	}
+
+	@Test
+	void testIsZarrFolder_invalidZarrFolders() throws URISyntaxException
+	{
+		String[] examples = {
+				"sc/fiji/ome/zarr/util",
+				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0/image/0",
+				"sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0/image/c/0"
+		};
+
+		for ( String example : examples )
+		{
+			Path path = resourcePath( example );
+			assertFalse( ZarrOnFileSystemUtils.isZarrFolder( path ) );
 		}
 	}
 }
