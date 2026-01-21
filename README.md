@@ -1,3 +1,8 @@
+[![Build Status](https://github.com/mastodon-sc/mastodon-deep-lineage/actions/workflows/build.yml/badge.svg)](https://github.com/BioImageTools/ome-zarr-fiji-java/actions/workflows/build.yml)
+[![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=BioImageTools_ome-zarr-fiji-java&metric=coverage)](https://sonarcloud.io/summary/overall?id=BioImageTools_ome-zarr-fiji-java)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=BioImageTools_ome-zarr-fiji-java&metric=ncloc)](https://sonarcloud.io/summary/overall?id=BioImageTools_ome-zarr-fiji-java)
+
 # About
 
 ![demo video showing drag-and-drop of OME-Zarr in Fiji](doc/NGFF+DnD+Fiji.webm)
@@ -8,8 +13,8 @@ An outcome of this handler is three-fold:
 
 - It either doesn't recognize the dropped target as Zarr v3 and does nothing; or else
 - It opens the N5 Import dialog (which is also available under "Fiji -> File -> Import -> HDF5/N5/Zarr/NGFF..."), unless
-- It was an ALT + drag-and-drop (the ALT key was held down) in which case [BigDataViewer](https://imagej.net/plugins/bdv/) is opened directly.
-
+- It was an ALT + drag-and-drop (the ALT key was held down) in which
+  case [BigDataViewer](https://imagej.net/plugins/bdv/) is opened directly.
 
 # Availability
 
@@ -24,16 +29,21 @@ and thus not listed Fiji update site `https://sites.imagej.net/xulman/`:
 
 ![screenshot of Fiji updater with enabled own update site](doc/xulman-experimental-fiji-update-site.png)
 
-
 # History
 
-* 2025: Moved under this github organization from [previous URL https://github.com/xulman/ome-zarr-fiji-ui](https://github.com/xulman/ome-zarr-fiji-ui).
+* 2025: Moved under this github organization
+  from [previous URL https://github.com/xulman/ome-zarr-fiji-ui](https://github.com/xulman/ome-zarr-fiji-ui).
 * 2024: Project revamped and based solely on [the suite of libs around the N5](https://github.com/saalfeldlab/n5).
-* 2024: [OME-NGFF Workflows Hackathon 2024](https://biovisioncenter.notion.site/OME-NGFF-Workflows-Hackathon-2024-dde32a032adf49b4a53b4b014586b678) in Zurich.
-* 2024: [CZI grant about "OME-Zarr Support for Java/Fiji"](https://chanzuckerberg.com/eoss/proposals/?cycle=6) landed at [CEITEC](https://www.ceitec.eu/).
-* 2023: Changes in the [scijava land](https://github.com/scijava) towards more generic drag-and-drop handlers.
-* 2022: It started at the ["Fiji + NGFF Hackathon" in Prague](https://forum.image.sc/t/fiji-ngff-hackathon-sep-2022-prague-cze/69191).
+*
 
+2024: [OME-NGFF Workflows Hackathon 2024](https://biovisioncenter.notion.site/OME-NGFF-Workflows-Hackathon-2024-dde32a032adf49b4a53b4b014586b678)
+in Zurich.
+
+* 2024: [CZI grant about "OME-Zarr Support for Java/Fiji"](https://chanzuckerberg.com/eoss/proposals/?cycle=6) landed
+  at [CEITEC](https://www.ceitec.eu/).
+* 2023: Changes in the [scijava land](https://github.com/scijava) towards more generic drag-and-drop handlers.
+* 2022: It started at
+  the ["Fiji + NGFF Hackathon" in Prague](https://forum.image.sc/t/fiji-ngff-hackathon-sep-2022-prague-cze/69191).
 
 # Outlook
 
@@ -42,9 +52,11 @@ like to have in Fiji so that the usual Fiji pipelines (meaning the standard
 ImageJ macros, Jython scripts, and even GUI-operated plugins) could work with
 Zarrs and benefit from their chunk-based nature. It is greatly inspired by his
 [previous work on DataStore](https://github.com/fiji-hpc/hpc-datastore/), which
-is essentially [a suite of Fiji plugins](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md#clients)
+is
+essentially [a suite of Fiji plugins](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md#clients)
 to manage (create, modify and delete full datasets, read and write images or
-even their chunks) [a http-servered N5 datasets](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md).
+even their
+chunks) [a http-servered N5 datasets](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md).
 
 So, we basically need a suite of Fiji (in fact scijava) plugins that (are
 “headless” and) all of them would take an URI to some NGFF data plus specific
@@ -98,4 +110,3 @@ the `NgffService` can be also directly accessible in the Jython scripts. In
 fact, these are cheap “side-effects” of the great [scijava universe](https://github.com/scijava).
 
 The first version is expected to be delivered in 2025.
-
