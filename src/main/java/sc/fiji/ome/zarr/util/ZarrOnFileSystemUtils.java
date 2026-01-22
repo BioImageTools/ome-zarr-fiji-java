@@ -31,6 +31,7 @@ package sc.fiji.ome.zarr.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Files;
@@ -82,6 +83,48 @@ public class ZarrOnFileSystemUtils
 		}
 
 		return lastValidFolder;
+	}
+
+	/**
+	 * Traverses to parent folders as long as they are Zarr folders. And returns the last visited folder just one below,
+	 * if there was such. If the traversing started already with the top-level folder, it would return one folder below
+	 * if there is exactly one. Otherwise, it returns null.
+	 */
+	public static Path findImageRootFolder( final Path somewhereInZarrFolder )
+	{
+		Path currFolder = somewhereInZarrFolder;
+		Path prevFolder = null;
+		Path prevprevFolder = null;
+
+		while ( isZarrFolder( currFolder ) )
+		{
+			prevprevFolder = prevFolder;
+			prevFolder = currFolder;
+			currFolder = currFolder.getParent();
+		}
+
+		// ever found a top-level zarr?
+		if ( prevFolder == null) return null;
+
+		// prevFolder is now the top-level zarr, and
+		// prevprevFolder is the last visited one just below (if there is such)
+		if ( prevprevFolder != null) return prevprevFolder;
+
+		//see if there's only one image subfolder, and choose it possibly
+		try {
+			//Files.list(prevFolder).forEach(p -> System.out.println("sub-item: "+p));
+			Path[] subFolders = Files.list(prevFolder)
+					  .filter(Files::isDirectory)
+					  .filter(p -> !p.getFileName().toString().equals("OME"))
+					  .limit(2)
+					  .toArray(Path[]::new);
+			if (subFolders.length == 1) prevprevFolder = subFolders[0];
+		} catch (IOException e) {
+			//if anything went wrong, signal giving up...
+			return null;
+		}
+
+		return prevprevFolder;
 	}
 
 	/**
@@ -139,23 +182,19 @@ public class ZarrOnFileSystemUtils
 	}
 
 	/**
-	 * Resolves the root path of an OME Zarr dataset given a path pointing inside the dataset.
 	 * The method ensures compatibility with different operating systems by formatting the path accordingly.
 	 * If the provided path is null, the method returns null.
 	 *
-	 * @param path the file system path pointing to a location inside an OME Zarr dataset
-	 * @return the absolute path to the root of the Zarr dataset formatted as a string,
+	 * @param path the file system path pointing anywhere
+	 * @return the absolute path formatted as a string,
 	 *         or null if the provided path is null
 	 */
-	public static URI getZarrRootPath( final Path path )
+	public static URI getUriFromPath(final Path path )
 	{
-		if ( path != null )
-		{
-			final Path zarrRootPath = findRootFolder( path );
-			final URI zarrRootPathAsStr = zarrRootPath.toUri();
-			logger.info( "zarrRootPath: {}", zarrRootPathAsStr );
-			return zarrRootPathAsStr;
-		}
-		return null;
+		if (path == null) return null;
+
+		final URI pathAsStr = path.toUri();
+		logger.info( "URI: {}", pathAsStr );
+		return pathAsStr;
 	}
 }
