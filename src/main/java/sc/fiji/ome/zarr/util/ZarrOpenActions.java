@@ -50,7 +50,7 @@ public class ZarrOpenActions
 		final URI rootUri = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath );
 		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
 
-		new N5Importer().runWithDialog( rootUri.toString(), ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, rootPath ) );
+		new N5Importer().runWithDialog( rootUri.toString(), ZarrOnFileSystemUtils.relativePathElements( rootPath, droppedInPath ) );
 
 		logger.info( "Opened Zarr/N5 importer at {}", rootUri );
 	}
@@ -64,7 +64,8 @@ public class ZarrOpenActions
 		final URI rootUri = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath );
 		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
 
-		new N5ViewerCreator().runWithDialog( rootUri.toString(), ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, rootPath ) );
+		new N5ViewerCreator().runWithDialog( rootUri.toString(),
+				ZarrOnFileSystemUtils.relativePathElements( rootPath, droppedInPath ) );
 
 		logger.info( "Opened Zarr/N5 viewer at {}", rootUri );
 	}

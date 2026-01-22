@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,7 +36,8 @@ import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -180,25 +181,63 @@ public class ZarrOnFileSystemUtils
 	}
 
 	/**
-	 * If not a top-level path is drag-and-dropped to Fiji, but instead a folder from
-	 * inside an OME Zarr folders structure, this routine returns the list of folders
-	 * that the 'shorterPath' would need to traverse to arrive to the 'longerPath'.
+	 * Returns the relative path from the {@code ancestorPath} to the {@code descendantPath},
+	 * as a list of folder names in the order needed to traverse from {@code ancestorPath}
+	 * to reach {@code descendantPath}.
+	 * <p>
+	 * For example, if {@code ancestorPath} is "/a/b" and {@code descendantPath} is "/a/b/c",
+	 * this method returns ["c"].
+	 * <p>
+	 * This method assumes that {@code ancestorPath} is a parent (or ancestor) of {@code descendantPath}.
+	 * If not, an {@link IllegalArgumentException} is thrown.
 	 *
-	 * @param longerPath Target path, presumably the top-level OME Zarr folder.
-	 * @param shorterPath Starting path, under which folders need to be opened to reach the 'longerPath'.
-	 * @return An ordered list of folders or an empty list if no solution was found.
+	 * @param ancestorPath the shorter path (must be an ancestor of {@code descendantPath})
+	 * @param descendantPath the longer path (must be a descendant of {@code ancestorPath})
+	 * @return an ordered list of folder names from {@code ancestorPath} to {@code descendantPath},
+	 *         or an empty list if the paths are equal
+	 * @throws IllegalArgumentException if {@code ancestorPath} is not an ancestor of {@code descendantPath}
+	 *         or if either path is null
 	 */
-	public static List< String > listPathDifferences( final Path longerPath, final Path shorterPath )
+	public static List< String > relativePathElements( final Path ancestorPath, final Path descendantPath )
 	{
-		List< String > diffPathElems = new LinkedList<>();
-		Path currPath = longerPath;
-		while ( !currPath.equals( shorterPath ) )
+		// Null checks
+		if ( descendantPath == null )
+			throw new IllegalArgumentException( "ancestorPath must not be null" );
+		if ( ancestorPath == null )
+			throw new IllegalArgumentException( "descendantPath must not be null" );
+
+		// If paths are equal, no difference
+		if ( descendantPath.equals( ancestorPath ) )
+			return Collections.emptyList(); // immutable empty list (Java 8)
+
+		// Build the path from longerPath up to shorterPath
+		List< String > pathElements = new ArrayList<>();
+		Path current = descendantPath;
+
+		while ( current != null && !current.equals( ancestorPath ) )
 		{
-			diffPathElems.add( 0, currPath.getFileName().toString() );
-			currPath = currPath.getParent();
-			//NB: OS-agnostic finding of the difference of the folders
+			Path fileName = current.getFileName();
+			if ( fileName == null )
+			{
+				throw new IllegalArgumentException(
+						"Cannot determine path difference: " + descendantPath + " is not a descendant of " + ancestorPath
+				);
+			}
+			pathElements.add( fileName.toString() );
+			current = current.getParent();
 		}
-		return diffPathElems;
+
+		// If we reached null without matching shorterPath, it's not a descendant
+		if ( current == null )
+		{
+			throw new IllegalArgumentException(
+					"Path " + descendantPath + " is not a descendant of " + ancestorPath
+			);
+		}
+
+		// Reverse to get the path from shorterPath to longerPath
+		Collections.reverse( pathElements );
+		return Collections.unmodifiableList( pathElements ); // immutable result
 	}
 
 	/**
@@ -220,9 +259,10 @@ public class ZarrOnFileSystemUtils
 	 * @return the absolute path formatted as a string,
 	 *         or null if the provided path is null
 	 */
-	public static URI getUriFromPath(final Path path )
+	public static URI getUriFromPath( final Path path )
 	{
-		if (path == null) return null;
+		if ( path == null )
+			return null;
 
 		final URI pathAsStr = path.toUri();
 		logger.info( "URI: {}", pathAsStr );
