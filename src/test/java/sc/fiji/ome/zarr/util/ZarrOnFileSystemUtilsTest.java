@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -115,9 +116,8 @@ class ZarrOnFileSystemUtilsTest
 	void testListPathDifferences_noDifferences()
 	{
 		Path pathA = Paths.get( "/some/path/to/folder" );
-		Path pathB = Paths.get( "/some/path/to/folder" );
 
-		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( pathA, pathB );
+		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( pathA, pathA );
 
 		assertTrue( result.isEmpty(), "Expected no differences when paths are the same." );
 	}
@@ -125,10 +125,10 @@ class ZarrOnFileSystemUtilsTest
 	@Test
 	void testListPathDifferences_simpleDifference()
 	{
-		Path longerPath = Paths.get( "/root/folder/subfolder" );
 		Path shorterPath = Paths.get( "/root/folder" );
+		Path longerPath = Paths.get( "/root/folder/subfolder" );
 
-		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( longerPath, shorterPath );
+		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( shorterPath, longerPath );
 
 		assertEquals( 1, result.size(), "Expected exactly 1 folder difference." );
 		assertEquals( "subfolder", result.get( 0 ), "Expected the difference to be 'subfolder'." );
@@ -137,10 +137,10 @@ class ZarrOnFileSystemUtilsTest
 	@Test
 	void testListPathDifferences_multipleDifferences()
 	{
-		Path longerPath = Paths.get( "/usr/local/bin/java" );
 		Path shorterPath = Paths.get( "/usr" );
+		Path longerPath = Paths.get( "/usr/local/bin/java" );
 
-		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( longerPath, shorterPath );
+		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( shorterPath, longerPath );
 
 		assertEquals( 3, result.size(), "Expected 3 folder differences." );
 		assertEquals( "local", result.get( 0 ), "First difference should be 'local'." );
@@ -151,10 +151,10 @@ class ZarrOnFileSystemUtilsTest
 	@Test
 	void testListPathDifferences_shorterPathIsParentRoot()
 	{
-		Path longerPath = Paths.get( "C:/Users/John/Documents/Projects/Code" );
 		Path shorterPath = Paths.get( "C:/" );
+		Path longerPath = Paths.get( "C:/Users/John/Documents/Projects/Code" );
 
-		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( longerPath, shorterPath );
+		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( shorterPath, longerPath );
 
 		assertEquals( 5, result.size(), "Expected 5 folder differences." );
 		assertEquals( "Users", result.get( 0 ), "First difference should be 'Users'." );
@@ -167,10 +167,10 @@ class ZarrOnFileSystemUtilsTest
 	@Test
 	void testListPathDifferences_relativePaths()
 	{
-		Path longerPath = Paths.get( "a/b/c" );
 		Path shorterPath = Paths.get( "a" );
+		Path longerPath = Paths.get( "a/b/c" );
 
-		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( longerPath, shorterPath );
+		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( shorterPath, longerPath );
 
 		assertEquals( 2, result.size(), "Expected 2 folder differences." );
 		assertEquals( "b", result.get( 0 ), "First difference should be 'b'." );
@@ -180,12 +180,25 @@ class ZarrOnFileSystemUtilsTest
 	@Test
 	void testListPathDifferences_differentRelativePaths()
 	{
-		Path longerPath = Paths.get( "../longer" );
 		Path shorterPath = Paths.get( ".." );
+		Path longerPath = Paths.get( "../longer" );
 
-		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( longerPath, shorterPath );
+		List< String > result = ZarrOnFileSystemUtils.listPathDifferences( shorterPath, longerPath );
 
 		assertEquals( 1, result.size(), "Expected 1 folder difference." );
 		assertEquals( "longer", result.get( 0 ), "Expected the difference to be 'longer'." );
+	}
+
+	@Test
+	void testListPathDifferences_pathsDoNotAlign()
+	{
+		Path shorterPath = Paths.get( "/differentRoot/folderB" );
+		Path longerPath = Paths.get( "/root/folderA" );
+
+		assertThrows(
+				IllegalArgumentException.class, () -> {
+					ZarrOnFileSystemUtils.listPathDifferences( shorterPath, longerPath );
+				}, "Expected IllegalArgumentException because paths do not align."
+		);
 	}
 }
