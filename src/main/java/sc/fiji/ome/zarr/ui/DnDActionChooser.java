@@ -223,21 +223,33 @@ public class DnDActionChooser
 		return dialog;
 	}
 
+	/**
+	 * Opens the N5 Importer dialog pointed at the dropped-in path.
+	 * Shortcut to File > Import > HDF5/N5/Zarr/OME-NGFF
+	 */
 	private void openN5ImporterDialog()
 	{
 		final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath );
 		final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
-		new N5Importer().runWithDialog( zarrRootPathAsURI.toString(),
-				ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath ) );
+		new N5Importer().runWithDialog(
+				zarrRootPathAsURI.toString(),
+				ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath )
+		);
 		logger.info( "opened zarr importer dialog at {}", zarrRootPathAsURI );
 	}
 
+	/**
+	 * Opens the N5 Viewer (BDV) dialog pointed at the dropped-in path.
+	 * Shortcut to Plugins > BigDataViewer > HDF5/N5/Zarr/OME-NGFF Viewer
+	 */
 	private void openN5ViewerDialog()
 	{
 		final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath );
 		final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
-		new N5ViewerCreator().runWithDialog( zarrRootPathAsURI.toString(),
-				ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath ) );
+		new N5ViewerCreator().runWithDialog(
+				zarrRootPathAsURI.toString(),
+				ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath )
+		);
 		logger.info( "opened zarr viewer dialog at {}", zarrRootPathAsURI );
 	}
 
