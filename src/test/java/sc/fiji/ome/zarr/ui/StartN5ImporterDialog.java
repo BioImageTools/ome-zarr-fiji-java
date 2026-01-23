@@ -44,6 +44,6 @@ public class StartN5ImporterDialog
 
 		N5Importer importer = new N5Importer();
 		importer.runWithDialog( zarrRootPath.toAbsolutePath().toString(),
-				ZarrOnFileSystemUtils.listPathDifferences( zarrRootPath, droppedPath ) );
+				ZarrOnFileSystemUtils.relativePathElements( zarrRootPath, droppedPath ) );
 	}
 }

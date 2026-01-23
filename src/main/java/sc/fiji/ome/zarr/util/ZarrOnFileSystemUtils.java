@@ -181,46 +181,46 @@ public class ZarrOnFileSystemUtils
 	}
 
 	/**
-	 * Returns the relative path from the {@code shorterPath} to the {@code longerPath},
-	 * as a list of folder names in the order needed to traverse from {@code shorterPath}
-	 * to reach {@code longerPath}.
+	 * Returns the relative path from the {@code ancestorPath} to the {@code descendantPath},
+	 * as a list of folder names in the order needed to traverse from {@code ancestorPath}
+	 * to reach {@code descendantPath}.
 	 * <p>
-	 * For example, if {@code shorterPath} is "/a/b" and {@code longerPath} is "/a/b/c",
+	 * For example, if {@code ancestorPath} is "/a/b" and {@code descendantPath} is "/a/b/c",
 	 * this method returns ["c"].
 	 * <p>
-	 * This method assumes that {@code shorterPath} is a parent (or ancestor) of {@code longerPath}.
+	 * This method assumes that {@code ancestorPath} is a parent (or ancestor) of {@code descendantPath}.
 	 * If not, an {@link IllegalArgumentException} is thrown.
 	 *
-	 * @param shorterPath the shorter path (must be an ancestor of {@code longerPath})
-	 * @param longerPath the longer path (must be a descendant of {@code shorterPath})
-	 * @return an ordered list of folder names from {@code shorterPath} to {@code longerPath},
+	 * @param ancestorPath the shorter path (must be an ancestor of {@code descendantPath})
+	 * @param descendantPath the longer path (must be a descendant of {@code ancestorPath})
+	 * @return an ordered list of folder names from {@code ancestorPath} to {@code descendantPath},
 	 *         or an empty list if the paths are equal
-	 * @throws IllegalArgumentException if {@code shorterPath} is not an ancestor of {@code longerPath}
+	 * @throws IllegalArgumentException if {@code ancestorPath} is not an ancestor of {@code descendantPath}
 	 *         or if either path is null
 	 */
-	public static List< String > listPathDifferences( final Path shorterPath, final Path longerPath )
+	public static List< String > relativePathElements( final Path ancestorPath, final Path descendantPath )
 	{
 		// Null checks
-		if ( longerPath == null )
-			throw new IllegalArgumentException( "longerPath must not be null" );
-		if ( shorterPath == null )
-			throw new IllegalArgumentException( "shorterPath must not be null" );
+		if ( descendantPath == null )
+			throw new IllegalArgumentException( "ancestorPath must not be null" );
+		if ( ancestorPath == null )
+			throw new IllegalArgumentException( "descendantPath must not be null" );
 
 		// If paths are equal, no difference
-		if ( longerPath.equals( shorterPath ) )
+		if ( descendantPath.equals( ancestorPath ) )
 			return Collections.emptyList(); // immutable empty list (Java 8)
 
 		// Build the path from longerPath up to shorterPath
 		List< String > pathElements = new ArrayList<>();
-		Path current = longerPath;
+		Path current = descendantPath;
 
-		while ( current != null && !current.equals( shorterPath ) )
+		while ( current != null && !current.equals( ancestorPath ) )
 		{
 			Path fileName = current.getFileName();
 			if ( fileName == null )
 			{
 				throw new IllegalArgumentException(
-						"Cannot determine path difference: " + longerPath + " is not a descendant of " + shorterPath
+						"Cannot determine path difference: " + descendantPath + " is not a descendant of " + ancestorPath
 				);
 			}
 			pathElements.add( fileName.toString() );
@@ -231,7 +231,7 @@ public class ZarrOnFileSystemUtils
 		if ( current == null )
 		{
 			throw new IllegalArgumentException(
-					"Path " + longerPath + " is not a descendant of " + shorterPath
+					"Path " + descendantPath + " is not a descendant of " + ancestorPath
 			);
 		}
 
