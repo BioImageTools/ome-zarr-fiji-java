@@ -17,6 +17,7 @@ import java.awt.Desktop;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.List;
 
 import bdv.util.BdvFunctions;
 
@@ -47,12 +48,14 @@ public class ZarrOpenActions
 	 */
 	public void openImporterDialog()
 	{
-		final URI rootUri = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath );
+		final URI droppedInURI = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath );
 		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
+		final List< String > relativePaths = ZarrOnFileSystemUtils.relativePathElements( rootPath, droppedInPath );
 
-		new N5Importer().runWithDialog( rootUri.toString(), ZarrOnFileSystemUtils.relativePathElements( rootPath, droppedInPath ) );
+		new N5Importer().runWithDialog( droppedInURI.toString(), relativePaths );
 
-		logger.info( "Opened Zarr/N5 importer at {}", rootUri );
+		if ( logger.isInfoEnabled() )
+			logger.info( "Opened Zarr/N5 importer dialog at {} with relative paths: {}.", droppedInURI, String.join( "/", relativePaths ) );
 	}
 
 	/**
@@ -61,13 +64,14 @@ public class ZarrOpenActions
 	 */
 	public void openViewerDialog()
 	{
-		final URI rootUri = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath );
+		final URI droppedInURI = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath );
 		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
+		final List< String > relativePaths = ZarrOnFileSystemUtils.relativePathElements( rootPath, droppedInPath );
 
-		new N5ViewerCreator().runWithDialog( rootUri.toString(),
-				ZarrOnFileSystemUtils.relativePathElements( rootPath, droppedInPath ) );
+		new N5ViewerCreator().runWithDialog( droppedInURI.toString(), relativePaths );
 
-		logger.info( "Opened Zarr/N5 viewer at {}", rootUri );
+		if ( logger.isInfoEnabled() )
+			logger.info( "Opened Zarr/N5 viewer at {} with relative paths: {}.", droppedInURI, String.join( "/", relativePaths ) );
 	}
 
 	public void openIJHighestResolution()
