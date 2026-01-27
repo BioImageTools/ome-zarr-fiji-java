@@ -144,14 +144,14 @@ public class DnDActionChooser
 
 		// FIJI button
 		zarrIJHighestResolution.addActionListener( e -> {
-			actions.openIJHighestResolution();
+			actions.openIJWithImage();
 			dialog.dispose();
 		} );
 		zarrIJHighestResolution.setToolTipText( "Open Zarr/N5 in ImageJ at highest resolution level" );
 
 		// BDV button
 		zarrBDVHighestResolution.addActionListener( e -> {
-			actions.openBDVHighestResolution();
+			actions.openBDVWithImage();
 			dialog.dispose();
 		} );
 		zarrBDVHighestResolution.setToolTipText( "Open Zarr/N5 in BDV at highest resolution level" );
