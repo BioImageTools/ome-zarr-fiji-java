@@ -1,8 +1,8 @@
 package sc.fiji.ome.zarr.util;
 
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.util.Cast;
 
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
@@ -18,8 +18,10 @@ import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Consumer;
 
 import bdv.util.BdvFunctions;
+import ij.IJ;
 
 import javax.annotation.Nullable;
 
@@ -74,31 +76,38 @@ public class ZarrOpenActions
 			logger.info( "Opened Zarr/N5 viewer at {} with relative paths: {}.", droppedInURI, String.join( "/", relativePaths ) );
 	}
 
-	public void openIJHighestResolution()
+	public void openIJWithImage()
 	{
-		final String root = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
-
-		N5Reader reader = new N5Factory().openReader( root );
-		String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
-
-		ImageJFunctions.show( ( RandomAccessibleInterval ) N5Utils.open( reader, dataset ), dataset );
-
-		logger.info( "Opened ImageJ at highest resolution: {}", root );
+		openImage( img -> ImageJFunctions.show( Cast.unchecked( img ) ) );
 	}
 
-	public void openBDVHighestResolution()
+	public void openBDVWithImage()
 	{
-		final String root = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
+		openImage( img -> {
+			if ( bdvHandleService == null )
+				BdvFunctions.show( img, droppedInPath.toString() );
+			else
+				bdvHandleService.openNewBdv( img, droppedInPath.toString() );
+		} );
+	}
 
-		N5Reader reader = new N5Factory().openReader( root );
-		String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
-
-		if ( bdvHandleService == null )
-			BdvFunctions.show( ( Img< ? > ) N5Utils.open( reader, dataset ), dataset );
-		else
-			bdvHandleService.openNewBdv( N5Utils.open( reader, dataset ), dataset );
-
-		logger.info( "Opened BDV at highest resolution: {}", root );
+	void openImage( final Consumer< Img< ? > > imageOpener )
+	{
+		N5Reader reader = new N5Factory().openReader( ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString() );
+		Img< ? > img;
+		try
+		{
+			img = N5Utils.open( reader, "" );
+		}
+		catch ( Exception e )
+		{
+			IJ.error( "Could not open dataset as image: " + droppedInPath + "\n\n"
+					+ "Consider opening one level higher or lower in the hierarchy instead." );
+			logger.warn( "Could not open dataset as image: {}. Error message: {}", droppedInPath, e.getMessage() );
+			return;
+		}
+		imageOpener.accept( img );
+		logger.info( "Opened dataset: {}", droppedInPath );
 	}
 
 	public void runScript()
