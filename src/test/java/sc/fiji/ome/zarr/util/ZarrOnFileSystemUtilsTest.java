@@ -2,7 +2,6 @@ package sc.fiji.ome.zarr.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,20 +9,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
 class ZarrOnFileSystemUtilsTest
 {
-
-	private Path resourcePath( String resource ) throws URISyntaxException
-	{
-		URL url = getClass().getClassLoader().getResource( resource );
-		assertNotNull( url, "Resource folder not found: " + resource );
-		return Paths.get( url.toURI() );
-	}
 
 	@Test
 	void testFindImageRootFolder_startOnRootFolder() throws URISyntaxException
@@ -35,7 +26,7 @@ class ZarrOnFileSystemUtilsTest
 
 		for ( String example : examples )
 		{
-			Path path = resourcePath( example );
+			Path path = ZarrTestUtils.resourcePath( example );
 			Path result = ZarrOnFileSystemUtils.findImageRootFolder( path );
 			assertNull( result, "Expected null for root folder: " + example );
 		}
@@ -51,7 +42,7 @@ class ZarrOnFileSystemUtilsTest
 
 		for ( String example : examples )
 		{
-			Path path = resourcePath( example );
+			Path path = ZarrTestUtils.resourcePath( example );
 			Path result = ZarrOnFileSystemUtils.findImageRootFolder( path );
 			assertEquals( path, result, "Expected image root folder for: " + example );
 		}
@@ -67,7 +58,7 @@ class ZarrOnFileSystemUtilsTest
 
 		for ( String example : examples )
 		{
-			Path startPath = resourcePath( example );
+			Path startPath = ZarrTestUtils.resourcePath( example );
 
 			// Expected parent folder
 			Path expectedPath = startPath.getParent();
@@ -91,7 +82,7 @@ class ZarrOnFileSystemUtilsTest
 
 		for ( String example : examples )
 		{
-			Path path = resourcePath( example );
+			Path path = ZarrTestUtils.resourcePath( example );
 			assertTrue( ZarrOnFileSystemUtils.isZarrFolder( path ) );
 		}
 	}
@@ -107,7 +98,7 @@ class ZarrOnFileSystemUtilsTest
 
 		for ( String example : examples )
 		{
-			Path path = resourcePath( example );
+			Path path = ZarrTestUtils.resourcePath( example );
 			assertFalse( ZarrOnFileSystemUtils.isZarrFolder( path ) );
 		}
 	}
