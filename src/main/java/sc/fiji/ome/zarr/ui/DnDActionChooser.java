@@ -4,11 +4,9 @@ import org.scijava.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.ui.util.CreateIcon;
-import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
-import javax.annotation.Nullable;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -54,11 +52,10 @@ public class DnDActionChooser
 
 	private boolean extendedVersion;
 
-	public DnDActionChooser( final Frame parentFrame, final Path path, final Context context,
-			@Nullable final BdvHandleService bdvHandleService )
+	public DnDActionChooser( final Frame parentFrame, final Path path, final Context context )
 	{
 		this.parentFrame = parentFrame;
-		this.actions = new ZarrOpenActions( path, context, bdvHandleService );
+		this.actions = new ZarrOpenActions( path, context );
 		this.context = context;
 
 		this.extendedVersion = true;
