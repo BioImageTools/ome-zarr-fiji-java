@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -72,7 +72,6 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		return ZarrOnFileSystemUtils.isZarrFolder( Paths.get( source.getURI() ) );
 	}
 
-
 	@Override
 	public Object open( Location source ) throws IOException
 	{
@@ -80,8 +79,9 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		final FileLocation fsource = source instanceof FileLocation ? ( FileLocation ) source : null;
 
 		//debugging the DnD a bit.... but both tests should never fail
-		if ( fsource == null || !ZarrOnFileSystemUtils.isZarrFolder( fsource.getFile().toPath() ) ) {
-			logger.error("Zarr DND plugin: Sanity check failed. Something is very wrong, bailing out.");
+		if ( fsource == null || !ZarrOnFileSystemUtils.isZarrFolder( fsource.getFile().toPath() ) )
+		{
+			logger.error( "Zarr DND plugin: Sanity check failed. Something is very wrong, bailing out." );
 			return null;
 		}
 
@@ -89,7 +89,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
 
 		//TODO: this should ideally go into a separate thread... as an independent follow-up story after the DnD event is over
-		new DnDActionChooser( null, droppedInPath, this.context(), bdvHandleService ).show();
+		new DnDActionChooser( null, droppedInPath, this.context() ).show();
 
 		// Returning such an object makes Scijava's DnD subsystem believe that the dropped object
 		// has been already fully loaded, and Scijava (Fiji) will attempt to display it now (and
@@ -98,7 +98,6 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		// (While our DnDActionChoose window will still be up there...)
 		return FAKE_INPUT;
 	}
-
 
 	@Override
 	public Class< Object > getDataType()

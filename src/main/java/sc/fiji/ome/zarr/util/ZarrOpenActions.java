@@ -23,8 +23,6 @@ import java.util.function.Consumer;
 import bdv.util.BdvFunctions;
 import ij.IJ;
 
-import javax.annotation.Nullable;
-
 public class ZarrOpenActions
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
@@ -35,13 +33,10 @@ public class ZarrOpenActions
 
 	private final Context context;
 
-	private final @Nullable BdvHandleService bdvHandleService;
-
-	public ZarrOpenActions( final Path droppedInPath, final Context context, @Nullable final BdvHandleService bdvHandleService )
+	public ZarrOpenActions( final Path droppedInPath, final Context context )
 	{
 		this.droppedInPath = droppedInPath;
 		this.context = context;
-		this.bdvHandleService = bdvHandleService;
 	}
 
 	/**
@@ -83,12 +78,7 @@ public class ZarrOpenActions
 
 	public void openBDVWithImage()
 	{
-		openImage( img -> {
-			if ( bdvHandleService == null )
-				BdvFunctions.show( img, droppedInPath.toString() );
-			else
-				bdvHandleService.openNewBdv( img, droppedInPath.toString() );
-		} );
+		openImage( img -> BdvFunctions.show( img, droppedInPath.toString() ) );
 	}
 
 	void openImage( final Consumer< Img< ? > > imageOpener )
