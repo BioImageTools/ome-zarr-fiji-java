@@ -63,7 +63,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	@Override
 	public boolean supportsOpen( Location source )
 	{
-		logger.info( "Zarr DND plugin: Was questioned if this path supports open: {}", source.getURI().getPath() ); //TODO: should be debug()
+		logger.debug( "Zarr DND plugin: Was questioned if this path supports open: {}", source.getURI().getPath() );
 
 		if ( !( source instanceof FileLocation ) )
 		{
@@ -75,7 +75,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	@Override
 	public Object open( Location source ) throws IOException
 	{
-		logger.info( "Zarr DND plugin: Was asked to open: {}", source.getURI().getPath() ); //TODO: should be debug()
+		logger.debug( "Zarr DND plugin: Was asked to open: {}", source.getURI().getPath() );
 		final FileLocation fsource = source instanceof FileLocation ? ( FileLocation ) source : null;
 
 		//debugging the DnD a bit.... but both tests should never fail
