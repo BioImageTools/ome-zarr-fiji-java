@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -34,13 +34,16 @@ import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class StartN5ImporterDialog {
-	public static void main(String[] args) {
+public class StartN5ImporterDialog
+{
+	public static void main( String[] args )
+	{
 		// final Path droppedPath = Paths.get("/temp/Zurich.hackathon.testData/maybe_top_level.zarr/CTC_trainTrif02_TP35/");
-        final Path droppedPath = Paths.get("D:", "idr0079_images.zarr");
-		final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder(droppedPath);
+		final Path droppedPath = Paths.get( "D:", "idr0079_images.zarr" );
+		final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( droppedPath );
 
 		N5Importer importer = new N5Importer();
-		importer.runWithDialog(zarrRootPath.toAbsolutePath().toString(), ZarrOnFileSystemUtils.listPathDifferences(droppedPath,zarrRootPath));
+		importer.runWithDialog( zarrRootPath.toAbsolutePath().toString(),
+				ZarrOnFileSystemUtils.relativePathElements( zarrRootPath, droppedPath ) );
 	}
 }

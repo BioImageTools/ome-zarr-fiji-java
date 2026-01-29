@@ -1,0 +1,65 @@
+{
+  "multiscales": [
+    {
+      "axes": [
+        {
+          "name": "y",
+          "type": "space"
+        },
+        {
+          "name": "x",
+          "type": "space"
+        }
+      ],
+      "datasets": [
+        {
+          "path": "scale0/image",
+          "coordinateTransformations": [
+            {
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "type": "scale"
+            },
+            {
+              "translation": [
+                0.0,
+                0.0
+              ],
+              "type": "translation"
+            }
+          ]
+        },
+        {
+          "path": "scale1/image",
+          "coordinateTransformations": [
+            {
+              "scale": [
+                2.0,
+                2.0
+              ],
+              "type": "scale"
+            },
+            {
+              "translation": [
+                0.5,
+                0.5
+              ],
+              "type": "translation"
+            }
+          ]
+        }
+      ],
+      "name": "image",
+      "version": "0.4",
+      "type": "itkwasm_gaussian",
+      "metadata": {
+        "description": "Smoothed with a discrete gaussian filter to generate a scale space, ideal for intensity images. ITK-Wasm implementation is extremely portable and SIMD accelerated.",
+        "method": "itkwasm_downsample.downsample",
+        "version": "1.8.1"
+      },
+      "@type": "ngff:Image"
+    }
+  ]
+}

@@ -1,25 +1,12 @@
 package sc.fiji.ome.zarr.ui;
 
-import bdv.util.BdvFunctions;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
-import org.janelia.saalfeldlab.n5.ij.N5Importer;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
-import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.scijava.Context;
-import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 import sc.fiji.ome.zarr.ui.util.CreateIcon;
-import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ScriptUtils;
-import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
+import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
-import javax.annotation.Nullable;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -28,7 +15,6 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import java.awt.AWTError;
-import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -39,7 +25,6 @@ import java.awt.PointerInfo;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
-import java.net.URI;
 import java.nio.file.Path;
 
 public class DnDActionChooser
@@ -47,16 +32,11 @@ public class DnDActionChooser
 
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private static final String HELP_URL = "https://github.com/BioImageTools/ome-zarr-fiji-java/";
-
 	private final Frame parentFrame;
 
-	private final Path droppedInPath;
+	private final ZarrOpenActions actions;
 
 	private final Context context;
-
-	@Nullable
-	private final BdvHandleService bdvHandleService;
 
 	private final JButton zarrToIJDialog;
 
@@ -72,13 +52,11 @@ public class DnDActionChooser
 
 	private boolean extendedVersion;
 
-	public DnDActionChooser( final Frame parentFrame, final Path path, final Context context,
-			@Nullable final BdvHandleService bdvHandleService )
+	public DnDActionChooser( final Frame parentFrame, final Path path, final Context context )
 	{
 		this.parentFrame = parentFrame;
-		this.droppedInPath = path;
+		this.actions = new ZarrOpenActions( path, context );
 		this.context = context;
-		this.bdvHandleService = bdvHandleService;
 
 		this.extendedVersion = true;
 
@@ -149,28 +127,28 @@ public class DnDActionChooser
 
 		// zarr to FIJI importer button
 		zarrToIJDialog.addActionListener( e -> {
-			openN5ImporterDialog();
+			actions.openImporterDialog();
 			dialog.dispose();
 		} );
 		zarrToIJDialog.setToolTipText( "Open Zarr/N5 Importer dialog" );
 
 		// zarr to BDV viewer button
 		zarrToBDVDialog.addActionListener( e -> {
-			openN5ViewerDialog();
+			actions.openViewerDialog();
 			dialog.dispose();
 		} );
 		zarrToBDVDialog.setToolTipText( "Open Zarr/N5 BDV Viewer dialog" );
 
 		// FIJI button
 		zarrIJHighestResolution.addActionListener( e -> {
-			openIJAtSpecificResolutionLevel();
+			actions.openIJWithImage();
 			dialog.dispose();
 		} );
 		zarrIJHighestResolution.setToolTipText( "Open Zarr/N5 in ImageJ at highest resolution level" );
 
 		// BDV button
 		zarrBDVHighestResolution.addActionListener( e -> {
-			openBDVAtSpecificResolutionLevel();
+			actions.openBDVWithImage();
 			dialog.dispose();
 		} );
 		zarrBDVHighestResolution.setToolTipText( "Open Zarr/N5 in BDV at highest resolution level" );
@@ -179,22 +157,14 @@ public class DnDActionChooser
 		String scriptName = ScriptUtils.getTooltipText( context );
 		zarrScript.setToolTipText( "Open Zarr/N5 Script:\n\n" + scriptName );
 		zarrScript.addActionListener( e -> {
-			runScript();
+			actions.runScript();
 			dialog.dispose();
 		} );
+
 		// help button
 		help.addActionListener( e -> dialog.dispose() );
 		help.setToolTipText( "Help about Zarr/N5 actions" );
-		help.addActionListener( e -> {
-			try
-			{
-				Desktop.getDesktop().browse( new URI( HELP_URL ) );
-			}
-			catch ( Exception ex )
-			{
-				logger.warn( "Cannot open help link: {}", ex.getMessage() );
-			}
-		} );
+		help.addActionListener( e -> actions.showHelp() );
 
 		setupCloseOnKeyboard( dialog );
 		setupCloseOnMouseLeave( dialog );
@@ -221,52 +191,6 @@ public class DnDActionChooser
 		dialog.setAlwaysOnTop( true );
 		dialog.setOpacity( 1.0f );
 		return dialog;
-	}
-
-	private void openN5ImporterDialog()
-	{
-		final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath );
-		final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
-		new N5Importer().runWithDialog( zarrRootPathAsURI.toString(),
-				ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath ) );
-		logger.info( "opened zarr importer dialog at {}", zarrRootPathAsURI );
-	}
-
-	private void openN5ViewerDialog()
-	{
-		final URI zarrRootPathAsURI = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath );
-		final Path zarrRootPath = ZarrOnFileSystemUtils.findRootFolder( droppedInPath );
-		new N5ViewerCreator().runWithDialog( zarrRootPathAsURI.toString(),
-				ZarrOnFileSystemUtils.listPathDifferences( droppedInPath, zarrRootPath ) );
-		logger.info( "opened zarr viewer dialog at {}", zarrRootPathAsURI );
-	}
-
-	private void openBDVAtSpecificResolutionLevel()
-	{
-		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath ).toString();
-		N5Reader reader = new N5Factory().openReader( zarrRootPathAsStr );
-		String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
-		if ( bdvHandleService == null )
-			BdvFunctions.show( ( Img< ? > ) N5Utils.open( reader, dataset ), dataset );
-		else
-			bdvHandleService.openNewBdv( N5Utils.open( reader, dataset ), dataset );
-		logger.info( "open big data viewer with zarr at {}", zarrRootPathAsStr );
-	}
-
-	private void openIJAtSpecificResolutionLevel()
-	{
-		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath ).toString();
-		N5Reader reader = new N5Factory().openReader( zarrRootPathAsStr );
-		String dataset = ZarrOnFileSystemUtils.findHighestResolutionByName( reader.deepListDatasets( "" ) );
-		ImageJFunctions.show( ( RandomAccessibleInterval ) N5Utils.open( reader, dataset ), dataset );
-		logger.info( "open imageJ with zarr at {}", zarrRootPathAsStr );
-	}
-
-	private void runScript()
-	{
-		final String zarrRootPathAsStr = ZarrOnFileSystemUtils.getZarrRootPath( droppedInPath ).toString();
-		logger.info( "run script with zarr root path at {}", zarrRootPathAsStr );
-		ScriptUtils.executePresetScript( context, zarrRootPathAsStr );
 	}
 
 	private void positionDialog( JDialog dialog, Point mouseLocation )
