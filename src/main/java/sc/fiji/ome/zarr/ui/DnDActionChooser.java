@@ -123,29 +123,29 @@ public class DnDActionChooser
 
 		// zarr to FIJI importer button
 		zarrToIJDialog.addActionListener( e -> {
-			actions.openImporterDialog();
 			dialog.dispose();
+			actions.openImporterDialog();
 		} );
 		zarrToIJDialog.setToolTipText( "Open Zarr/N5 Importer dialog" );
 
 		// zarr to BDV viewer button
 		zarrToBDVDialog.addActionListener( e -> {
-			actions.openViewerDialog();
 			dialog.dispose();
+			actions.openViewerDialog();
 		} );
 		zarrToBDVDialog.setToolTipText( "Open Zarr/N5 BDV Viewer dialog" );
 
 		// FIJI button
 		zarrIJHighestResolution.addActionListener( e -> {
-			actions.openIJWithImage();
 			dialog.dispose();
+			actions.openIJWithImage();
 		} );
 		zarrIJHighestResolution.setToolTipText( "Open Zarr/N5 in ImageJ at highest resolution level" );
 
 		// BDV button
 		zarrBDVHighestResolution.addActionListener( e -> {
-			actions.openBDVWithImage();
 			dialog.dispose();
+			actions.openBDVWithImage();
 		} );
 		zarrBDVHighestResolution.setToolTipText( "Open Zarr/N5 in BDV at highest resolution level" );
 
@@ -153,8 +153,8 @@ public class DnDActionChooser
 		String scriptName = ScriptUtils.getTooltipText( context );
 		zarrScript.setToolTipText( "Open Zarr/N5 Script:\n\n" + scriptName );
 		zarrScript.addActionListener( e -> {
-			actions.runScript();
 			dialog.dispose();
+			actions.runScript();
 		} );
 
 		// help button
