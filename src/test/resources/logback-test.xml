@@ -151,6 +151,6 @@
     </root>
 
     <!-- Example how to change log level for certain packages -->
-    <logger name="org.mastodon.mamut" level="DEBUG"/>
+    <logger name="sc.fiji.ome.zarr" level="DEBUG"/>
 
 </configuration>
