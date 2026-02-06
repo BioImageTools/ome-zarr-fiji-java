@@ -17,7 +17,6 @@ import javax.swing.Timer;
 import java.awt.AWTError;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.MouseInfo;
 import java.awt.Point;
@@ -31,8 +30,6 @@ public class DnDActionChooser
 {
 
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
-
-	private final Frame parentFrame;
 
 	private final ZarrOpenActions actions;
 
@@ -52,9 +49,8 @@ public class DnDActionChooser
 
 	private boolean extendedVersion;
 
-	public DnDActionChooser( final Frame parentFrame, final Path path, final Context context )
+	public DnDActionChooser( final Path path, final Context context )
 	{
-		this.parentFrame = parentFrame;
 		this.actions = new ZarrOpenActions( path, context );
 		this.context = context;
 
@@ -185,7 +181,7 @@ public class DnDActionChooser
 
 	private JDialog createDialog()
 	{
-		JDialog dialog = new JDialog( parentFrame );
+		JDialog dialog = new JDialog();
 		dialog.setUndecorated( true );
 		dialog.setModal( false );
 		dialog.setAlwaysOnTop( true );

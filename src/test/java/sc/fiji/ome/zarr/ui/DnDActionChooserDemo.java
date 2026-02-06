@@ -46,7 +46,7 @@ public class DnDActionChooserDemo {
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			final JFrame mainFrame = new JFrame();
-			final DnDActionChooser menu = new DnDActionChooser( mainFrame, null, null );
+			final DnDActionChooser menu = new DnDActionChooser( null, null );
 			setupFrame( mainFrame, menu );
 		} );
 	}
