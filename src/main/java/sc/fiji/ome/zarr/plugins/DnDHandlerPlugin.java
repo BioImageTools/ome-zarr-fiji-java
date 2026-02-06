@@ -85,7 +85,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		final Path droppedInPath = fileLocation.getFile().toPath();
 
 		//TODO: this should ideally go into a separate thread... as an independent follow-up story after the DnD event is over
-		new DnDActionChooser( droppedInPath, this.context() ).show();
+		new DnDActionChooser( droppedInPath, this.context() ).showDialog();
 
 		// Returning such an object makes Scijava's DnD subsystem believe that the dropped object
 		// has been already fully loaded, and Scijava (Fiji) will attempt to display it now (and

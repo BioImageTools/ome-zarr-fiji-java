@@ -13,6 +13,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import java.awt.AWTError;
 import java.awt.Dimension;
@@ -76,7 +77,19 @@ public class DnDActionChooser
 		logger.debug( "Show extended version: {}", show );
 	}
 
-	public void show()
+	public void showDialog()
+	{
+		if ( SwingUtilities.isEventDispatchThread() )
+		{
+			doShow();
+		}
+		else
+		{
+			SwingUtilities.invokeLater( this::doShow );
+		}
+	}
+
+	private void doShow()
 	{
 		final Point mouseLocation = getMouseLocation();
 		if ( mouseLocation == null )
@@ -123,29 +136,29 @@ public class DnDActionChooser
 
 		// zarr to FIJI importer button
 		zarrToIJDialog.addActionListener( e -> {
-			actions.openImporterDialog();
 			dialog.dispose();
+			actions.openImporterDialog();
 		} );
 		zarrToIJDialog.setToolTipText( "Open Zarr/N5 Importer dialog" );
 
 		// zarr to BDV viewer button
 		zarrToBDVDialog.addActionListener( e -> {
-			actions.openViewerDialog();
 			dialog.dispose();
+			actions.openViewerDialog();
 		} );
 		zarrToBDVDialog.setToolTipText( "Open Zarr/N5 BDV Viewer dialog" );
 
 		// FIJI button
 		zarrIJHighestResolution.addActionListener( e -> {
-			actions.openIJWithImage();
 			dialog.dispose();
+			actions.openIJWithImage();
 		} );
 		zarrIJHighestResolution.setToolTipText( "Open Zarr/N5 in ImageJ at highest resolution level" );
 
 		// BDV button
 		zarrBDVHighestResolution.addActionListener( e -> {
-			actions.openBDVWithImage();
 			dialog.dispose();
+			actions.openBDVWithImage();
 		} );
 		zarrBDVHighestResolution.setToolTipText( "Open Zarr/N5 in BDV at highest resolution level" );
 
@@ -153,8 +166,8 @@ public class DnDActionChooser
 		String scriptName = ScriptUtils.getTooltipText( context );
 		zarrScript.setToolTipText( "Open Zarr/N5 Script:\n\n" + scriptName );
 		zarrScript.addActionListener( e -> {
-			actions.runScript();
 			dialog.dispose();
+			actions.runScript();
 		} );
 
 		// help button
