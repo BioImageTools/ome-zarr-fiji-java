@@ -37,6 +37,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
@@ -47,7 +48,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-@Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
+import net.imglib2.util.Cast;
+
+@Plugin(type = IOPlugin.class, attrs = @Attr(name = "eager"))
 public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
@@ -60,32 +63,26 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 
 	// ========================= IOPlugin stuff =========================
 	@Override
-	public boolean supportsOpen( Location source )
+	public boolean supportsOpen( final Location source )
 	{
-		logger.debug( "Zarr DND plugin: Was questioned if this path supports open: {}", source.getURI().getPath() );
+		logger.debug(
+				"Zarr DnD plugin: supportsOpen check, location type={}, path={}", source.getClass().getSimpleName(),
+				source.getURI().getPath()
+		);
 
 		if ( !( source instanceof FileLocation ) )
-		{
 			return false;
-		}
+
 		return ZarrOnFileSystemUtils.isZarrFolder( Paths.get( source.getURI() ) );
 	}
 
 	@Override
-	public Object open( Location source ) throws IOException
+	public Object open( final Location source ) throws IOException
 	{
-		logger.debug( "Zarr DND plugin: Was asked to open: {}", source.getURI().getPath() );
-		final FileLocation fsource = source instanceof FileLocation ? ( FileLocation ) source : null;
+		logger.debug( "Zarr DnD plugin: opening {}", source.getURI().getPath() );
 
-		//debugging the DnD a bit.... but both tests should never fail
-		if ( fsource == null || !ZarrOnFileSystemUtils.isZarrFolder( fsource.getFile().toPath() ) )
-		{
-			logger.error( "Zarr DND plugin: Sanity check failed. Something is very wrong, bailing out." );
-			return null;
-		}
-
-		final Path droppedInPath = fsource.getFile().toPath();
-		//NB: shouldn't be null as fsource is already a valid OME Zarr path (see above)
+		final FileLocation fileLocation = Cast.unchecked( source );
+		final Path droppedInPath = fileLocation.getFile().toPath();
 
 		//TODO: this should ideally go into a separate thread... as an independent follow-up story after the DnD event is over
 		new DnDActionChooser( null, droppedInPath, this.context() ).show();
