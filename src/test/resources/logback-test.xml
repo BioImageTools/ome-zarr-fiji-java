@@ -1,156 +1,126 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  #%L
-  mastodon-deep-lineage
-  %%
-  Copyright (C) 2022 - 2025 Stefan Hahmann
-  %%
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-  
-  1. Redistributions of source code must retain the above copyright notice,
-     this list of conditions and the following disclaimer.
-  2. Redistributions in binary form must reproduce the above copyright notice,
-     this list of conditions and the following disclaimer in the documentation
-     and/or other materials provided with the distribution.
-  
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-  POSSIBILITY OF SUCH DAMAGE.
-  #L%
-  -->
-
-
 <configuration debug="false">
 
-    <property name="LOGS" value="./logs"/>
+	<property name="LOGS" value="./logs"/>
 
-    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%highlight(%-5level) %d{yyyy-MM-dd HH:mm:ss.SSS} [%blue(%t)] \(%file:%line\) - %m%n
-            </pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>DEBUG</level>
-        </filter>
-    </appender>
-    <appender name="stderr" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%highlight(%-5level) %d{yyyy-MM-dd HH:mm:ss.SSS} [%blue(%t)] \(%file:%line\) - %m%n
-            </pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
-        </filter>
-    </appender>
-    <appender name="file-trace" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${LOGS}/trace.log</File>
-        <encoder>
-            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c{1}:%M:%L] - %m%n</Pattern>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- rollover daily -->
-            <fileNamePattern>${LOGS}/trace.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
-            <!-- each file should be at most 10MB, keep 60 days worth of history, but at most 1GB-->
-            <maxFileSize>20MB</maxFileSize>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>TRACE</level>
-        </filter>
-    </appender>
-    <appender name="file-debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${LOGS}/debug.log</File>
-        <encoder>
-            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c{1}:%M:%L] - %m%n</Pattern>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- rollover daily -->
-            <fileNamePattern>${LOGS}/debug.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
-            <!-- each file should be at most 10MB, keep 60 days worth of history, but at most 1GB-->
-            <maxFileSize>20MB</maxFileSize>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>DEBUG</level>
-        </filter>
-    </appender>
-    <appender name="file-info" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${LOGS}/info.log</File>
-        <encoder>
-            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c{1}:%M:%L] - %m%n</Pattern>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- rollover daily -->
-            <fileNamePattern>${LOGS}/info.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
-            <!-- each file should be at most 10MB, keep 60 days worth of history, but at most 1GB-->
-            <maxFileSize>20MB</maxFileSize>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
-    </appender>
-    <appender name="file-warn" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${LOGS}/warn.log</File>
-        <encoder>
-            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c{1}:%M:%L] - %m%n</Pattern>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- rollover daily -->
-            <fileNamePattern>${LOGS}/warn.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
-            <!-- each file should be at most 10MB, keep 60 days worth of history, but at most 1GB-->
-            <maxFileSize>20MB</maxFileSize>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
-        </filter>
-    </appender>
-    <appender name="file-error" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${LOGS}/error.log</File>
-        <encoder>
-            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c{1}:%M:%L] - %m%n</Pattern>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- rollover daily -->
-            <fileNamePattern>${LOGS}/error.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
-            <!-- each file should be at most 10MB, keep 60 days worth of history, but at most 1GB-->
-            <maxFileSize>20MB</maxFileSize>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>ERROR</level>
-        </filter>
-    </appender>
+	<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%highlight(%-5level) %d{yyyy-MM-dd HH:mm:ss.SSS} [%blue(%t)] \(%file:%line\) - %m%n
+			</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>DEBUG</level>
+		</filter>
+	</appender>
+	<appender name="stderr" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%highlight(%-5level) %d{yyyy-MM-dd HH:mm:ss.SSS} [%blue(%t)] \(%file:%line\) - %m%n
+			</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>WARN</level>
+		</filter>
+	</appender>
+	<appender name="file-trace" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${LOGS}/trace.log</File>
+		<encoder>
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c{1}:%M:%L] - %m%n</Pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>${LOGS}/trace.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+			<!-- each file should be at most 10MB, keep 60 days worth of history, but at most 1GB-->
+			<maxFileSize>20MB</maxFileSize>
+			<maxHistory>60</maxHistory>
+			<totalSizeCap>1GB</totalSizeCap>
+		</rollingPolicy>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>TRACE</level>
+		</filter>
+	</appender>
+	<appender name="file-debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${LOGS}/debug.log</File>
+		<encoder>
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c{1}:%M:%L] - %m%n</Pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>${LOGS}/debug.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+			<!-- each file should be at most 10MB, keep 60 days worth of history, but at most 1GB-->
+			<maxFileSize>20MB</maxFileSize>
+			<maxHistory>60</maxHistory>
+			<totalSizeCap>1GB</totalSizeCap>
+		</rollingPolicy>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>DEBUG</level>
+		</filter>
+	</appender>
+	<appender name="file-info" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${LOGS}/info.log</File>
+		<encoder>
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c{1}:%M:%L] - %m%n</Pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>${LOGS}/info.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+			<!-- each file should be at most 10MB, keep 60 days worth of history, but at most 1GB-->
+			<maxFileSize>20MB</maxFileSize>
+			<maxHistory>60</maxHistory>
+			<totalSizeCap>1GB</totalSizeCap>
+		</rollingPolicy>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>INFO</level>
+		</filter>
+	</appender>
+	<appender name="file-warn" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${LOGS}/warn.log</File>
+		<encoder>
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c{1}:%M:%L] - %m%n</Pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>${LOGS}/warn.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+			<!-- each file should be at most 10MB, keep 60 days worth of history, but at most 1GB-->
+			<maxFileSize>20MB</maxFileSize>
+			<maxHistory>60</maxHistory>
+			<totalSizeCap>1GB</totalSizeCap>
+		</rollingPolicy>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>WARN</level>
+		</filter>
+	</appender>
+	<appender name="file-error" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${LOGS}/error.log</File>
+		<encoder>
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c{1}:%M:%L] - %m%n</Pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>${LOGS}/error.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+			<!-- each file should be at most 10MB, keep 60 days worth of history, but at most 1GB-->
+			<maxFileSize>20MB</maxFileSize>
+			<maxHistory>60</maxHistory>
+			<totalSizeCap>1GB</totalSizeCap>
+		</rollingPolicy>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>ERROR</level>
+		</filter>
+	</appender>
 
 
-    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+	<statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
 
-    <!-- Set root log level to INFO -->
-    <root level="INFO">
-        <appender-ref ref="stdout"/>
-        <appender-ref ref="file-trace"/>
-        <appender-ref ref="file-debug"/>
-        <appender-ref ref="file-info"/>
-        <appender-ref ref="file-warn"/>
-        <appender-ref ref="file-error"/>
-    </root>
+	<!-- Set root log level to INFO -->
+	<root level="INFO">
+		<appender-ref ref="stdout"/>
+		<appender-ref ref="file-trace"/>
+		<appender-ref ref="file-debug"/>
+		<appender-ref ref="file-info"/>
+		<appender-ref ref="file-warn"/>
+		<appender-ref ref="file-error"/>
+	</root>
 
-    <!-- Example how to change log level for certain packages -->
-    <logger name="sc.fiji.ome.zarr" level="DEBUG"/>
+	<!-- Example how to change log level for certain packages -->
+	<logger name="sc.fiji.ome.zarr" level="DEBUG"/>
 
 </configuration>
