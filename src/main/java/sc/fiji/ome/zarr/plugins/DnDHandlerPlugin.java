@@ -51,7 +51,6 @@ import java.util.ArrayList;
 public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
-	//TODO: consider using the official scijava: private LogService logService;
 
 	//the "innocent" product of the (hypothetical) file reading... which Fiji will not display
 	private static final Object FAKE_INPUT = new ArrayList<>( 0 );
