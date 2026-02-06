@@ -13,6 +13,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import java.awt.AWTError;
 import java.awt.Dimension;
@@ -76,7 +77,19 @@ public class DnDActionChooser
 		logger.debug( "Show extended version: {}", show );
 	}
 
-	public void show()
+	public void showDialog()
+	{
+		if ( SwingUtilities.isEventDispatchThread() )
+		{
+			doShow();
+		}
+		else
+		{
+			SwingUtilities.invokeLater( this::doShow );
+		}
+	}
+
+	private void doShow()
 	{
 		final Point mouseLocation = getMouseLocation();
 		if ( mouseLocation == null )

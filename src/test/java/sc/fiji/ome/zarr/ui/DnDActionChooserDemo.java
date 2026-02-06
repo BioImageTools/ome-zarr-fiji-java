@@ -30,7 +30,7 @@ public class DnDActionChooserDemo
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				menu.show();
+				menu.showDialog();
 			}
 		} );
 
