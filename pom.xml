@@ -224,12 +224,21 @@
 			<artifactId>logback-core</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<!-- Junit 5 for unit tests -->
+
+		<!-- JUnit 5 - https://junit.org/junit5/ -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
+			<version>${org.junit.jupiter.junit-jupiter-api.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-params</artifactId>
+			<version>${org.junit.jupiter.junit-jupiter-params.version}</version>
+			<scope>test</scope>
+		</dependency>
+
 
 		<!-- ====================================== -->
 
