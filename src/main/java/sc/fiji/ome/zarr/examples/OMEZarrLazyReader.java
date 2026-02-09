@@ -59,8 +59,7 @@ public class OMEZarrLazyReader {
 			OMEZarrMetadata omeZarrMD = (OMEZarrMetadata) rootNode.getDescendant(datasetPath).get().getMetadata();
 
 		}
-		N5MultiScaleMetadata
-			
+		N5MultiScaleMetadata n5MultiScaleMetadata;
 
 		N5Writer n5readerwriter = new N5Factory().openWriter(path);
 		N5Utils.save(lazyImg, n5readerwriter, "firstImage0", new int[] {64,64,64}, new GzipCompression());
