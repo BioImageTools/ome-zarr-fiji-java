@@ -100,6 +100,7 @@ public class Multiscales
         public double[] offsets;
     }
 
+	// TODO: re-use org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis instead of this new Axis class?
     public static class Axis
     {
         public static final String CHANNEL_TYPE = "channel";
