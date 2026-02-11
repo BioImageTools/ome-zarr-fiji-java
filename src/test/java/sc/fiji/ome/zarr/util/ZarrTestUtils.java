@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 
 public class ZarrTestUtils
 {
-	static Path resourcePath( String resource ) throws URISyntaxException
+	public static Path resourcePath( final String resource ) throws URISyntaxException
 	{
 		URL url = ZarrTestUtils.class.getClassLoader().getResource( resource );
 		assertNotNull( url, "Resource folder not found: " + resource );
