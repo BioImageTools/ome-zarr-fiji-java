@@ -5,7 +5,7 @@ import net.imagej.ImageJ;
 public class MultiscaleImageDemo {
 	public static void main( String[] args )
 	{
-		final String multiscalePath = "/Users/tischer/Desktop/testNew.zarr";
+		final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
 
 		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath );
 		multiscaleImage.dimensions();
