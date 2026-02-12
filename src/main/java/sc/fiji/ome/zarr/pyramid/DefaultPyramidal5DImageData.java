@@ -46,8 +46,6 @@ import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
 import org.jetbrains.annotations.NotNull;
 import org.scijava.Context;
 
@@ -158,6 +156,7 @@ public class DefaultPyramidal5DImageData<
 		N5Metadata m = N5DatasetDiscoverer.discover(n5reader).getMetadata();
 		System.out.println("got metadata: "+m);
 
+		/*
 		if (m instanceof OmeNgffV05Metadata) {
 			OmeNgffV05Metadata mv05 = (OmeNgffV05Metadata)m;
 			System.out.println("name: "+mv05.getName());
@@ -167,7 +166,7 @@ public class DefaultPyramidal5DImageData<
 				System.out.println(ms.coordinateTransformations);
 			}
 		}
-
+		*/
 
 		//TODO fetch v0.5 NGFF Metadata -> ask John
 		//there was supposed to be some class for it
