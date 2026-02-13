@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.scijava.Context;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -232,7 +233,29 @@ public class DefaultPyramidal5DImageData<
 		final List< Multiscales.Axis > axes = multiscales.getAxes();
 
 		// The scale factors of the resolution level 0
-		final double[] scaleFactors = multiscales.getScales().get( 0 ).scaleFactors;
+		// final double[] scaleFactors = multiscales.getScales().get( 0 ).scaleFactors;
+
+		// The global transformations that
+		// should be applied to all resolutions.
+		final Multiscales.CoordinateTransformations[] globalCoordinateTransformations = multiscales.getCoordinateTransformations();
+
+		// The transformations that should
+		// only be applied to the highest resolution,
+		// which is the one we are concerned with here.
+		final Multiscales.CoordinateTransformations[] coordinateTransformations = multiscales.getDatasets()[ 0 ].coordinateTransformations;
+
+		// Concatenate all scaling transformations
+		final double[] scaleFactors = new double[ numDimensions ];
+		Arrays.fill( scaleFactors, 1.0 );
+		if ( globalCoordinateTransformations != null )
+			for ( Multiscales.CoordinateTransformations transformation : globalCoordinateTransformations )
+				for ( int d = 0; d < numDimensions; d++ )
+					scaleFactors[ d ] *= transformation.scale[ d ];
+
+		if ( coordinateTransformations != null )
+			for ( Multiscales.CoordinateTransformations transformation : coordinateTransformations )
+				for ( int d = 0; d < numDimensions; d++ )
+					scaleFactors[ d ] *= transformation.scale[ d ];
 
 		// Create the imgAxes
 		final ArrayList< CalibratedAxis > imgAxes = new ArrayList<>();
