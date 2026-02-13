@@ -34,6 +34,8 @@ import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import bdv.util.BdvFunctions;
+
 @Plugin( type = Command.class )
 public class OpenInBDVCommand implements Command
 {
@@ -49,7 +51,7 @@ public class OpenInBDVCommand implements Command
 		if ( dataset instanceof PyramidalDataset)
 		{
 			logService.log( 0 , "Opening " + dataset.getClass().toString() + " in BDV...");
-			//BdvFunctions.show( ( ( PyramidalDataset<?> ) dataset ).asSpimData() );
+			BdvFunctions.show( ( ( PyramidalDataset< ? > ) dataset ).asSpimData() );
 		}
 		else
 		{
