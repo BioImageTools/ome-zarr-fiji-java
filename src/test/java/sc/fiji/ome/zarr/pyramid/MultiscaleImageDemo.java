@@ -9,7 +9,6 @@ public class MultiscaleImageDemo {
 		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
 
 		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath );
-		multiscaleImage.dimensions();
 
 		// Show as imagePlus
 		final ImageJ imageJ = new ImageJ();
