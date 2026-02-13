@@ -28,7 +28,14 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
+import static sc.fiji.ome.zarr.pyramid.Multiscales.MULTI_SCALE_KEY;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+
 import bdv.util.volatiles.VolatileTypeMatcher;
+import bdv.util.volatiles.VolatileViews;
+
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -46,12 +53,14 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
 import org.janelia.saalfeldlab.n5.DataType;
+import org.janelia.saalfeldlab.n5.DatasetAttributes;
+import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
+import org.janelia.saalfeldlab.n5.zarr.N5ZarrReader;
 
 public class MultiscaleImage<
 		  T extends NativeType< T > & RealType< T >,
 		  V extends Volatile< T > & NativeType< V > & RealType< V > >
 {
-	private static final String MULTI_SCALE_KEY = "multiscales";
 	private final String multiscalePath;
 
 	private int numResolutions;
@@ -84,7 +93,7 @@ public class MultiscaleImage<
 		if ( imgs != null ) return;
 
 		//TODO: re-use the code from N5Importer and fill local attributes from that
-		/*
+
 
 		try
 		{
@@ -103,7 +112,10 @@ public class MultiscaleImage<
 			// information.
 			// TODO: could we do this by means of a JsonDeserializer?
 
-			final JsonArray multiscalesJsonArray = n5ZarrReader.getAttributes( "" ).get( MULTI_SCALE_KEY ).getAsJsonArray();
+			// final JsonArray multiscalesJsonArray = n5ZarrReader.getAttributes( "" ).get( MULTI_SCALE_KEY ).getAsJsonArray();
+			final JsonElement jsonElement = n5ZarrReader.getAttributes( "" );
+			final JsonArray multiscalesJsonArray = jsonElement.getAsJsonObject().getAsJsonArray( MULTI_SCALE_KEY );
+
 			for ( int i = 0; i < multiscalesArray.length; i++ )
 			{
 				multiscalesArray[ i ].applyVersionFixes( multiscalesJsonArray.get( i ).getAsJsonObject() );
@@ -153,7 +165,7 @@ public class MultiscaleImage<
 			e.printStackTrace();
 			throw new RuntimeException( e );
 		}
-		*/
+
 	}
 
 	private void initTypes( DataType dataType )
