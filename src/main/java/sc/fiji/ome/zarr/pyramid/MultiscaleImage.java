@@ -33,6 +33,7 @@ import static sc.fiji.ome.zarr.pyramid.Multiscales.MULTI_SCALE_KEY;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
+import bdv.cache.SharedQueue;
 import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.util.volatiles.VolatileViews;
 
@@ -63,6 +64,8 @@ public class MultiscaleImage<
 {
 	private final String multiscalePath;
 
+	private final SharedQueue queue;
+
 	private int numResolutions;
 
 	private long[] dimensions;
@@ -82,10 +85,10 @@ public class MultiscaleImage<
 	/**
 	 * TODO
 	 */
-	public MultiscaleImage(
-			final String multiscalePath )
+	public MultiscaleImage( final String multiscalePath )
 	{
 		this.multiscalePath = multiscalePath;
+		this.queue = null;
 	}
 
 	private void init()
