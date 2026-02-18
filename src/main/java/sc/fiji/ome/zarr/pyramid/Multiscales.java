@@ -130,22 +130,22 @@ public class Multiscales
         return -1;
     }
 
-    public int getTimepointAxisIndex()
-    {
-        for ( int d = 0; d < numDimensions; d++ )
+	public int getTimepointAxisIndex()
+	{
+		for ( int d = 0; d < numDimensions; d++ )
 			if ( axisList.get( d ).type.equals( Axis.TIME_TYPE ) )
-                return d;
-        return -1;
-    }
+				return d;
+		return -1;
+	}
 
-    public int getSpatialAxisIndex( String axisName )
-    {
-        for ( int d = 0; d < numDimensions; d++ )
+	public int getSpatialAxisIndex( String axisName )
+	{
+		for ( int d = 0; d < numDimensions; d++ )
 			if ( axisList.get( d ).type.equals( Axis.SPATIAL_TYPE )
 					&& axisList.get( d ).name.equals( axisName ) )
-                return d;
-        return -1;
-    }
+				return d;
+		return -1;
+	}
 
     public List< Axis > getAxes()
     {
