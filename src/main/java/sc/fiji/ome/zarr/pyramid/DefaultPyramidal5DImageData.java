@@ -112,7 +112,7 @@ public class DefaultPyramidal5DImageData<
 	private final ImgPlus< T > imgPlus;
 	private final Dataset ijDataset;
 
-	private List< SourceAndConverter< T > > sources;
+	private List< SourceAndConverter< T > > sourceAndConverters;
 	private SpimData spimData;
 
 
@@ -189,7 +189,7 @@ public class DefaultPyramidal5DImageData<
 	public List< SourceAndConverter< T > > asSources()
 	{
 		// FIXME (JOHN) implement List< SourceAndConverter< T > > creation
-		return sources;
+		return sourceAndConverters;
 	}
 
 	@Override
