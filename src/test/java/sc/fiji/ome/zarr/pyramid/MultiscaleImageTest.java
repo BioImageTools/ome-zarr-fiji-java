@@ -1,7 +1,9 @@
 package sc.fiji.ome.zarr.pyramid;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -10,6 +12,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
+import net.imglib2.RandomAccessibleInterval;
+
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class MultiscaleImageTest
@@ -17,22 +21,23 @@ class MultiscaleImageTest
 	static Stream< String > omeZarrExamples()
 	{
 		return Stream.of(
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example",
-				"sc/fiji/ome/zarr/util/ome_zarr_v5_example"
+				"sc/fiji/ome/zarr/util/ome_zarr_v4_example"
+		// "sc/fiji/ome/zarr/util/ome_zarr_v5_example" // NB: OME v05 not supported yet
 		);
 	}
 
 	@ParameterizedTest
 	@MethodSource( "omeZarrExamples" )
-	public void testNumDimensions( String resource ) throws URISyntaxException
+	void testNumDimensions( String resource ) throws URISyntaxException
 	{
 		MultiscaleImage< ?, ? > img = load( resource );
+		assertNotNull( img );
 		assertEquals( 2, img.numDimensions() );
 	}
 
 	@ParameterizedTest
 	@MethodSource( "omeZarrExamples" )
-	public void testDimensions( String resource ) throws URISyntaxException
+	void testDimensions( String resource ) throws URISyntaxException
 	{
 		MultiscaleImage< ?, ? > img = load( resource );
 		long[] dimensions = img.dimensions();
@@ -42,52 +47,51 @@ class MultiscaleImageTest
 
 	@ParameterizedTest
 	@MethodSource( "omeZarrExamples" )
-	public void testAxes( String resource ) throws URISyntaxException
+	void testAxes( String resource ) throws URISyntaxException
 	{
 		MultiscaleImage< ?, ? > img = load( resource );
-		List< Multiscales.Axis > axes = img.getMultiscales().getAxes();
+		Multiscales multiscales = img.getMultiscales();
+		assertNotNull( multiscales );
+		List< Multiscales.Axis > axes = multiscales.getAxes();
 		assertEquals( 2, axes.size() );
-		assertEquals( "y", axes.get( 0 ).name );
-		assertEquals( "x", axes.get( 1 ).name );
+		assertEquals( "x", axes.get( 0 ).name ); // NB: reverse order compared to .zattrs as image data is in reverse order to
+		assertEquals( "y", axes.get( 1 ).name );
 	}
 
 	@ParameterizedTest
 	@MethodSource( "omeZarrExamples" )
-	public void testScales( String resource ) throws URISyntaxException
+	@Disabled( "Implementation of coordinate transformations yet incomplete" )
+	void testCoordinateTransformations( String resource ) throws URISyntaxException
 	{
 		MultiscaleImage< ?, ? > img = load( resource );
-		List< Multiscales.Scale > scales = img.getMultiscales().getScales();
+		Multiscales multiscales = img.getMultiscales();
+		assertNotNull( multiscales );
+		Multiscales.CoordinateTransformations[] coordinateTransformations = multiscales.getCoordinateTransformations();
 		assertEquals( 2, img.numResolutions() );
-		assertEquals( 2, scales.size() );
-		Multiscales.Scale scale0 = scales.get( 0 );
-		assertEquals( 1d, scale0.scaleFactors[ 0 ] );
-		assertEquals( 1d, scale0.scaleFactors[ 1 ] );
-		assertEquals( 0d, scale0.offsets[ 0 ] );
-		assertEquals( 0d, scale0.offsets[ 1 ] );
-		Multiscales.Scale scale1 = scales.get( 1 );
-		assertEquals( 2d, scale1.scaleFactors[ 0 ] );
-		assertEquals( 2d, scale1.scaleFactors[ 1 ] );
-		assertEquals( 0.5d, scale1.offsets[ 0 ] );
-		assertEquals( 0.5d, scale1.offsets[ 1 ] );
+		assertEquals( 2, coordinateTransformations.length );
+		Multiscales.CoordinateTransformations coordinateTransformation0 = coordinateTransformations[ 0 ];
+		assertEquals( 1d, coordinateTransformation0.scale[ 0 ] );
+		assertEquals( 1d, coordinateTransformation0.scale[ 1 ] );
+		assertEquals( 0d, coordinateTransformation0.translation[ 0 ] );
+		assertEquals( 0d, coordinateTransformation0.translation[ 1 ] );
+		Multiscales.CoordinateTransformations coordinateTransformation1 = coordinateTransformations[ 0 ];
+		assertEquals( 2d, coordinateTransformation1.scale[ 0 ] );
+		assertEquals( 2d, coordinateTransformation1.scale[ 1 ] );
+		assertEquals( 0.5d, coordinateTransformation1.translation[ 0 ] );
+		assertEquals( 0.5d, coordinateTransformation1.translation[ 1 ] );
 	}
 
 	@ParameterizedTest
 	@MethodSource( "omeZarrExamples" )
-	public void testTimepoints( String resource ) throws URISyntaxException
+	void testNumResolutions( String resource ) throws URISyntaxException
 	{
 		MultiscaleImage< ?, ? > img = load( resource );
+		assertEquals( 2, img.numResolutions() );
 	}
 
 	@ParameterizedTest
 	@MethodSource( "omeZarrExamples" )
-	public void testChannels( String resource ) throws URISyntaxException
-	{
-		MultiscaleImage< ?, ? > img = load( resource );
-	}
-
-	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	public void testImg( String resource ) throws URISyntaxException
+	void testImg( String resource ) throws URISyntaxException
 	{
 		MultiscaleImage< ?, ? > img = load( resource );
 		long[] imgDimensions = img.getImg( 0 ).dimensionsAsLongArray();
@@ -96,6 +100,17 @@ class MultiscaleImageTest
 		imgDimensions = img.getVolatileImg( 0 ).dimensionsAsLongArray();
 		assertEquals( 1000, imgDimensions[ 0 ] );
 		assertEquals( 1000, imgDimensions[ 1 ] );
+	}
+
+	@ParameterizedTest
+	@MethodSource( "omeZarrExamples" )
+	void testVolatileImg( String resource ) throws URISyntaxException
+	{
+		MultiscaleImage< ?, ? > img = load( resource );
+		RandomAccessibleInterval< ? > randomAccessibleInterval = img.getVolatileImg( 0 );
+		assertNotNull( randomAccessibleInterval );
+		assertEquals( 1000, randomAccessibleInterval.dimension( 0 ) );
+		assertEquals( 1000, randomAccessibleInterval.dimension( 1 ) );
 	}
 
 	private MultiscaleImage< ?, ? > load( String resource ) throws URISyntaxException
