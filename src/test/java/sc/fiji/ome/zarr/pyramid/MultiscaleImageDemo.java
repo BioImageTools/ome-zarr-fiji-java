@@ -19,6 +19,6 @@ public class MultiscaleImageDemo {
 		imageJ.ui().show( pyramidalDataset );
 
 		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true, dataset );
+		imageJ.command().run( OpenInBDVCommand.class, true );
 	}
 }
