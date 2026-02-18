@@ -28,9 +28,13 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
+import bdv.cache.SharedQueue;
+import bdv.util.BdvOptions;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
+
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
@@ -42,15 +46,25 @@ import net.imglib2.EuclideanSpace;
 import net.imglib2.Volatile;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+
 import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.bdv.N5Viewer;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
+import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser;
 import org.jetbrains.annotations.NotNull;
 import org.scijava.Context;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -188,7 +202,48 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public List< SourceAndConverter< T > > asSources()
 	{
-		// FIXME (JOHN) implement List< SourceAndConverter< T > > creation
+		if ( sourceAndConverters == null )
+		{
+			try
+			{
+				sourceAndConverters = new ArrayList<>();
+
+				// Initialize N5Reader
+				final Path inputPath = Paths.get( multiscaleImage.getMultiscalePath() );
+				final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
+				N5Reader reader = new N5Factory().openReader( rootPath.toUri().toString() );
+
+				// Initialize N5TreeNode
+				final List< String > relativePathElements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
+				final String relativePath = String.join( File.separator, relativePathElements );
+				N5TreeNode n5TreeNode = new N5TreeNode( relativePath );
+
+				// Create Parsers
+				OmeNgffMetadataParser parserV03 = new OmeNgffMetadataParser();
+				org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser parserV04 =
+						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser();
+				List< N5MetadataParser< ? > > metadataParsers = Arrays.asList( parserV03, parserV04 );
+				List< N5MetadataParser< ? > > groupParsers = new ArrayList<>( metadataParsers );
+
+				// Parse Metadata
+				N5DatasetDiscoverer.parseMetadataShallow( reader, n5TreeNode, metadataParsers, groupParsers );
+
+				// Create a list containing only the metadata of the dataset we want to visualize
+				List< N5Metadata > selectedMetadata = Collections.singletonList( n5TreeNode.getMetadata() );
+
+				// Initialize BDV Cache
+				final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
+
+				// Create BDV options
+				BdvOptions bdvOptions = BdvOptions.options().frameTitle( getName() );
+				this.numTimepoints = N5Viewer.buildN5Sources( reader, selectedMetadata, sharedQueue, new ArrayList<>(), sourceAndConverters,
+						bdvOptions );
+			}
+			catch ( IOException e )
+			{
+				throw new RuntimeException( e );
+			}
+		}
 		return sourceAndConverters;
 	}
 
