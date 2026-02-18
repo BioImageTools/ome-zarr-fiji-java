@@ -174,9 +174,9 @@ public class DefaultPyramidal5DImageData<
 	}
 
 	@Override
-	public PyramidalDataset asPyramidalDataset()
+	public PyramidalDataset< T > asPyramidalDataset()
 	{
-		return new PyramidalDataset( this );
+		return new PyramidalDataset< T >( this );
 	}
 
 	@Override
