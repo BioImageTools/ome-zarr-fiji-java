@@ -97,7 +97,7 @@ public class DefaultPyramidal5DImageData<
 
 
 	/** The fourth dimension size... */
-	private int numTimePoints = 1;
+	private int numTimepoints = 1;
 
 	/** The fifth dimension size... */
 	private int numChannels = 1;
@@ -288,7 +288,7 @@ public class DefaultPyramidal5DImageData<
 		if ( tAxisIndex >= 0 )
 		{
 			imgAxes.add( createAxis( tAxisIndex, Axes.TIME, axes, scaleFactors ) );
-			numTimePoints = (int) dimensions[ tAxisIndex ];
+			numTimepoints = ( int ) dimensions[ tAxisIndex ];
 		}
 
 		// Set all axes
@@ -323,9 +323,9 @@ public class DefaultPyramidal5DImageData<
 	 * Get the number timepoints.
 	 */
 	@Override
-	public int numTimePoints()
+	public int numTimepoints()
 	{
-		return numTimePoints;
+		return numTimepoints;
 	}
 
 	/**

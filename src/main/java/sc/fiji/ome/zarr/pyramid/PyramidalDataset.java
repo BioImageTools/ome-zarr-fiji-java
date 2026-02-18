@@ -43,9 +43,9 @@ public class PyramidalDataset < T extends NativeType< T > & RealType< T > >  ext
 		return data.numChannels();
 	}
 
-	public int numTimePoints()
+	public int numTimepoints()
 	{
-		return data.numTimePoints();
+		return data.numTimepoints();
 	}
 
 	public int numResolutions()
