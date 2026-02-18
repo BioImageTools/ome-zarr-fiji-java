@@ -260,4 +260,9 @@ public class MultiscaleImage<
 		init();
 		return dimensions.length;
 	}
+
+	public String getMultiscalePath()
+	{
+		return multiscalePath;
+	}
 }
