@@ -255,7 +255,13 @@ public class DefaultPyramidal5DImageData<
 		if ( coordinateTransformations != null )
 			for ( Multiscales.CoordinateTransformations transformation : coordinateTransformations )
 				for ( int d = 0; d < numDimensions; d++ )
+				{
+					if ( transformation.scale == null )
+						continue;
 					scaleFactors[ d ] *= transformation.scale[ d ];
+				}
+
+		reverseArray( scaleFactors );
 
 		// Create the imgAxes
 		final ArrayList< CalibratedAxis > imgAxes = new ArrayList<>();
@@ -294,6 +300,18 @@ public class DefaultPyramidal5DImageData<
 		// Set all axes
 		for ( int i = 0; i < imgAxes.size(); ++i )
 			imgPlus.setAxis( imgAxes.get( i ), i );
+	}
+
+	private void reverseArray( final double[] arr )
+	{
+
+		for ( int i = 0; i < arr.length / 2; i++ )
+		{
+			double temp = arr[ i ];
+			arr[ i ] = arr[ arr.length - 1 - i ];
+			arr[ arr.length - 1 - i ] = temp;
+		}
+
 	}
 
 	@NotNull
