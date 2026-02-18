@@ -215,6 +215,7 @@ public class MultiscaleImage<
 
 	public Multiscales getMultiscales()
 	{
+		init();
 		return multiscales;
 	}
 
@@ -256,6 +257,7 @@ public class MultiscaleImage<
 
 	public int numDimensions()
 	{
+		init();
 		return dimensions.length;
 	}
 }
