@@ -221,7 +221,7 @@ public class DefaultPyramidal5DImageData<
 
 	/**
 	 * Create/update calibrated axes for ImgPlus {@link DefaultPyramidal5DImageData#imgPlus}.
-	 *
+	 * <br>
 	 * This only needs to consider
 	 * the highest resolution dataset and metadata.
 	 */
