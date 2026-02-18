@@ -18,7 +18,8 @@ public class Multiscales
     private final String name;
     private final List< Axis > axes;    //length matches number of dimensions
     private final List< Scale > scales; //length matches the number of resolution levels
-    private final int numDimensions;
+
+	private int numDimensions;
 
 	// Simply contains the {@codeAxes[] axes}
 	// but in reversed order to accommodate
@@ -57,7 +58,7 @@ public class Multiscales
 	public void init()
 	{
 		axisList = Lists.reverse( axes );
-		// numDimensions = axisList.size();
+		numDimensions = axisList.size();
 	}
 
 	// TODO Can this be done with a JSONAdapter ?
