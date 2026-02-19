@@ -51,6 +51,9 @@ public class OpenInBDVCommand implements Command
 	@Override
 	public void run()
 	{
+		logService.log( 0, "Trying to open: " + dataset.getName() );
+		logService.log( 0, "Class: " + dataset.getClass() );
+		logService.log( 0, "Dataset instanceof PyramidalDataset: " + ( dataset instanceof PyramidalDataset ) );
 		if ( dataset instanceof PyramidalDataset )
 		{
 			logService.log( 0, "Opening " + dataset.getClass() + " in BDV..." );
