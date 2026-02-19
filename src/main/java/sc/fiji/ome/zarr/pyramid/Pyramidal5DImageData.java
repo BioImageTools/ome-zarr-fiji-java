@@ -9,14 +9,13 @@ import net.imglib2.type.numeric.RealType;
 
 import java.util.List;
 
-
 /**
  * 5D multi-resolution array data
  * represented as various 5D images objects
- * that can be visualised in different ImageJ
+ * that can be visualized in different ImageJ
  * viewers.
  *
- * @param <T>
+ * @param <T> pixel type
  */
 public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T > >
 {
@@ -25,7 +24,7 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	 *   with additional methods for retrieving the
 	 *   underlying multi-resolution data.
 	 */
-	PyramidalDataset asPyramidalDataset();
+	PyramidalDataset< T > asPyramidalDataset();
 
 	/**
 	 * @return a IJ2 {@code net.imagej.Dataset} wrapping the full resolution
@@ -48,7 +47,7 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 
 	int numChannels();
 
-	int numTimePoints();
+	int numTimepoints();
 
 	int numResolutions();
 

@@ -19,9 +19,9 @@ import java.util.List;
  */
 public class PyramidalDataset < T extends NativeType< T > & RealType< T > >  extends DefaultDataset
 {
-	private final Pyramidal5DImageData data;
+	private final Pyramidal5DImageData< T > data;
 
-	public PyramidalDataset( Pyramidal5DImageData data )
+	public PyramidalDataset( Pyramidal5DImageData< T > data )
 	{
 		super( data.asDataset().context(), data.asDataset().getImgPlus() );
 
@@ -43,9 +43,9 @@ public class PyramidalDataset < T extends NativeType< T > & RealType< T > >  ext
 		return data.numChannels();
 	}
 
-	public int numTimePoints()
+	public int numTimepoints()
 	{
-		return data.numTimePoints();
+		return data.numTimepoints();
 	}
 
 	public int numResolutions()

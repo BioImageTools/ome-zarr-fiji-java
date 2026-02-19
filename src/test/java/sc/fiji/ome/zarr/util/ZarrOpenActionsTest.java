@@ -17,7 +17,7 @@ class ZarrOpenActionsTest
 	@Test
 	void testOpenValidImagePath() throws URISyntaxException
 	{
-		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0/image" );
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0/image" );
 		ZarrOpenActions actions = new ZarrOpenActions( path, null );
 		AtomicInteger counter = new AtomicInteger( 0 );
 		Consumer< Img< ? > > imgOpeningCounter = img -> counter.incrementAndGet();

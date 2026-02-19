@@ -72,6 +72,9 @@ public class BdvHandleService extends AbstractService implements SciJavaService
 	/**
 	 * Always opens a new BDV, and remembers a handle to it (so that
 	 * it can be manipulated later again).
+	 * <br>
+	 * @param img Image to be displayed
+	 * @param name Name of the image
 	 */
 	public void openNewBdv( RandomAccessibleInterval< ? > img, String name )
 	{
@@ -83,6 +86,9 @@ public class BdvHandleService extends AbstractService implements SciJavaService
 	 * Attempts to add another source into the most recently opened BDV.
 	 * If the service is not aware of any BDV, it just opens a new one
 	 * (and again remembers a handle to it).
+	 * <br>
+	 * @param img Image to be added
+	 * @param name Name of the image
 	 */
 	public void addToLastOrInNewBdv( RandomAccessibleInterval< ? > img, String name )
 	{

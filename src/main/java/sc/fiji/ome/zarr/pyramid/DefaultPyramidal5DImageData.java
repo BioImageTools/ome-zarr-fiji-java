@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,9 +28,13 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
+import bdv.cache.SharedQueue;
+import bdv.util.BdvOptions;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
+
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
@@ -42,16 +46,25 @@ import net.imglib2.EuclideanSpace;
 import net.imglib2.Volatile;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+
 import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.bdv.N5Viewer;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
+import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser;
 import org.jetbrains.annotations.NotNull;
 import org.scijava.Context;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -98,7 +111,7 @@ public class DefaultPyramidal5DImageData<
 
 
 	/** The fourth dimension size... */
-	private int numTimePoints = 1;
+	private int numTimepoints = 1;
 
 	/** The fifth dimension size... */
 	private int numChannels = 1;
@@ -113,17 +126,17 @@ public class DefaultPyramidal5DImageData<
 	private final ImgPlus< T > imgPlus;
 	private final Dataset ijDataset;
 
-	private List< SourceAndConverter< T > > sources;
+	private List< SourceAndConverter< T > > sourceAndConverters;
 	private SpimData spimData;
 
 
 	/**
 	 * Build a dataset from a single {@code PyramidalOMEZarrArray},
 	 * which MUST only contains subset of the axes: X,Y,Z,C,T
-	 *
+	 * <br>
 	 * @param context The SciJava context for building the SciJava dataset
 	 * @param multiscaleImage The array containing the image all data.
-	 * @throws Error
+	 * @throws Error any error
 	 */
 	public DefaultPyramidal5DImageData(
 			final Context context,
@@ -134,7 +147,7 @@ public class DefaultPyramidal5DImageData<
 		this.name = name;
 		this.multiscaleImage = multiscaleImage;
 
-		numResolutions = multiscaleImage.numResolutions();;
+		numResolutions = multiscaleImage.numResolutions();
 		dimensions = multiscaleImage.dimensions();
 		numDimensions = dimensions.length;
 
@@ -158,6 +171,7 @@ public class DefaultPyramidal5DImageData<
 		N5Metadata m = N5DatasetDiscoverer.discover(n5reader).getMetadata();
 		System.out.println("got metadata: "+m);
 
+		/*
 		if (m instanceof OmeNgffV05Metadata) {
 			OmeNgffV05Metadata mv05 = (OmeNgffV05Metadata)m;
 			System.out.println("name: "+mv05.getName());
@@ -167,16 +181,16 @@ public class DefaultPyramidal5DImageData<
 				System.out.println(ms.coordinateTransformations);
 			}
 		}
-
+		*/
 
 		//TODO fetch v0.5 NGFF Metadata -> ask John
 		//there was supposed to be some class for it
 	}
 
 	@Override
-	public PyramidalDataset asPyramidalDataset()
+	public PyramidalDataset< T > asPyramidalDataset()
 	{
-		return new PyramidalDataset( this );
+		return new PyramidalDataset< T >( this );
 	}
 
 	@Override
@@ -188,8 +202,49 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public List< SourceAndConverter< T > > asSources()
 	{
-		// FIXME (JOHN) implement List< SourceAndConverter< T > > creation
-		return sources;
+		if ( sourceAndConverters == null )
+		{
+			try
+			{
+				sourceAndConverters = new ArrayList<>();
+
+				// Initialize N5Reader
+				final Path inputPath = Paths.get( multiscaleImage.getMultiscalePath() );
+				final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
+				N5Reader reader = new N5Factory().openReader( rootPath.toUri().toString() );
+
+				// Initialize N5TreeNode
+				final List< String > relativePathElements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
+				final String relativePath = String.join( File.separator, relativePathElements );
+				N5TreeNode n5TreeNode = new N5TreeNode( relativePath );
+
+				// Create Parsers
+				OmeNgffMetadataParser parserV03 = new OmeNgffMetadataParser();
+				org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser parserV04 =
+						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser();
+				List< N5MetadataParser< ? > > metadataParsers = Arrays.asList( parserV03, parserV04 );
+				List< N5MetadataParser< ? > > groupParsers = new ArrayList<>( metadataParsers );
+
+				// Parse Metadata
+				N5DatasetDiscoverer.parseMetadataShallow( reader, n5TreeNode, metadataParsers, groupParsers );
+
+				// Create a list containing only the metadata of the dataset we want to visualize
+				List< N5Metadata > selectedMetadata = Collections.singletonList( n5TreeNode.getMetadata() );
+
+				// Initialize BDV Cache
+				final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
+
+				// Create BDV options
+				BdvOptions bdvOptions = BdvOptions.options().frameTitle( getName() );
+				this.numTimepoints = N5Viewer.buildN5Sources( reader, selectedMetadata, sharedQueue, new ArrayList<>(), sourceAndConverters,
+						bdvOptions );
+			}
+			catch ( IOException e )
+			{
+				throw new RuntimeException( e );
+			}
+		}
+		return sourceAndConverters;
 	}
 
 	@Override
@@ -221,7 +276,7 @@ public class DefaultPyramidal5DImageData<
 
 	/**
 	 * Create/update calibrated axes for ImgPlus {@link DefaultPyramidal5DImageData#imgPlus}.
-	 *
+	 * <br>
 	 * This only needs to consider
 	 * the highest resolution dataset and metadata.
 	 */
@@ -233,7 +288,35 @@ public class DefaultPyramidal5DImageData<
 		final List< Multiscales.Axis > axes = multiscales.getAxes();
 
 		// The scale factors of the resolution level 0
-		final double[] scaleFactors = multiscales.getScales().get( 0 ).scaleFactors;
+		// final double[] scaleFactors = multiscales.getScales().get( 0 ).scaleFactors;
+
+		// The global transformations that
+		// should be applied to all resolutions.
+		final Multiscales.CoordinateTransformations[] globalCoordinateTransformations = multiscales.getCoordinateTransformations();
+
+		// The transformations that should
+		// only be applied to the highest resolution,
+		// which is the one we are concerned with here.
+		final Multiscales.CoordinateTransformations[] coordinateTransformations = multiscales.getDatasets()[ 0 ].coordinateTransformations;
+
+		// Concatenate all scaling transformations
+		final double[] scaleFactors = new double[ numDimensions ];
+		Arrays.fill( scaleFactors, 1.0 );
+		if ( globalCoordinateTransformations != null )
+			for ( Multiscales.CoordinateTransformations transformation : globalCoordinateTransformations )
+				for ( int d = 0; d < numDimensions; d++ )
+					scaleFactors[ d ] *= transformation.scale[ d ];
+
+		if ( coordinateTransformations != null )
+			for ( Multiscales.CoordinateTransformations transformation : coordinateTransformations )
+				for ( int d = 0; d < numDimensions; d++ )
+				{
+					if ( transformation.scale == null )
+						continue;
+					scaleFactors[ d ] *= transformation.scale[ d ];
+				}
+
+		reverseArray( scaleFactors );
 
 		// Create the imgAxes
 		final ArrayList< CalibratedAxis > imgAxes = new ArrayList<>();
@@ -266,12 +349,24 @@ public class DefaultPyramidal5DImageData<
 		if ( tAxisIndex >= 0 )
 		{
 			imgAxes.add( createAxis( tAxisIndex, Axes.TIME, axes, scaleFactors ) );
-			numTimePoints = (int) dimensions[ tAxisIndex ];
+			numTimepoints = ( int ) dimensions[ tAxisIndex ];
 		}
 
 		// Set all axes
 		for ( int i = 0; i < imgAxes.size(); ++i )
 			imgPlus.setAxis( imgAxes.get( i ), i );
+	}
+
+	private void reverseArray( final double[] arr )
+	{
+
+		for ( int i = 0; i < arr.length / 2; i++ )
+		{
+			double temp = arr[ i ];
+			arr[ i ] = arr[ arr.length - 1 - i ];
+			arr[ arr.length - 1 - i ] = temp;
+		}
+
 	}
 
 	@NotNull
@@ -301,9 +396,9 @@ public class DefaultPyramidal5DImageData<
 	 * Get the number timepoints.
 	 */
 	@Override
-	public int numTimePoints()
+	public int numTimepoints()
 	{
-		return numTimePoints;
+		return numTimepoints;
 	}
 
 	/**

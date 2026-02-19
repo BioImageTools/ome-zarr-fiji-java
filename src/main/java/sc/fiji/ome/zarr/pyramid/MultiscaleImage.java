@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,7 +28,15 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
+import static sc.fiji.ome.zarr.pyramid.Multiscales.MULTI_SCALE_KEY;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+
+import bdv.cache.SharedQueue;
 import bdv.util.volatiles.VolatileTypeMatcher;
+import bdv.util.volatiles.VolatileViews;
+
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -46,13 +54,17 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
 import org.janelia.saalfeldlab.n5.DataType;
+import org.janelia.saalfeldlab.n5.DatasetAttributes;
+import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
+import org.janelia.saalfeldlab.n5.zarr.N5ZarrReader;
 
 public class MultiscaleImage<
 		  T extends NativeType< T > & RealType< T >,
 		  V extends Volatile< T > & NativeType< V > & RealType< V > >
 {
-	private static final String MULTI_SCALE_KEY = "multiscales";
 	private final String multiscalePath;
+
+	private final SharedQueue queue;
 
 	private int numResolutions;
 
@@ -70,13 +82,16 @@ public class MultiscaleImage<
 
 	private int multiscaleArrayIndex = 0; // TODO (see comments within code)
 
+
 	/**
-	 * TODO
+	 * Constructs a MultiscaleImage instance with the specified path for a multiscale dataset.
+	 *
+	 * @param multiscalePath The path to the multiscale dataset. Usually a directory that represents the base location of a multiscale dataset.
 	 */
-	public MultiscaleImage(
-			final String multiscalePath )
+	public MultiscaleImage( final String multiscalePath )
 	{
 		this.multiscalePath = multiscalePath;
+		this.queue = null;
 	}
 
 	private void init()
@@ -84,7 +99,7 @@ public class MultiscaleImage<
 		if ( imgs != null ) return;
 
 		//TODO: re-use the code from N5Importer and fill local attributes from that
-		/*
+
 
 		try
 		{
@@ -103,7 +118,10 @@ public class MultiscaleImage<
 			// information.
 			// TODO: could we do this by means of a JsonDeserializer?
 
-			final JsonArray multiscalesJsonArray = n5ZarrReader.getAttributes( "" ).get( MULTI_SCALE_KEY ).getAsJsonArray();
+			// final JsonArray multiscalesJsonArray = n5ZarrReader.getAttributes( "" ).get( MULTI_SCALE_KEY ).getAsJsonArray();
+			final JsonElement jsonElement = n5ZarrReader.getAttributes( "" );
+			final JsonArray multiscalesJsonArray = jsonElement.getAsJsonObject().getAsJsonArray( MULTI_SCALE_KEY );
+
 			for ( int i = 0; i < multiscalesArray.length; i++ )
 			{
 				multiscalesArray[ i ].applyVersionFixes( multiscalesJsonArray.get( i ).getAsJsonObject() );
@@ -150,10 +168,9 @@ public class MultiscaleImage<
 		}
 		catch ( Exception e )
 		{
-			e.printStackTrace();
 			throw new RuntimeException( e );
 		}
-		*/
+
 	}
 
 	private void initTypes( DataType dataType )
@@ -200,6 +217,7 @@ public class MultiscaleImage<
 
 	public Multiscales getMultiscales()
 	{
+		init();
 		return multiscales;
 	}
 
@@ -241,6 +259,12 @@ public class MultiscaleImage<
 
 	public int numDimensions()
 	{
+		init();
 		return dimensions.length;
+	}
+
+	public String getMultiscalePath()
+	{
+		return multiscalePath;
 	}
 }

@@ -5,7 +5,6 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Cast;
 
 import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
@@ -17,6 +16,7 @@ import java.awt.Desktop;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 import bdv.util.BdvFunctions;
@@ -40,25 +40,28 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the N5 Importer dialog pointed at the dropped-in path.<br>
-	 * Shortcut to File > Import > HDF5/N5/Zarr/OME-NGFF
+	 * Shortcut to File &gt; Import &gt; HDF5/N5/Zarr/OME-NGFF
 	 */
 	public void openImporterDialog()
 	{
-		new N5Importer().runWithDialog( droppedInPath.toString() );
+		new N5Importer().runWithDialog( droppedInPath.toString(), Collections.emptyList() );
 		if ( logger.isInfoEnabled() )
 			logger.info( "Opened Zarr/N5 importer dialog with path: {}.", droppedInPath );
 	}
 
 	/**
 	 * Opens the N5 Viewer (aka BigDataViewer) dialog pointed at the dropped-in path.<br>
-	 * Shortcut to Plugins > BigDataViewer > HDF5/N5/Zarr/OME-NGFF Viewer
+	 * Shortcut to Plugins &gt; BigDataViewer &gt; HDF5/N5/Zarr/OME-NGFF Viewer
 	 */
 	public void openViewerDialog()
 	{
+		/*
+		// NB this can be used after n5-viewer_fiji 6.1.3 has been released
 		new N5ViewerCreator().runWithDialog( droppedInPath.toString(),
 				e -> logger.warn( "Could not open viewer selection dialog: {}", e.getMessage() ) );
 		if ( logger.isInfoEnabled() )
 			logger.info( "Opened Zarr/N5 viewer with path: {}.", droppedInPath );
+		 */
 	}
 
 	public void openIJWithImage()

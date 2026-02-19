@@ -29,10 +29,15 @@
 package sc.fiji.ome.zarr.pyramid;
 
 import net.imagej.Dataset;
+import net.imglib2.util.Cast;
+
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+
+import bdv.util.BdvFunctions;
+import bdv.util.BdvOptions;
 
 @Plugin( type = Command.class )
 public class OpenInBDVCommand implements Command
@@ -49,7 +54,9 @@ public class OpenInBDVCommand implements Command
 		if ( dataset instanceof PyramidalDataset)
 		{
 			logService.log( 0 , "Opening " + dataset.getClass().toString() + " in BDV...");
-			//BdvFunctions.show( ( ( PyramidalDataset<?> ) dataset ).asSpimData() );
+			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
+			BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
+					BdvOptions.options().frameTitle( pyramidalDataset.getName() ) );
 		}
 		else
 		{
