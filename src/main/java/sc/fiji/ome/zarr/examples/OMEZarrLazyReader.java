@@ -51,19 +51,25 @@ public class OMEZarrLazyReader {
 			n5 = new N5ZarrReader(path);
 		}
 
+		// Open dataset lazily - this does NOT load data into memory
+		// The data is read on-demand when accessed
+		RandomAccessibleInterval< T > lazyImg = N5Utils.open( n5, datasetPath );
+
+		/*
+		// Advice from John
 		final N5Reader n5reader = new N5Factory().openReader(path);
 		RandomAccessibleInterval<T> lazyImg = N5Utils.open(n5reader, datasetPath);
-		
+
 		N5TreeNode rootNode = N5DatasetDiscoverer.discover(n5reader);
 		if (rootNode.getDescendant(datasetPath).get().getMetadata() instanceof OMEZarrMetadata) {
 			OMEZarrMetadata omeZarrMD = (OMEZarrMetadata) rootNode.getDescendant(datasetPath).get().getMetadata();
 
 		}
-		N5MultiScaleMetadata n5MultiScaleMetadata;
+		N5MultiScaleMetadata n5MultiScaleMetadata = (N5MultiScaleMetadata ) rootNode.getMetadata();
 
 		N5Writer n5readerwriter = new N5Factory().openWriter(path);
 		N5Utils.save(lazyImg, n5readerwriter, "firstImage0", new int[] {64,64,64}, new GzipCompression());
-
+		*/
 
 		return lazyImg;
 	}
