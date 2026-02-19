@@ -53,14 +53,14 @@ public class OpenInBDVCommand implements Command
 	{
 		if ( dataset instanceof PyramidalDataset )
 		{
-			logService.log( 0, "Opening " + dataset.getClass().toString() + " in BDV..." );
+			logService.log( 0, "Opening " + dataset.getClass() + " in BDV..." );
 			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
 			BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
 					BdvOptions.options().frameTitle( pyramidalDataset.getName() ) );
 		}
 		else
 		{
-			logService.error( "Cannot display datasets of type " + dataset.getClass().toString() + " in BDV." );
+			logService.error( "Cannot display datasets of type " + dataset.getClass() + " in BDV." );
 		}
 	}
 }
