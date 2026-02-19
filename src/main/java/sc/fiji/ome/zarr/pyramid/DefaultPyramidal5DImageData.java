@@ -69,8 +69,8 @@ import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 /**
  * An OME-Zarr backed pyramidal 5D image
- * that can be visualised in ImageJ in various ways.
- *
+ * that can be visualized in ImageJ in various ways.
+ * <br>
  * 5D refers to: x,y,z,t,channels (or simply the dimension in which all images are stacked)
  * The {@link EuclideanSpace} brings in only the `numDimensions()`.
  *
