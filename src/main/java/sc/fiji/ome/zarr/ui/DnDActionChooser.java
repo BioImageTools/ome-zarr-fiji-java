@@ -3,18 +3,7 @@ package sc.fiji.ome.zarr.ui;
 import org.scijava.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sc.fiji.ome.zarr.ui.util.CreateIcon;
-import sc.fiji.ome.zarr.util.ScriptUtils;
-import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 import java.awt.AWTError;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -26,6 +15,19 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+
+import sc.fiji.ome.zarr.ui.util.CreateIcon;
+import sc.fiji.ome.zarr.util.ScriptUtils;
+import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
 public class DnDActionChooser
 {

@@ -1,56 +1,81 @@
 package sc.fiji.ome.zarr.examples;
 
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.cell.LazyCellImg;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import org.janelia.saalfeldlab.n5.*;
-import org.janelia.saalfeldlab.n5.s3.N5AmazonS3Reader;
-import org.janelia.saalfeldlab.n5.zarr.*;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
-import net.imglib2.*;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import com.google.gson.*;
+
+import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
+import org.janelia.saalfeldlab.n5.s3.N5AmazonS3Reader;
+import org.janelia.saalfeldlab.n5.zarr.N5ZarrReader;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 /**
  * BigStitcher/BigDataViewer-style OME-Zarr reader using n5-zarr.
  * This follows the pattern used by bigdataviewer-omezarr and mobie-io projects.
  */
-public class BigStitcherStyleOMEZarrReader {
+public class BigStitcherStyleOMEZarrReader
+{
 
 	/**
 	 * Reads OME-Zarr metadata following the OME-NGFF v0.4 specification.
 	 * This is how BigDataViewer/MoBIE parse OME-Zarr metadata.
 	 */
-	public static class OMEZarrMetadata {
-		public List<Multiscale> multiscales;
+	public static class OMEZarrMetadata
+	{
+		public List< Multiscale > multiscales;
+
 		public JsonObject omero;
 
-		public static class Multiscale {
+		public static class Multiscale
+		{
 			public String version;
+
 			public String name;
-			public List<Axis> axes;
-			public List<Dataset> datasets;
+
+			public List< Axis > axes;
+
+			public List< Dataset > datasets;
+
 			public String type; // Optional
+
 			public JsonObject metadata; // Optional additional metadata
 
-			public static class Axis {
+			public static class Axis
+			{
 				public String name;
+
 				public String type;
+
 				public String unit;
 			}
 
-			public static class Dataset {
+			public static class Dataset
+			{
 				public String path;
-				public List<CoordinateTransformation> coordinateTransformations;
 
-				public static class CoordinateTransformation {
+				public List< CoordinateTransformation > coordinateTransformations;
+
+				public static class CoordinateTransformation
+				{
 					public String type;
+
 					public double[] scale;
+
 					public double[] translation;
 				}
 			}
@@ -92,54 +117,61 @@ public class BigStitcherStyleOMEZarrReader {
 		return new OMEZarrContainer( n5, metadata, zarrPath );
 	}
 
-
 	/**
 	 * Parses OME-NGFF metadata from the root .zattrs file.
 	 * This follows the pattern used by bigdataviewer-omezarr.
 	 */
-	private static OMEZarrMetadata parseOMEZarrMetadata(N5Reader n5) throws IOException {
+	private static OMEZarrMetadata parseOMEZarrMetadata( N5Reader n5 ) throws IOException
+	{
 		OMEZarrMetadata metadata = new OMEZarrMetadata();
 
 		// Read the root attributes (equivalent to .zattrs)
-		Map<String, Class<?>> attributes = n5.listAttributes("/");
+		Map< String, Class< ? > > attributes = n5.listAttributes( "/" );
 
 		// Parse multiscales array
-		if (attributes.containsKey("multiscales")) {
-			JsonElement multiscalesJson = n5.getAttribute("/", "multiscales", JsonElement.class);
-			if (multiscalesJson != null && multiscalesJson.isJsonArray()) {
+		if ( attributes.containsKey( "multiscales" ) )
+		{
+			JsonElement multiscalesJson = n5.getAttribute( "/", "multiscales", JsonElement.class );
+			if ( multiscalesJson != null && multiscalesJson.isJsonArray() )
+			{
 				Gson gson = new Gson();
 				metadata.multiscales = new ArrayList<>();
 				JsonArray multiscalesArray = multiscalesJson.getAsJsonArray();
 
-				for (JsonElement elem : multiscalesArray) {
+				for ( JsonElement elem : multiscalesArray )
+				{
 					OMEZarrMetadata.Multiscale ms = gson.fromJson(
-						elem,
-						OMEZarrMetadata.Multiscale.class
+							elem,
+							OMEZarrMetadata.Multiscale.class
 					);
-					metadata.multiscales.add(ms);
+					metadata.multiscales.add( ms );
 				}
 			}
 		}
 
 		// Parse OMERO metadata if present
-		if (attributes.containsKey("omero")) {
-			metadata.omero = n5.getAttribute("/", "omero", JsonObject.class);
+		if ( attributes.containsKey( "omero" ) )
+		{
+			metadata.omero = n5.getAttribute( "/", "omero", JsonObject.class );
 		}
 
 		return metadata;
 	}
 
-
 	/**
 	 * Container class holding N5 reader, metadata, and helper methods.
 	 * Similar to what BigDataViewer uses internally.
 	 */
-	public static class OMEZarrContainer {
+	public static class OMEZarrContainer
+	{
 		private final N5Reader n5;
+
 		private final OMEZarrMetadata metadata;
+
 		private final String path;
 
-		public OMEZarrContainer(N5Reader n5, OMEZarrMetadata metadata, String path) {
+		public OMEZarrContainer( N5Reader n5, OMEZarrMetadata metadata, String path )
+		{
 			this.n5 = n5;
 			this.metadata = metadata;
 			this.path = path;
@@ -246,8 +278,8 @@ public class BigStitcherStyleOMEZarrReader {
 
 		public < T extends RealType< T > & NativeType< T > > LazyCellImg< T, ? > openScaleLazy( int scaleLevel )
 		{
-			String datasetPath = getScalePath(scaleLevel);
-			return N5Utils.open(n5, datasetPath);
+			String datasetPath = getScalePath( scaleLevel );
+			return N5Utils.open( n5, datasetPath );
 		}
 
 		/**

@@ -28,16 +28,20 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
-import bdv.util.volatiles.SharedQueue;
 import org.scijava.Context;
+
+import bdv.util.volatiles.SharedQueue;
 
 import javax.annotation.Nullable;
 
 public class OMEZarrData
 {
 	private final Context context;
+
 	private final String omeZarrPath;
+
 	private String[] multiscalePaths;
+
 	private final SharedQueue queue;
 
 	public OMEZarrData(

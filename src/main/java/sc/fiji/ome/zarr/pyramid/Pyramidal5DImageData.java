@@ -1,13 +1,14 @@
 package sc.fiji.ome.zarr.pyramid;
 
-import bdv.viewer.SourceAndConverter;
-import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imagej.Dataset;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import java.util.List;
+
+import bdv.viewer.SourceAndConverter;
+import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 
 /**
  * 5D multi-resolution array data

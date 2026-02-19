@@ -15,9 +15,11 @@ public class Multiscales
 	// key in json for multiscales
 	public static final String MULTI_SCALE_KEY = "multiscales";
 
-    private final String name;
-    private final List< Axis > axes;    //length matches number of dimensions
-    private final List< Scale > scales; //length matches the number of resolution levels
+	private final String name;
+
+	private final List< Axis > axes; //length matches number of dimensions
+
+	private final List< Scale > scales; //length matches the number of resolution levels
 
 	private int numDimensions;
 
@@ -48,12 +50,13 @@ public class Multiscales
 		public String path;
 	}
 
-    public Multiscales(String name, List< Axis > axes, List< Scale > scales) {
-        this.name = name;
-        this.axes = axes;
-        this.scales = scales;
-        this.numDimensions = axes.size();
-    }
+	public Multiscales( String name, List< Axis > axes, List< Scale > scales )
+	{
+		this.name = name;
+		this.axes = axes;
+		this.scales = scales;
+		this.numDimensions = axes.size();
+	}
 
 	public void init()
 	{
@@ -87,48 +90,57 @@ public class Multiscales
 		}
 	}
 
-    /**
-     * This is a representation of a single scale, typically this
-     * is one image of a resolution pyramid. Just note that a chain
-     * of transformations could be provided.
-     *
-     * The lengths of the both arrays should be the same, and should
-     * match the number of dimensions.
-     */
-    public static class Scale {
-        public String path; //TODO why this is here??
-        public double[] scaleFactors;
-        public double[] offsets;
-    }
+	/**
+	 * This is a representation of a single scale, typically this
+	 * is one image of a resolution pyramid. Just note that a chain
+	 * of transformations could be provided.
+	 *
+	 * The lengths of the both arrays should be the same, and should
+	 * match the number of dimensions.
+	 */
+	public static class Scale
+	{
+		public String path; //TODO why this is here??
+
+		public double[] scaleFactors;
+
+		public double[] offsets;
+	}
 
 	// TODO: re-use org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis instead of this new Axis class?
-    public static class Axis
-    {
-        public static final String CHANNEL_TYPE = "channel";
-        public static final String TIME_TYPE = "time";
-        public static final String SPATIAL_TYPE = "space";
-        //TODO: renamed to SPATIAL_TYPE_X and drop X_AXIS_NAME, and
+	public static class Axis
+	{
+		public static final String CHANNEL_TYPE = "channel";
 
-        public static final String X_AXIS_NAME = "x";
-        public static final String Y_AXIS_NAME = "y";
-        public static final String Z_AXIS_NAME = "z";
+		public static final String TIME_TYPE = "time";
 
-        public String name;
-        public String type;
-        public String unit;
-    }
+		public static final String SPATIAL_TYPE = "space";
+		//TODO: renamed to SPATIAL_TYPE_X and drop X_AXIS_NAME, and
 
-    public int getChannelAxisIndex()
-    {
-        for ( int d = 0; d < numDimensions; d++ )
+		public static final String X_AXIS_NAME = "x";
+
+		public static final String Y_AXIS_NAME = "y";
+
+		public static final String Z_AXIS_NAME = "z";
+
+		public String name;
+
+		public String type;
+
+		public String unit;
+	}
+
+	public int getChannelAxisIndex()
+	{
+		for ( int d = 0; d < numDimensions; d++ )
 		{
 			Axis axis = axisList.get( d );
 			if ( axis.type.equals( Axis.CHANNEL_TYPE ) )
 				return d;
 		}
 
-        return -1;
-    }
+		return -1;
+	}
 
 	public int getTimepointAxisIndex()
 	{
@@ -147,15 +159,15 @@ public class Multiscales
 		return -1;
 	}
 
-    public List< Axis > getAxes()
-    {
+	public List< Axis > getAxes()
+	{
 		return Collections.unmodifiableList( axisList );
-    }
+	}
 
-    public List< Scale > getScales()
-    {
-        return Collections.unmodifiableList( scales );
-    }
+	public List< Scale > getScales()
+	{
+		return Collections.unmodifiableList( scales );
+	}
 
 	public CoordinateTransformations[] getCoordinateTransformations()
 	{
@@ -167,8 +179,8 @@ public class Multiscales
 		return datasets;
 	}
 
-    public int numDimensions()
-    {
-        return numDimensions;
-    }
+	public int numDimensions()
+	{
+		return numDimensions;
+	}
 }

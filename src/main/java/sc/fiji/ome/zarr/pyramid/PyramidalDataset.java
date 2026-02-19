@@ -1,13 +1,14 @@
 package sc.fiji.ome.zarr.pyramid;
 
-import bdv.viewer.SourceAndConverter;
-import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imagej.DefaultDataset;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import java.util.List;
+
+import bdv.viewer.SourceAndConverter;
+import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 
 /**
  * A {@code et.imagej.Dataset} that can be viewed
@@ -17,7 +18,7 @@ import java.util.List;
  *
  * @param <T> the type of the data.
  */
-public class PyramidalDataset < T extends NativeType< T > & RealType< T > >  extends DefaultDataset
+public class PyramidalDataset< T extends NativeType< T > & RealType< T > > extends DefaultDataset
 {
 	private final Pyramidal5DImageData< T > data;
 

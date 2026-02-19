@@ -7,12 +7,13 @@ import org.scijava.script.ScriptService;
 import org.scijava.ui.swing.script.TextEditor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 
 import java.io.File;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
+import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 
 public class ScriptUtils
 {
