@@ -40,7 +40,7 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the N5 Importer dialog pointed at the dropped-in path.<br>
-	 * Shortcut to File > Import > HDF5/N5/Zarr/OME-NGFF
+	 * Shortcut to File &gt; Import &gt; HDF5/N5/Zarr/OME-NGFF
 	 */
 	public void openImporterDialog()
 	{
@@ -51,7 +51,7 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the N5 Viewer (aka BigDataViewer) dialog pointed at the dropped-in path.<br>
-	 * Shortcut to Plugins > BigDataViewer > HDF5/N5/Zarr/OME-NGFF Viewer
+	 * Shortcut to Plugins &gt; BigDataViewer &gt; HDF5/N5/Zarr/OME-NGFF Viewer
 	 */
 	public void openViewerDialog()
 	{

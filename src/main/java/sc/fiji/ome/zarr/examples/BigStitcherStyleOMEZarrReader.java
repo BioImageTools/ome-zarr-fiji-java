@@ -57,35 +57,39 @@ public class BigStitcherStyleOMEZarrReader {
 		}
 	}
 
-
 	/**
 	 * Opens an OME-Zarr dataset lazily, following BigStitcher's approach.
-	 * 
+	 * <br>
 	 * @param zarrPath Path to .ome.zarr (local or S3 URL like "s3://bucket/data.ome.zarr")
 	 * @return OMEZarrContainer with metadata and lazy image access
+	 * @throws IOException if there is an error reading the metadata or opening the dataset
 	 */
-	public static OMEZarrContainer openOMEZarr(String zarrPath) throws IOException {
+	public static OMEZarrContainer openOMEZarr( String zarrPath ) throws IOException
+	{
 		N5Reader n5;
 
 		// Create appropriate N5 reader
-		if (zarrPath.startsWith("s3://")) {
-			String[] parts = zarrPath.substring(5).split("/", 2);
-			String bucketName = parts[0];
-			String keyPrefix = parts.length > 1 ? parts[1] : "";
+		if ( zarrPath.startsWith( "s3://" ) )
+		{
+			String[] parts = zarrPath.substring( 5 ).split( "/", 2 );
+			String bucketName = parts[ 0 ];
+			String keyPrefix = parts.length > 1 ? parts[ 1 ] : "";
 
 			n5 = new N5AmazonS3Reader(
-				com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
-				bucketName,
-				keyPrefix
+					com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
+					bucketName,
+					keyPrefix
 			);
-		} else {
-			n5 = new N5ZarrReader(zarrPath);
+		}
+		else
+		{
+			n5 = new N5ZarrReader( zarrPath );
 		}
 
 		// Parse OME-Zarr metadata from .zattrs
-		OMEZarrMetadata metadata = parseOMEZarrMetadata(n5);
+		OMEZarrMetadata metadata = parseOMEZarrMetadata( n5 );
 
-		return new OMEZarrContainer(n5, metadata, zarrPath);
+		return new OMEZarrContainer( n5, metadata, zarrPath );
 	}
 
 
@@ -143,43 +147,59 @@ public class BigStitcherStyleOMEZarrReader {
 
 		/**
 		 * Get the number of resolution levels (scales) available.
+		 * @return Number of scales
 		 */
-		public int getNumScales() {
-			if (metadata.multiscales == null || metadata.multiscales.isEmpty()) {
+		public int getNumScales()
+		{
+			if ( metadata.multiscales == null || metadata.multiscales.isEmpty() )
+			{
 				return 0;
 			}
-			return metadata.multiscales.get(0).datasets.size();
+			return metadata.multiscales.get( 0 ).datasets.size();
 		}
 
 		/**
 		 * Get the dataset path for a specific resolution level.
 		 * Typically "0" is highest resolution, "1" is downsampled by 2, etc.
+		 * <br>
+		 * @param scaleLevel Resolution level (scale) index
+		 * @return Dataset path
 		 */
-		public String getScalePath(int scaleLevel) {
-			if (metadata.multiscales == null || metadata.multiscales.isEmpty()) {
-				return String.valueOf(scaleLevel);
+		public String getScalePath( int scaleLevel )
+		{
+			if ( metadata.multiscales == null || metadata.multiscales.isEmpty() )
+			{
+				return String.valueOf( scaleLevel );
 			}
-			return metadata.multiscales.get(0).datasets.get(scaleLevel).path;
+			return metadata.multiscales.get( 0 ).datasets.get( scaleLevel ).path;
 		}
 
 		/**
 		 * Get the voxel size (scale) for a specific resolution level.
+		 * <br>
+		 * @param scaleLevel Resolution level (scale) index
+		 * @return Voxel size
 		 */
-		public double[] getVoxelSize(int scaleLevel) {
-			if (metadata.multiscales == null || metadata.multiscales.isEmpty()) {
+		public double[] getVoxelSize( int scaleLevel )
+		{
+			if ( metadata.multiscales == null || metadata.multiscales.isEmpty() )
+			{
 				return null;
 			}
 
-			List<OMEZarrMetadata.Multiscale.Dataset.CoordinateTransformation> transforms = metadata.multiscales.get(0).datasets.get(scaleLevel)
-					.coordinateTransformations;
+			List< OMEZarrMetadata.Multiscale.Dataset.CoordinateTransformation > transforms =
+					metadata.multiscales.get( 0 ).datasets.get( scaleLevel ).coordinateTransformations;
 
-			if (transforms == null || transforms.isEmpty()) {
+			if ( transforms == null || transforms.isEmpty() )
+			{
 				return null;
 			}
 
 			// Find the scale transformation
-			for (OMEZarrMetadata.Multiscale.Dataset.CoordinateTransformation transform : transforms) {
-				if ("scale".equals(transform.type)) {
+			for ( OMEZarrMetadata.Multiscale.Dataset.CoordinateTransformation transform : transforms )
+			{
+				if ( "scale".equals( transform.type ) )
+				{
 					return transform.scale;
 				}
 			}
@@ -189,88 +209,100 @@ public class BigStitcherStyleOMEZarrReader {
 
 		/**
 		 * Get axis names (e.g., ["t", "c", "z", "y", "x"])
+		 * @return Array of axis names, or null if there are no axes
 		 */
-		public String[] getAxisNames() {
-			if (metadata.multiscales == null || metadata.multiscales.isEmpty()) {
+		public String[] getAxisNames()
+		{
+			if ( metadata.multiscales == null || metadata.multiscales.isEmpty() )
+			{
 				return null;
 			}
 
-			List<OMEZarrMetadata.Multiscale.Axis> axes = metadata.multiscales.get(0).axes;
-			if (axes == null) {
+			List< OMEZarrMetadata.Multiscale.Axis > axes = metadata.multiscales.get( 0 ).axes;
+			if ( axes == null )
+			{
 				return null;
 			}
 
-			return axes.stream()
-				.map(axis -> axis.name)
-				.toArray(String[]::new);
+			return axes.stream().map( axis -> axis.name ).toArray( String[]::new );
 		}
 
 		/**
 		 * Open a specific resolution level as a lazy ImgLib2 image.
 		 * This is the key method - it returns a lazy RandomAccessibleInterval.
-		 *
+		 * <br>
 		 * Note: While other methods seem to report in Python/numpy order [t,c,z,y,x],
 		 * the order of axes in the returned image is "normal" --- that is, the opposite
 		 * to what is listed in e.g. this.getAxisNames().
+		 * <br>
+		 * @param scaleLevel Resolution level (scale) index
+		 * @return Lazy ImgLib2 image
 		 */
-		public <T extends RealType<T> & NativeType<T>>
-		RandomAccessibleInterval<T> openScale(int scaleLevel) throws IOException {
-			String datasetPath = getScalePath(scaleLevel);
-			return N5Utils.open(n5, datasetPath);
+		public < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval< T > openScale( int scaleLevel )
+		{
+			String datasetPath = getScalePath( scaleLevel );
+			return N5Utils.open( n5, datasetPath );
 		}
 
-		public <T extends RealType<T> & NativeType<T>>
-		LazyCellImg<T,?> openScaleLazy(int scaleLevel) throws IOException {
+		public < T extends RealType< T > & NativeType< T > > LazyCellImg< T, ? > openScaleLazy( int scaleLevel )
+		{
 			String datasetPath = getScalePath(scaleLevel);
 			return N5Utils.open(n5, datasetPath);
 		}
 
 		/**
 		 * Get all metadata for inspection
+		 * @return OMEZarrMetadata object
 		 */
-		public OMEZarrMetadata getMetadata() {
+		public OMEZarrMetadata getMetadata()
+		{
 			return metadata;
 		}
 
 		/**
 		 * Get the underlying N5Reader for advanced operations
+		 * @return N5Reader object
 		 */
-		public N5Reader getN5Reader() {
+		public N5Reader getN5Reader()
+		{
 			return n5;
 		}
 	}
 
-
 	/**
 	 * Example usage demonstrating BigStitcher-style OME-Zarr access
+	 * @param args Ignored
 	 */
-	public static void main(String[] args) {
-		try {
+	public static void main( String[] args )
+	{
+		try
+		{
 			// Example 1: Open local OME-Zarr
 			//String localPath = "/home/ulman/data/Mette_moreEmbryos/embryo4_first_tp/dataset.ome.zarr/s0-t0.zarr";
 			String localPath = "/temp/output2.ome.zarr";
-			OMEZarrContainer container = openOMEZarr(localPath);
+			OMEZarrContainer container = openOMEZarr( localPath );
 
-			System.out.println("Number of resolution levels: " + container.getNumScales());
-			System.out.println("Axis names: " + Arrays.toString(container.getAxisNames()));
+			System.out.println( "Number of resolution levels: " + container.getNumScales() );
+			System.out.println( "Axis names: " + Arrays.toString( container.getAxisNames() ) );
 
 			// Open highest resolution (level 0) lazily
-			RandomAccessibleInterval<UnsignedShortType> level0 = container.openScale(0);
-			System.out.println("Level 0 dimensions: " +
-				Arrays.toString(level0.dimensionsAsLongArray()));
+			RandomAccessibleInterval< UnsignedShortType > level0 = container.openScale( 0 );
+			System.out.println( "Level 0 dimensions: " +
+					Arrays.toString( level0.dimensionsAsLongArray() ) );
 
 			// Get voxel size
-			double[] voxelSize = container.getVoxelSize(0);
-			System.out.println("Level 0 voxel size: " + Arrays.toString(voxelSize));
+			double[] voxelSize = container.getVoxelSize( 0 );
+			System.out.println( "Level 0 voxel size: " + Arrays.toString( voxelSize ) );
 
 			// Open lower resolution levels (for multi-scale visualization like BigDataViewer)
-			for (int level = 0; level < container.getNumScales(); level++) {
-				RandomAccessibleInterval<UnsignedShortType> img = container.openScale(level);
-				double[] scale = container.getVoxelSize(level);
+			for ( int level = 0; level < container.getNumScales(); level++ )
+			{
+				RandomAccessibleInterval< UnsignedShortType > img = container.openScale( level );
+				double[] scale = container.getVoxelSize( level );
 
-				System.out.println("Level " + level + ": " +
-					Arrays.toString(img.dimensionsAsLongArray()) +
-					" @ scale " + Arrays.toString(scale));
+				System.out.println( "Level " + level + ": " +
+						Arrays.toString( img.dimensionsAsLongArray() ) +
+						" @ scale " + Arrays.toString( scale ) );
 			}
 
 			/*
@@ -323,28 +355,32 @@ public class BigStitcherStyleOMEZarrReader {
 
 			// Example 4: Work with the data lazily
 			// This is the key advantage - no data is loaded until accessed
-			RandomAccessibleInterval<UnsignedShortType> lazyImage = container.openScale(0);
+			RandomAccessibleInterval< UnsignedShortType > lazyImage = container.openScale( 0 );
 
 			// Only when you access pixels does data get loaded from disk/S3
-			RandomAccess<UnsignedShortType> ra = lazyImage.randomAccess();
-			ra.setPosition(new long[]{256, 256, 50, 0, 0}); // "normal" order!!
+			RandomAccess< UnsignedShortType > ra = lazyImage.randomAccess();
+			ra.setPosition( new long[] { 256, 256, 50, 0, 0 } ); // "normal" order!!
 			int pixelValue = ra.get().get();
-			System.out.println("Pixel value at position: " + pixelValue);
+			System.out.println( "Pixel value at position: " + pixelValue );
 
-			System.out.println("-----------");
-			for (int x=200; x < 220; ++x) System.out.println( lazyImage.getAt(x,257,50,0,0) );
-			System.out.println("===========");
-			for (int x=200; x < 220; ++x) System.out.println( lazyImage.getAt(x,257,50,0,0) );
-			System.out.println("+++++++++++");
+			System.out.println( "-----------" );
+			for ( int x = 200; x < 220; ++x )
+				System.out.println( lazyImage.getAt( x, 257, 50, 0, 0 ) );
+			System.out.println( "===========" );
+			for ( int x = 200; x < 220; ++x )
+				System.out.println( lazyImage.getAt( x, 257, 50, 0, 0 ) );
+			System.out.println( "+++++++++++" );
 
-			ImageJFunctions.show(lazyImage);
-			lazyImage = container.openScale(1);
-			ImageJFunctions.show(lazyImage);
-			lazyImage = container.openScale(2);
-			ImageJFunctions.show(lazyImage);
-			System.out.println(lazyImage);
+			ImageJFunctions.show( lazyImage );
+			lazyImage = container.openScale( 1 );
+			ImageJFunctions.show( lazyImage );
+			lazyImage = container.openScale( 2 );
+			ImageJFunctions.show( lazyImage );
+			System.out.println( lazyImage );
 
-		} catch (IOException e) {
+		}
+		catch ( IOException e )
+		{
 			e.printStackTrace();
 		}
 	}

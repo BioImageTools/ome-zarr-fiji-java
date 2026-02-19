@@ -82,8 +82,11 @@ public class MultiscaleImage<
 
 	private int multiscaleArrayIndex = 0; // TODO (see comments within code)
 
+
 	/**
-	 * TODO
+	 * Constructs a MultiscaleImage instance with the specified path for a multiscale dataset.
+	 *
+	 * @param multiscalePath The path to the multiscale dataset. Usually a directory that represents the base location of a multiscale dataset.
 	 */
 	public MultiscaleImage( final String multiscalePath )
 	{

@@ -30,12 +30,17 @@ public class ScriptUtils
 	 * Retrieves preset script and its title, and returns the title if the script
 	 * actually exits (is reachable).
 	 * Otherwise, it returns {@link ScriptUtils#DEFAULT_SCRIPT_TITLE}.
+	 * <br>
+	 * @param ctx scijava context
 	 */
-	public static String getTooltipText( final Context ctx ) {
-		if ( ctx == null ) return DEFAULT_SCRIPT_TITLE;
+	public static String getTooltipText( final Context ctx )
+	{
+		if ( ctx == null )
+			return DEFAULT_SCRIPT_TITLE;
 
 		PrefService prefService = ctx.getService( PrefService.class );
-		if ( prefService == null ) return DEFAULT_SCRIPT_TITLE;
+		if ( prefService == null )
+			return DEFAULT_SCRIPT_TITLE;
 
 		final String scriptTitle = prefService.get( PresetScriptPlugin.class, "scriptTitle", DEFAULT_SCRIPT_TITLE );
 		final String scriptPath = prefService.get( PresetScriptPlugin.class, "scriptPath", "--none--" );
@@ -43,17 +48,20 @@ public class ScriptUtils
 		return Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) ? scriptTitle : DEFAULT_SCRIPT_TITLE;
 	}
 
-
 	/**
 	 * Executes either a preset script and passes 'inputPath' arg to it provided
 	 * the preset script is a valid file; otherwise it opens a script editor
 	 * on a default example script provided in {@link ScriptUtils#getTemplate()}.
+	 * <br>
+	 * @param ctx scijava context
+	 * @param inputPath path to the input image
 	 */
 	public static void executePresetScript( final Context ctx, final String inputPath )
 	{
 		ScriptService scriptService = ctx.getService( ScriptService.class );
 		PrefService prefService = ctx.getService( PrefService.class );
-		if ( scriptService == null || prefService == null ) {
+		if ( scriptService == null || prefService == null )
+		{
 			logger.error( "Failed obtaining Script and/or Pref services. Is Fiji properly initiated?" );
 			return;
 		}
@@ -66,7 +74,7 @@ public class ScriptUtils
 			//the filepath is viable, let's run the script
 			try
 			{
-				ScriptModule module = scriptService.getScript(new File(scriptPath)).createModule();
+				ScriptModule module = scriptService.getScript( new File( scriptPath ) ).createModule();
 				module.setInput( "path", inputPath );
 				logger.info( "Executing script: {}", scriptPath );
 				logger.info( "on String parameter: {}", inputPath );
@@ -82,9 +90,9 @@ public class ScriptUtils
 		{
 			//this opens an _always new_ window with the template script,
 			//...at least the user is more likely to notice that this "help" came up
-			final TextEditor editor = new TextEditor(ctx);
-			editor.createNewDocument("open_ome_zarr_my_way.py", getTemplate());
-			editor.setVisible(true);
+			final TextEditor editor = new TextEditor( ctx );
+			editor.createNewDocument( "open_ome_zarr_my_way.py", getTemplate() );
+			editor.setVisible( true );
 		}
 	}
 
