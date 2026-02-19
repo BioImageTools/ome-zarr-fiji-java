@@ -1,34 +1,47 @@
 package sc.fiji.ome.zarr.examples;
 
+import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImgFactory;
-import org.janelia.saalfeldlab.n5.*;
-import org.janelia.saalfeldlab.n5.s3.N5AmazonS3Writer;
-import org.janelia.saalfeldlab.n5.zarr.*;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
-import net.imglib2.*;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.view.Views;
-import com.google.gson.*;
+
+import org.janelia.saalfeldlab.n5.Compression;
+import org.janelia.saalfeldlab.n5.GzipCompression;
+import org.janelia.saalfeldlab.n5.N5Writer;
+import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
+import org.janelia.saalfeldlab.n5.s3.N5AmazonS3Writer;
+import org.janelia.saalfeldlab.n5.zarr.N5ZarrWriter;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 /**
  * BigStitcher/BigDataViewer-style OME-Zarr writer using n5-zarr.
  * This follows the pattern used by BigStitcher-Spark for creating OME-Zarr output.
  */
-public class BigStitcherStyleOMEZarrWriter {
+public class BigStitcherStyleOMEZarrWriter
+{
 
 	/**
 	 * Writes a multi-scale OME-Zarr following OME-NGFF v0.4 specification.
 	 * This is how BigStitcher-Spark creates OME-Zarr fusion output.
 	 */
-	public static class OMEZarrWriter {
+	public static class OMEZarrWriter
+	{
 		private final N5Writer n5;
+
 		private final String zarrPath;
+
 		private final int numScales;
 
 		public OMEZarrWriter( String zarrPath, int numScales )
@@ -37,21 +50,23 @@ public class BigStitcherStyleOMEZarrWriter {
 			this.numScales = numScales;
 
 			// Create N5 writer
-			if (zarrPath.startsWith("s3://")) {
-				String[] parts = zarrPath.substring(5).split("/", 2);
-				String bucketName = parts[0];
-				String keyPrefix = parts.length > 1 ? parts[1] : "";
+			if ( zarrPath.startsWith( "s3://" ) )
+			{
+				String[] parts = zarrPath.substring( 5 ).split( "/", 2 );
+				String bucketName = parts[ 0 ];
+				String keyPrefix = parts.length > 1 ? parts[ 1 ] : "";
 
 				this.n5 = new N5AmazonS3Writer(
-					com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
-					bucketName,
-					keyPrefix
+						com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
+						bucketName,
+						keyPrefix
 				);
-			} else {
-				this.n5 = new N5ZarrWriter(zarrPath, "/", false);
+			}
+			else
+			{
+				this.n5 = new N5ZarrWriter( zarrPath, "/", false );
 			}
 		}
-
 
 		/**
 		 * Write a multiscale pyramid with proper OME-NGFF metadata. This follows BigStitcher-Spark's approach.<br>
@@ -77,44 +92,45 @@ public class BigStitcherStyleOMEZarrWriter {
 		 *                           file structure.
 		 * @throws IOException If an I/O error occurs during dataset or metadata writing.
 		 */
-		public <T extends RealType<T> & NativeType<T>> void writeMultiscale(
-			RandomAccessibleInterval<T>[] scales,
-			int[][] blockSizes,
-			double[][] voxelSizes,
-			String[] axisNames,
-			String[] axisTypes,
-			String[] axisUnits,
-			Compression compression,
-			Map<String, Object> additionalMetadata
-		) throws IOException {
+		public < T extends RealType< T > & NativeType< T > > void writeMultiscale(
+				RandomAccessibleInterval< T >[] scales,
+				int[][] blockSizes,
+				double[][] voxelSizes,
+				String[] axisNames,
+				String[] axisTypes,
+				String[] axisUnits,
+				Compression compression,
+				Map< String, Object > additionalMetadata
+		) throws IOException
+		{
 
 			// Write each resolution level
-			for (int level = 0; level < scales.length; level++) {
-				String datasetPath = String.valueOf(level);
+			for ( int level = 0; level < scales.length; level++ )
+			{
+				String datasetPath = String.valueOf( level );
 
 				N5Utils.save(
-					scales[level],
-					n5,
-					datasetPath,
-					blockSizes[level],
-					compression
+						scales[ level ],
+						n5,
+						datasetPath,
+						blockSizes[ level ],
+						compression
 				);
 
-				System.out.println("Written scale level " + level + ": " +
-					Arrays.toString(scales[level].dimensionsAsLongArray()));
+				System.out.println( "Written scale level " + level + ": " +
+						Arrays.toString( scales[ level ].dimensionsAsLongArray() ) );
 			}
 
 			// Write OME-NGFF v0.4 metadata
 			writeOMEMetadata(
-				scales,
-				voxelSizes,
-				axisNames,
-				axisTypes,
-				axisUnits,
-				additionalMetadata
+					scales,
+					voxelSizes,
+					axisNames,
+					axisTypes,
+					axisUnits,
+					additionalMetadata
 			);
 		}
-
 
 		/**
 		 * Writes OME-NGFF v0.4 compliant metadata to root .zattrs. This is the key method for proper OME-Zarr compliance.<br>
@@ -141,13 +157,13 @@ public class BigStitcherStyleOMEZarrWriter {
 		 *                           the dataset. If provided, the "omero" key should contain a {@code JsonObject}
 		 *                           representing OMERO metadata.
 		 */
-		private <T extends RealType<T> & NativeType<T>> void writeOMEMetadata(
-			RandomAccessibleInterval<T>[] scales,
-			double[][] voxelSizes,
-			String[] axisNames,
-			String[] axisTypes,
-			String[] axisUnits,
-			Map<String, Object> additionalMetadata
+		private < T extends RealType< T > & NativeType< T > > void writeOMEMetadata(
+				RandomAccessibleInterval< T >[] scales,
+				double[][] voxelSizes,
+				String[] axisNames,
+				String[] axisTypes,
+				String[] axisUnits,
+				Map< String, Object > additionalMetadata
 		)
 		{
 
@@ -157,60 +173,64 @@ public class BigStitcherStyleOMEZarrWriter {
 			JsonArray multiscales = new JsonArray();
 			JsonObject multiscale = new JsonObject();
 
-			multiscale.addProperty("version", "0.4");
-			multiscale.addProperty("name",
-				additionalMetadata != null && additionalMetadata.containsKey("name") ?
-					(String) additionalMetadata.get("name") : "default");
+			multiscale.addProperty( "version", "0.4" );
+			multiscale.addProperty( "name",
+					additionalMetadata != null && additionalMetadata.containsKey( "name" ) ? ( String ) additionalMetadata.get( "name" )
+							: "default" );
 
 			// Add axes
 			JsonArray axes = new JsonArray();
-			for (int i = 0; i < axisNames.length; i++) {
+			for ( int i = 0; i < axisNames.length; i++ )
+			{
 				JsonObject axis = new JsonObject();
-				axis.addProperty("name", axisNames[i]);
-				axis.addProperty("type", axisTypes[i]);
-				if (axisUnits != null && i < axisUnits.length && axisUnits[i] != null) {
-					axis.addProperty("unit", axisUnits[i]);
+				axis.addProperty( "name", axisNames[ i ] );
+				axis.addProperty( "type", axisTypes[ i ] );
+				if ( axisUnits != null && i < axisUnits.length && axisUnits[ i ] != null )
+				{
+					axis.addProperty( "unit", axisUnits[ i ] );
 				}
-				axes.add(axis);
+				axes.add( axis );
 			}
-			multiscale.add("axes", axes);
+			multiscale.add( "axes", axes );
 
 			// Add datasets (resolution pyramid levels)
 			JsonArray datasets = new JsonArray();
-			for (int level = 0; level < scales.length; level++) {
+			for ( int level = 0; level < scales.length; level++ )
+			{
 				JsonObject dataset = new JsonObject();
-				dataset.addProperty("path", String.valueOf(level));
+				dataset.addProperty( "path", String.valueOf( level ) );
 
 				// Add coordinate transformations
 				JsonArray transforms = new JsonArray();
 				JsonObject scaleTransform = new JsonObject();
-				scaleTransform.addProperty("type", "scale");
+				scaleTransform.addProperty( "type", "scale" );
 
 				JsonArray scaleArray = new JsonArray();
-				for (double voxel : voxelSizes[level]) {
-					scaleArray.add(voxel);
+				for ( double voxel : voxelSizes[ level ] )
+				{
+					scaleArray.add( voxel );
 				}
-				scaleTransform.add("scale", scaleArray);
+				scaleTransform.add( "scale", scaleArray );
 
-				transforms.add(scaleTransform);
-				dataset.add("coordinateTransformations", transforms);
+				transforms.add( scaleTransform );
+				dataset.add( "coordinateTransformations", transforms );
 
-				datasets.add(dataset);
+				datasets.add( dataset );
 			}
-			multiscale.add("datasets", datasets);
+			multiscale.add( "datasets", datasets );
 
-			multiscales.add(multiscale);
+			multiscales.add( multiscale );
 
 			// Write multiscales to root
-			n5.setAttribute("/", "multiscales", multiscales);
+			n5.setAttribute( "/", "multiscales", multiscales );
 
 			// Add OMERO metadata if provided
-			if (additionalMetadata != null && additionalMetadata.containsKey("omero")) {
-				JsonObject omero = (JsonObject) additionalMetadata.get("omero");
-				n5.setAttribute("/", "omero", omero);
+			if ( additionalMetadata != null && additionalMetadata.containsKey( "omero" ) )
+			{
+				JsonObject omero = ( JsonObject ) additionalMetadata.get( "omero" );
+				n5.setAttribute( "/", "omero", omero );
 			}
 		}
-
 
 		/**
 		 * Create a downsampled pyramid from a source image.
@@ -231,39 +251,43 @@ public class BigStitcherStyleOMEZarrWriter {
 		public static < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval< T >[]
 				createPyramid( RandomAccessibleInterval< T > source, int numLevels, int[] downsamplingFactors )
 		{
-			@SuppressWarnings("unchecked")
-			RandomAccessibleInterval<T>[] pyramid = new RandomAccessibleInterval[numLevels];
-			pyramid[0] = source;
+			@SuppressWarnings( "unchecked" )
+			RandomAccessibleInterval< T >[] pyramid = new RandomAccessibleInterval[ numLevels ];
+			pyramid[ 0 ] = source;
 
 			// Create downsampled levels
-			RandomAccessibleInterval<T> current = source;
-			for (int level = 1; level < numLevels; level++) {
-				int factor = (int) Math.pow(2, level);
+			RandomAccessibleInterval< T > current = source;
+			for ( int level = 1; level < numLevels; level++ )
+			{
+				int factor = ( int ) Math.pow( 2, level );
 
 				// Downsample by averaging (simple approach)
 				// For production use, consider using imglib2-algorithm's Gauss + subsample
-				long[] downsampledDims = new long[current.numDimensions()];
-				for (int d = 0; d < downsampledDims.length; d++) {
+				long[] downsampledDims = new long[ current.numDimensions() ];
+				for ( int d = 0; d < downsampledDims.length; d++ )
+				{
 					// Typically don't downsample the last two dimensions: time and channel
-					if (d >= (downsampledDims.length-2)) {
-						downsampledDims[d] = current.dimension(d);
-					} else {
-						downsampledDims[d] = current.dimension(d) / 2;
+					if ( d >= ( downsampledDims.length - 2 ) )
+					{
+						downsampledDims[ d ] = current.dimension( d );
+					}
+					else
+					{
+						downsampledDims[ d ] = current.dimension( d ) / 2;
 					}
 				}
-				System.out.println("Level "+level+" pyramid size: "+downsampledDims);
+				System.out.println( "Level " + level + " pyramid size: " + downsampledDims );
 
 				// Create downsampled image using simple subsampling
 				// For better quality, use Gaussian blur before subsampling
 				RandomAccessibleInterval< T > downsampled = subsample( current, downsampledDims );
 
-				pyramid[level] = downsampled;
+				pyramid[ level ] = downsampled;
 				current = downsampled;
 			}
 
 			return pyramid;
 		}
-
 
 		/**
 		 * Simple subsampling helper (for demonstration).
@@ -283,36 +307,39 @@ public class BigStitcherStyleOMEZarrWriter {
 		private static < T extends RealType< T > & NativeType< T > > RandomAccessibleInterval< T >
 				subsample( RandomAccessibleInterval< T > source, long[] targetDims )
 		{
-			ArrayImgFactory<T> arrayImgFactory = new ArrayImgFactory<>();
+			ArrayImgFactory< T > arrayImgFactory = new ArrayImgFactory<>();
 
 			// Create target image -- DEPRECATED BUILDING OF NEW IMAGES
-			net.imglib2.img.Img<T> target = arrayImgFactory.create(
-				targetDims,
-				source.randomAccess().get().createVariable()
+			net.imglib2.img.Img< T > target = arrayImgFactory.create(
+					targetDims,
+					source.randomAccess().get().createVariable()
 			);
 
 			// Simple subsampling by taking every other pixel
-			Cursor<T> targetCursor = target.cursor();
-			RandomAccess<T> sourceAccess = source.randomAccess();
+			Cursor< T > targetCursor = target.cursor();
+			RandomAccess< T > sourceAccess = source.randomAccess();
 
-			long[] sourcePos = new long[source.numDimensions()];
-			while (targetCursor.hasNext()) {
+			long[] sourcePos = new long[ source.numDimensions() ];
+			while ( targetCursor.hasNext() )
+			{
 				targetCursor.fwd();
-				targetCursor.localize(sourcePos);
+				targetCursor.localize( sourcePos );
 
 				// Scale position to source coordinates
-				for (int d = 0; d < sourcePos.length-2; d++) {
-					sourcePos[d] *= 2;
+				for ( int d = 0; d < sourcePos.length - 2; d++ )
+				{
+					sourcePos[ d ] *= 2;
 				}
 
-				sourceAccess.setPosition(sourcePos);
-				targetCursor.get().set(sourceAccess.get());
+				sourceAccess.setPosition( sourcePos );
+				targetCursor.get().set( sourceAccess.get() );
 			}
 
 			return target;
 		}
 
-		public N5Writer getN5Writer() {
+		public N5Writer getN5Writer()
+		{
 			return n5;
 		}
 	}
@@ -345,7 +372,7 @@ public class BigStitcherStyleOMEZarrWriter {
 			OMEZarrWriter writer = new OMEZarrWriter( localPath, 3 ); // 3 resolution levels
 
 			// Create multi-scale pyramid
-			@SuppressWarnings("unchecked")
+			@SuppressWarnings( "unchecked" )
 			RandomAccessibleInterval< UnsignedShortType >[] pyramid =
 					OMEZarrWriter.createPyramid( sourceImage, 3, new int[] { 1, 2, 4 } );
 
@@ -492,8 +519,6 @@ public class BigStitcherStyleOMEZarrWriter {
 		}
 	}
 
-
-
 	/**
 	 * Helper method to write a simple 3D volume as OME-Zarr (without multiscale).
 	 * Useful for quick exports.
@@ -510,44 +535,45 @@ public class BigStitcherStyleOMEZarrWriter {
 	 * @param compression The compression scheme to be used for data storage.
 	 * @throws IOException If there is an error during the writing process.
 	 */
-	public static <T extends RealType<T> & NativeType<T>> void writeSimple3D(
-		RandomAccessibleInterval<T> volume,
-		String zarrPath,
-		int[] blockSize,
-		double[] voxelSize,
-		Compression compression
-	) throws IOException {
+	public static < T extends RealType< T > & NativeType< T > > void writeSimple3D(
+			RandomAccessibleInterval< T > volume,
+			String zarrPath,
+			int[] blockSize,
+			double[] voxelSize,
+			Compression compression
+	) throws IOException
+	{
 
 		// Expand to 5D: (1, 1, z, y, x)
-		RandomAccessibleInterval<T> expanded = Views.addDimension(
-			Views.addDimension(volume, 0, 0), 0, 0);
+		RandomAccessibleInterval< T > expanded = Views.addDimension(
+				Views.addDimension( volume, 0, 0 ), 0, 0 );
 
-		OMEZarrWriter writer = new OMEZarrWriter(zarrPath, 1);
+		OMEZarrWriter writer = new OMEZarrWriter( zarrPath, 1 );
 
-		@SuppressWarnings("unchecked")
-		RandomAccessibleInterval<T>[] scales = new RandomAccessibleInterval[]{expanded};
+		@SuppressWarnings( "unchecked" )
+		RandomAccessibleInterval< T >[] scales = new RandomAccessibleInterval[] { expanded };
 
 		int[][] blockSizes = {
-			{1, 1, blockSize[0], blockSize[1], blockSize[2]}
+				{ 1, 1, blockSize[ 0 ], blockSize[ 1 ], blockSize[ 2 ] }
 		};
 
 		double[][] voxelSizes = {
-			{1.0, 1.0, voxelSize[0], voxelSize[1], voxelSize[2]}
+				{ 1.0, 1.0, voxelSize[ 0 ], voxelSize[ 1 ], voxelSize[ 2 ] }
 		};
 
-		String[] axisNames = {"t", "c", "z", "y", "x"};
-		String[] axisTypes = {"time", "channel", "space", "space", "space"};
-		String[] axisUnits = {null, null, "micrometer", "micrometer", "micrometer"};
+		String[] axisNames = { "t", "c", "z", "y", "x" };
+		String[] axisTypes = { "time", "channel", "space", "space", "space" };
+		String[] axisUnits = { null, null, "micrometer", "micrometer", "micrometer" };
 
 		writer.writeMultiscale(
-			scales,
-			blockSizes,
-			voxelSizes,
-			axisNames,
-			axisTypes,
-			axisUnits,
-			compression,
-			Collections.singletonMap("name", "volume")
+				scales,
+				blockSizes,
+				voxelSizes,
+				axisNames,
+				axisTypes,
+				axisUnits,
+				compression,
+				Collections.singletonMap( "name", "volume" )
 		);
 	}
 }

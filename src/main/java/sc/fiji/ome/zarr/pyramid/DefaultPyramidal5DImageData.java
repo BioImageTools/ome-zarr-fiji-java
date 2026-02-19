@@ -28,13 +28,6 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
-import bdv.cache.SharedQueue;
-import bdv.util.BdvOptions;
-import bdv.viewer.SourceAndConverter;
-import mpicbg.spim.data.SpimData;
-import mpicbg.spim.data.sequence.VoxelDimensions;
-import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
-
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
@@ -67,6 +60,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import bdv.cache.SharedQueue;
+import bdv.util.BdvOptions;
+import bdv.viewer.SourceAndConverter;
+import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
+
 /**
  * An OME-Zarr backed pyramidal 5D image
  * that can be visualised in ImageJ in various ways.
@@ -78,9 +78,9 @@ import java.util.List;
  * @param <V> Volatile type of the pixels
  */
 public class DefaultPyramidal5DImageData<
-		  T extends NativeType< T > & RealType< T >,
-		  V extends Volatile< T > & NativeType< V > & RealType< V > >
-		  implements EuclideanSpace, Pyramidal5DImageData< T >
+		T extends NativeType< T > & RealType< T >,
+		V extends Volatile< T > & NativeType< V > & RealType< V > >
+		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
 	/** The scijava context. This is needed (only) for creating {@link #ijDataset}. */
 	private final Context context;
@@ -109,7 +109,6 @@ public class DefaultPyramidal5DImageData<
 	 */
 	private int numResolutions;
 
-
 	/** The fourth dimension size... */
 	private int numTimepoints = 1;
 
@@ -118,17 +117,19 @@ public class DefaultPyramidal5DImageData<
 
 	/** TODO: Should be 4 or 5, no??? */
 	private int numDimensions;
+
 	private long[] dimensions;
 	//TODO: -- knows resolution along the dimensions
 	//private OMEZarrAxes omeZarrAxes;
 
 	//these act as caches not to create them again and again
 	private final ImgPlus< T > imgPlus;
+
 	private final Dataset ijDataset;
 
 	private List< SourceAndConverter< T > > sourceAndConverters;
-	private SpimData spimData;
 
+	private SpimData spimData;
 
 	/**
 	 * Build a dataset from a single {@code PyramidalOMEZarrArray},
@@ -151,25 +152,24 @@ public class DefaultPyramidal5DImageData<
 		dimensions = multiscaleImage.dimensions();
 		numDimensions = dimensions.length;
 
-		imgPlus = new ImgPlus<>(multiscaleImage.getImg(0));
-		imgPlus.setName(getName());
+		imgPlus = new ImgPlus<>( multiscaleImage.getImg( 0 ) );
+		imgPlus.setName( getName() );
 		updateImgPlusAxes();
 
-		final DatasetService datasetService = context.getService(DatasetService.class);
-		ijDataset = datasetService.create(imgPlus);
-		ijDataset.setName(imgPlus.getName());
-		ijDataset.setRGBMerged(false);
+		final DatasetService datasetService = context.getService( DatasetService.class );
+		ijDataset = datasetService.create( imgPlus );
+		ijDataset.setName( imgPlus.getName() );
+		ijDataset.setRGBMerged( false );
 	}
 
-
-
-	public static void main(String[] args) {
+	public static void main( String[] args )
+	{
 		//final String path = "/home/ulman/Documents/talks/CEITEC/2025_11_ZarrSymposium_Zurich/data/MitoEM_fixedRes.zarr/MitoEM_fixedRes";
 		final String path = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0";
-		final N5Reader n5reader = new N5Factory().openReader(path);
-		System.out.println("got reader: "+n5reader);
-		N5Metadata m = N5DatasetDiscoverer.discover(n5reader).getMetadata();
-		System.out.println("got metadata: "+m);
+		final N5Reader n5reader = new N5Factory().openReader( path );
+		System.out.println( "got reader: " + n5reader );
+		N5Metadata m = N5DatasetDiscoverer.discover( n5reader ).getMetadata();
+		System.out.println( "got metadata: " + m );
 
 		/*
 		if (m instanceof OmeNgffV05Metadata) {
@@ -271,8 +271,7 @@ public class DefaultPyramidal5DImageData<
 	 * just once.
 	 */
 	private synchronized void imgPlus()
-	{
-	}
+	{}
 
 	/**
 	 * Create/update calibrated axes for ImgPlus {@link DefaultPyramidal5DImageData#imgPlus}.
@@ -341,7 +340,7 @@ public class DefaultPyramidal5DImageData<
 		if ( cAxisIndex >= 0 )
 		{
 			imgAxes.add( createAxis( cAxisIndex, Axes.CHANNEL, axes, scaleFactors ) );
-			numChannels = (int) dimensions[ cAxisIndex ];
+			numChannels = ( int ) dimensions[ cAxisIndex ];
 		}
 
 		// T

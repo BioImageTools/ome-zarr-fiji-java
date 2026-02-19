@@ -1,23 +1,25 @@
 package sc.fiji.ome.zarr.examples;
 
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.view.IntervalView;
-import org.janelia.saalfeldlab.n5.*;
-import org.janelia.saalfeldlab.n5.s3.N5AmazonS3Reader;
-import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
-import org.janelia.saalfeldlab.n5.universe.N5Factory;
-import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
-import org.janelia.saalfeldlab.n5.universe.metadata.N5MultiScaleMetadata;
-import org.janelia.saalfeldlab.n5.zarr.*;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
-import net.imglib2.*;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonElement;
 
-public class OMEZarrLazyReader {
+import org.janelia.saalfeldlab.n5.DataType;
+import org.janelia.saalfeldlab.n5.DatasetAttributes;
+import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
+import org.janelia.saalfeldlab.n5.s3.N5AmazonS3Reader;
+import org.janelia.saalfeldlab.n5.zarr.N5ZarrReader;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+public class OMEZarrLazyReader
+{
 
 	/**
 	 * Reads an OME-Zarr dataset lazily into ImgLib2 structures.
@@ -27,28 +29,31 @@ public class OMEZarrLazyReader {
 	 * @param datasetPath Path within the Zarr (e.g., "0" for multiscale level 0, or "labels/cells")
 	 * @return Lazy RandomAccessibleInterval backed by the OME-Zarr store
 	 */
-	public static <T extends RealType<T> & NativeType<T>>
+	public static < T extends RealType< T > & NativeType< T > >
 			RandomAccessibleInterval< T > readLazy( String path, String datasetPath )
 	{
 
 		N5Reader n5;
 
 		// Determine if it's S3 or local filesystem
-		if (path.startsWith("s3://")) {
+		if ( path.startsWith( "s3://" ) )
+		{
 			// For S3, use N5AmazonS3Reader
-			String[] parts = path.substring(5).split("/", 2);
-			String bucketName = parts[0];
-			String keyPrefix = parts.length > 1 ? parts[1] : "";
+			String[] parts = path.substring( 5 ).split( "/", 2 );
+			String bucketName = parts[ 0 ];
+			String keyPrefix = parts.length > 1 ? parts[ 1 ] : "";
 
 			// Create S3 reader with Zarr backend
 			n5 = new N5AmazonS3Reader(
-				com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
-				bucketName,
-				keyPrefix
+					com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
+					bucketName,
+					keyPrefix
 			);
-		} else {
+		}
+		else
+		{
 			// Local filesystem - use ZarrKeyValueReader
-			n5 = new N5ZarrReader(path);
+			n5 = new N5ZarrReader( path );
 		}
 
 		// Open dataset lazily - this does NOT load data into memory
@@ -74,7 +79,6 @@ public class OMEZarrLazyReader {
 		return lazyImg;
 	}
 
-
 	/**
 	 * Reads OME-Zarr metadata including multiscale information, axes, units, etc.
 	 * <br>
@@ -85,40 +89,47 @@ public class OMEZarrLazyReader {
 	{
 		N5Reader n5;
 
-		if (path.startsWith("s3://")) {
-			String[] parts = path.substring(5).split("/", 2);
-			String bucketName = parts[0];
-			String keyPrefix = parts.length > 1 ? parts[1] : "";
+		if ( path.startsWith( "s3://" ) )
+		{
+			String[] parts = path.substring( 5 ).split( "/", 2 );
+			String bucketName = parts[ 0 ];
+			String keyPrefix = parts.length > 1 ? parts[ 1 ] : "";
 			n5 = new N5AmazonS3Reader(
-				com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
-				bucketName,
-				keyPrefix
+					com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
+					bucketName,
+					keyPrefix
 			);
-		} else {
-			n5 = new N5ZarrReader(path);
+		}
+		else
+		{
+			n5 = new N5ZarrReader( path );
 		}
 
 		OMEZarrMetadata metadata = new OMEZarrMetadata();
 
 		// Read root attributes (.zattrs in Zarr)
-		JsonElement attrs = n5.getAttribute("/", "attributes", JsonElement.class);
-		if (attrs != null && attrs.isJsonObject()) {
+		JsonElement attrs = n5.getAttribute( "/", "attributes", JsonElement.class );
+		if ( attrs != null && attrs.isJsonObject() )
+		{
 			JsonObject attrsObj = attrs.getAsJsonObject();
 
 			// Parse OME-Zarr multiscales metadata
-			if (attrsObj.has("multiscales")) {
-				metadata.multiscales = attrsObj.get("multiscales");
+			if ( attrsObj.has( "multiscales" ) )
+			{
+				metadata.multiscales = attrsObj.get( "multiscales" );
 			}
 
 			// Parse OME metadata if present
-			if (attrsObj.has("omero")) {
-				metadata.omero = attrsObj.get("omero").getAsJsonObject();
+			if ( attrsObj.has( "omero" ) )
+			{
+				metadata.omero = attrsObj.get( "omero" ).getAsJsonObject();
 			}
 		}
 
 		// Read dataset-specific metadata
-		DatasetAttributes datasetAttrs = n5.getDatasetAttributes("/0");
-		if (datasetAttrs != null) {
+		DatasetAttributes datasetAttrs = n5.getDatasetAttributes( "/0" );
+		if ( datasetAttrs != null )
+		{
 			metadata.dimensions = datasetAttrs.getDimensions();
 			metadata.blockSize = datasetAttrs.getBlockSize();
 			metadata.dataType = datasetAttrs.getDataType();
@@ -182,15 +193,19 @@ public class OMEZarrLazyReader {
 
 	}
 
-
 	/**
 	 * Container class for OME-Zarr metadata
 	 */
-	public static class OMEZarrMetadata {
+	public static class OMEZarrMetadata
+	{
 		public JsonElement multiscales;
+
 		public JsonObject omero;
+
 		public long[] dimensions;
+
 		public int[] blockSize;
+
 		public DataType dataType;
 	}
 }

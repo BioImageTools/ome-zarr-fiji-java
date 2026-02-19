@@ -28,6 +28,8 @@
  */
 package sc.fiji.ome.zarr.plugins;
 
+import net.imglib2.util.Cast;
+
 import org.scijava.io.AbstractIOPlugin;
 import org.scijava.io.IOPlugin;
 import org.scijava.io.location.FileLocation;
@@ -38,19 +40,17 @@ import org.scijava.plugin.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.util.BdvHandleService;
-import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
-
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-import net.imglib2.util.Cast;
+import sc.fiji.ome.zarr.ui.DnDActionChooser;
+import sc.fiji.ome.zarr.util.BdvHandleService;
+import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
-@Plugin(type = IOPlugin.class, attrs = @Attr(name = "eager"))
+@Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
 public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );

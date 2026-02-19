@@ -1,15 +1,17 @@
 package sc.fiji.ome.zarr.util;
 
-import bdv.util.BdvFunctions;
-import bdv.util.BdvOptions;
-import bdv.util.BdvStackSource;
-import bdv.viewer.ViewerPanel;
 import net.imglib2.RandomAccessibleInterval;
+
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
 import org.scijava.service.SciJavaService;
+
+import bdv.util.BdvFunctions;
+import bdv.util.BdvOptions;
+import bdv.util.BdvStackSource;
+import bdv.viewer.ViewerPanel;
 
 @Plugin( type = SciJavaService.class )
 public class BdvHandleService extends AbstractService implements SciJavaService

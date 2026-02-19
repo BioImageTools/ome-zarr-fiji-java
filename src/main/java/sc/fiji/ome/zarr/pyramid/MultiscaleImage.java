@@ -30,13 +30,6 @@ package sc.fiji.ome.zarr.pyramid;
 
 import static sc.fiji.ome.zarr.pyramid.Multiscales.MULTI_SCALE_KEY;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-
-import bdv.cache.SharedQueue;
-import bdv.util.volatiles.VolatileTypeMatcher;
-import bdv.util.volatiles.VolatileViews;
-
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -53,14 +46,22 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
+
 import org.janelia.saalfeldlab.n5.DataType;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.zarr.N5ZarrReader;
 
+import bdv.cache.SharedQueue;
+import bdv.util.volatiles.VolatileTypeMatcher;
+import bdv.util.volatiles.VolatileViews;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+
 public class MultiscaleImage<
-		  T extends NativeType< T > & RealType< T >,
-		  V extends Volatile< T > & NativeType< V > & RealType< V > >
+		T extends NativeType< T > & RealType< T >,
+		V extends Volatile< T > & NativeType< V > & RealType< V > >
 {
 	private final String multiscalePath;
 
@@ -82,7 +83,6 @@ public class MultiscaleImage<
 
 	private int multiscaleArrayIndex = 0; // TODO (see comments within code)
 
-
 	/**
 	 * Constructs a MultiscaleImage instance with the specified path for a multiscale dataset.
 	 *
@@ -96,10 +96,10 @@ public class MultiscaleImage<
 
 	private void init()
 	{
-		if ( imgs != null ) return;
+		if ( imgs != null )
+			return;
 
 		//TODO: re-use the code from N5Importer and fill local attributes from that
-
 
 		try
 		{
@@ -175,41 +175,43 @@ public class MultiscaleImage<
 
 	private void initTypes( DataType dataType )
 	{
-		if ( type != null ) return;
+		if ( type != null )
+			return;
 
 		// TODO JOHN: Does the below code already exists
 		//   somewhere in N5?
-		switch ( dataType ) {
-			case UINT8:
-				type = Cast.unchecked( new UnsignedByteType() );
-				break;
-			case UINT16:
-				type = Cast.unchecked( new UnsignedShortType() );
-				break;
-			case UINT32:
-				type = Cast.unchecked( new UnsignedIntType() );
-				break;
-			case UINT64:
-				type = Cast.unchecked( new UnsignedLongType() );
-				break;
-			case INT8:
-				type = Cast.unchecked( new ByteType() );
-				break;
-			case INT16:
-				type = Cast.unchecked( new ShortType() );
-				break;
-			case INT32:
-				type = Cast.unchecked( new IntType() );
-				break;
-			case INT64:
-				type = Cast.unchecked( new LongType() );
-				break;
-			case FLOAT32:
-				type = Cast.unchecked( new FloatType() );
-				break;
-			case FLOAT64:
-				type = Cast.unchecked( new DoubleType() );
-				break;
+		switch ( dataType )
+		{
+		case UINT8:
+			type = Cast.unchecked( new UnsignedByteType() );
+			break;
+		case UINT16:
+			type = Cast.unchecked( new UnsignedShortType() );
+			break;
+		case UINT32:
+			type = Cast.unchecked( new UnsignedIntType() );
+			break;
+		case UINT64:
+			type = Cast.unchecked( new UnsignedLongType() );
+			break;
+		case INT8:
+			type = Cast.unchecked( new ByteType() );
+			break;
+		case INT16:
+			type = Cast.unchecked( new ShortType() );
+			break;
+		case INT32:
+			type = Cast.unchecked( new IntType() );
+			break;
+		case INT64:
+			type = Cast.unchecked( new LongType() );
+			break;
+		case FLOAT32:
+			type = Cast.unchecked( new FloatType() );
+			break;
+		case FLOAT64:
+			type = Cast.unchecked( new DoubleType() );
+			break;
 		}
 
 		volatileType = ( V ) VolatileTypeMatcher.getVolatileTypeForType( type );
