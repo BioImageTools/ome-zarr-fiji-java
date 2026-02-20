@@ -49,6 +49,21 @@ class ZarrOnFileSystemUtilsTest
 	}
 
 	@Test
+	void testFindImageRootFolder_startOnLeaveFolder() throws URISyntaxException
+	{
+		String[] examples = {
+				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0/image/0"
+		};
+
+		for ( String example : examples )
+		{
+			Path path = ZarrTestUtils.resourcePath( example );
+			Path result = ZarrOnFileSystemUtils.findImageRootFolder( path );
+			assertNull( result, "Expected null for root folder: " + example );
+		}
+	}
+
+	@Test
 	void testFindImageRootFolder_startOnLevelTwoFolder() throws URISyntaxException
 	{
 		String[] examples = {

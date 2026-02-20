@@ -39,7 +39,7 @@ import org.scijava.plugin.Plugin;
 import bdv.util.BdvFunctions;
 import bdv.util.BdvOptions;
 
-@Plugin( type = Command.class )
+@Plugin( type = Command.class, menuPath = "Plugins > BigDataViewer > Open Current Zarr image" )
 public class OpenInBDVCommand implements Command
 {
 	@Parameter
@@ -51,16 +51,19 @@ public class OpenInBDVCommand implements Command
 	@Override
 	public void run()
 	{
+		logService.log( 0, "Trying to open: " + dataset.getName() );
+		logService.log( 0, "Class: " + dataset.getClass() );
+		logService.log( 0, "Dataset instanceof PyramidalDataset: " + ( dataset instanceof PyramidalDataset ) );
 		if ( dataset instanceof PyramidalDataset )
 		{
-			logService.log( 0, "Opening " + dataset.getClass().toString() + " in BDV..." );
+			logService.log( 0, "Opening " + dataset.getClass() + " in BDV..." );
 			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
 			BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
 					BdvOptions.options().frameTitle( pyramidalDataset.getName() ) );
 		}
 		else
 		{
-			logService.error( "Cannot display datasets of type " + dataset.getClass().toString() + " in BDV." );
+			logService.error( "Cannot display datasets of type " + dataset.getClass() + " in BDV." );
 		}
 	}
 }
