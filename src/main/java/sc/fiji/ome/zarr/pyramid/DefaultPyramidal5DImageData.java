@@ -196,6 +196,14 @@ public class DefaultPyramidal5DImageData<
 		// Initialize N5Reader
 		final Path inputPath = Paths.get( this.path );
 		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath ); // TODO: maybe do not go back to root folder
+		if ( rootPath == null )
+		{
+			boolean isZarrFolder = ZarrOnFileSystemUtils.isZarrFolder( inputPath );
+			if ( !isZarrFolder )
+				throw new NotAMultiscaleImageException( "The provided path '" + path + "' does not contain supported a multiscale image." );
+			else
+				throw new NotAMultiscaleImageException( "The provided path '" + path + "' is not a multiscale image." );
+		}
 		N5Reader reader = new N5Factory().openReader( rootPath.toUri().toString() );
 
 		// Initialize N5TreeNode
