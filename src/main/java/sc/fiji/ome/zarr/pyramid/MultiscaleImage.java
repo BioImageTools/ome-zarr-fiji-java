@@ -92,7 +92,7 @@ public class MultiscaleImage<
 	public MultiscaleImage( final String multiscalePath )
 	{
 		this.multiscalePath = multiscalePath;
-		this.queue = null;
+		this.queue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 	}
 
 	private void init()
