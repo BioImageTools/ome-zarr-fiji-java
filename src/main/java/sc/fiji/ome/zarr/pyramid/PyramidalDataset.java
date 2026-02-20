@@ -58,4 +58,9 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 	{
 		return data.voxelDimensions();
 	}
+
+	public String getPyramidName()
+	{
+		return data.getName();
+	}
 }
