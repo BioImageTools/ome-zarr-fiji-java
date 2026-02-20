@@ -8,6 +8,7 @@ public class MultiscaleImageDemo
 	{
 		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
 		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
+		// final String multiscalePath = "/Users/hahmann/Data/13457537.zarr"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457537.zarr/0
 
 		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath );
 
