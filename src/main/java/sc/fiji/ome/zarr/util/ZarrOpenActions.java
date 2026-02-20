@@ -127,9 +127,9 @@ public class ZarrOpenActions
 	private void openMultiScaleImage( final Consumer< PyramidalDataset< ? > > multiScaleImageOpener ) throws NotAMultiscaleImageException
 	{
 
-		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( droppedInPath.toString() );
+		// final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( droppedInPath.toString() );
 		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
-				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), multiscaleImage );
+				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString() );
 		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
 		multiScaleImageOpener.accept( pyramidalDataset );
 		logger.info( "Opened multiscale image: {}", droppedInPath );
