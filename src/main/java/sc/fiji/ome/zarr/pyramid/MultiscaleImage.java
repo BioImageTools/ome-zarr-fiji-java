@@ -49,6 +49,7 @@ import net.imglib2.util.Cast;
 
 import org.janelia.saalfeldlab.n5.DataType;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
+import org.janelia.saalfeldlab.n5.N5Exception;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.zarr.N5ZarrReader;
 
@@ -109,6 +110,10 @@ public class MultiscaleImage<
 			// Fetch metadata
 			//
 			Multiscales[] multiscalesArray = n5ZarrReader.getAttribute( "", MULTI_SCALE_KEY, Multiscales[].class );
+			if ( multiscalesArray == null || multiscalesArray.length == 0 )
+			{
+				throw new NotAMultiscaleImageException( multiscalePath );
+			}
 
 			// In principle the call above would be sufficient.
 			// However since we need to support different
@@ -166,11 +171,10 @@ public class MultiscaleImage<
 					vimgs[ resolution ] = VolatileViews.wrapAsVolatile( imgs[ resolution ], queue );
 			}
 		}
-		catch ( Exception e )
+		catch ( N5Exception.N5IOException e )
 		{
-			throw new RuntimeException( e );
+			throw new NotAMultiscaleImageException( multiscalePath, e );
 		}
-
 	}
 
 	private void initTypes( DataType dataType )
@@ -217,49 +221,49 @@ public class MultiscaleImage<
 		volatileType = ( V ) VolatileTypeMatcher.getVolatileTypeForType( type );
 	}
 
-	public Multiscales getMultiscales()
+	public Multiscales getMultiscales() throws NotAMultiscaleImageException
 	{
 		init();
 		return multiscales;
 	}
 
-	public long[] dimensions()
+	public long[] dimensions() throws NotAMultiscaleImageException
 	{
 		init();
 		return dimensions;
 	}
 
-	public int numResolutions()
+	public int numResolutions() throws NotAMultiscaleImageException
 	{
 		init();
 		return numResolutions;
 	}
 
-	public CachedCellImg< T, ? > getImg( final int resolutionLevel )
+	public CachedCellImg< T, ? > getImg( final int resolutionLevel ) throws NotAMultiscaleImageException
 	{
 		init();
 		return imgs[ resolutionLevel ];
 	}
 
-	public RandomAccessibleInterval< V > getVolatileImg( final int resolutionLevel )
+	public RandomAccessibleInterval< V > getVolatileImg( final int resolutionLevel ) throws NotAMultiscaleImageException
 	{
 		init();
 		return vimgs[ resolutionLevel ];
 	}
 
-	public T getType()
+	public T getType() throws NotAMultiscaleImageException
 	{
 		init();
 		return type;
 	}
 
-	public V getVolatileType()
+	public V getVolatileType() throws NotAMultiscaleImageException
 	{
 		init();
 		return volatileType;
 	}
 
-	public int numDimensions()
+	public int numDimensions() throws NotAMultiscaleImageException
 	{
 		init();
 		return dimensions.length;
