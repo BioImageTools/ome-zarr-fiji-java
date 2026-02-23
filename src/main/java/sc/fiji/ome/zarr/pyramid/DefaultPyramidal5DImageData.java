@@ -116,10 +116,11 @@ public class DefaultPyramidal5DImageData<
 	/** The fifth dimension size... */
 	private int numChannels = 1;
 
-	/** TODO: Should be 4 or 5, no??? */
+	/** The total number of dimensions in the image. */
 	private int numDimensions;
 
 	private long[] dimensions;
+
 	//TODO: -- knows resolution along the dimensions
 	//private OMEZarrAxes omeZarrAxes;
 
@@ -341,7 +342,6 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public SpimData asSpimData()
 	{
-		// FIXME (JOHN) implement SpimData creation
 		return spimData;
 	}
 
