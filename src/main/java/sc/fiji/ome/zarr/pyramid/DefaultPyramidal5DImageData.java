@@ -232,8 +232,6 @@ public class DefaultPyramidal5DImageData<
 		CachedCellImg< T, ? > cachedCellImg = N5Utils.openVolatile( reader, selectedDataset );
 		imgPlus = new ImgPlus<>( cachedCellImg );
 		imgPlus.setName( singleScaleName );
-		// N5Importer importer = new N5Importer(); // TODO: why actually not ImagePlus? What is the disadvantage?
-		// ImagePlus imagePlus = importer.process( path, true ).get( 0 );
 
 		Map< String, AxisType > mapping = new HashMap<>();
 		mapping.put( "x", Axes.X );
