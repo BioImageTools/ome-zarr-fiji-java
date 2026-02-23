@@ -152,7 +152,7 @@ public class DefaultPyramidal5DImageData<
 
 		// Initialize N5Reader
 		final Path inputPath = Paths.get( this.path );
-		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath ); // TODO: maybe do not go back to root folder
+		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath ); // NB: it seems that more metadata is discovered if we first traverse up to the root folder
 		if ( rootPath == null )
 		{
 			boolean isZarrFolder = ZarrOnFileSystemUtils.isZarrFolder( inputPath );
@@ -165,7 +165,7 @@ public class DefaultPyramidal5DImageData<
 
 		// Initialize N5TreeNode
 		final List< String > relativePathElements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
-		final String relativePath = String.join( File.separator, relativePathElements ); // TODO: go not back to root folder and use "" as relative path
+		final String relativePath = String.join( File.separator, relativePathElements );
 		N5TreeNode n5TreeNode = new N5TreeNode( relativePath );
 
 		// Create Parsers
