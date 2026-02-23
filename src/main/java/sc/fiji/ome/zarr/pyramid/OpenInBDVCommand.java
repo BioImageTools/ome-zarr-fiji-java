@@ -39,7 +39,7 @@ import org.scijava.plugin.Plugin;
 import bdv.util.BdvFunctions;
 import bdv.util.BdvOptions;
 
-@Plugin( type = Command.class, menuPath = "Plugins > BigDataViewer > Open Current Zarr image" )
+@Plugin( type = Command.class, menuPath = "Plugins > BigDataViewer > Open Current Zarr Image" )
 public class OpenInBDVCommand implements Command
 {
 	@Parameter
