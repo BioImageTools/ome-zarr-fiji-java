@@ -24,7 +24,6 @@ import bdv.util.BdvFunctions;
 import bdv.util.BdvOptions;
 import ij.IJ;
 import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
-import sc.fiji.ome.zarr.pyramid.MultiscaleImage;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;

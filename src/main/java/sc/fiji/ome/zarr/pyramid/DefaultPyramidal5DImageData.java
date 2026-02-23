@@ -57,7 +57,6 @@ import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
-import org.jetbrains.annotations.NotNull;
 import org.scijava.Context;
 
 import java.io.File;
@@ -107,18 +106,7 @@ public class DefaultPyramidal5DImageData<
 	private final String path;
 
 	/**
-	 * Basically a list of individual images<T,V>, each of which
-	 * showing the same content but at different spatial resolution.
-	 * This is where the 'pyramids' are held.
-	 *
-	 * Note that none of the individual images knows its pixel resolution,
-	 * or any other metadata.
-	 */
-	private final MultiscaleImage< T, V > multiscaleImage;
-
-	/**
-	 * Only a shortcut as this information is otherwise also available
-	 * in the {@link DefaultPyramidal5DImageData#multiscaleImage}.
+	 * The number of available resolutions.
 	 */
 	private int numResolutions;
 
@@ -143,38 +131,6 @@ public class DefaultPyramidal5DImageData<
 	private List< SourceAndConverter< T > > sourceAndConverters;
 
 	private SpimData spimData;
-
-	/**
-	 * Build a dataset from a single {@code PyramidalOMEZarrArray},
-	 * which MUST only contains subset of the axes: X,Y,Z,C,T
-	 * <br>
-	 * @param context The SciJava context for building the SciJava dataset
-	 * @param multiscaleImage The array containing the image all data.
-	 * @throws Error any error
-	 */
-	public DefaultPyramidal5DImageData(
-			final Context context,
-			final String name,
-			final MultiscaleImage< T, V > multiscaleImage ) throws Error
-	{
-		this.context = context;
-		this.name = name;
-		this.path = null;
-		this.multiscaleImage = multiscaleImage;
-
-		numResolutions = multiscaleImage.numResolutions();
-		dimensions = multiscaleImage.dimensions();
-		numDimensions = dimensions.length;
-
-		imgPlus = new ImgPlus<>( multiscaleImage.getImg( 0 ) );
-		imgPlus.setName( getName() );
-		updateImgPlusAxes();
-
-		final DatasetService datasetService = context.getService( DatasetService.class );
-		ijDataset = datasetService.create( imgPlus );
-		ijDataset.setName( imgPlus.getName() );
-		ijDataset.setRGBMerged( false );
-	}
 
 	/**
 	 * Build a dataset from a single {@code PyramidalOMEZarrArray},
@@ -225,6 +181,7 @@ public class DefaultPyramidal5DImageData<
 		final String selectedDataset;
 		final DatasetAttributes attributes;
 		final int representativeResolutionLevel = 0; // TODO: highest resolution level or resolution level closest to 1000x1000?
+		final int representativeMultiscaleIndex = 0; // TODO: if multiple multiscales are present, which one to choose?
 		final Axis[] axes;
 		final String[] axisNames;
 		final String[] units;
@@ -233,9 +190,9 @@ public class DefaultPyramidal5DImageData<
 		if ( ( metadata instanceof OmeNgffMetadata ) )
 		{
 			OmeNgffMetadata ngffMetadata = Cast.unchecked( metadata );
-			numResolutions = ngffMetadata.multiscales.length;
-			name = ngffMetadata.getName();
-			OmeNgffMultiScaleMetadata multiscales = ngffMetadata.multiscales[ 0 ];
+			OmeNgffMultiScaleMetadata multiscales = ngffMetadata.multiscales[ representativeMultiscaleIndex ];
+			numResolutions = multiscales.datasets.length;
+			name = multiscales.name;
 			NgffSingleScaleAxesMetadata singleScaleMetadata = multiscales.getChildrenMetadata()[ representativeResolutionLevel ];
 			selectedDataset = singleScaleMetadata.getPath();
 			attributes = singleScaleMetadata.getAttributes();
@@ -249,10 +206,10 @@ public class DefaultPyramidal5DImageData<
 		else if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
 		{
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata ngffMetadata = Cast.unchecked( metadata );
-			numResolutions = ngffMetadata.getMultiscales().length;
-			name = ngffMetadata.getName();
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMultiScaleMetadata multiscales =
-					ngffMetadata.getMultiscales()[ 0 ];
+					ngffMetadata.getMultiscales()[ representativeMultiscaleIndex ];
+			numResolutions = multiscales.datasets.length;
+			name = multiscales.name;
 			N5SingleScaleMetadata singleScaleMetadata = multiscales.getChildrenMetadata()[ representativeResolutionLevel ];
 			selectedDataset = singleScaleMetadata.getPath();
 			attributes = singleScaleMetadata.getAttributes();
@@ -268,7 +225,6 @@ public class DefaultPyramidal5DImageData<
 			throw new NotAMultiscaleImageException( "The provided path '" + path + "' does not contain supported a multiscale image." );
 		}
 
-		multiscaleImage = null;
 		dimensions = attributes.getDimensions();
 		numDimensions = dimensions.length;
 
@@ -369,7 +325,7 @@ public class DefaultPyramidal5DImageData<
 
 				// TODO: avoid code duplication with constructor
 				// Initialize N5Reader
-				final Path inputPath = Paths.get( multiscaleImage == null ? path : multiscaleImage.getMultiscalePath() );
+				final Path inputPath = Paths.get( path );
 				final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
 				N5Reader reader = new N5Factory().openReader( rootPath.toUri().toString() );
 
@@ -433,114 +389,10 @@ public class DefaultPyramidal5DImageData<
 	private synchronized void imgPlus()
 	{}
 
-	/**
-	 * Create/update calibrated axes for ImgPlus {@link DefaultPyramidal5DImageData#imgPlus}.
-	 * <br>
-	 * This only needs to consider
-	 * the highest resolution dataset and metadata.
-	 */
-	private void updateImgPlusAxes()
-	{
-		final Multiscales multiscales = multiscaleImage.getMultiscales();
-
-		// The axes, which are valid for all resolutions.
-		final List< Multiscales.Axis > axes = multiscales.getAxes();
-
-		// The scale factors of the resolution level 0
-		// final double[] scaleFactors = multiscales.getScales().get( 0 ).scaleFactors;
-
-		// The global transformations that
-		// should be applied to all resolutions.
-		final Multiscales.CoordinateTransformations[] globalCoordinateTransformations = multiscales.getCoordinateTransformations();
-
-		// The transformations that should
-		// only be applied to the highest resolution,
-		// which is the one we are concerned with here.
-		final Multiscales.CoordinateTransformations[] coordinateTransformations = multiscales.getDatasets()[ 0 ].coordinateTransformations;
-
-		// Concatenate all scaling transformations
-		final double[] scaleFactors = new double[ numDimensions ];
-		Arrays.fill( scaleFactors, 1.0 );
-		if ( globalCoordinateTransformations != null )
-			for ( Multiscales.CoordinateTransformations transformation : globalCoordinateTransformations )
-				for ( int d = 0; d < numDimensions; d++ )
-					scaleFactors[ d ] *= transformation.scale[ d ];
-
-		if ( coordinateTransformations != null )
-			for ( Multiscales.CoordinateTransformations transformation : coordinateTransformations )
-				for ( int d = 0; d < numDimensions; d++ )
-				{
-					if ( transformation.scale == null )
-						continue;
-					scaleFactors[ d ] *= transformation.scale[ d ];
-				}
-
-		reverseArray( scaleFactors );
-
-		// Create the imgAxes
-		final ArrayList< CalibratedAxis > imgAxes = new ArrayList<>();
-
-		// X
-		final int xAxisIndex = multiscales.getSpatialAxisIndex( Multiscales.Axis.X_AXIS_NAME );
-		if ( xAxisIndex >= 0 )
-			imgAxes.add( createAxis( xAxisIndex, Axes.X, axes, scaleFactors ) );
-
-		// Y
-		final int yAxisIndex = multiscales.getSpatialAxisIndex( Multiscales.Axis.Y_AXIS_NAME );
-		if ( yAxisIndex >= 0 )
-			imgAxes.add( createAxis( yAxisIndex, Axes.Y, axes, scaleFactors ) );
-
-		// Z
-		final int zAxisIndex = multiscales.getSpatialAxisIndex( Multiscales.Axis.Z_AXIS_NAME );
-		if ( zAxisIndex >= 0 )
-			imgAxes.add( createAxis( zAxisIndex, Axes.Z, axes, scaleFactors ) );
-
-		// C
-		final int cAxisIndex = multiscales.getChannelAxisIndex();
-		if ( cAxisIndex >= 0 )
-		{
-			imgAxes.add( createAxis( cAxisIndex, Axes.CHANNEL, axes, scaleFactors ) );
-			numChannels = ( int ) dimensions[ cAxisIndex ];
-		}
-
-		// T
-		final int tAxisIndex = multiscales.getTimepointAxisIndex();
-		if ( tAxisIndex >= 0 )
-		{
-			imgAxes.add( createAxis( tAxisIndex, Axes.TIME, axes, scaleFactors ) );
-			numTimepoints = ( int ) dimensions[ tAxisIndex ];
-		}
-
-		// Set all axes
-		for ( int i = 0; i < imgAxes.size(); ++i )
-			imgPlus.setAxis( imgAxes.get( i ), i );
-	}
-
-	private void reverseArray( final double[] arr )
-	{
-
-		for ( int i = 0; i < arr.length / 2; i++ )
-		{
-			double temp = arr[ i ];
-			arr[ i ] = arr[ arr.length - 1 - i ];
-			arr[ arr.length - 1 - i ] = temp;
-		}
-
-	}
-
-	@NotNull
-	private DefaultLinearAxis createAxis( int axisIndex, AxisType axisType, List< Multiscales.Axis > axes, double[] scale )
-	{
-		return new DefaultLinearAxis(
-				axisType,
-				axes.get( axisIndex ).unit,
-				scale[ axisIndex ] );
-	}
-
 	@Override
 	public int numDimensions()
 	{
-		return multiscaleImage.numDimensions();
+		return numDimensions;
 	}
 
 	/**
@@ -552,7 +404,7 @@ public class DefaultPyramidal5DImageData<
 	}
 
 	/**
-	 * Get the number timepoints.
+	 * Get the number of timepoints.
 	 */
 	@Override
 	public int numTimepoints()
@@ -566,7 +418,9 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public T getType()
 	{
-		return multiscaleImage.getType();
+		if ( imgPlus == null )
+			return null;
+		return imgPlus.firstElement();
 	}
 
 	@Override

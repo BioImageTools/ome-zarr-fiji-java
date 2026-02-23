@@ -22,7 +22,7 @@ import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class DefaultPyramidal5DImageDataTest
 {
-	private static final String IMAGE_NAME = "test";
+	private static final String IMAGE_NAME = "image";
 
 	static Stream< String > omeZarrExamples()
 	{
@@ -90,7 +90,6 @@ class DefaultPyramidal5DImageDataTest
 		try (Context context = new Context())
 		{
 			DefaultPyramidal5DImageData< ?, ? > dataset = load( resource, context );
-			dataset.numDimensions();
 			assertNotNull( dataset );
 			assertEquals( 2, dataset.numDimensions() ); // NB: two spatial dimensions
 		}
@@ -167,7 +166,6 @@ class DefaultPyramidal5DImageDataTest
 	private DefaultPyramidal5DImageData< ?, ? > load( final String resource, final Context context ) throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( path.toString() );
-		return new DefaultPyramidal5DImageData<>( context, IMAGE_NAME, multiscaleImage );
+		return new DefaultPyramidal5DImageData<>( context, path.toString() );
 	}
 }

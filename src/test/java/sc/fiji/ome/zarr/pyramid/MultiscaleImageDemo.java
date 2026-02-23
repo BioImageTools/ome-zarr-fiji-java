@@ -16,7 +16,7 @@ public class MultiscaleImageDemo
 		final ImageJ imageJ = new ImageJ();
 		imageJ.ui().showUI();
 		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
-				new DefaultPyramidal5DImageData<>( imageJ.context(), "image", multiscaleImage );
+				new DefaultPyramidal5DImageData<>( imageJ.context(), "image" /*, multiscaleImage */ );
 		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
 		imageJ.ui().show( pyramidalDataset );
 
