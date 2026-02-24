@@ -106,7 +106,7 @@ public class DefaultPyramidal5DImageData<
 	/**
 	 * The number of available resolutions.
 	 */
-	private int numResolutions;
+	private final int numResolutions;
 
 	/** The fourth dimension size... */
 	private int numTimepoints = 1;
@@ -115,9 +115,9 @@ public class DefaultPyramidal5DImageData<
 	private int numChannels = 1;
 
 	/** The total number of dimensions in the image. */
-	private int numDimensions;
+	private final int numDimensions;
 
-	private long[] dimensions;
+	private final long[] dimensions;
 
 	//TODO: -- knows resolution along the dimensions
 	//private OMEZarrAxes omeZarrAxes;
@@ -129,7 +129,7 @@ public class DefaultPyramidal5DImageData<
 
 	private List< SourceAndConverter< T > > sourceAndConverters;
 
-	private SpimData spimData;
+	private final SpimData spimData;
 
 	private final String inputPathAsString;
 
