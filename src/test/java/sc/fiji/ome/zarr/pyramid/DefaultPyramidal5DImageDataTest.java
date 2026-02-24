@@ -125,6 +125,7 @@ class DefaultPyramidal5DImageDataTest
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			assertEquals( 2, pyramidal5DImageData.numResolutionLevels() );
+			assertEquals( 2, pyramidal5DImageData.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() );
 		}
 	}
 
