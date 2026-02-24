@@ -33,7 +33,6 @@ import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
-import net.imagej.axis.CalibratedAxis;
 import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.EuclideanSpace;
 import net.imglib2.Volatile;
@@ -53,7 +52,6 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
@@ -87,11 +85,22 @@ import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
  * @param <T> Type of the pixels
  * @param <V> Volatile type of the pixels
  */
-public class DefaultPyramidal5DImageData<
-		T extends NativeType< T > & RealType< T >,
-		V extends Volatile< T > & NativeType< V > & RealType< V > >
-		implements EuclideanSpace, Pyramidal5DImageData< T >
+public class DefaultPyramidal5DImageData< T extends NativeType< T > & RealType< T >,
+		V extends Volatile< T > & NativeType< V > & RealType< V > > implements EuclideanSpace, Pyramidal5DImageData< T >
 {
+	private static final Map< String, AxisType > AXIS_MAPPING;
+
+	static
+	{
+		Map< String, AxisType > map = new HashMap<>();
+		map.put( "x", Axes.X );
+		map.put( "y", Axes.Y );
+		map.put( "z", Axes.Z );
+		map.put( "c", Axes.CHANNEL );
+		map.put( "t", Axes.TIME );
+		AXIS_MAPPING = Collections.unmodifiableMap( map );
+	}
+
 	/** The scijava context. This is needed (only) for creating {@link #ijDataset}. */
 	private final Context context;
 
@@ -151,171 +160,205 @@ public class DefaultPyramidal5DImageData<
 	 * @param inputPathAsString The path to the OME-Zarr dataset.
 	 * @throws Error any error
 	 */
-	public DefaultPyramidal5DImageData(
-			final Context context,
-			final String inputPathAsString
-	) throws Error
+	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString )
 	{
 		this.context = context;
 		this.inputPathAsString = inputPathAsString;
 		this.inputPath = Paths.get( inputPathAsString );
-		this.rootPath = getRootPath();
-		this.relativePathAsString = getRelativePathAsString();
-		this.reader = getN5Reader();
-		this.metadata = getN5Metadata();
+		this.rootPath = resolveRootPath();
+		this.relativePathAsString = resolveRelativePath();
+		this.reader = createReader();
+		this.metadata = readMetadata();
 		this.spimData = null;
 
-		final String singleScaleName;
-		final String selectedDataset;
-		final DatasetAttributes attributes;
-		final int representativeResolutionLevel = 0; // TODO: highest resolution level or resolution level closest to 1000x1000?
-		final int representativeMultiscaleIndex = 0; // TODO: if multiple multiscales are present, which one to choose?
-		final Axis[] axes;
-		final String[] axisNames;
-		final String[] units;
-		final double[] scales;
-		// OME Zarr v04
-		if ( ( metadata instanceof OmeNgffMetadata ) )
-		{
-			OmeNgffMetadata ngffMetadata = Cast.unchecked( metadata );
-			OmeNgffMultiScaleMetadata multiscales = ngffMetadata.multiscales[ representativeMultiscaleIndex ];
-			numResolutions = multiscales.datasets.length;
-			name = multiscales.name;
-			NgffSingleScaleAxesMetadata singleScaleMetadata = multiscales.getChildrenMetadata()[ representativeResolutionLevel ];
-			selectedDataset = singleScaleMetadata.getPath();
-			attributes = singleScaleMetadata.getAttributes();
-			singleScaleName = singleScaleMetadata.getName();
-			axes = singleScaleMetadata.getAxes();
-			axisNames = null;
-			units = null;
-			scales = singleScaleMetadata.getScale();
-		}
-		// OME Zarr v03
-		else if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
-		{
-			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata ngffMetadata = Cast.unchecked( metadata );
-			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMultiScaleMetadata multiscales =
-					ngffMetadata.getMultiscales()[ representativeMultiscaleIndex ];
-			numResolutions = multiscales.datasets.length;
-			name = multiscales.name;
-			N5SingleScaleMetadata singleScaleMetadata = multiscales.getChildrenMetadata()[ representativeResolutionLevel ];
-			selectedDataset = singleScaleMetadata.getPath();
-			attributes = singleScaleMetadata.getAttributes();
-			singleScaleName = singleScaleMetadata.getName();
-			axes = null;
-			axisNames = multiscales.axes;
-			units = multiscales.units();
-			scales = singleScaleMetadata.getPixelResolution();
-		}
-		// Unsupported
-		else
-		{
-			throw new NotAMultiscaleImageException(
-					"The provided path '" + inputPathAsString + "' does not contain supported a multiscale image." );
-		}
+		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata );
+		final int multiscaleIndex = 0; // TODO
+		final int resolutionLevelIndex = 0; // TODO
+		ResolutionLevel resolutionLevel = adapter.initResolutionLevel( metadata, multiscaleIndex, resolutionLevelIndex );
 
-		dimensions = attributes.getDimensions();
-		numDimensions = dimensions.length;
+		this.name = resolutionLevel.imageName;
+		this.numResolutions = resolutionLevel.numResolutions;
+		this.dimensions = resolutionLevel.attributes.getDimensions();
+		this.numDimensions = dimensions.length;
 
-		CachedCellImg< T, ? > cachedCellImg = N5Utils.openVolatile( reader, selectedDataset );
-		imgPlus = new ImgPlus<>( cachedCellImg );
-		imgPlus.setName( singleScaleName );
+		CachedCellImg< T, ? > img = N5Utils.openVolatile( reader, resolutionLevel.datasetPath );
+		this.imgPlus = new ImgPlus<>( img );
+		this.imgPlus.setName( name );
+		configureAxes( imgPlus, resolutionLevel );
 
-		Map< String, AxisType > mapping = new HashMap<>();
-		mapping.put( "x", Axes.X );
-		mapping.put( "y", Axes.Y );
-		mapping.put( "z", Axes.Z );
-		mapping.put( "c", Axes.CHANNEL );
-		mapping.put( "t", Axes.TIME );
+		DatasetService datasetService = context.getService( DatasetService.class );
 
-		if ( axes != null )
-		{
-			for ( int i = 0; i < axes.length; i++ )
-			{
-				Axis axis = axes[ i ];
-				AxisType axisType = mapping.get( axis.getName() );
-				String unit = axis.getUnit();
-				double scale = scales[ i ];
-				CalibratedAxis calibratedAxis = new DefaultLinearAxis(
-						axisType,
-						unit,
-						scale );
-				imgPlus.setAxis( calibratedAxis, i );
-			}
-		}
-		else if ( axisNames != null && units != null )
-		{
-			for ( int i = 0; i < axisNames.length; i++ )
-			{
-				AxisType axisType = mapping.get( axisNames[ i ] );
-				String unit = units[ i ];
-				double scale = scales[ i ];
-				CalibratedAxis calibratedAxis = new DefaultLinearAxis(
-						axisType,
-						unit,
-						scale );
-				imgPlus.setAxis( calibratedAxis, i );
-			}
-		}
-
-		final DatasetService datasetService = context.getService( DatasetService.class );
-		ijDataset = datasetService.create( imgPlus );
-		ijDataset.setName( imgPlus.getName() );
-		ijDataset.setRGBMerged( false );
+		this.ijDataset = datasetService.create( imgPlus );
+		this.ijDataset.setName( name );
+		this.ijDataset.setRGBMerged( false );
 	}
 
-	private Path getRootPath()
+	// ---------------------------------------------------------------------
+	// Metadata & Reader Utilities
+	// ---------------------------------------------------------------------
+
+	private Path resolveRootPath()
 	{
 		if ( inputPath == null )
-			return null;
-		return ZarrOnFileSystemUtils.findRootFolder( this.inputPath ); // NB: it seems that more metadata is discovered if we first traverse up to the root folder and then from there discover the relative path
+			throw new IllegalArgumentException( "Input path is null" );
+		return ZarrOnFileSystemUtils.findRootFolder( inputPath ); // NB: it seems that more metadata is discovered if we first traverse up to the root folder and then from there discover the relative path
 	}
 
-	private String getRelativePathAsString()
+	private String resolveRelativePath()
 	{
 		if ( inputPath == null || rootPath == null )
-			return null;
-		final List< String > relativePathElements = ZarrOnFileSystemUtils.relativePathElements( this.rootPath, this.inputPath );
-		return String.join( File.separator, relativePathElements );
+			throw new NotAMultiscaleImageException( "Input path or root path is null" );
+		List< String > elements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
+		return String.join( File.separator, elements );
 	}
 
-	private N5Reader getN5Reader()
+	private N5Reader createReader()
 	{
-		// Initialize N5Reader
 		if ( rootPath == null )
-		{
-			boolean isZarrFolder = ZarrOnFileSystemUtils.isZarrFolder( inputPath );
-			if ( !isZarrFolder )
-				throw new NotAMultiscaleImageException(
-						"The provided path '" + inputPathAsString + "' does not contain supported a multiscale image." );
-			else
-				throw new NotAMultiscaleImageException( "The provided path '" + inputPathAsString + "' is not a multiscale image." );
-		}
+			throw new NotAMultiscaleImageException( "Invalid OME-Zarr path: " + inputPathAsString );
 		return new N5Factory().openReader( rootPath.toUri().toString() );
 	}
 
-	private N5Metadata getN5Metadata()
+	private N5Metadata readMetadata()
 	{
 		if ( relativePathAsString == null )
-			return null;
-		if ( reader == null )
-			return null;
+			throw new NotAMultiscaleImageException( "Invalid OME-Zarr path: " + inputPathAsString );
 
-		// Initialize N5TreeNode
-		N5TreeNode n5TreeNode = new N5TreeNode( relativePathAsString );
-
-		// Create Parsers
-		OmeNgffMetadataParser parserV03 = new OmeNgffMetadataParser();
-		org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser parserV04 =
-				new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser();
-		List< N5MetadataParser< ? > > metadataParsers = Arrays.asList( parserV03, parserV04 );
-		List< N5MetadataParser< ? > > groupParsers = new ArrayList<>( metadataParsers );
-
-		// Parse Metadata
-		N5DatasetDiscoverer.parseMetadataShallow( reader, n5TreeNode, metadataParsers, groupParsers );
-
-		return n5TreeNode.getMetadata();
+		N5TreeNode node = new N5TreeNode( relativePathAsString );
+		List< N5MetadataParser< ? > > parsers =
+				Arrays.asList( new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser(),
+						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser() );
+		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, new ArrayList<>( parsers ) );
+		N5Metadata n5Metadata = node.getMetadata();
+		if ( n5Metadata == null )
+			throw new NotAMultiscaleImageException(
+					"The provided path '" + inputPathAsString + "' does not contain a supported multiscale image." );
+		return n5Metadata;
 	}
+
+	// ---------------------------------------------------------------------
+	// Selected Scale DTO
+	// ---------------------------------------------------------------------
+
+	private static class ResolutionLevel
+	{
+		private final String imageName;
+
+		private final String datasetPath;
+
+		private final DatasetAttributes attributes;
+
+		private final Axis[] axes;
+
+		private final String[] axisNames;
+
+		private final String[] units;
+
+		private final double[] scales;
+
+		private final int numResolutions;
+
+		private ResolutionLevel(
+				final String imageName, final String datasetPath, final DatasetAttributes attributes, final Axis[] axes,
+				final String[] axisNames, final String[] units, final double[] scales, final int numResolutions )
+		{
+			this.imageName = imageName;
+			this.datasetPath = datasetPath;
+			this.attributes = attributes;
+			this.axes = axes;
+			this.axisNames = axisNames;
+			this.units = units;
+			this.scales = scales;
+			this.numResolutions = numResolutions;
+		}
+	}
+
+	// ---------------------------------------------------------------------
+	// Metadata Adapter Strategy
+	// ---------------------------------------------------------------------
+
+	private interface MetadataAdapter
+	{
+		ResolutionLevel initResolutionLevel( final N5Metadata metadata, final int multiscaleIndex, final int resolutionLevelIndex );
+	}
+
+	private static class MetadataAdapterFactory
+	{
+		static MetadataAdapter getAdapter( final N5Metadata metadata )
+		{
+			if ( metadata instanceof OmeNgffMetadata )
+				return new V04MetadataAdapter();
+			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
+				return new V03MetadataAdapter();
+			throw new NotAMultiscaleImageException(
+					"Unsupported multiscale metadata type: " + metadata.getClass() );
+		}
+	}
+
+	private static class V04MetadataAdapter implements MetadataAdapter
+	{
+
+		@Override
+		public ResolutionLevel initResolutionLevel( final N5Metadata n5Metadata, final int multiscaleIndex, final int resolutionLevelIndex )
+		{
+			OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
+			OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
+			NgffSingleScaleAxesMetadata single = multiscales.getChildrenMetadata()[ resolutionLevelIndex ];
+			return new ResolutionLevel(
+					multiscales.name, single.getPath(), single.getAttributes(), single.getAxes(), null, null,
+					single.getScale(), multiscales.datasets.length
+			);
+		}
+	}
+
+	private static class V03MetadataAdapter implements MetadataAdapter
+	{
+
+		@Override
+		public ResolutionLevel initResolutionLevel( final N5Metadata n5Metadata, final int multiscaleIndex, final int resolutionLevelIndex )
+		{
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMultiScaleMetadata multiscales =
+					omeNgffMetadata.getMultiscales()[ multiscaleIndex ];
+			N5SingleScaleMetadata single = multiscales.getChildrenMetadata()[ resolutionLevelIndex ];
+
+			return new ResolutionLevel( multiscales.name, single.getPath(), single.getAttributes(), null, multiscales.axes,
+					multiscales.units(), single.getPixelResolution(), multiscales.datasets.length );
+		}
+	}
+
+	// ---------------------------------------------------------------------
+	// Axis Configuration
+	// ---------------------------------------------------------------------
+
+	private void configureAxes( final ImgPlus< T > img, final ResolutionLevel resolutionLevel )
+	{
+		if ( resolutionLevel.axes != null )
+		{
+			for ( int i = 0; i < resolutionLevel.axes.length; i++ )
+			{
+				Axis axis = resolutionLevel.axes[ i ];
+				setAxis( img, AXIS_MAPPING.get( axis.getName() ), axis.getUnit(), resolutionLevel.scales[ i ], i );
+			}
+		}
+		else if ( resolutionLevel.axisNames != null )
+		{
+			for ( int i = 0; i < resolutionLevel.axisNames.length; i++ )
+			{
+				setAxis( img, AXIS_MAPPING.get( resolutionLevel.axisNames[ i ] ), resolutionLevel.units[ i ], resolutionLevel.scales[ i ],
+						i );
+			}
+		}
+	}
+
+	private void setAxis( final ImgPlus< T > img, final AxisType type, final String unit, final double scale, final int index )
+	{
+		img.setAxis( new DefaultLinearAxis( type, unit, scale ), index );
+	}
+
+	// ---------------------------------------------------------------------
+	// Interface Implementations
+	// ---------------------------------------------------------------------
 
 	@Override
 	public PyramidalDataset< T > asPyramidalDataset()
@@ -332,20 +375,19 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public List< SourceAndConverter< T > > asSources()
 	{
+		if ( reader == null )
+			throw new NotAMultiscaleImageException( "Cannot create sources: no reader available for path: " + inputPathAsString );
+		if ( metadata == null )
+			throw new NotAMultiscaleImageException( "Cannot create sources: no metadata available for path: " + inputPathAsString );
 		if ( sourceAndConverters == null )
 		{
 			try
 			{
 				sourceAndConverters = new ArrayList<>();
-
-				// Initialize BDV Cache
-				final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
-
-				// Create BDV options
-				BdvOptions bdvOptions = BdvOptions.options().frameTitle( getName() );
-				this.numTimepoints = N5Viewer.buildN5Sources( reader, Collections.singletonList( metadata ), sharedQueue, new ArrayList<>(),
-						sourceAndConverters,
-						bdvOptions );
+				SharedQueue queue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
+				BdvOptions options = BdvOptions.options().frameTitle( name );
+				this.numTimepoints = N5Viewer.buildN5Sources( reader, Collections.singletonList( metadata ), queue, new ArrayList<>(),
+						sourceAndConverters, options );
 			}
 			catch ( IOException e )
 			{
