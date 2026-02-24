@@ -363,7 +363,7 @@ public class DefaultPyramidal5DImageData< T extends NativeType< T > & RealType< 
 	@Override
 	public PyramidalDataset< T > asPyramidalDataset()
 	{
-		return new PyramidalDataset< T >( this );
+		return new PyramidalDataset<>( this );
 	}
 
 	@Override
