@@ -115,7 +115,7 @@ public class DefaultPyramidal5DImageData< T extends NativeType< T > & RealType< 
 	/**
 	 * The number of available resolutions.
 	 */
-	private final int numResolutions;
+	private final int numResolutionLevels;
 
 	/** The fourth dimension size... */
 	private int numTimepoints = 1;
@@ -177,7 +177,7 @@ public class DefaultPyramidal5DImageData< T extends NativeType< T > & RealType< 
 		ResolutionLevel resolutionLevel = adapter.initResolutionLevel( metadata, multiscaleIndex, resolutionLevelIndex );
 
 		this.name = resolutionLevel.imageName;
-		this.numResolutions = resolutionLevel.numResolutions;
+		this.numResolutionLevels = resolutionLevel.numResolutionLevels;
 		this.dimensions = resolutionLevel.attributes.getDimensions();
 		this.numDimensions = dimensions.length;
 
@@ -256,11 +256,11 @@ public class DefaultPyramidal5DImageData< T extends NativeType< T > & RealType< 
 
 		private final double[] scales;
 
-		private final int numResolutions;
+		private final int numResolutionLevels;
 
 		private ResolutionLevel(
 				final String imageName, final String datasetPath, final DatasetAttributes attributes, final Axis[] axes,
-				final String[] axisNames, final String[] units, final double[] scales, final int numResolutions )
+				final String[] axisNames, final String[] units, final double[] scales, final int numResolutionLevels )
 		{
 			this.imageName = imageName;
 			this.datasetPath = datasetPath;
@@ -269,7 +269,7 @@ public class DefaultPyramidal5DImageData< T extends NativeType< T > & RealType< 
 			this.axisNames = axisNames;
 			this.units = units;
 			this.scales = scales;
-			this.numResolutions = numResolutions;
+			this.numResolutionLevels = numResolutionLevels;
 		}
 	}
 
@@ -431,9 +431,9 @@ public class DefaultPyramidal5DImageData< T extends NativeType< T > & RealType< 
 	/**
 	 * Get the number of levels in the resolution pyramid.
 	 */
-	public int numResolutions()
+	public int numResolutionLevels()
 	{
-		return numResolutions;
+		return numResolutionLevels;
 	}
 
 	/**

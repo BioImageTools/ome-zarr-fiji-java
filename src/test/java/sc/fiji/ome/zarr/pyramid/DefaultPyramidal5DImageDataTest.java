@@ -119,12 +119,12 @@ class DefaultPyramidal5DImageDataTest
 
 	@ParameterizedTest
 	@MethodSource( "omeZarrExamples" )
-	void testNumResolutions( String resource ) throws URISyntaxException
+	void testNumResolutionLevels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
-			assertEquals( 2, pyramidal5DImageData.numResolutions() );
+			assertEquals( 2, pyramidal5DImageData.numResolutionLevels() );
 		}
 	}
 

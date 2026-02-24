@@ -50,7 +50,7 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 
 	int numTimepoints();
 
-	int numResolutions();
+	int numResolutionLevels();
 
 	T getType();
 

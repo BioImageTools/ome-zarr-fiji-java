@@ -51,7 +51,7 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 
 	public int numResolutions()
 	{
-		return data.numResolutions();
+		return data.numResolutionLevels();
 	}
 
 	public VoxelDimensions voxelDimensions()
