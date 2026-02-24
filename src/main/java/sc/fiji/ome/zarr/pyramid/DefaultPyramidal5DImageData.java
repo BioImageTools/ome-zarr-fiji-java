@@ -103,8 +103,6 @@ public class DefaultPyramidal5DImageData<
 	 */
 	private final String name;
 
-	private final String path;
-
 	/**
 	 * The number of available resolutions.
 	 */
@@ -133,52 +131,41 @@ public class DefaultPyramidal5DImageData<
 
 	private SpimData spimData;
 
+	private final String inputPathAsString;
+
+	private final Path inputPath;
+
+	private final Path rootPath;
+
+	private final String relativePathAsString;
+
+	private final N5Reader reader;
+
+	private final N5Metadata metadata;
+
 	/**
 	 * Build a dataset from a single {@code PyramidalOMEZarrArray},
 	 * which MUST only contains subset of the axes: X,Y,Z,C,T
 	 * <br>
 	 * @param context The SciJava context for building the SciJava dataset
-	 * @param path The path to the OME-Zarr dataset.
+	 * @param inputPathAsString The path to the OME-Zarr dataset.
 	 * @throws Error any error
 	 */
 	public DefaultPyramidal5DImageData(
 			final Context context,
-			final String path
+			final String inputPathAsString
 	) throws Error
 	{
 		this.context = context;
-		this.path = path;
+		this.inputPathAsString = inputPathAsString;
+		this.inputPath = Paths.get( inputPathAsString );
+		this.rootPath = getRootPath();
+		this.relativePathAsString = getRelativePathAsString();
+		this.reader = getN5Reader();
+		this.metadata = getN5Metadata();
+		this.spimData = null;
+
 		final String singleScaleName;
-
-		// Initialize N5Reader
-		final Path inputPath = Paths.get( this.path );
-		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath ); // NB: it seems that more metadata is discovered if we first traverse up to the root folder
-		if ( rootPath == null )
-		{
-			boolean isZarrFolder = ZarrOnFileSystemUtils.isZarrFolder( inputPath );
-			if ( !isZarrFolder )
-				throw new NotAMultiscaleImageException( "The provided path '" + path + "' does not contain supported a multiscale image." );
-			else
-				throw new NotAMultiscaleImageException( "The provided path '" + path + "' is not a multiscale image." );
-		}
-		N5Reader reader = new N5Factory().openReader( rootPath.toUri().toString() );
-
-		// Initialize N5TreeNode
-		final List< String > relativePathElements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
-		final String relativePath = String.join( File.separator, relativePathElements );
-		N5TreeNode n5TreeNode = new N5TreeNode( relativePath );
-
-		// Create Parsers
-		OmeNgffMetadataParser parserV03 = new OmeNgffMetadataParser();
-		org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser parserV04 =
-				new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser();
-		List< N5MetadataParser< ? > > metadataParsers = Arrays.asList( parserV03, parserV04 );
-		List< N5MetadataParser< ? > > groupParsers = new ArrayList<>( metadataParsers );
-
-		// Parse Metadata
-		N5DatasetDiscoverer.parseMetadataShallow( reader, n5TreeNode, metadataParsers, groupParsers );
-
-		N5Metadata metadata = n5TreeNode.getMetadata();
 		final String selectedDataset;
 		final DatasetAttributes attributes;
 		final int representativeResolutionLevel = 0; // TODO: highest resolution level or resolution level closest to 1000x1000?
@@ -223,7 +210,8 @@ public class DefaultPyramidal5DImageData<
 		// Unsupported
 		else
 		{
-			throw new NotAMultiscaleImageException( "The provided path '" + path + "' does not contain supported a multiscale image." );
+			throw new NotAMultiscaleImageException(
+					"The provided path '" + inputPathAsString + "' does not contain supported a multiscale image." );
 		}
 
 		dimensions = attributes.getDimensions();
@@ -276,6 +264,59 @@ public class DefaultPyramidal5DImageData<
 		ijDataset.setRGBMerged( false );
 	}
 
+	private Path getRootPath()
+	{
+		if ( inputPath == null )
+			return null;
+		return ZarrOnFileSystemUtils.findRootFolder( this.inputPath ); // NB: it seems that more metadata is discovered if we first traverse up to the root folder and then from there discover the relative path
+	}
+
+	private String getRelativePathAsString()
+	{
+		if ( inputPath == null || rootPath == null )
+			return null;
+		final List< String > relativePathElements = ZarrOnFileSystemUtils.relativePathElements( this.rootPath, this.inputPath );
+		return String.join( File.separator, relativePathElements );
+	}
+
+	private N5Reader getN5Reader()
+	{
+		// Initialize N5Reader
+		if ( rootPath == null )
+		{
+			boolean isZarrFolder = ZarrOnFileSystemUtils.isZarrFolder( inputPath );
+			if ( !isZarrFolder )
+				throw new NotAMultiscaleImageException(
+						"The provided path '" + inputPathAsString + "' does not contain supported a multiscale image." );
+			else
+				throw new NotAMultiscaleImageException( "The provided path '" + inputPathAsString + "' is not a multiscale image." );
+		}
+		return new N5Factory().openReader( rootPath.toUri().toString() );
+	}
+
+	private N5Metadata getN5Metadata()
+	{
+		if ( relativePathAsString == null )
+			return null;
+		if ( reader == null )
+			return null;
+
+		// Initialize N5TreeNode
+		N5TreeNode n5TreeNode = new N5TreeNode( relativePathAsString );
+
+		// Create Parsers
+		OmeNgffMetadataParser parserV03 = new OmeNgffMetadataParser();
+		org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser parserV04 =
+				new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser();
+		List< N5MetadataParser< ? > > metadataParsers = Arrays.asList( parserV03, parserV04 );
+		List< N5MetadataParser< ? > > groupParsers = new ArrayList<>( metadataParsers );
+
+		// Parse Metadata
+		N5DatasetDiscoverer.parseMetadataShallow( reader, n5TreeNode, metadataParsers, groupParsers );
+
+		return n5TreeNode.getMetadata();
+	}
+
 	@Override
 	public PyramidalDataset< T > asPyramidalDataset()
 	{
@@ -297,36 +338,13 @@ public class DefaultPyramidal5DImageData<
 			{
 				sourceAndConverters = new ArrayList<>();
 
-				// TODO: avoid code duplication with constructor
-				// Initialize N5Reader
-				final Path inputPath = Paths.get( path );
-				final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
-				N5Reader reader = new N5Factory().openReader( rootPath.toUri().toString() );
-
-				// Initialize N5TreeNode
-				final List< String > relativePathElements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
-				final String relativePath = String.join( File.separator, relativePathElements );
-				N5TreeNode n5TreeNode = new N5TreeNode( relativePath );
-
-				// Create Parsers
-				OmeNgffMetadataParser parserV03 = new OmeNgffMetadataParser();
-				org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser parserV04 =
-						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser();
-				List< N5MetadataParser< ? > > metadataParsers = Arrays.asList( parserV03, parserV04 );
-				List< N5MetadataParser< ? > > groupParsers = new ArrayList<>( metadataParsers );
-
-				// Parse Metadata
-				N5DatasetDiscoverer.parseMetadataShallow( reader, n5TreeNode, metadataParsers, groupParsers );
-
-				// Create a list containing only the metadata of the dataset we want to visualize
-				List< N5Metadata > selectedMetadata = Collections.singletonList( n5TreeNode.getMetadata() );
-
 				// Initialize BDV Cache
 				final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 
 				// Create BDV options
 				BdvOptions bdvOptions = BdvOptions.options().frameTitle( getName() );
-				this.numTimepoints = N5Viewer.buildN5Sources( reader, selectedMetadata, sharedQueue, new ArrayList<>(), sourceAndConverters,
+				this.numTimepoints = N5Viewer.buildN5Sources( reader, Collections.singletonList( metadata ), sharedQueue, new ArrayList<>(),
+						sourceAndConverters,
 						bdvOptions );
 			}
 			catch ( IOException e )
