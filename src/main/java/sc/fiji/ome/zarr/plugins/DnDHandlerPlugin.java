@@ -37,6 +37,7 @@ import org.scijava.io.location.Location;
 import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,8 +48,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
+import sc.fiji.ome.zarr.util.ZarrDefaultOpenSettings;
 import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
+import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
 public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
@@ -60,6 +63,9 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 
 	@Parameter
 	private BdvHandleService bdvHandleService; //TODO, is it really used down-stream?
+
+	@Parameter
+	private PrefService prefService;
 
 	// ========================= IOPlugin stuff =========================
 	@Override
