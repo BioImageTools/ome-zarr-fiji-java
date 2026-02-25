@@ -30,6 +30,7 @@ package sc.fiji.ome.zarr.plugins;
 
 import net.imglib2.util.Cast;
 
+import org.scijava.Context;
 import org.scijava.io.AbstractIOPlugin;
 import org.scijava.io.IOPlugin;
 import org.scijava.io.location.FileLocation;
@@ -90,7 +91,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		final FileLocation fileLocation = Cast.unchecked( source );
 		final Path droppedInPath = fileLocation.getFile().toPath();
 
-		ZarrOpenActions actions = new ZarrOpenActions( droppedInPath, context() );
+		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context() );
 		ZarrDefaultOpenSettings setting = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
 		switch ( setting.getChosenOpenOption() )
 		{
@@ -103,7 +104,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 			break;
 		case SHOW_SELECTION_DIALOG:
 		default:
-			new DnDActionChooser( context(), actions ).showDialog();
+			createDnDActionChooser( context(), actions ).showDialog();
 			break;
 		}
 
@@ -113,6 +114,16 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		// is exactly what is desired now). The processing of this DnD event will then finish finally.
 		// (While our DnDActionChoose window will still be up there...)
 		return FAKE_INPUT;
+	}
+
+	protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context )
+	{
+		return new ZarrOpenActions( path, context );
+	}
+
+	protected DnDActionChooser createDnDActionChooser( final Context context, final ZarrOpenActions actions )
+	{
+		return new DnDActionChooser( context, actions );
 	}
 
 	@Override
