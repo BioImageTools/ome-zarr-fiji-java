@@ -1,0 +1,11 @@
+[workspace]
+authors = ["Vladimir Ulman (@Win11) <ulman@fi.muni.cz>"]
+channels = ["conda-forge"]
+name = "augmented_pyramidal_zarr"
+platforms = ["win-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+ome-zarr = ">=0.13.0,<0.14"
