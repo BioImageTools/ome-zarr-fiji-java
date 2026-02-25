@@ -84,8 +84,22 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		final FileLocation fileLocation = Cast.unchecked( source );
 		final Path droppedInPath = fileLocation.getFile().toPath();
 
-		//TODO: this should ideally go into a separate thread... as an independent follow-up story after the DnD event is over
-		new DnDActionChooser( droppedInPath, this.context() ).showDialog();
+		ZarrOpenActions actions = new ZarrOpenActions( droppedInPath, context() );
+		ZarrDefaultOpenSettings setting = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
+		switch ( setting.getChosenOpenOption() )
+		{
+		case IMAGEJ_HIGHEST_RESOLUTION:
+		case IMAGEJ_CUSTOM_RESOLUTION:
+			actions.openIJWithImage();
+			break;
+		case BDV_MULTI_RESOLUTION:
+			actions.openBDVWithImage();
+			break;
+		case SHOW_SELECTION_DIALOG:
+		default:
+			new DnDActionChooser( context(), actions ).showDialog();
+			break;
+		}
 
 		// Returning such an object makes Scijava's DnD subsystem believe that the dropped object
 		// has been already fully loaded, and Scijava (Fiji) will attempt to display it now (and
