@@ -1,8 +1,8 @@
 [workspace]
-authors = ["Vladimir Ulman (@Win11) <ulman@fi.muni.cz>"]
+authors = ["Vladimir Ulman <ulman@fi.muni.cz>"]
 channels = ["conda-forge"]
 name = "augmented_pyramidal_zarr"
-platforms = ["win-64"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 version = "0.1.0"
 
 [tasks]
