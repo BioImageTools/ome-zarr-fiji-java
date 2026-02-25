@@ -1,5 +1,6 @@
 package sc.fiji.ome.zarr.ui;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,6 +10,8 @@ import org.scijava.command.DynamicCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import sc.fiji.ome.zarr.util.ZarrDefaultOpenSettings;
 import sc.fiji.ome.zarr.util.ZarrOpenOptions;
@@ -19,6 +22,9 @@ import sc.fiji.ome.zarr.util.ZarrOpenOptions;
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Zarr Default Open Options", initializer = "init" )
 public class ZarrDefaultOpenSettingUI extends DynamicCommand
 {
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	@SuppressWarnings( "all" )
 	@Parameter
 	private PrefService prefService;
 
@@ -37,6 +43,8 @@ public class ZarrDefaultOpenSettingUI extends DynamicCommand
 	{
 		settings.setChosenOpenOption( ZarrOpenOptions.getByDescription( defaultZarrOpenOption ) );
 		settings.setCustomWidth( customWidth );
+		logger.debug( "Now saving Zarr Default Open Options to preferences. Option: {}, customWidth: {}", settings.getChosenOpenOption(),
+				customWidth );
 		settings.saveSettingsToPreferences( prefService );
 	}
 
