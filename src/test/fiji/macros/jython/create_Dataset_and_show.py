@@ -1,7 +1,8 @@
 #@ DatasetService dsService
 #@ UIService ui
-#@ boolean display_image (label="Display the created image:")
 #@ string image_label (label="Title of the created image:", value="ImgPlus turned into Dataset #1")
+#@ boolean show_in_IJ  (label="Display in ImageJ window:")
+#@ boolean show_in_BDV (label="Display in BigDataViewer:")
 
 from net.imagej import ImgPlus
 from net.imglib2.img.planar import PlanarImgs
@@ -33,9 +34,10 @@ def register_datasetDecrement_onBdvCloseWindow(bdv_handle, dataset):
 
 
 # ------- finally show the `Dataset` either way(s) -------
-if display_image:
+if show_in_IJ:
 	ui.show(ds)
-else:
+
+if show_in_BDV:
 	ds.incrementReferences()
 	bdv_stack_source = BdvFunctions.show(ds.getImgPlus(), image_label)
 	register_datasetDecrement_onBdvCloseWindow(bdv_stack_source.getBdvHandle(), ds)
