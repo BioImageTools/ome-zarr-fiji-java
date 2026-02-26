@@ -1,13 +1,18 @@
 package sc.fiji.ome.zarr.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static sc.fiji.ome.zarr.util.ZarrTestUtils.IMAGE_NAME;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import net.imagej.Dataset;
+import net.imagej.DatasetService;
 import net.imglib2.img.Img;
 
 import org.junit.jupiter.api.Test;
@@ -79,6 +84,42 @@ class ZarrOpenActionsTest
 				Consumer< Img< ? > > singleScaleNoOp = img -> {};
 				assertThrows( NotASingleScaleImageException.class, () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
 			}
+		}
+	}
+
+	@Test
+	void testOpenDatasetImageJ() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/ome_zarr_v4_example" );
+		try (Context context = new Context())
+		{
+			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			actions.openIJWithImage();
+
+			DatasetService datasetService = context.getService( DatasetService.class );
+			assertNotNull( datasetService );
+			List< Dataset > datasets = datasetService.getDatasets();
+			assertNotNull( datasets );
+			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
+			Dataset dataset = datasets.get( 0 );
+			assertEquals( IMAGE_NAME, dataset.getName() );
+		}
+	}
+
+	@Test
+	void testOpenDatasetBDV() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/ome_zarr_v4_example" );
+		try (Context context = new Context())
+		{
+			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			actions.openBDVWithImage();
+
+			DatasetService datasetService = context.getService( DatasetService.class );
+			assertNotNull( datasetService );
+			List< Dataset > datasets = datasetService.getDatasets();
+			assertNotNull( datasets );
+			assertEquals( 0, datasets.size() ); // NB: The dataset service does not know the BDV dataset
 		}
 	}
 }
