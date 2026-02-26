@@ -22,7 +22,6 @@ import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class DefaultPyramidal5DImageDataTest
 {
-	private static final String IMAGE_NAME = "image";
 
 	static Stream< String > omeZarrExamples()
 	{
@@ -57,7 +56,7 @@ class DefaultPyramidal5DImageDataTest
 			assertNotNull( imgPlus );
 			assertEquals( 1000, imgPlus.dimension( 0 ) );
 			assertEquals( 1000, imgPlus.dimension( 1 ) );
-			assertEquals( IMAGE_NAME, imgPlus.getName() );
+			assertEquals( ZarrTestUtils.IMAGE_NAME, imgPlus.getName() );
 		}
 	}
 
@@ -160,7 +159,7 @@ class DefaultPyramidal5DImageDataTest
 		try (Context context = new Context())
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
-			assertEquals( IMAGE_NAME, pyramidal5DImageData.getName() );
+			assertEquals( ZarrTestUtils.IMAGE_NAME, pyramidal5DImageData.getName() );
 		}
 	}
 
