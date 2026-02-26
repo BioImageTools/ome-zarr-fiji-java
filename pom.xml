@@ -182,13 +182,10 @@
 	</repositories>
 
 	<dependencies>
+		<!-- N5 implementations of OME-Zarr including BDV Viewer adaptions -->
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>
 			<artifactId>n5-viewer_fiji</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>bigdataviewer-vistools</artifactId>
 		</dependency>
 		<!-- to open Fiji script editor on DnD when no script is preset -->
 		<dependency>
