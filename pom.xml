@@ -186,6 +186,7 @@
 			<groupId>org.janelia.saalfeldlab</groupId>
 			<artifactId>n5-viewer_fiji</artifactId>
 		</dependency>
+		<!-- TODO: can be probably be removed, since this is in bigdataviewer-core -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-vistools</artifactId>
