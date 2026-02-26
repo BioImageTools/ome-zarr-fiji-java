@@ -1,3 +1,3 @@
 #@ ImagePlus imp
 
-print("image "+imp.getTitle()+" of width x height: "+str(imp.getWidth())+'x'+str(imp.getHeight()))
+print("image '"+imp.getTitle()+"' (id: "+str(id(imp))+") of width x height: "+str(imp.getWidth())+'x'+str(imp.getHeight()))
