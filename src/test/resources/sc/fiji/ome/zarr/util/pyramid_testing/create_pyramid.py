@@ -65,8 +65,8 @@ def create_pyramid():
     #img0.shape, img1.shape
     #scale0, scale1
     print("adjusting global intensities per level")
-    img1[...] += 80
-    img0[...] += 160
+    img1[...] = 100
+    img0[...] = 180
 
     #paths = ["scale0", "scale1", "scale2"]
     #NB: paths are hard-coded to '0', '1', ...

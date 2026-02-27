@@ -6,17 +6,25 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.integer.LongType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.util.Cast;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
 
+import bdv.viewer.Source;
+import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
@@ -160,6 +168,38 @@ class DefaultPyramidal5DImageDataTest
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			assertEquals( ZarrTestUtils.IMAGE_NAME, pyramidal5DImageData.getName() );
+		}
+	}
+
+	@Test
+	void testGetPyramidLevels() throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			String resource = "sc/fiji/ome/zarr/util/pyramid_testing/pyramid_v4.zarr";
+			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
+			Source< ? > spimSource = pyramidal5DImageData.asSources().get( 0 ).getSpimSource();
+
+			RandomAccessibleInterval< ? > resolutionLevel0 = spimSource.getSource( 0, 0 );
+			RandomAccess< ? > randomAccessLevel0 = resolutionLevel0.randomAccess();
+			randomAccessLevel0.setPosition( new long[] { 10, 10, 10 } );
+			UnsignedByteType value0 = Cast.unchecked( randomAccessLevel0.get() ); // NB: compare uint8 type in src/test/resources/sc/fiji/ome/zarr/util/pyramid_testing/create_pyramid.py
+
+			RandomAccessibleInterval< ? > resolutionLevel1 = spimSource.getSource( 0, 1 );
+			RandomAccess< ? > randomAccessLevel1 = resolutionLevel1.randomAccess();
+			randomAccessLevel1.setPosition( new long[] { 10, 10, 10 } );
+			UnsignedByteType value1 = Cast.unchecked( randomAccessLevel1.get() );
+
+			RandomAccessibleInterval< ? > resolutionLevel2 = spimSource.getSource( 0, 2 );
+			RandomAccess< ? > randomAccessLevel2 = resolutionLevel2.randomAccess();
+			randomAccessLevel2.setPosition( new long[] { 10, 10, 10 } );
+			UnsignedByteType value2 = Cast.unchecked( randomAccessLevel2.get() );
+
+			assertEquals( 3, pyramidal5DImageData.numResolutionLevels() );
+			assertEquals( 3, spimSource.getNumMipmapLevels() );
+			assertEquals( 180, value0.get() ); // NB: compare values in src/test/resources/sc/fiji/ome/zarr/util/pyramid_testing/create_pyramid.py
+			assertEquals( 100, value1.get() );
+			assertEquals( 20, value2.get() );
 		}
 	}
 
