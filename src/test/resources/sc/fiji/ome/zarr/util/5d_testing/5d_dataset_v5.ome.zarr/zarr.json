@@ -1,0 +1,68 @@
+{
+  "attributes": {
+    "ome": {
+      "version": "0.5",
+      "multiscales": [
+        {
+          "datasets": [
+            {
+              "path": "0",
+              "coordinateTransformations": [
+                {
+                  "type": "scale",
+                  "scale": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                  ]
+                }
+              ]
+            },
+            {
+              "path": "1",
+              "coordinateTransformations": [
+                {
+                  "type": "scale",
+                  "scale": [
+                    1.0,
+                    1.0,
+                    2.0,
+                    2.0,
+                    2.0
+                  ]
+                }
+              ]
+            }
+          ],
+          "name": "image",
+          "axes": [
+            {
+              "name": "t",
+              "type": "time"
+            },
+            {
+              "name": "c",
+              "type": "channel"
+            },
+            {
+              "name": "z",
+              "type": "space"
+            },
+            {
+              "name": "y",
+              "type": "space"
+            },
+            {
+              "name": "x",
+              "type": "space"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}

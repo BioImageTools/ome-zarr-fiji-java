@@ -32,8 +32,10 @@ class DefaultPyramidal5DImageDataTest
 	static Stream< String > omeZarrExamples()
 	{
 		return Stream.of(
-				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example"
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
+				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr"
 		// "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example" // NB: OME v05 not supported yet
+		// "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" // NB: OME v05 not supported yet
 		);
 	}
 
@@ -60,8 +62,17 @@ class DefaultPyramidal5DImageDataTest
 			assertNotNull( ijDataset );
 			ImgPlus< ? > imgPlus = ijDataset.getImgPlus();
 			assertNotNull( imgPlus );
-			assertEquals( 1000, imgPlus.dimension( 0 ) );
-			assertEquals( 1000, imgPlus.dimension( 1 ) );
+			if ( resource.contains( "5d_testing" ) )
+			{
+				assertEquals( 64, imgPlus.dimension( 0 ) );
+				assertEquals( 64, imgPlus.dimension( 1 ) );
+				assertEquals( 16, imgPlus.dimension( 2 ) );
+			}
+			if ( resource.contains( "ome_zarr_v" ) )
+			{
+				assertEquals( 1000, imgPlus.dimension( 0 ) );
+				assertEquals( 1000, imgPlus.dimension( 1 ) );
+			}
 			assertEquals( ZarrTestUtils.IMAGE_NAME, imgPlus.getName() );
 		}
 	}
@@ -85,7 +96,11 @@ class DefaultPyramidal5DImageDataTest
 		{
 			DefaultPyramidal5DImageData< ?, ? > dataset = load( resource, context );
 			assertNotNull( dataset );
-			assertEquals( 2, dataset.numDimensions() ); // NB: two spatial dimensions
+			if ( resource.contains( "5d_testing" ) )
+				assertEquals( 5, dataset.numDimensions() ); // NB: xyzct
+			if ( resource.contains( "ome_zarr_v" ) )
+				assertEquals( 2, dataset.numDimensions() ); // NB: xy
+
 		}
 	}
 
@@ -96,7 +111,10 @@ class DefaultPyramidal5DImageDataTest
 		try (Context context = new Context())
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
-			assertEquals( 1, pyramidal5DImageData.numTimepoints() );
+			if ( resource.contains( "5d_testing" ) )
+				assertEquals( 2, pyramidal5DImageData.numTimepoints() );
+			if ( resource.contains( "ome_zarr_v" ) )
+				assertEquals( 1, pyramidal5DImageData.numTimepoints() );
 		}
 	}
 
@@ -107,7 +125,10 @@ class DefaultPyramidal5DImageDataTest
 		try (Context context = new Context())
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
-			assertEquals( 1, pyramidal5DImageData.numChannels() );
+			if ( resource.contains( "5d_testing" ) )
+				assertEquals( 2, pyramidal5DImageData.numChannels() );
+			if ( resource.contains( "ome_zarr_v" ) )
+				assertEquals( 1, pyramidal5DImageData.numChannels() );
 		}
 	}
 
@@ -143,7 +164,10 @@ class DefaultPyramidal5DImageDataTest
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			Object type = pyramidal5DImageData.getType();
-			Assertions.assertInstanceOf( LongType.class, type );
+			if ( resource.contains( "5d_testing" ) )
+				Assertions.assertInstanceOf( UnsignedByteType.class, type );
+			if ( resource.contains( "ome_zarr_v" ) )
+				Assertions.assertInstanceOf( LongType.class, type );
 		}
 	}
 
