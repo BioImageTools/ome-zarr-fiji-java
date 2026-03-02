@@ -81,17 +81,6 @@ class DefaultPyramidal5DImageDataTest
 
 	@ParameterizedTest
 	@MethodSource( "omeZarrExamples" )
-	void testAsSpimData( String resource ) throws URISyntaxException
-	{
-		try (Context context = new Context())
-		{
-			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
-			assertNull( pyramidal5DImageData.asSpimData() ); // NB: not yet implemented
-		}
-	}
-
-	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
 	void testNumDimensions( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
