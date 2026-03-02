@@ -177,8 +177,8 @@ public class DefaultPyramidal5DImageData<
 		this.metadata = readMetadata();
 
 		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata );
-		final int multiscaleIndex = 0; // TODO
-		final int resolutionLevelIndex = 0; // TODO
+		final int multiscaleIndex = 0; // TODO: How to select multiscale index?
+		final int resolutionLevelIndex = 0; // TODO: How to select resolution level index?
 		ResolutionLevel resolutionLevel = adapter.initResolutionLevel( metadata, multiscaleIndex, resolutionLevelIndex );
 
 		this.name = resolutionLevel.imageName;
