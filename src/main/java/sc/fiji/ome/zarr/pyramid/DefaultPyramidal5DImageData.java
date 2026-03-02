@@ -203,7 +203,10 @@ public class DefaultPyramidal5DImageData<
 	{
 		if ( inputPath == null )
 			throw new IllegalArgumentException( "Input path is null" );
-		return ZarrOnFileSystemUtils.findRootFolder( inputPath ); // NB: it seems that more metadata is discovered if we first traverse up to the root folder and then from there discover the relative path
+		Path path = ZarrOnFileSystemUtils.findRootFolder( inputPath );
+		if ( path == null )
+			throw new IllegalArgumentException( "Could not find root folder for non-Zarr path: " + inputPath );
+		return path;
 	}
 
 	private String resolveRelativePath()
@@ -233,8 +236,7 @@ public class DefaultPyramidal5DImageData<
 		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, new ArrayList<>( parsers ) );
 		N5Metadata n5Metadata = node.getMetadata();
 		if ( n5Metadata == null )
-			throw new NotAMultiscaleImageException(
-					"The provided path '" + inputPathAsString + "' does not contain a supported multiscale image." );
+			throw new NotAMultiscaleImageException( inputPathAsString );
 		return n5Metadata;
 	}
 

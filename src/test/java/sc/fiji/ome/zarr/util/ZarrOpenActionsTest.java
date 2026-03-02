@@ -1,8 +1,8 @@
 package sc.fiji.ome.zarr.util;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static sc.fiji.ome.zarr.util.ZarrTestUtils.IMAGE_NAME;
 
 import java.net.URISyntaxException;
@@ -18,7 +18,6 @@ import net.imglib2.img.Img;
 import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 
-import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
 class ZarrOpenActionsTest
@@ -79,10 +78,10 @@ class ZarrOpenActionsTest
 			for ( String invalidPath : invalidPaths )
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
-				ZarrOpenActions actions = new ZarrOpenActions( path, context );
+				ZarrOpenActions actions = new ZarrOpenActions( path, context, System.out::println );
 				Consumer< PyramidalDataset< ? > > multiScaleNoOp = dataset -> {};
 				Consumer< Img< ? > > singleScaleNoOp = img -> {};
-				assertThrows( NotASingleScaleImageException.class, () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
+				assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
 			}
 		}
 	}

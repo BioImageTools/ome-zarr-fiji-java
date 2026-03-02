@@ -38,10 +38,18 @@ public class ZarrOpenActions
 
 	private final Context context;
 
+	private final Consumer< String > errorHandler;
+
 	public ZarrOpenActions( final Path droppedInPath, final Context context )
+	{
+		this( droppedInPath, context, IJ::error );
+	}
+
+	ZarrOpenActions( final Path droppedInPath, final Context context, final Consumer< String > errorHandler )
 	{
 		this.droppedInPath = droppedInPath;
 		this.context = context;
+		this.errorHandler = errorHandler;
 	}
 
 	/**
@@ -72,45 +80,38 @@ public class ZarrOpenActions
 
 	public void openIJWithImage()
 	{
-		try
-		{
-			openImage(
-					pyramidalDataset -> context.getService( UIService.class ).show( pyramidalDataset ),
-					singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ),
-					"ImageJ"
-			);
-		}
-		catch ( NotASingleScaleImageException e )
-		{
-			showError( e );
-		}
+		openImage(
+				pyramidalDataset -> context.getService( UIService.class ).show( pyramidalDataset ),
+				singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ),
+				"ImageJ"
+		);
 	}
 
 	public void openBDVWithImage()
 	{
-		try
-		{
-			openImage(
-					pyramidalDataset -> BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
-							BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ),
-					singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
-					"BigDataViewer" );
-		}
-		catch ( NotASingleScaleImageException e )
-		{
-			showError( e );
-		}
+		openImage(
+				pyramidalDataset -> BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
+						BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ),
+				singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
+				"BigDataViewer" );
 	}
 
-	private void showError( final Exception e )
+	private void showSingleScaleError( final Exception e )
 	{
-		IJ.error( "Could not open dataset as image: " + droppedInPath + "\n\n"
+		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
 				+ "Consider opening one level higher or lower in the hierarchy instead." );
 		logger.warn( "Could not open dataset as single scale image: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 
+	private void showNonZarrError( final Exception e )
+	{
+		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
+				+ "The drag & drop for Zarr folders only supports folders that contains zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
+		logger.warn( "Could not open dataset as non-Zarr image: {}. Error message: {}", droppedInPath, e.getMessage() );
+	}
+
 	void openImage( final Consumer< PyramidalDataset< ? > > multiScaleImageOpener, final Consumer< Img< ? > > singleScaleImageOpener,
-			final String message ) throws NotASingleScaleImageException
+			final String message )
 	{
 		try
 		{
@@ -121,7 +122,18 @@ public class ZarrOpenActions
 		{
 			logger.warn( "Not a multiscale image: {}", e.getMessage() );
 			logger.info( "Try opening as single-scale image instead." );
-			openSingleScaleImage( singleScaleImageOpener );
+			try
+			{
+				openSingleScaleImage( singleScaleImageOpener );
+			}
+			catch ( NotASingleScaleImageException ex )
+			{
+				showSingleScaleError( ex );
+			}
+		}
+		catch ( IllegalArgumentException ex )
+		{
+			showNonZarrError( ex );
 		}
 	}
 
