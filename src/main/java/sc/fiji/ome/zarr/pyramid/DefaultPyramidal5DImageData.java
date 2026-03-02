@@ -162,12 +162,10 @@ public class DefaultPyramidal5DImageData<
 	private final N5Metadata metadata;
 
 	/**
-	 * Build a dataset from a single {@code PyramidalOMEZarrArray},
-	 * which MUST only contains subset of the axes: X,Y,Z,C,T
+	 * Build a dataset from the given OME-Zarr path. The path can be the root of the OME-Zarr dataset or a subfolder within it.
 	 * <br>
 	 * @param context The SciJava context for building the SciJava dataset
 	 * @param inputPathAsString The path to the OME-Zarr dataset.
-	 * @throws Error any error
 	 */
 	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString )
 	{
