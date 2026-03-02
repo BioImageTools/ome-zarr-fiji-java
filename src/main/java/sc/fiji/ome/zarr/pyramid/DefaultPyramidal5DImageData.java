@@ -366,6 +366,7 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public PyramidalDataset< T > asPyramidalDataset()
 	{
+		// TODO: cache the pyramidal dataset instead of recreating it every time?
 		return new PyramidalDataset<>( this );
 	}
 
