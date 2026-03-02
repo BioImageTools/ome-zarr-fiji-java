@@ -413,12 +413,6 @@ public class DefaultPyramidal5DImageData<
 		return null;
 	}
 
-	/**
-	 * The purpose is to create the internal {@link DefaultPyramidal5DImageData#imgPlus}
-	 * just once.
-	 */
-	private synchronized void imgPlus()
-	{}
 
 	@Override
 	public int numDimensions()
