@@ -20,11 +20,9 @@ import org.scijava.Context;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.stream.Stream;
 
 import bdv.viewer.Source;
-import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
