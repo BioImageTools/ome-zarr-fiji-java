@@ -188,7 +188,7 @@ public class DefaultPyramidal5DImageData<
 
 		CachedCellImg< T, ? > img = N5Utils.openVolatile( reader, resolutionLevel.datasetPath );
 		this.imgPlus = new ImgPlus<>( img, name );
-		configureAxes( imgPlus, resolutionLevel );
+		configureImgPlusAxesFromResolutionLevel( imgPlus, resolutionLevel );
 
 		this.ijDataset = new DefaultDataset( context, imgPlus );
 		this.ijDataset.setName( name );
@@ -333,7 +333,7 @@ public class DefaultPyramidal5DImageData<
 	// Axis Configuration
 	// ---------------------------------------------------------------------
 
-	private void configureAxes( final ImgPlus< T > img, final ResolutionLevel resolutionLevel )
+	private void configureImgPlusAxesFromResolutionLevel( final ImgPlus< T > img, final ResolutionLevel resolutionLevel )
 	{
 		if ( resolutionLevel.axes != null )
 		{
