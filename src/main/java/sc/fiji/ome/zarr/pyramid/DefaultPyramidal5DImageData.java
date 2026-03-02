@@ -188,8 +188,7 @@ public class DefaultPyramidal5DImageData<
 		this.numDimensions = dimensions.length;
 
 		CachedCellImg< T, ? > img = N5Utils.openVolatile( reader, resolutionLevel.datasetPath );
-		this.imgPlus = new ImgPlus<>( img );
-		this.imgPlus.setName( name );
+		this.imgPlus = new ImgPlus<>( img, name );
 		configureAxes( imgPlus, resolutionLevel );
 
 		DatasetService datasetService = context.getService( DatasetService.class );
