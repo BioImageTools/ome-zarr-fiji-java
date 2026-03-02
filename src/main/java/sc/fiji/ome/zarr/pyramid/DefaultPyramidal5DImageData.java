@@ -210,7 +210,7 @@ public class DefaultPyramidal5DImageData<
 	private String resolveRelativePath()
 	{
 		if ( inputPath == null || rootPath == null )
-			throw new NotAMultiscaleImageException( "Input path or root path is null" );
+			throw new IllegalStateException( "Input path or root path is null" );
 		List< String > elements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
 		return String.join( File.separator, elements );
 	}
@@ -218,7 +218,7 @@ public class DefaultPyramidal5DImageData<
 	private N5Reader createReader()
 	{
 		if ( rootPath == null )
-			throw new NotAMultiscaleImageException( "Invalid OME-Zarr path: " + inputPathAsString );
+			throw new IllegalStateException( "Invalid OME-Zarr path: " + inputPathAsString );
 		return new N5Factory().openReader( rootPath.toUri().toString() );
 	}
 
