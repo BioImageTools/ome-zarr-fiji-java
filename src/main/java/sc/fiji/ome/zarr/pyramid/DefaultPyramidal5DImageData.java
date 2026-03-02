@@ -246,11 +246,11 @@ public class DefaultPyramidal5DImageData<
 
 		private final DatasetAttributes attributes;
 
-		private final Axis[] axes;
+		private final Axis[] axes; // for OME NGFF v04 metadata
 
-		private final String[] axisNames;
+		private final String[] axisNames; // for OME NGFF v03 metadata
 
-		private final String[] units;
+		private final String[] units; // for OME NGFF v03 metadata
 
 		private final double[] scales;
 
