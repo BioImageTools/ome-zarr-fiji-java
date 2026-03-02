@@ -179,10 +179,10 @@ public class DefaultPyramidal5DImageData<
 		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata );
 		final int multiscaleIndex = 0; // TODO: How to select multiscale index?
 		final int resolutionLevelIndex = 0; // TODO: How to select resolution level index?
-		ResolutionLevel resolutionLevel = adapter.initResolutionLevel( metadata, multiscaleIndex, resolutionLevelIndex );
-
-		this.name = resolutionLevel.imageName;
-		this.numResolutionLevels = resolutionLevel.numResolutionLevels;
+		Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
+		this.name = multiscale.getName();
+		this.numResolutionLevels = multiscale.numResolutionLevels();
+		ResolutionLevel resolutionLevel = multiscale.getLevel( resolutionLevelIndex );
 		this.dimensions = resolutionLevel.attributes.getDimensions();
 		this.numDimensions = dimensions.length;
 
@@ -240,14 +240,46 @@ public class DefaultPyramidal5DImageData<
 		return n5Metadata;
 	}
 
+	private static class Multiscale
+	{
+
+		private final String name;
+
+		private final List< ResolutionLevel > resolutionLevels;
+
+		private Multiscale( final String name, final List< ResolutionLevel > resolutionLevels )
+		{
+			this.name = name;
+			this.resolutionLevels = resolutionLevels;
+		}
+
+		public String getName()
+		{
+			return name;
+		}
+
+		public int numResolutionLevels()
+		{
+			return resolutionLevels.size();
+		}
+
+		public ResolutionLevel getLevel( int index )
+		{
+			return resolutionLevels.get( index );
+		}
+
+		public List< ResolutionLevel > getLevels()
+		{
+			return resolutionLevels;
+		}
+	}
+
 	// ---------------------------------------------------------------------
 	// Selected Scale Level Representation
 	// ---------------------------------------------------------------------
 
 	private static class ResolutionLevel
 	{
-		private final String imageName;
-
 		private final String datasetPath;
 
 		private final DatasetAttributes attributes;
@@ -260,20 +292,16 @@ public class DefaultPyramidal5DImageData<
 
 		private final double[] scales;
 
-		private final int numResolutionLevels;
-
 		private ResolutionLevel(
-				final String imageName, final String datasetPath, final DatasetAttributes attributes, final Axis[] axes,
-				final String[] axisNames, final String[] units, final double[] scales, final int numResolutionLevels )
+				final String datasetPath, final DatasetAttributes attributes, final Axis[] axes, final String[] axisNames,
+				final String[] units, final double[] scales )
 		{
-			this.imageName = imageName;
 			this.datasetPath = datasetPath;
 			this.attributes = attributes;
 			this.axes = axes;
 			this.axisNames = axisNames;
 			this.units = units;
 			this.scales = scales;
-			this.numResolutionLevels = numResolutionLevels;
 		}
 	}
 
@@ -283,7 +311,7 @@ public class DefaultPyramidal5DImageData<
 
 	private interface MetadataAdapter
 	{
-		ResolutionLevel initResolutionLevel( final N5Metadata metadata, final int multiscaleIndex, final int resolutionLevelIndex );
+		Multiscale initMultiscale( final N5Metadata metadata, final int multiscaleIndex );
 	}
 
 	private static class MetadataAdapterFactory
@@ -303,15 +331,17 @@ public class DefaultPyramidal5DImageData<
 	{
 
 		@Override
-		public ResolutionLevel initResolutionLevel( final N5Metadata n5Metadata, final int multiscaleIndex, final int resolutionLevelIndex )
+		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
 		{
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
 			OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
-			NgffSingleScaleAxesMetadata single = multiscales.getChildrenMetadata()[ resolutionLevelIndex ];
-			return new ResolutionLevel(
-					multiscales.name, single.getPath(), single.getAttributes(), single.getAxes(), null, null,
-					single.getScale(), multiscales.datasets.length
-			);
+			List< ResolutionLevel > levels = new ArrayList<>();
+			for ( NgffSingleScaleAxesMetadata single : multiscales.getChildrenMetadata() )
+			{
+				levels.add(
+						new ResolutionLevel( single.getPath(), single.getAttributes(), single.getAxes(), null, null, single.getScale() ) );
+			}
+			return new Multiscale( multiscales.name, levels );
 		}
 	}
 
@@ -319,15 +349,18 @@ public class DefaultPyramidal5DImageData<
 	{
 
 		@Override
-		public ResolutionLevel initResolutionLevel( final N5Metadata n5Metadata, final int multiscaleIndex, final int resolutionLevelIndex )
+		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
 		{
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMultiScaleMetadata multiscales =
 					omeNgffMetadata.getMultiscales()[ multiscaleIndex ];
-			N5SingleScaleMetadata single = multiscales.getChildrenMetadata()[ resolutionLevelIndex ];
-
-			return new ResolutionLevel( multiscales.name, single.getPath(), single.getAttributes(), null, multiscales.axes,
-					multiscales.units(), single.getPixelResolution(), multiscales.datasets.length );
+			List< ResolutionLevel > levels = new ArrayList<>();
+			for ( N5SingleScaleMetadata single : multiscales.getChildrenMetadata() )
+			{
+				levels.add( new ResolutionLevel( single.getPath(), single.getAttributes(), null, multiscales.axes, multiscales.units(),
+						single.getPixelResolution() ) );
+			}
+			return new Multiscale( multiscales.name, levels );
 		}
 	}
 
