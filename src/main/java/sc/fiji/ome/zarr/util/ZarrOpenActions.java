@@ -90,10 +90,11 @@ public class ZarrOpenActions
 	{
 		try
 		{
-			openImage( pyramidalDataset -> BdvFunctions.show(
-					pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
-					BdvOptions.options().frameTitle( pyramidalDataset.getName() )
-			), singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ), "BigDataViewer" );
+			openImage(
+					pyramidalDataset -> BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
+							BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ),
+					singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
+					"BigDataViewer" );
 		}
 		catch ( NotASingleScaleImageException e )
 		{
