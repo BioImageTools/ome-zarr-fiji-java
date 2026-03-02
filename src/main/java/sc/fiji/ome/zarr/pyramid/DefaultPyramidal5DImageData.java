@@ -29,7 +29,7 @@
 package sc.fiji.ome.zarr.pyramid;
 
 import net.imagej.Dataset;
-import net.imagej.DatasetService;
+import net.imagej.DefaultDataset;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
@@ -191,9 +191,7 @@ public class DefaultPyramidal5DImageData<
 		this.imgPlus = new ImgPlus<>( img, name );
 		configureAxes( imgPlus, resolutionLevel );
 
-		DatasetService datasetService = context.getService( DatasetService.class );
-
-		this.ijDataset = datasetService.create( imgPlus );
+		this.ijDataset = new DefaultDataset( context, imgPlus );
 		this.ijDataset.setName( name );
 		this.ijDataset.setRGBMerged( false );
 	}
