@@ -71,7 +71,6 @@ import java.util.Map;
 import bdv.cache.SharedQueue;
 import bdv.util.BdvOptions;
 import bdv.viewer.SourceAndConverter;
-import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
@@ -140,8 +139,6 @@ public class DefaultPyramidal5DImageData<
 
 	private List< SourceAndConverter< T > > sourceAndConverters;
 
-	private final SpimData spimData;
-
 	private final String inputPathAsString;
 
 	private final Path inputPath;
@@ -171,7 +168,6 @@ public class DefaultPyramidal5DImageData<
 		this.relativePathAsString = resolveRelativePath();
 		this.reader = createReader();
 		this.metadata = readMetadata();
-		this.spimData = null;
 
 		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata );
 		final int multiscaleIndex = 0; // TODO
@@ -397,12 +393,6 @@ public class DefaultPyramidal5DImageData<
 			}
 		}
 		return sourceAndConverters;
-	}
-
-	@Override
-	public SpimData asSpimData()
-	{
-		return spimData;
 	}
 
 	@Override
