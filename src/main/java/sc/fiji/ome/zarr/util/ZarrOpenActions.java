@@ -76,7 +76,8 @@ public class ZarrOpenActions
 		{
 			openImage(
 					pyramidalDataset -> context.getService( UIService.class ).show( pyramidalDataset ),
-					singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ), "ImageJ"
+					singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ),
+					"ImageJ"
 			);
 		}
 		catch ( NotASingleScaleImageException e )
