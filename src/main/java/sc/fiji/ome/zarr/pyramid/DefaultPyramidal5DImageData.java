@@ -443,8 +443,6 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public T getType()
 	{
-		if ( imgPlus == null )
-			return null;
 		return imgPlus.firstElement();
 	}
 
