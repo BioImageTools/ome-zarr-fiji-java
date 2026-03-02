@@ -145,6 +145,16 @@ public class DefaultPyramidal5DImageData<
 
 	private final Path rootPath;
 
+	/**
+	 * The relative path of the dataset within the root directory, represented as a string.
+	 * E.g.
+	 * <ul>
+	 *     <li>input path: /Users/foo/Data/123.ome.zarr/dataset1/image1</li>
+	 *     <li>root path: /Users/foo/Data/123.ome.zarr</li>
+	 *     <li>relativePathAsString: dataset1/image1</li>
+	 * </ul>
+	 *
+	 */
 	private final String relativePathAsString;
 
 	private final N5Reader reader;
