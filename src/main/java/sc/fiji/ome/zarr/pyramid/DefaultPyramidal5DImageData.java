@@ -380,7 +380,7 @@ public class DefaultPyramidal5DImageData<
 	public List< SourceAndConverter< T > > asSources()
 	{
 		if ( reader == null )
-			throw new NotAMultiscaleImageException( "Cannot create sources: no reader available for path: " + inputPathAsString );
+			throw new IllegalStateException( "Cannot create sources: no reader available for path: " + inputPathAsString );
 		if ( metadata == null )
 			throw new NotAMultiscaleImageException( "Cannot create sources: no metadata available for path: " + inputPathAsString );
 		if ( sourceAndConverters == null )
