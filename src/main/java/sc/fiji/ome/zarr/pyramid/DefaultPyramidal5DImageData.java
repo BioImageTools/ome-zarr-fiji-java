@@ -85,8 +85,10 @@ import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
  * @param <T> Type of the pixels
  * @param <V> Volatile type of the pixels
  */
-public class DefaultPyramidal5DImageData< T extends NativeType< T > & RealType< T >,
-		V extends Volatile< T > & NativeType< V > & RealType< V > > implements EuclideanSpace, Pyramidal5DImageData< T >
+public class DefaultPyramidal5DImageData<
+		T extends NativeType< T > & RealType< T >,
+		V extends Volatile< T > & NativeType< V > & RealType< V > >
+		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
 	private static final Map< String, AxisType > AXIS_MAPPING;
 
