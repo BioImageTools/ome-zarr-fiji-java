@@ -240,7 +240,7 @@ public class DefaultPyramidal5DImageData<
 	}
 
 	// ---------------------------------------------------------------------
-	// Selected Scale DTO
+	// Selected Scale Level Representation
 	// ---------------------------------------------------------------------
 
 	private static class ResolutionLevel
