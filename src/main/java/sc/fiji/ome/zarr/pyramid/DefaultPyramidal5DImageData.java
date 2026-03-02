@@ -340,20 +340,21 @@ public class DefaultPyramidal5DImageData<
 			for ( int i = 0; i < resolutionLevel.axes.length; i++ )
 			{
 				Axis axis = resolutionLevel.axes[ i ];
-				setAxis( img, AXIS_MAPPING.get( axis.getName() ), axis.getUnit(), resolutionLevel.scales[ i ], i );
+				setImgPlusAxis( img, AXIS_MAPPING.get( axis.getName() ), axis.getUnit(), resolutionLevel.scales[ i ], i );
 			}
 		}
 		else if ( resolutionLevel.axisNames != null )
 		{
 			for ( int i = 0; i < resolutionLevel.axisNames.length; i++ )
 			{
-				setAxis( img, AXIS_MAPPING.get( resolutionLevel.axisNames[ i ] ), resolutionLevel.units[ i ], resolutionLevel.scales[ i ],
+				setImgPlusAxis( img, AXIS_MAPPING.get( resolutionLevel.axisNames[ i ] ), resolutionLevel.units[ i ],
+						resolutionLevel.scales[ i ],
 						i );
 			}
 		}
 	}
 
-	private void setAxis( final ImgPlus< T > img, final AxisType type, final String unit, final double scale, final int index )
+	private void setImgPlusAxis( final ImgPlus< T > img, final AxisType type, final String unit, final double scale, final int index )
 	{
 		img.setAxis( new DefaultLinearAxis( type, unit, scale ), index );
 	}
