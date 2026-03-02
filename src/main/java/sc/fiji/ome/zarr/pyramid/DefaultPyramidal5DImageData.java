@@ -53,7 +53,6 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
 import org.scijava.Context;
 
@@ -289,7 +288,7 @@ public class DefaultPyramidal5DImageData<
 	{
 		static MetadataAdapter getAdapter( final N5Metadata metadata )
 		{
-			if ( metadata instanceof OmeNgffMetadata )
+			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata )
 				return new V04MetadataAdapter();
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
 				return new V03MetadataAdapter();
@@ -304,7 +303,7 @@ public class DefaultPyramidal5DImageData<
 		@Override
 		public ResolutionLevel initResolutionLevel( final N5Metadata n5Metadata, final int multiscaleIndex, final int resolutionLevelIndex )
 		{
-			OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
 			OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
 			NgffSingleScaleAxesMetadata single = multiscales.getChildrenMetadata()[ resolutionLevelIndex ];
 			return new ResolutionLevel(
