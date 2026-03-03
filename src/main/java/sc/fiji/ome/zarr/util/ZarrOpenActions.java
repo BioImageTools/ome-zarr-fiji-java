@@ -10,6 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Desktop;
+import java.awt.Container;
+import java.awt.Window;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
@@ -22,6 +26,7 @@ import net.imglib2.util.Cast;
 
 import bdv.util.BdvFunctions;
 import bdv.util.BdvOptions;
+import bdv.util.BdvHandle;
 import ij.IJ;
 import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
@@ -90,8 +95,26 @@ public class ZarrOpenActions
 	public void openBDVWithImage()
 	{
 		openImage(
-				pyramidalDataset -> BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
-						BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ),
+				pyramidalDataset -> {
+					BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
+							BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
+
+					Container topLevelContainer = bdvHandle.getViewerPanel().getRootPane().getParent();
+					if ( topLevelContainer instanceof Window )
+					{
+						// notify scijava about "usage" (and "no longer usage" later) of this Dataset
+						// only iff we're able to listen for when Bdv window closes
+						pyramidalDataset.incrementReferences();
+						( ( Window ) topLevelContainer ).addWindowListener( new WindowAdapter()
+						{
+							@Override
+							public void windowClosed( WindowEvent e )
+							{
+								pyramidalDataset.decrementReferences();
+							}
+						} );
+					}
+				},
 				singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
 				"BigDataViewer" );
 	}
