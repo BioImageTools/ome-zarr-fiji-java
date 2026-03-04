@@ -290,7 +290,7 @@ public class DefaultPyramidal5DImageData<
 
 		private final String[] units; // for OME NGFF v03 metadata
 
-		private final double[] scales;
+		private final double[] scales; // down sampling factor
 
 		private ResolutionLevel(
 				final String datasetPath, final DatasetAttributes attributes, final Axis[] axes, final String[] axisNames,

@@ -118,7 +118,7 @@ class ZarrOpenActionsTest
 			assertNotNull( datasetService );
 			List< Dataset > datasets = datasetService.getDatasets();
 			assertNotNull( datasets );
-			assertEquals( 0, datasets.size() ); // NB: The dataset service does not know the BDV dataset
+			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
 		}
 	}
 }
