@@ -32,6 +32,7 @@ import net.imagej.Dataset;
 import net.imglib2.util.Cast;
 
 import org.scijava.command.Command;
+import org.scijava.log.LogLevel;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -39,7 +40,7 @@ import org.scijava.plugin.Plugin;
 import bdv.util.BdvFunctions;
 import bdv.util.BdvOptions;
 
-@Plugin( type = Command.class )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
 {
 	@Parameter
@@ -51,16 +52,19 @@ public class OpenInBDVCommand implements Command
 	@Override
 	public void run()
 	{
+		logService.log( LogLevel.DEBUG, "Trying to open: " + dataset.getName() );
+		logService.log( LogLevel.DEBUG, "Class: " + dataset.getClass() );
+		logService.log( LogLevel.DEBUG, "Dataset instanceof PyramidalDataset: " + ( dataset instanceof PyramidalDataset ) );
 		if ( dataset instanceof PyramidalDataset )
 		{
-			logService.log( 0, "Opening " + dataset.getClass().toString() + " in BDV..." );
+			logService.log( 0, "Opening " + dataset.getClass() + " in BDV..." );
 			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
 			BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
 					BdvOptions.options().frameTitle( pyramidalDataset.getName() ) );
 		}
 		else
 		{
-			logService.error( "Cannot display datasets of type " + dataset.getClass().toString() + " in BDV." );
+			logService.error( "Cannot display datasets of type " + dataset.getClass() + " in BDV." );
 		}
 	}
 }

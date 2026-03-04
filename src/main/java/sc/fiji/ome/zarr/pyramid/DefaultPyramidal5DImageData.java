@@ -29,26 +29,31 @@
 package sc.fiji.ome.zarr.pyramid;
 
 import net.imagej.Dataset;
-import net.imagej.DatasetService;
+import net.imagej.DefaultDataset;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
-import net.imagej.axis.CalibratedAxis;
 import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.EuclideanSpace;
 import net.imglib2.Volatile;
+import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Cast;
 
+import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.bdv.N5Viewer;
+import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser;
-import org.jetbrains.annotations.NotNull;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
 import org.scijava.Context;
 
 import java.io.File;
@@ -58,12 +63,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import bdv.cache.SharedQueue;
 import bdv.util.BdvOptions;
 import bdv.viewer.SourceAndConverter;
-import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
@@ -82,6 +88,19 @@ public class DefaultPyramidal5DImageData<
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
+	private static final Map< String, AxisType > AXIS_MAPPING;
+
+	static
+	{
+		Map< String, AxisType > map = new HashMap<>();
+		map.put( "x", Axes.X );
+		map.put( "y", Axes.Y );
+		map.put( "z", Axes.Z );
+		map.put( "c", Axes.CHANNEL );
+		map.put( "t", Axes.TIME );
+		AXIS_MAPPING = Collections.unmodifiableMap( map );
+	}
+
 	/** The scijava context. This is needed (only) for creating {@link #ijDataset}. */
 	private final Context context;
 
@@ -94,20 +113,9 @@ public class DefaultPyramidal5DImageData<
 	private final String name;
 
 	/**
-	 * Basically a list of individual images<T,V>, each of which
-	 * showing the same content but at different spatial resolution.
-	 * This is where the 'pyramids' are held.
-	 *
-	 * Note that none of the individual images knows its pixel resolution,
-	 * or any other metadata.
+	 * The number of available resolutions.
 	 */
-	private final MultiscaleImage< T, V > multiscaleImage;
-
-	/**
-	 * Only a shortcut as this information is otherwise also available
-	 * in the {@link DefaultPyramidal5DImageData#multiscaleImage}.
-	 */
-	private int numResolutions;
+	private final int numResolutionLevels;
 
 	/** The fourth dimension size... */
 	private int numTimepoints = 1;
@@ -115,10 +123,11 @@ public class DefaultPyramidal5DImageData<
 	/** The fifth dimension size... */
 	private int numChannels = 1;
 
-	/** TODO: Should be 4 or 5, no??? */
-	private int numDimensions;
+	/** The total number of dimensions in the image. */
+	private final int numDimensions;
 
-	private long[] dimensions;
+	private final long[] dimensions;
+
 	//TODO: -- knows resolution along the dimensions
 	//private OMEZarrAxes omeZarrAxes;
 
@@ -129,68 +138,271 @@ public class DefaultPyramidal5DImageData<
 
 	private List< SourceAndConverter< T > > sourceAndConverters;
 
-	private SpimData spimData;
+	private final String inputPathAsString;
+
+	private final Path inputPath;
+
+	private final Path rootPath;
 
 	/**
-	 * Build a dataset from a single {@code PyramidalOMEZarrArray},
-	 * which MUST only contains subset of the axes: X,Y,Z,C,T
+	 * The relative path of the dataset within the root directory, represented as a string.
+	 * E.g.
+	 * <ul>
+	 *     <li>input path: /Users/foo/Data/123.ome.zarr/dataset1/image1</li>
+	 *     <li>root path: /Users/foo/Data/123.ome.zarr</li>
+	 *     <li>relativePathAsString: dataset1/image1</li>
+	 * </ul>
+	 *
+	 */
+	private final String relativePathAsString;
+
+	private final N5Reader reader;
+
+	private final N5Metadata metadata;
+
+	/**
+	 * Build a dataset from the given OME-Zarr path. The path can be the root of the OME-Zarr dataset or a subfolder within it.
 	 * <br>
 	 * @param context The SciJava context for building the SciJava dataset
-	 * @param multiscaleImage The array containing the image all data.
-	 * @throws Error any error
+	 * @param inputPathAsString The path to the OME-Zarr dataset.
 	 */
-	public DefaultPyramidal5DImageData(
-			final Context context,
-			final String name,
-			final MultiscaleImage< T, V > multiscaleImage ) throws Error
+	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString )
 	{
 		this.context = context;
-		this.name = name;
-		this.multiscaleImage = multiscaleImage;
+		this.inputPathAsString = inputPathAsString;
+		this.inputPath = Paths.get( inputPathAsString );
+		this.rootPath = resolveRootPath();
+		this.relativePathAsString = resolveRelativePath();
+		this.reader = createReader();
+		this.metadata = readMetadata();
 
-		numResolutions = multiscaleImage.numResolutions();
-		dimensions = multiscaleImage.dimensions();
-		numDimensions = dimensions.length;
+		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata );
+		final int multiscaleIndex = 0; // TODO: How to select multiscale index?
+		final int resolutionLevelIndex = 0; // TODO: How to select resolution level index?
+		Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
+		this.name = multiscale.getName();
+		this.numResolutionLevels = multiscale.numResolutionLevels();
+		ResolutionLevel resolutionLevel = multiscale.getLevel( resolutionLevelIndex );
+		this.dimensions = resolutionLevel.attributes.getDimensions();
+		this.numDimensions = dimensions.length;
 
-		imgPlus = new ImgPlus<>( multiscaleImage.getImg( 0 ) );
-		imgPlus.setName( getName() );
-		updateImgPlusAxes();
+		CachedCellImg< T, ? > img = N5Utils.openVolatile( reader, resolutionLevel.datasetPath );
+		this.imgPlus = new ImgPlus<>( img, name );
+		configureImgPlusAxesFromResolutionLevel( imgPlus, resolutionLevel );
 
-		final DatasetService datasetService = context.getService( DatasetService.class );
-		ijDataset = datasetService.create( imgPlus );
-		ijDataset.setName( imgPlus.getName() );
-		ijDataset.setRGBMerged( false );
+		this.ijDataset = new DefaultDataset( context, imgPlus );
+		this.ijDataset.setName( name );
+		this.ijDataset.setRGBMerged( false );
 	}
 
-	public static void main( String[] args )
-	{
-		//final String path = "/home/ulman/Documents/talks/CEITEC/2025_11_ZarrSymposium_Zurich/data/MitoEM_fixedRes.zarr/MitoEM_fixedRes";
-		final String path = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0";
-		final N5Reader n5reader = new N5Factory().openReader( path );
-		System.out.println( "got reader: " + n5reader );
-		N5Metadata m = N5DatasetDiscoverer.discover( n5reader ).getMetadata();
-		System.out.println( "got metadata: " + m );
+	// ---------------------------------------------------------------------
+	// Metadata & Reader Utilities
+	// ---------------------------------------------------------------------
 
-		/*
-		if (m instanceof OmeNgffV05Metadata) {
-			OmeNgffV05Metadata mv05 = (OmeNgffV05Metadata)m;
-			System.out.println("name: "+mv05.getName());
-			for (OmeNgffMultiScaleMetadata ms : mv05.multiscales) {
-				System.out.println("----------------");
-				System.out.println("name: "+ms.name+"     type: "+ms.type+"     version: "+ms.version);
-				System.out.println(ms.coordinateTransformations);
+	private Path resolveRootPath()
+	{
+		if ( inputPath == null )
+			throw new IllegalArgumentException( "Input path is null" );
+		Path path = ZarrOnFileSystemUtils.findRootFolder( inputPath );
+		if ( path == null )
+			throw new IllegalArgumentException( "Could not find root folder for non-Zarr path: " + inputPath );
+		return path;
+	}
+
+	private String resolveRelativePath()
+	{
+		if ( inputPath == null || rootPath == null )
+			throw new IllegalStateException( "Input path or root path is null" );
+		List< String > elements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
+		return String.join( File.separator, elements );
+	}
+
+	private N5Reader createReader()
+	{
+		if ( rootPath == null )
+			throw new IllegalStateException( "Invalid OME-Zarr path: " + inputPathAsString );
+		return new N5Factory().openReader( rootPath.toUri().toString() );
+	}
+
+	private N5Metadata readMetadata()
+	{
+		if ( relativePathAsString == null )
+			throw new NotAMultiscaleImageException( "Invalid OME-Zarr path: " + inputPathAsString );
+
+		N5TreeNode node = new N5TreeNode( relativePathAsString );
+		List< N5MetadataParser< ? > > parsers =
+				Arrays.asList( new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser(),
+						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser() );
+		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, new ArrayList<>( parsers ) );
+		N5Metadata n5Metadata = node.getMetadata();
+		if ( n5Metadata == null )
+			throw new NotAMultiscaleImageException( inputPathAsString );
+		return n5Metadata;
+	}
+
+	private static class Multiscale
+	{
+
+		private final String name;
+
+		private final List< ResolutionLevel > resolutionLevels;
+
+		private Multiscale( final String name, final List< ResolutionLevel > resolutionLevels )
+		{
+			this.name = name;
+			this.resolutionLevels = resolutionLevels;
+		}
+
+		public String getName()
+		{
+			return name;
+		}
+
+		public int numResolutionLevels()
+		{
+			return resolutionLevels.size();
+		}
+
+		public ResolutionLevel getLevel( int index )
+		{
+			return resolutionLevels.get( index );
+		}
+
+		public List< ResolutionLevel > getLevels()
+		{
+			return resolutionLevels;
+		}
+	}
+
+	// ---------------------------------------------------------------------
+	// Selected Scale Level Representation
+	// ---------------------------------------------------------------------
+
+	private static class ResolutionLevel
+	{
+		private final String datasetPath;
+
+		private final DatasetAttributes attributes;
+
+		private final Axis[] axes; // for OME NGFF v04 metadata
+
+		private final String[] axisNames; // for OME NGFF v03 metadata
+
+		private final String[] units; // for OME NGFF v03 metadata
+
+		private final double[] scales; // down sampling factor
+
+		private ResolutionLevel(
+				final String datasetPath, final DatasetAttributes attributes, final Axis[] axes, final String[] axisNames,
+				final String[] units, final double[] scales )
+		{
+			this.datasetPath = datasetPath;
+			this.attributes = attributes;
+			this.axes = axes;
+			this.axisNames = axisNames;
+			this.units = units;
+			this.scales = scales;
+		}
+	}
+
+	// ---------------------------------------------------------------------
+	// Metadata Adapter Strategy
+	// ---------------------------------------------------------------------
+
+	private interface MetadataAdapter
+	{
+		Multiscale initMultiscale( final N5Metadata metadata, final int multiscaleIndex );
+	}
+
+	private static class MetadataAdapterFactory
+	{
+		static MetadataAdapter getAdapter( final N5Metadata metadata )
+		{
+			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata )
+				return new V04MetadataAdapter();
+			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
+				return new V03MetadataAdapter();
+			throw new NotAMultiscaleImageException(
+					"Unsupported multiscale metadata type: " + metadata.getClass() );
+		}
+	}
+
+	private static class V04MetadataAdapter implements MetadataAdapter
+	{
+
+		@Override
+		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
+		{
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
+			OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
+			List< ResolutionLevel > levels = new ArrayList<>();
+			for ( NgffSingleScaleAxesMetadata single : multiscales.getChildrenMetadata() )
+			{
+				levels.add(
+						new ResolutionLevel( single.getPath(), single.getAttributes(), single.getAxes(), null, null, single.getScale() ) );
+			}
+			return new Multiscale( multiscales.name, levels );
+		}
+	}
+
+	private static class V03MetadataAdapter implements MetadataAdapter
+	{
+
+		@Override
+		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
+		{
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMultiScaleMetadata multiscales =
+					omeNgffMetadata.getMultiscales()[ multiscaleIndex ];
+			List< ResolutionLevel > levels = new ArrayList<>();
+			for ( N5SingleScaleMetadata single : multiscales.getChildrenMetadata() )
+			{
+				levels.add( new ResolutionLevel( single.getPath(), single.getAttributes(), null, multiscales.axes, multiscales.units(),
+						single.getPixelResolution() ) );
+			}
+			return new Multiscale( multiscales.name, levels );
+		}
+	}
+
+	// ---------------------------------------------------------------------
+	// Axis Configuration
+	// ---------------------------------------------------------------------
+
+	private void configureImgPlusAxesFromResolutionLevel( final ImgPlus< T > img, final ResolutionLevel resolutionLevel )
+	{
+		if ( resolutionLevel.axes != null )
+		{
+			for ( int i = 0; i < resolutionLevel.axes.length; i++ )
+			{
+				Axis axis = resolutionLevel.axes[ i ];
+				setImgPlusAxis( img, AXIS_MAPPING.get( axis.getName() ), axis.getUnit(), resolutionLevel.scales[ i ], i );
 			}
 		}
-		*/
-
-		//TODO fetch v0.5 NGFF Metadata -> ask John
-		//there was supposed to be some class for it
+		else if ( resolutionLevel.axisNames != null )
+		{
+			for ( int i = 0; i < resolutionLevel.axisNames.length; i++ )
+			{
+				setImgPlusAxis( img, AXIS_MAPPING.get( resolutionLevel.axisNames[ i ] ), resolutionLevel.units[ i ],
+						resolutionLevel.scales[ i ],
+						i );
+			}
+		}
 	}
+
+	private void setImgPlusAxis( final ImgPlus< T > img, final AxisType type, final String unit, final double scale, final int index )
+	{
+		img.setAxis( new DefaultLinearAxis( type, unit, scale ), index );
+	}
+
+	// ---------------------------------------------------------------------
+	// Interface Implementations
+	// ---------------------------------------------------------------------
 
 	@Override
 	public PyramidalDataset< T > asPyramidalDataset()
 	{
-		return new PyramidalDataset< T >( this );
+		// TODO: cache the pyramidal dataset instead of recreating it every time?
+		return new PyramidalDataset<>( this );
 	}
 
 	@Override
@@ -202,42 +414,19 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public List< SourceAndConverter< T > > asSources()
 	{
+		if ( reader == null )
+			throw new IllegalStateException( "Cannot create sources: no reader available for path: " + inputPathAsString );
+		if ( metadata == null )
+			throw new NotAMultiscaleImageException( "Cannot create sources: no metadata available for path: " + inputPathAsString );
 		if ( sourceAndConverters == null )
 		{
 			try
 			{
 				sourceAndConverters = new ArrayList<>();
-
-				// Initialize N5Reader
-				final Path inputPath = Paths.get( multiscaleImage.getMultiscalePath() );
-				final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
-				N5Reader reader = new N5Factory().openReader( rootPath.toUri().toString() );
-
-				// Initialize N5TreeNode
-				final List< String > relativePathElements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
-				final String relativePath = String.join( File.separator, relativePathElements );
-				N5TreeNode n5TreeNode = new N5TreeNode( relativePath );
-
-				// Create Parsers
-				OmeNgffMetadataParser parserV03 = new OmeNgffMetadataParser();
-				org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser parserV04 =
-						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser();
-				List< N5MetadataParser< ? > > metadataParsers = Arrays.asList( parserV03, parserV04 );
-				List< N5MetadataParser< ? > > groupParsers = new ArrayList<>( metadataParsers );
-
-				// Parse Metadata
-				N5DatasetDiscoverer.parseMetadataShallow( reader, n5TreeNode, metadataParsers, groupParsers );
-
-				// Create a list containing only the metadata of the dataset we want to visualize
-				List< N5Metadata > selectedMetadata = Collections.singletonList( n5TreeNode.getMetadata() );
-
-				// Initialize BDV Cache
-				final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
-
-				// Create BDV options
-				BdvOptions bdvOptions = BdvOptions.options().frameTitle( getName() );
-				this.numTimepoints = N5Viewer.buildN5Sources( reader, selectedMetadata, sharedQueue, new ArrayList<>(), sourceAndConverters,
-						bdvOptions );
+				SharedQueue queue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
+				BdvOptions options = BdvOptions.options().frameTitle( name );
+				this.numTimepoints = N5Viewer.buildN5Sources( reader, Collections.singletonList( metadata ), queue, new ArrayList<>(),
+						sourceAndConverters, options );
 			}
 			catch ( IOException e )
 			{
@@ -245,13 +434,6 @@ public class DefaultPyramidal5DImageData<
 			}
 		}
 		return sourceAndConverters;
-	}
-
-	@Override
-	public SpimData asSpimData()
-	{
-		// FIXME (JOHN) implement SpimData creation
-		return spimData;
 	}
 
 	@Override
@@ -266,133 +448,23 @@ public class DefaultPyramidal5DImageData<
 		return null;
 	}
 
-	/**
-	 * The purpose is to create the internal {@link DefaultPyramidal5DImageData#imgPlus}
-	 * just once.
-	 */
-	private synchronized void imgPlus()
-	{}
-
-	/**
-	 * Create/update calibrated axes for ImgPlus {@link DefaultPyramidal5DImageData#imgPlus}.
-	 * <br>
-	 * This only needs to consider
-	 * the highest resolution dataset and metadata.
-	 */
-	private void updateImgPlusAxes()
-	{
-		final Multiscales multiscales = multiscaleImage.getMultiscales();
-
-		// The axes, which are valid for all resolutions.
-		final List< Multiscales.Axis > axes = multiscales.getAxes();
-
-		// The scale factors of the resolution level 0
-		// final double[] scaleFactors = multiscales.getScales().get( 0 ).scaleFactors;
-
-		// The global transformations that
-		// should be applied to all resolutions.
-		final Multiscales.CoordinateTransformations[] globalCoordinateTransformations = multiscales.getCoordinateTransformations();
-
-		// The transformations that should
-		// only be applied to the highest resolution,
-		// which is the one we are concerned with here.
-		final Multiscales.CoordinateTransformations[] coordinateTransformations = multiscales.getDatasets()[ 0 ].coordinateTransformations;
-
-		// Concatenate all scaling transformations
-		final double[] scaleFactors = new double[ numDimensions ];
-		Arrays.fill( scaleFactors, 1.0 );
-		if ( globalCoordinateTransformations != null )
-			for ( Multiscales.CoordinateTransformations transformation : globalCoordinateTransformations )
-				for ( int d = 0; d < numDimensions; d++ )
-					scaleFactors[ d ] *= transformation.scale[ d ];
-
-		if ( coordinateTransformations != null )
-			for ( Multiscales.CoordinateTransformations transformation : coordinateTransformations )
-				for ( int d = 0; d < numDimensions; d++ )
-				{
-					if ( transformation.scale == null )
-						continue;
-					scaleFactors[ d ] *= transformation.scale[ d ];
-				}
-
-		reverseArray( scaleFactors );
-
-		// Create the imgAxes
-		final ArrayList< CalibratedAxis > imgAxes = new ArrayList<>();
-
-		// X
-		final int xAxisIndex = multiscales.getSpatialAxisIndex( Multiscales.Axis.X_AXIS_NAME );
-		if ( xAxisIndex >= 0 )
-			imgAxes.add( createAxis( xAxisIndex, Axes.X, axes, scaleFactors ) );
-
-		// Y
-		final int yAxisIndex = multiscales.getSpatialAxisIndex( Multiscales.Axis.Y_AXIS_NAME );
-		if ( yAxisIndex >= 0 )
-			imgAxes.add( createAxis( yAxisIndex, Axes.Y, axes, scaleFactors ) );
-
-		// Z
-		final int zAxisIndex = multiscales.getSpatialAxisIndex( Multiscales.Axis.Z_AXIS_NAME );
-		if ( zAxisIndex >= 0 )
-			imgAxes.add( createAxis( zAxisIndex, Axes.Z, axes, scaleFactors ) );
-
-		// C
-		final int cAxisIndex = multiscales.getChannelAxisIndex();
-		if ( cAxisIndex >= 0 )
-		{
-			imgAxes.add( createAxis( cAxisIndex, Axes.CHANNEL, axes, scaleFactors ) );
-			numChannels = ( int ) dimensions[ cAxisIndex ];
-		}
-
-		// T
-		final int tAxisIndex = multiscales.getTimepointAxisIndex();
-		if ( tAxisIndex >= 0 )
-		{
-			imgAxes.add( createAxis( tAxisIndex, Axes.TIME, axes, scaleFactors ) );
-			numTimepoints = ( int ) dimensions[ tAxisIndex ];
-		}
-
-		// Set all axes
-		for ( int i = 0; i < imgAxes.size(); ++i )
-			imgPlus.setAxis( imgAxes.get( i ), i );
-	}
-
-	private void reverseArray( final double[] arr )
-	{
-
-		for ( int i = 0; i < arr.length / 2; i++ )
-		{
-			double temp = arr[ i ];
-			arr[ i ] = arr[ arr.length - 1 - i ];
-			arr[ arr.length - 1 - i ] = temp;
-		}
-
-	}
-
-	@NotNull
-	private DefaultLinearAxis createAxis( int axisIndex, AxisType axisType, List< Multiscales.Axis > axes, double[] scale )
-	{
-		return new DefaultLinearAxis(
-				axisType,
-				axes.get( axisIndex ).unit,
-				scale[ axisIndex ] );
-	}
 
 	@Override
 	public int numDimensions()
 	{
-		return multiscaleImage.numDimensions();
+		return numDimensions;
 	}
 
 	/**
 	 * Get the number of levels in the resolution pyramid.
 	 */
-	public int numResolutions()
+	public int numResolutionLevels()
 	{
-		return numResolutions;
+		return numResolutionLevels;
 	}
 
 	/**
-	 * Get the number timepoints.
+	 * Get the number of timepoints.
 	 */
 	@Override
 	public int numTimepoints()
@@ -406,7 +478,7 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public T getType()
 	{
-		return multiscaleImage.getType();
+		return imgPlus.firstElement();
 	}
 
 	@Override

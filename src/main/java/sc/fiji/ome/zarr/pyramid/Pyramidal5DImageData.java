@@ -7,7 +7,6 @@ import net.imglib2.type.numeric.RealType;
 import java.util.List;
 
 import bdv.viewer.SourceAndConverter;
-import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 
 /**
@@ -41,16 +40,11 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	 */
 	List< SourceAndConverter< T > > asSources();
 
-	/**
-	 * @return a SpimData representation of a 5D (XYZCT) multi-resolution image.
-	 */
-	SpimData asSpimData();
-
 	int numChannels();
 
 	int numTimepoints();
 
-	int numResolutions();
+	int numResolutionLevels();
 
 	T getType();
 

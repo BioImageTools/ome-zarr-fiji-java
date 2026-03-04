@@ -7,7 +7,6 @@ import net.imglib2.type.numeric.RealType;
 import java.util.List;
 
 import bdv.viewer.SourceAndConverter;
-import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 
 /**
@@ -29,11 +28,6 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 		this.data = data;
 	}
 
-	public SpimData asSpimData()
-	{
-		return data.asSpimData();
-	}
-
 	public List< SourceAndConverter< T > > asSources()
 	{
 		return data.asSources();
@@ -51,11 +45,16 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 
 	public int numResolutions()
 	{
-		return data.numResolutions();
+		return data.numResolutionLevels();
 	}
 
 	public VoxelDimensions voxelDimensions()
 	{
 		return data.voxelDimensions();
+	}
+
+	public String getPyramidName()
+	{
+		return data.getName();
 	}
 }

@@ -80,8 +80,8 @@ public class OMEZarrData
 		// "primary image data structure in ImageJ".
 		return new DefaultPyramidal5DImageData<>(
 				context,
-				multiscalePaths[ 0 ],
-				multiscaleImage
+				multiscalePaths[ 0 ]
+		/*, multiscaleImage*/
 		);
 	}
 

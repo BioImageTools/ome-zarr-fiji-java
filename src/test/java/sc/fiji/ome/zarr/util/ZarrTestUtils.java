@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 
 public class ZarrTestUtils
 {
+	public static final String IMAGE_NAME = "image";
+
 	public static Path resourcePath( final String resource ) throws URISyntaxException
 	{
 		URL url = ZarrTestUtils.class.getClassLoader().getResource( resource );

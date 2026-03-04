@@ -1,26 +1,37 @@
 package sc.fiji.ome.zarr.util;
 
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.util.Cast;
-
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.scijava.Context;
+import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Desktop;
+import java.awt.Container;
+import java.awt.Window;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.function.Consumer;
 
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.util.Cast;
+
 import bdv.util.BdvFunctions;
+import bdv.util.BdvOptions;
+import bdv.util.BdvHandle;
 import ij.IJ;
+import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
+import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
+import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
+import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
 public class ZarrOpenActions
 {
@@ -32,10 +43,18 @@ public class ZarrOpenActions
 
 	private final Context context;
 
+	private final Consumer< String > errorHandler;
+
 	public ZarrOpenActions( final Path droppedInPath, final Context context )
+	{
+		this( droppedInPath, context, IJ::error );
+	}
+
+	ZarrOpenActions( final Path droppedInPath, final Context context, final Consumer< String > errorHandler )
 	{
 		this.droppedInPath = droppedInPath;
 		this.context = context;
+		this.errorHandler = errorHandler;
 	}
 
 	/**
@@ -66,15 +85,93 @@ public class ZarrOpenActions
 
 	public void openIJWithImage()
 	{
-		openImage( img -> ImageJFunctions.show( Cast.unchecked( img ) ) );
+		openImage(
+				pyramidalDataset -> context.getService( UIService.class ).show( pyramidalDataset ),
+				singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ),
+				"ImageJ"
+		);
 	}
 
 	public void openBDVWithImage()
 	{
-		openImage( img -> BdvFunctions.show( img, droppedInPath.toString() ) );
+		openImage(
+				pyramidalDataset -> {
+					BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
+							BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
+
+					Container topLevelContainer = bdvHandle.getViewerPanel().getRootPane().getParent();
+					if ( topLevelContainer instanceof Window )
+					{
+						// notify scijava about "usage" (and "no longer usage" later) of this Dataset
+						// only iff we're able to listen for when Bdv window closes
+						pyramidalDataset.incrementReferences();
+						( ( Window ) topLevelContainer ).addWindowListener( new WindowAdapter()
+						{
+							@Override
+							public void windowClosed( WindowEvent e )
+							{
+								pyramidalDataset.decrementReferences();
+							}
+						} );
+					}
+				},
+				singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
+				"BigDataViewer" );
 	}
 
-	void openImage( final Consumer< Img< ? > > imageOpener )
+	private void showSingleScaleError( final Exception e )
+	{
+		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
+				+ "Consider opening one level higher or lower in the hierarchy instead." );
+		logger.warn( "Could not open dataset as single scale image: {}. Error message: {}", droppedInPath, e.getMessage() );
+	}
+
+	private void showNonZarrError( final Exception e )
+	{
+		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
+				+ "The drag & drop for Zarr folders only supports folders that contains zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
+		logger.warn( "Could not open dataset as non-Zarr image: {}. Error message: {}", droppedInPath, e.getMessage() );
+	}
+
+	void openImage( final Consumer< PyramidalDataset< ? > > multiScaleImageOpener, final Consumer< Img< ? > > singleScaleImageOpener,
+			final String message )
+	{
+		try
+		{
+			openMultiScaleImage( multiScaleImageOpener );
+			logger.info( "Opened dataset in {}: {}", message, droppedInPath );
+		}
+		catch ( NotAMultiscaleImageException e )
+		{
+			logger.warn( "Not a multiscale image: {}", e.getMessage() );
+			logger.info( "Try opening as single-scale image instead." );
+			try
+			{
+				openSingleScaleImage( singleScaleImageOpener );
+			}
+			catch ( NotASingleScaleImageException ex )
+			{
+				showSingleScaleError( ex );
+			}
+		}
+		catch ( IllegalArgumentException ex )
+		{
+			showNonZarrError( ex );
+		}
+	}
+
+	private void openMultiScaleImage( final Consumer< PyramidalDataset< ? > > multiScaleImageOpener ) throws NotAMultiscaleImageException
+	{
+
+		// final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( droppedInPath.toString() );
+		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
+				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString() );
+		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
+		multiScaleImageOpener.accept( pyramidalDataset );
+		logger.info( "Opened multiscale image: {}", droppedInPath );
+	}
+
+	private void openSingleScaleImage( final Consumer< Img< ? > > singleScaleImageOpener ) throws NotASingleScaleImageException
 	{
 		N5Reader reader = new N5Factory().openReader( ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString() );
 		Img< ? > img;
@@ -84,13 +181,10 @@ public class ZarrOpenActions
 		}
 		catch ( Exception e )
 		{
-			IJ.error( "Could not open dataset as image: " + droppedInPath + "\n\n"
-					+ "Consider opening one level higher or lower in the hierarchy instead." );
-			logger.warn( "Could not open dataset as image: {}. Error message: {}", droppedInPath, e.getMessage() );
-			return;
+			throw new NotASingleScaleImageException( droppedInPath.toString(), e );
 		}
-		imageOpener.accept( img );
-		logger.info( "Opened dataset: {}", droppedInPath );
+		singleScaleImageOpener.accept( img );
+		logger.info( "Opened single scale image: {}", droppedInPath );
 	}
 
 	public void runScript()
