@@ -20,8 +20,8 @@ class ZarrOnFileSystemUtilsTest
 	void testFindImageRootFolder_startOnRootFolder() throws URISyntaxException
 	{
 		String[] examples = {
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example",
-				"sc/fiji/ome/zarr/util/ome_zarr_v5_example"
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example"
 		};
 
 		for ( String example : examples )
@@ -36,8 +36,8 @@ class ZarrOnFileSystemUtilsTest
 	void testFindImageRootFolder_startOnLevelOneFolder() throws URISyntaxException
 	{
 		String[] examples = {
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0",
-				"sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0"
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0"
 		};
 
 		for ( String example : examples )
@@ -52,7 +52,7 @@ class ZarrOnFileSystemUtilsTest
 	void testFindImageRootFolder_startOnLeaveFolder() throws URISyntaxException
 	{
 		String[] examples = {
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0/image/0"
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image/0"
 		};
 
 		for ( String example : examples )
@@ -67,8 +67,8 @@ class ZarrOnFileSystemUtilsTest
 	void testFindImageRootFolder_startOnLevelTwoFolder() throws URISyntaxException
 	{
 		String[] examples = {
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0/image",
-				"sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0/image"
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0/image"
 		};
 
 		for ( String example : examples )
@@ -87,12 +87,12 @@ class ZarrOnFileSystemUtilsTest
 	void testIsZarrFolder_validZarrFolders() throws URISyntaxException
 	{
 		String[] examples = {
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example",
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0",
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0/image",
-				"sc/fiji/ome/zarr/util/ome_zarr_v5_example",
-				"sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0",
-				"sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0/image"
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0/image"
 		};
 
 		for ( String example : examples )
@@ -107,8 +107,8 @@ class ZarrOnFileSystemUtilsTest
 	{
 		String[] examples = {
 				"sc/fiji/ome/zarr/util",
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0/image/0",
-				"sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0/image/c/0"
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image/0",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0/image/c/0"
 		};
 
 		for ( String example : examples )

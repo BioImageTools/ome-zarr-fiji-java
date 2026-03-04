@@ -32,8 +32,8 @@ class DefaultPyramidal5DImageDataTest
 	static Stream< String > omeZarrExamples()
 	{
 		return Stream.of(
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example"
-		// "sc/fiji/ome/zarr/util/ome_zarr_v5_example" // NB: OME v05 not supported yet
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example"
+		// "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example" // NB: OME v05 not supported yet
 		);
 	}
 

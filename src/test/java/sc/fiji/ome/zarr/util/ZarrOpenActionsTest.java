@@ -26,7 +26,7 @@ class ZarrOpenActionsTest
 	@Test
 	void testOpenValidMultiScaleImagePath() throws URISyntaxException
 	{
-		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/ome_zarr_v4_example" );
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example" );
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
@@ -44,7 +44,7 @@ class ZarrOpenActionsTest
 	void testOpenValidSingleScaleImagePath() throws URISyntaxException
 	{
 		String[] validPaths = {
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0/image"
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image"
 				// "sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0/image" // NB: OME v05 not supported yet
 		};
 		try (Context context = new Context())
@@ -68,10 +68,10 @@ class ZarrOpenActionsTest
 	void testOpenInvalidImagePaths() throws URISyntaxException
 	{
 		String[] invalidPaths = {
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0",
-				"sc/fiji/ome/zarr/util/ome_zarr_v4_example/scale0/image/0",
-				"sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0",
-				"sc/fiji/ome/zarr/util/ome_zarr_v5_example/scale0/image/c"
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image/0",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0/image/c"
 		};
 		try (Context context = new Context())
 		{
@@ -89,7 +89,7 @@ class ZarrOpenActionsTest
 	@Test
 	void testOpenDatasetImageJ() throws URISyntaxException
 	{
-		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/ome_zarr_v4_example" );
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example" );
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
@@ -108,7 +108,7 @@ class ZarrOpenActionsTest
 	@Test
 	void testOpenDatasetBDV() throws URISyntaxException
 	{
-		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/ome_zarr_v4_example" );
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example" );
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
