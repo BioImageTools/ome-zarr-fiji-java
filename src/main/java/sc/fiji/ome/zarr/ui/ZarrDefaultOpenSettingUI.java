@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import sc.fiji.ome.zarr.util.ZarrDefaultOpenSettings;
-import sc.fiji.ome.zarr.util.ZarrOpenOptions;
+import sc.fiji.ome.zarr.util.ZarrOpenChoice;
 
 /**
  * A FIJI/ImageJ command to select how to open a Zarr dataset.
@@ -41,7 +41,7 @@ public class ZarrDefaultOpenSettingUI extends DynamicCommand
 	@Override
 	public void run()
 	{
-		settings.setChosenOpenOption( ZarrOpenOptions.getByDescription( defaultZarrOpenOption ) );
+		settings.setChosenOpenOption( ZarrOpenChoice.getByDescription( defaultZarrOpenOption ) );
 		settings.setPreferredMaxWidth( customWidth );
 		logger.debug( "Now saving Zarr Default Open Options to preferences. Option: {}, customWidth: {}", settings.getChosenOpenOption(),
 				customWidth );
@@ -59,11 +59,11 @@ public class ZarrDefaultOpenSettingUI extends DynamicCommand
 	@SuppressWarnings( "unused" )
 	private void initZarrOpenOptionsChoices()
 	{
-		getInfo().getMutableInput( "defaultZarrOpenOption", String.class ).setChoices( enumNamesAsList( ZarrOpenOptions.values() ) );
+		getInfo().getMutableInput( "defaultZarrOpenOption", String.class ).setChoices( enumNamesAsList( ZarrOpenChoice.values() ) );
 	}
 
-	static List< String > enumNamesAsList( final ZarrOpenOptions[] values )
+	static List< String > enumNamesAsList( final ZarrOpenChoice[] values )
 	{
-		return Arrays.stream( values ).map( ZarrOpenOptions::getDescription ).collect( Collectors.toList() );
+		return Arrays.stream( values ).map( ZarrOpenChoice::getDescription ).collect( Collectors.toList() );
 	}
 }

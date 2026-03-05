@@ -5,7 +5,7 @@ import java.util.NoSuchElementException;
 /**
  * Options for opening Zarr datasets in different viewers and resolutions.
  */
-public enum ZarrOpenOptions
+public enum ZarrOpenChoice
 {
 	/**
 	 * Open the highest available single-resolution in ImageJ.
@@ -29,22 +29,22 @@ public enum ZarrOpenOptions
 
 	private final String description;
 
-	ZarrOpenOptions( final String description )
+	ZarrOpenChoice( final String description )
 	{
 		this.description = description;
 	}
 
-	public static ZarrOpenOptions getByName( final String name )
+	public static ZarrOpenChoice getByName( final String name )
 	{
-		for ( final ZarrOpenOptions option : values() )
+		for ( final ZarrOpenChoice option : values() )
 			if ( option.name().equals( name ) )
 				return option;
 		throw new NoSuchElementException( name );
 	}
 
-	public static ZarrOpenOptions getByDescription( final String description )
+	public static ZarrOpenChoice getByDescription( final String description )
 	{
-		for ( final ZarrOpenOptions option : values() )
+		for ( final ZarrOpenChoice option : values() )
 			if ( option.description.equals( description ) )
 				return option;
 		return null;

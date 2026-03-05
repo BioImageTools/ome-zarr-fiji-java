@@ -11,14 +11,14 @@ public class ZarrDefaultOpenSettings
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	public static final ZarrOpenOptions DEFAULT_OPEN_OPTION = ZarrOpenOptions.IMAGEJ_CUSTOM_RESOLUTION;
+	public static final ZarrOpenChoice DEFAULT_OPEN_OPTION = ZarrOpenChoice.IMAGEJ_CUSTOM_RESOLUTION;
 
 	/**
-	 * The default max width (in Pixels) for the {@link ZarrOpenOptions#IMAGEJ_CUSTOM_RESOLUTION} option. This is used if the user has not set a custom width in the preferences.
+	 * The default max width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option. This is used if the user has not set a custom width in the preferences.
 	 */
 	public static final int DEFAULT_MAX_WIDTH = 1000;
 
-	private ZarrOpenOptions option;
+	private ZarrOpenChoice zarrOpenChoice;
 
 	private int preferredMaxWidth;
 
@@ -31,26 +31,26 @@ public class ZarrDefaultOpenSettings
 		this( DEFAULT_OPEN_OPTION, DEFAULT_MAX_WIDTH );
 	}
 
-	public ZarrDefaultOpenSettings( final ZarrOpenOptions zarrOpenOptions, final int preferredMaxWidth )
+	public ZarrDefaultOpenSettings( final ZarrOpenChoice zarrOpenChoice, final int preferredMaxWidth )
 	{
-		this.option = zarrOpenOptions;
+		this.zarrOpenChoice = zarrOpenChoice;
 		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
-	public ZarrOpenOptions getChosenOpenOption()
+	public ZarrOpenChoice getChosenOpenOption()
 	{
-		return option;
+		return zarrOpenChoice;
 	}
 
-	public void setChosenOpenOption( final ZarrOpenOptions zarrOpenOptions )
+	public void setChosenOpenOption( final ZarrOpenChoice zarrOpenChoice )
 	{
-		option = zarrOpenOptions;
+		this.zarrOpenChoice = zarrOpenChoice;
 	}
 
 	/**
-	 * Gets the preferred width (in Pixels) for the {@link ZarrOpenOptions#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 * Gets the preferred width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option.
 	 *
-	 * @return  the preferred width (in Pixels) for the {@link ZarrOpenOptions#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 * @return  the preferred width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option.
 	 */
 	public int getPreferredMaxWidth()
 	{
@@ -58,9 +58,9 @@ public class ZarrDefaultOpenSettings
 	}
 
 	/**
-	 * Set the preferred width (in Pixels) for the {@link ZarrOpenOptions#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 * Set the preferred width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option.
 	 *
-	 * @param preferredMaxWidth the preferred width (in Pixels) for the {@link ZarrOpenOptions#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 * @param preferredMaxWidth the preferred width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option.
 	 */
 	public void setPreferredMaxWidth( final int preferredMaxWidth )
 	{
@@ -69,10 +69,10 @@ public class ZarrDefaultOpenSettings
 
 	public static ZarrDefaultOpenSettings loadSettingsFromPreferences( final PrefService prefs )
 	{
-		ZarrOpenOptions option;
+		ZarrOpenChoice option;
 		try
 		{
-			option = prefs == null ? DEFAULT_OPEN_OPTION : ZarrOpenOptions
+			option = prefs == null ? DEFAULT_OPEN_OPTION : ZarrOpenChoice
 					.getByName( prefs.get( ZarrDefaultOpenSettings.class, ZARR_OPEN_OPTION_SETTING_NAME, DEFAULT_OPEN_OPTION.name() ) );
 		}
 		catch ( NoSuchElementException e )
@@ -102,6 +102,6 @@ public class ZarrDefaultOpenSettings
 	@Override
 	public String toString()
 	{
-		return "ZarrDefaultOpenSetting{option=" + option + "}";
+		return "ZarrDefaultOpenSetting{option=" + zarrOpenChoice + "}";
 	}
 }

@@ -11,7 +11,7 @@ import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
 import sc.fiji.ome.zarr.util.ZarrDefaultOpenSettings;
-import sc.fiji.ome.zarr.util.ZarrOpenOptions;
+import sc.fiji.ome.zarr.util.ZarrOpenChoice;
 
 /**
  * Unit tests for the {@link ZarrDefaultOpenSettingUI#run()} method.
@@ -41,7 +41,7 @@ class ZarrDefaultOpenSettingUITest
 
 			Field defaultZarrOpenOptionField = ZarrDefaultOpenSettingUI.class.getDeclaredField( "defaultZarrOpenOption" );
 			defaultZarrOpenOptionField.setAccessible( true );
-			defaultZarrOpenOptionField.set( ui, ZarrOpenOptions.IMAGEJ_HIGHEST_RESOLUTION.getDescription() );
+			defaultZarrOpenOptionField.set( ui, ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION.getDescription() );
 
 			Field customWidthField = ZarrDefaultOpenSettingUI.class.getDeclaredField( "customWidth" );
 			customWidthField.setAccessible( true );
@@ -51,7 +51,7 @@ class ZarrDefaultOpenSettingUITest
 
 			ZarrDefaultOpenSettings settings = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
 
-			assertEquals( ZarrOpenOptions.IMAGEJ_HIGHEST_RESOLUTION, settings.getChosenOpenOption() );
+			assertEquals( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION, settings.getChosenOpenOption() );
 			assertEquals( customWidth, settings.getPreferredMaxWidth() );
 
 		}
