@@ -2,6 +2,8 @@ package sc.fiji.ome.zarr.pyramid;
 
 import net.imagej.ImageJ;
 
+import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
+
 public class MultiscaleImageDemo
 {
 	public static void main( String[] args )

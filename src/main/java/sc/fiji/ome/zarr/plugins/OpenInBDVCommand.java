@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.plugins;
 
 import net.imagej.Dataset;
 import net.imglib2.util.Cast;
@@ -39,6 +39,7 @@ import org.scijava.plugin.Plugin;
 
 import bdv.util.BdvFunctions;
 import bdv.util.BdvOptions;
+import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
