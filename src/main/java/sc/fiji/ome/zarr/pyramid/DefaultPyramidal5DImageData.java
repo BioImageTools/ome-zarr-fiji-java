@@ -60,6 +60,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
 import org.scijava.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -358,7 +359,8 @@ public class DefaultPyramidal5DImageData<
 		N5TreeNode node = new N5TreeNode( relativePathAsString );
 		List< N5MetadataParser< ? > > parsers =
 				Arrays.asList( new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser(),
-						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser() );
+						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser(),
+						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05MetadataParser() );
 		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, new ArrayList<>( parsers ) );
 		N5Metadata n5Metadata = node.getMetadata();
 		if ( n5Metadata == null )
@@ -450,12 +452,36 @@ public class DefaultPyramidal5DImageData<
 	{
 		static MetadataAdapter getAdapter( final N5Metadata metadata )
 		{
+			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata )
+				return new V05MetadataAdapter();
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata )
 				return new V04MetadataAdapter();
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
 				return new V03MetadataAdapter();
 			throw new NotAMultiscaleImageException(
 					"Unsupported multiscale metadata type: " + metadata.getClass() );
+		}
+	}
+
+	private static class V05MetadataAdapter implements MetadataAdapter
+	{
+
+		@Override
+		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
+		{
+			OmeNgffV05Metadata omeNgffMetadata = Cast.unchecked( n5Metadata );
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales =
+					omeNgffMetadata.multiscales[ multiscaleIndex ]; // NB: v04 multi scale metadata ??
+			List< ResolutionLevel > levels = new ArrayList<>();
+			int index = 0;
+			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : multiscales
+					.getChildrenMetadata() )
+			{
+				levels.add(
+						new ResolutionLevel( single.getPath(), index++, single.getAttributes(), single.getAxes(), null, null,
+								single.getScale() ) );
+			}
+			return new Multiscale( multiscales.name, levels, multiscales.getChildrenMetadata()[ 0 ].getAttributes().getDataType() );
 		}
 	}
 
@@ -466,12 +492,12 @@ public class DefaultPyramidal5DImageData<
 		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
 		{
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
-			OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
 			if ( multiscales.getChildrenMetadata().length == 0 || multiscales.getChildrenMetadata()[ 0 ] == null )
 				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
 			List< ResolutionLevel > levels = new ArrayList<>();
 			int index = 0;
-			for ( NgffSingleScaleAxesMetadata single : multiscales.getChildrenMetadata() )
+			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : multiscales.getChildrenMetadata() )
 			{
 				levels.add(
 						new ResolutionLevel( single.getPath(), index++, single.getAttributes(), single.getAxes(), null, null,
