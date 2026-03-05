@@ -52,8 +52,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
 import org.scijava.Context;
 
 import java.io.File;
@@ -317,12 +316,34 @@ public class DefaultPyramidal5DImageData<
 	{
 		static MetadataAdapter getAdapter( final N5Metadata metadata )
 		{
+			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata )
+				return new V05MetadataAdapter();
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata )
 				return new V04MetadataAdapter();
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
 				return new V03MetadataAdapter();
 			throw new NotAMultiscaleImageException(
 					"Unsupported multiscale metadata type: " + metadata.getClass() );
+		}
+	}
+
+	private static class V05MetadataAdapter implements MetadataAdapter
+	{
+
+		@Override
+		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
+		{
+			OmeNgffV05Metadata omeNgffMetadata = Cast.unchecked( n5Metadata );
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales =
+					omeNgffMetadata.multiscales[ multiscaleIndex ]; // NB: v04 multi scale metadata ??
+			List< ResolutionLevel > levels = new ArrayList<>();
+			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : multiscales
+					.getChildrenMetadata() )
+			{
+				levels.add(
+						new ResolutionLevel( single.getPath(), single.getAttributes(), single.getAxes(), null, null, single.getScale() ) );
+			}
+			return new Multiscale( multiscales.name, levels );
 		}
 	}
 
@@ -333,9 +354,11 @@ public class DefaultPyramidal5DImageData<
 		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
 		{
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
-			OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales =
+					omeNgffMetadata.multiscales[ multiscaleIndex ];
 			List< ResolutionLevel > levels = new ArrayList<>();
-			for ( NgffSingleScaleAxesMetadata single : multiscales.getChildrenMetadata() )
+			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : multiscales
+					.getChildrenMetadata() )
 			{
 				levels.add(
 						new ResolutionLevel( single.getPath(), single.getAttributes(), single.getAxes(), null, null, single.getScale() ) );
