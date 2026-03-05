@@ -13,7 +13,6 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Cast;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
@@ -33,9 +32,17 @@ class DefaultPyramidal5DImageDataTest
 	{
 		return Stream.of(
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
-				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr"
-		// "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example" // NB: OME v05 not supported yet
-		// "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" // NB: OME v05 not supported yet
+				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
+				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr"
+		);
+	}
+
+	static Stream< String > pyramids()
+	{
+		return Stream.of(
+				"sc/fiji/ome/zarr/util/pyramid_testing/pyramid_v4.zarr",
+				"sc/fiji/ome/zarr/util/pyramid_testing/pyramid_v5.zarr"
 		);
 	}
 
@@ -182,12 +189,12 @@ class DefaultPyramidal5DImageDataTest
 		}
 	}
 
-	@Test
-	void testGetPyramidLevels() throws URISyntaxException
+	@ParameterizedTest
+	@MethodSource( "pyramids" )
+	void testGetPyramidLevels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
-			String resource = "sc/fiji/ome/zarr/util/pyramid_testing/pyramid_v4.zarr";
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			Source< ? > spimSource = pyramidal5DImageData.asSources().get( 0 ).getSpimSource();
 
