@@ -10,14 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
-import sc.fiji.ome.zarr.util.ZarrDefaultOpenSettings;
+import sc.fiji.ome.zarr.util.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.util.ZarrOpenChoice;
 
 /**
- * Unit tests for the {@link ZarrDefaultOpenSettingUI#run()} method.
+ * Unit tests for the {@link ZarrDragAndDropOpenSettingsUI#run()} method.
  * This method is responsible for saving user preferences for Zarr dataset opening behavior.
  */
-class ZarrDefaultOpenSettingUITest
+class ZarrDragAndDropOpenSettingsUITest
 {
 
 	@Test
@@ -26,30 +26,30 @@ class ZarrDefaultOpenSettingUITest
 	{
 		try (Context context = new Context())
 		{
-			ZarrDefaultOpenSettingUI ui = new ZarrDefaultOpenSettingUI();
+			ZarrDragAndDropOpenSettingsUI ui = new ZarrDragAndDropOpenSettingsUI();
 			PrefService prefService = context.getService( PrefService.class );
 			prefService.clearAll();
 			final int customWidth = 500;
 
-			Field prefServiceField = ZarrDefaultOpenSettingUI.class.getDeclaredField( "prefService" );
+			Field prefServiceField = ZarrDragAndDropOpenSettingsUI.class.getDeclaredField( "prefService" );
 			prefServiceField.setAccessible( true );
 			prefServiceField.set( ui, prefService );
 
-			Method initMethod = ZarrDefaultOpenSettingUI.class.getDeclaredMethod( "init" );
+			Method initMethod = ZarrDragAndDropOpenSettingsUI.class.getDeclaredMethod( "init" );
 			initMethod.setAccessible( true ); // bypasses private visibility
 			initMethod.invoke( ui );
 
-			Field defaultZarrOpenOptionField = ZarrDefaultOpenSettingUI.class.getDeclaredField( "defaultZarrOpenOption" );
-			defaultZarrOpenOptionField.setAccessible( true );
-			defaultZarrOpenOptionField.set( ui, ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION.getDescription() );
+			Field defaultZarrOpenChoiceField = ZarrDragAndDropOpenSettingsUI.class.getDeclaredField( "defaultZarrOpenChoice" );
+			defaultZarrOpenChoiceField.setAccessible( true );
+			defaultZarrOpenChoiceField.set( ui, ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION.getDescription() );
 
-			Field customWidthField = ZarrDefaultOpenSettingUI.class.getDeclaredField( "customWidth" );
-			customWidthField.setAccessible( true );
-			customWidthField.set( ui, customWidth );
+			Field preferredWidthField = ZarrDragAndDropOpenSettingsUI.class.getDeclaredField( "preferredWidth" );
+			preferredWidthField.setAccessible( true );
+			preferredWidthField.set( ui, customWidth );
 
 			ui.run();
 
-			ZarrDefaultOpenSettings settings = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
+			ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
 
 			assertEquals( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION, settings.getCurrentChoice() );
 			assertEquals( customWidth, settings.getPreferredMaxWidth() );

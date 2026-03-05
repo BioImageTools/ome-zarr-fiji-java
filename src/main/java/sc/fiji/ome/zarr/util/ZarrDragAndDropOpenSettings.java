@@ -7,7 +7,7 @@ import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZarrDefaultOpenSettings
+public class ZarrDragAndDropOpenSettings
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -26,12 +26,12 @@ public class ZarrDefaultOpenSettings
 
 	private static final String ZARR_PREFERRED_WIDTH_SETTING_NAME = "ZarrPreferredWidth";
 
-	public ZarrDefaultOpenSettings()
+	public ZarrDragAndDropOpenSettings()
 	{
 		this( DEFAULT_OPEN_CHOICE, DEFAULT_PREFERRED_WIDTH );
 	}
 
-	public ZarrDefaultOpenSettings( final ZarrOpenChoice zarrOpenChoice, final int preferredMaxWidth )
+	public ZarrDragAndDropOpenSettings( final ZarrOpenChoice zarrOpenChoice, final int preferredMaxWidth )
 	{
 		this.zarrOpenChoice = zarrOpenChoice;
 		this.preferredMaxWidth = preferredMaxWidth;
@@ -73,13 +73,13 @@ public class ZarrDefaultOpenSettings
 	 * @param prefs If {@code null} is provided, default settings values from this class are used and returned.
 	 * @return the settings from the provided preference store, or default values if {@code prefs} is {@code null} or if the provided preference store does not contain any information about the default settings.
 	 */
-	public static ZarrDefaultOpenSettings loadSettingsFromPreferences( final PrefService prefs )
+	public static ZarrDragAndDropOpenSettings loadSettingsFromPreferences( final PrefService prefs )
 	{
 		ZarrOpenChoice choice;
 		try
 		{
 			choice = prefs == null ? DEFAULT_OPEN_CHOICE : ZarrOpenChoice
-					.getByName( prefs.get( ZarrDefaultOpenSettings.class, ZARR_OPEN_CHOICE_SETTING_NAME, DEFAULT_OPEN_CHOICE.name() ) );
+					.getByName( prefs.get( ZarrDragAndDropOpenSettings.class, ZARR_OPEN_CHOICE_SETTING_NAME, DEFAULT_OPEN_CHOICE.name() ) );
 		}
 		catch ( NoSuchElementException e )
 		{
@@ -87,12 +87,12 @@ public class ZarrDefaultOpenSettings
 		}
 		int preferredWidth = prefs == null ? DEFAULT_PREFERRED_WIDTH
 				: prefs.getInt(
-						ZarrDefaultOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME,
+						ZarrDragAndDropOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME,
 						DEFAULT_PREFERRED_WIDTH
 				);
 		logger.debug( "Loaded Zarr default opening choice: {}", choice );
 		logger.debug( "Loaded zarr preferred width: {}", preferredWidth );
-		return new ZarrDefaultOpenSettings( choice, preferredWidth );
+		return new ZarrDragAndDropOpenSettings( choice, preferredWidth );
 	}
 
 	/**
@@ -104,8 +104,8 @@ public class ZarrDefaultOpenSettings
 	{
 		if ( prefs == null )
 			return;
-		prefs.put( ZarrDefaultOpenSettings.class, ZARR_OPEN_CHOICE_SETTING_NAME, getCurrentChoice().name() );
-		prefs.put( ZarrDefaultOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
+		prefs.put( ZarrDragAndDropOpenSettings.class, ZARR_OPEN_CHOICE_SETTING_NAME, getCurrentChoice().name() );
+		prefs.put( ZarrDragAndDropOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
 		logger.debug( "Saved zarr default opening choice to preferences: {}", getCurrentChoice() );
 		logger.debug( "Saved zarr preferred width to preferences: {}", getPreferredMaxWidth() );
 	}

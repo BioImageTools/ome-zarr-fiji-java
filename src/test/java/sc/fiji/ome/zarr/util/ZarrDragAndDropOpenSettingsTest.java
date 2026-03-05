@@ -7,20 +7,20 @@ import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
 /**
- * Unit tests for the {@link ZarrDefaultOpenSettings#getCurrentChoice()} method.
+ * Unit tests for the {@link ZarrDragAndDropOpenSettings#getCurrentChoice()} method.
  * This method retrieves the current chosen open option for Zarr datasets.
  */
-class ZarrDefaultOpenSettingsTest
+class ZarrDragAndDropOpenSettingsTest
 {
 
 	@Test
 	void testGetCurrentChoiceSet()
 	{
 		// Instantiate ZarrDefaultOpenSettings without custom values
-		ZarrDefaultOpenSettings settings = new ZarrDefaultOpenSettings();
+		ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings();
 
 		// Verify the default open option is returned
-		assertEquals( ZarrDefaultOpenSettings.DEFAULT_OPEN_CHOICE, settings.getCurrentChoice(),
+		assertEquals( ZarrDragAndDropOpenSettings.DEFAULT_OPEN_CHOICE, settings.getCurrentChoice(),
 				"Default open option should be IMAGEJ_CUSTOM_RES" );
 	}
 
@@ -28,7 +28,7 @@ class ZarrDefaultOpenSettingsTest
 	void testGetCurrentChoice()
 	{
 		// Instantiate ZarrDefaultOpenSettings
-		ZarrDefaultOpenSettings settings = new ZarrDefaultOpenSettings();
+		ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings();
 
 		// Set a new open option
 		settings.setCurrentChoice( ZarrOpenChoice.BDV_MULTI_RESOLUTION );
@@ -46,9 +46,9 @@ class ZarrDefaultOpenSettingsTest
 			PrefService prefService = context.getService( PrefService.class );
 			prefService.clearAll();
 			// Load settings from preferences for the first time and verify default values
-			ZarrDefaultOpenSettings settings = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
-			assertEquals( ZarrDefaultOpenSettings.DEFAULT_OPEN_CHOICE, settings.getCurrentChoice() );
-			assertEquals( ZarrDefaultOpenSettings.DEFAULT_PREFERRED_WIDTH, settings.getPreferredMaxWidth() );
+			ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
+			assertEquals( ZarrDragAndDropOpenSettings.DEFAULT_OPEN_CHOICE, settings.getCurrentChoice() );
+			assertEquals( ZarrDragAndDropOpenSettings.DEFAULT_PREFERRED_WIDTH, settings.getPreferredMaxWidth() );
 
 			// Set custom values and save them to preferences
 			settings.setCurrentChoice( ZarrOpenChoice.IMAGEJ_CUSTOM_RESOLUTION );
@@ -56,7 +56,7 @@ class ZarrDefaultOpenSettingsTest
 			settings.saveSettingsToPreferences( prefService );
 
 			// Load settings from preferences again and verify custom values
-			ZarrDefaultOpenSettings settings2 = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
+			ZarrDragAndDropOpenSettings settings2 = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
 			assertEquals( ZarrOpenChoice.IMAGEJ_CUSTOM_RESOLUTION, settings2.getCurrentChoice() );
 			assertEquals( 500, settings2.getPreferredMaxWidth() );
 		}

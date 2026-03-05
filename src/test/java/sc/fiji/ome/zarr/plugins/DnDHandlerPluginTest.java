@@ -15,7 +15,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.util.ZarrDefaultOpenSettings;
+import sc.fiji.ome.zarr.util.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.util.ZarrOpenActions;
 import sc.fiji.ome.zarr.util.ZarrOpenChoice;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
@@ -29,7 +29,7 @@ class DnDHandlerPluginTest
 		try (Context context = new Context())
 		{
 			PrefService prefService = context.getService( PrefService.class );
-			ZarrDefaultOpenSettings settings = new ZarrDefaultOpenSettings();
+			ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings();
 			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/ome_zarr_v4_example/" );
 			FileLocation fileLocation = new FileLocation( path.toUri() );
 			ZarrOpenActions actionsMock = mock( ZarrOpenActions.class );
