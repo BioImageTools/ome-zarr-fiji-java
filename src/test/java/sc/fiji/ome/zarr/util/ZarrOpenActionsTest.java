@@ -119,6 +119,8 @@ class ZarrOpenActionsTest
 			List< Dataset > datasets = datasetService.getDatasets();
 			assertNotNull( datasets );
 			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
+			// TODO: try to get a BdvHandle here, close it and test if dataset.size() is 0 after closing
+			// TODO: add test for single scale image closing
 		}
 	}
 }
