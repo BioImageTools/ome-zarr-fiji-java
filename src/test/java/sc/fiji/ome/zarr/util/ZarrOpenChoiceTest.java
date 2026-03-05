@@ -30,7 +30,7 @@ class ZarrOpenChoiceTest
 	void testGetByDescriptionWithValidDescription()
 	{
 		// Test that fetching a valid description returns the corresponding enum instance
-		ZarrOpenChoice result = ZarrOpenChoice.getByDescription( "Open highest possible resolution in ImageJ" );
+		ZarrOpenChoice result = ZarrOpenChoice.getByDescription( "Open the highest available single-resolution in ImageJ" );
 		assertNotNull( result );
 		assertEquals( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION, result );
 	}
