@@ -20,6 +20,8 @@ import java.util.Map;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import software.amazon.awssdk.services.s3.S3Client;
+
 public class OMEZarrWriter
 {
 
@@ -53,7 +55,7 @@ public class OMEZarrWriter
 			String keyPrefix = parts.length > 1 ? parts[ 1 ] : "";
 
 			n5 = new N5AmazonS3Writer(
-					com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
+					S3Client.builder().build(),
 					bucketName,
 					keyPrefix
 			);
@@ -104,7 +106,7 @@ public class OMEZarrWriter
 			String bucketName = parts[ 0 ];
 			String keyPrefix = parts.length > 1 ? parts[ 1 ] : "";
 			n5 = new N5AmazonS3Writer(
-					com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
+					S3Client.builder().build(),
 					bucketName,
 					keyPrefix
 			);
