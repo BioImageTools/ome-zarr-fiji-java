@@ -13,6 +13,9 @@ public class ZarrDefaultOpenSettings
 
 	public static final ZarrOpenOptions DEFAULT_OPEN_OPTION = ZarrOpenOptions.IMAGEJ_CUSTOM_RESOLUTION;
 
+	/**
+	 * The default max width (in Pixels) for the {@link ZarrOpenOptions#IMAGEJ_CUSTOM_RESOLUTION} option. This is used if the user has not set a custom width in the preferences.
+	 */
 	public static final int DEFAULT_MAX_WIDTH = 1000;
 
 	private ZarrOpenOptions option;
