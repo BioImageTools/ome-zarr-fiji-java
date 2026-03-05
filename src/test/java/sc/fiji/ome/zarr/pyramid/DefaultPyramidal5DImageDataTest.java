@@ -35,9 +35,9 @@ class DefaultPyramidal5DImageDataTest
 	{
 		return Stream.of(
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
-				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr"
-		// "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example" // NB: OME v05 not supported yet
-		// "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" // NB: OME v05 not supported yet
+				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
+				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr"
 		);
 	}
 
