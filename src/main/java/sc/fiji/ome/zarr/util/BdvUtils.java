@@ -17,6 +17,15 @@ public class BdvUtils
 		// prevent instantiation of this class
 	}
 
+	/**
+	 * Displays the given pyramidal dataset in a BigDataViewer (BDV) window.<br>
+	 * Increments the dataset's reference count.<br>
+	 * Ensures that the dataset's reference count is properly decreased when the BDV window is closed.
+	 * <br>
+	 * @param pyramidalDataset the input dataset to be displayed in BDV; this dataset
+	 *                         contains multi-resolution image data along with associated metadata.
+	 * @return a {@code BdvHandle} instance representing the BDV window.
+	 */
 	public static BdvHandle showBdvAndRegisterDataset( final PyramidalDataset< ? > pyramidalDataset )
 	{
 		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
@@ -33,9 +42,7 @@ public class BdvUtils
 				@Override
 				public void windowClosed( WindowEvent e )
 				{
-					System.out.println( "Closing BDV Window..." );
 					pyramidalDataset.decrementReferences();
-					System.out.println( "Decremented references of pyramidal dataset" );
 				}
 			} );
 		}
