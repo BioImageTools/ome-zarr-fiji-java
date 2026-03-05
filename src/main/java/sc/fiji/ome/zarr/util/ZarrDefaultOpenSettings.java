@@ -20,7 +20,7 @@ public class ZarrDefaultOpenSettings
 
 	private ZarrOpenOptions option;
 
-	private int customWidth;
+	private int preferredMaxWidth;
 
 	private static final String ZARR_OPEN_OPTION_SETTING_NAME = "ZarrDefaultOpenOption";
 
@@ -31,10 +31,10 @@ public class ZarrDefaultOpenSettings
 		this( DEFAULT_OPEN_OPTION, DEFAULT_MAX_WIDTH );
 	}
 
-	public ZarrDefaultOpenSettings( final ZarrOpenOptions zarrOpenOptions, final int customWidth )
+	public ZarrDefaultOpenSettings( final ZarrOpenOptions zarrOpenOptions, final int preferredMaxWidth )
 	{
 		this.option = zarrOpenOptions;
-		this.customWidth = customWidth;
+		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
 	public ZarrOpenOptions getChosenOpenOption()
@@ -47,14 +47,24 @@ public class ZarrDefaultOpenSettings
 		option = zarrOpenOptions;
 	}
 
-	public int getCustomWidth()
+	/**
+	 * Gets the preferred width (in Pixels) for the {@link ZarrOpenOptions#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 *
+	 * @return  the preferred width (in Pixels) for the {@link ZarrOpenOptions#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 */
+	public int getPreferredMaxWidth()
 	{
-		return customWidth;
+		return preferredMaxWidth;
 	}
 
-	public void setCustomWidth( final int customWidth )
+	/**
+	 * Set the preferred width (in Pixels) for the {@link ZarrOpenOptions#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 *
+	 * @param preferredMaxWidth the preferred width (in Pixels) for the {@link ZarrOpenOptions#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 */
+	public void setPreferredMaxWidth( final int preferredMaxWidth )
 	{
-		this.customWidth = customWidth;
+		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
 	public static ZarrDefaultOpenSettings loadSettingsFromPreferences( final PrefService prefs )
@@ -84,9 +94,9 @@ public class ZarrDefaultOpenSettings
 		if ( prefs == null )
 			return;
 		prefs.put( ZarrDefaultOpenSettings.class, ZARR_OPEN_OPTION_SETTING_NAME, getChosenOpenOption().name() );
-		prefs.put( ZarrDefaultOpenSettings.class, ZARR_CUSTOM_WIDTH_SETTING_NAME, getCustomWidth() );
+		prefs.put( ZarrDefaultOpenSettings.class, ZARR_CUSTOM_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
 		logger.debug( "Saved zarr default opening option to preferences: {}", getChosenOpenOption() );
-		logger.debug( "Saved zarr custom width to preferences: {}", getCustomWidth() );
+		logger.debug( "Saved zarr custom width to preferences: {}", getPreferredMaxWidth() );
 	}
 
 	@Override

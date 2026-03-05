@@ -42,7 +42,7 @@ public class ZarrDefaultOpenSettingUI extends DynamicCommand
 	public void run()
 	{
 		settings.setChosenOpenOption( ZarrOpenOptions.getByDescription( defaultZarrOpenOption ) );
-		settings.setCustomWidth( customWidth );
+		settings.setPreferredMaxWidth( customWidth );
 		logger.debug( "Now saving Zarr Default Open Options to preferences. Option: {}, customWidth: {}", settings.getChosenOpenOption(),
 				customWidth );
 		settings.saveSettingsToPreferences( prefService );
@@ -53,7 +53,7 @@ public class ZarrDefaultOpenSettingUI extends DynamicCommand
 	{
 		settings = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
 		defaultZarrOpenOption = settings.getChosenOpenOption().getDescription();
-		customWidth = settings.getCustomWidth();
+		customWidth = settings.getPreferredMaxWidth();
 	}
 
 	@SuppressWarnings( "unused" )

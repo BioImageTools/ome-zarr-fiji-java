@@ -48,17 +48,17 @@ class ZarrDefaultOpenSettingsTest
 			// Load settings from preferences for the first time and verify default values
 			ZarrDefaultOpenSettings settings = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
 			assertEquals( ZarrDefaultOpenSettings.DEFAULT_OPEN_OPTION, settings.getChosenOpenOption() );
-			assertEquals( ZarrDefaultOpenSettings.DEFAULT_MAX_WIDTH, settings.getCustomWidth() );
+			assertEquals( ZarrDefaultOpenSettings.DEFAULT_MAX_WIDTH, settings.getPreferredMaxWidth() );
 
 			// Set custom values and save them to preferences
 			settings.setChosenOpenOption( ZarrOpenOptions.IMAGEJ_CUSTOM_RESOLUTION );
-			settings.setCustomWidth( 500 );
+			settings.setPreferredMaxWidth( 500 );
 			settings.saveSettingsToPreferences( prefService );
 
 			// Load settings from preferences again and verify custom values
 			ZarrDefaultOpenSettings settings2 = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
 			assertEquals( ZarrOpenOptions.IMAGEJ_CUSTOM_RESOLUTION, settings2.getChosenOpenOption() );
-			assertEquals( 500, settings2.getCustomWidth() );
+			assertEquals( 500, settings2.getPreferredMaxWidth() );
 		}
 	}
 }
