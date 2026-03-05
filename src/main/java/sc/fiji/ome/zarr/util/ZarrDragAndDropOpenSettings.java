@@ -11,46 +11,46 @@ public class ZarrDragAndDropOpenSettings
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	public static final ZarrOpenChoice DEFAULT_OPEN_CHOICE = ZarrOpenChoice.IMAGEJ_CUSTOM_RESOLUTION;
+	public static final ZarrOpenBehavior DEFAULT_OPEN_BEHAVIOR = ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION;
 
 	/**
-	 * The default max width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option. This is used if the user has not set a custom width in the preferences.
+	 * The default max width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} option. This is used if the user has not set a custom width in the preferences.
 	 */
 	public static final int DEFAULT_PREFERRED_WIDTH = 1000;
 
-	private ZarrOpenChoice zarrOpenChoice;
+	private ZarrOpenBehavior zarrOpenBehavior;
 
 	private int preferredMaxWidth;
 
-	private static final String ZARR_OPEN_CHOICE_SETTING_NAME = "ZarrDefaultOpenChoice";
+	private static final String ZARR_OPEN_BEHAVIOR_SETTING_NAME = "ZarrOpenBehavior";
 
 	private static final String ZARR_PREFERRED_WIDTH_SETTING_NAME = "ZarrPreferredWidth";
 
 	public ZarrDragAndDropOpenSettings()
 	{
-		this( DEFAULT_OPEN_CHOICE, DEFAULT_PREFERRED_WIDTH );
+		this( DEFAULT_OPEN_BEHAVIOR, DEFAULT_PREFERRED_WIDTH );
 	}
 
-	public ZarrDragAndDropOpenSettings( final ZarrOpenChoice zarrOpenChoice, final int preferredMaxWidth )
+	public ZarrDragAndDropOpenSettings( final ZarrOpenBehavior zarrOpenBehavior, final int preferredMaxWidth )
 	{
-		this.zarrOpenChoice = zarrOpenChoice;
+		this.zarrOpenBehavior = zarrOpenBehavior;
 		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
-	public ZarrOpenChoice getCurrentChoice()
+	public ZarrOpenBehavior getOpenBehavior()
 	{
-		return zarrOpenChoice;
+		return zarrOpenBehavior;
 	}
 
-	public void setCurrentChoice( final ZarrOpenChoice zarrOpenChoice )
+	public void setCurrentChoice( final ZarrOpenBehavior zarrOpenBehavior )
 	{
-		this.zarrOpenChoice = zarrOpenChoice;
+		this.zarrOpenBehavior = zarrOpenBehavior;
 	}
 
 	/**
-	 * Gets the preferred width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 * Gets the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
 	 *
-	 * @return  the preferred width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 * @return  the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
 	 */
 	public int getPreferredMaxWidth()
 	{
@@ -58,9 +58,9 @@ public class ZarrDragAndDropOpenSettings
 	}
 
 	/**
-	 * Set the preferred width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 * Set the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
 	 *
-	 * @param preferredMaxWidth the preferred width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option.
+	 * @param preferredMaxWidth the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
 	 */
 	public void setPreferredMaxWidth( final int preferredMaxWidth )
 	{
@@ -75,24 +75,25 @@ public class ZarrDragAndDropOpenSettings
 	 */
 	public static ZarrDragAndDropOpenSettings loadSettingsFromPreferences( final PrefService prefs )
 	{
-		ZarrOpenChoice choice;
+		ZarrOpenBehavior behavior;
 		try
 		{
-			choice = prefs == null ? DEFAULT_OPEN_CHOICE : ZarrOpenChoice
-					.getByName( prefs.get( ZarrDragAndDropOpenSettings.class, ZARR_OPEN_CHOICE_SETTING_NAME, DEFAULT_OPEN_CHOICE.name() ) );
+			behavior = prefs == null ? DEFAULT_OPEN_BEHAVIOR : ZarrOpenBehavior
+					.getByName(
+							prefs.get( ZarrDragAndDropOpenSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, DEFAULT_OPEN_BEHAVIOR.name() ) );
 		}
 		catch ( NoSuchElementException e )
 		{
-			choice = DEFAULT_OPEN_CHOICE;
+			behavior = DEFAULT_OPEN_BEHAVIOR;
 		}
 		int preferredWidth = prefs == null ? DEFAULT_PREFERRED_WIDTH
 				: prefs.getInt(
 						ZarrDragAndDropOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME,
 						DEFAULT_PREFERRED_WIDTH
 				);
-		logger.debug( "Loaded Zarr default opening choice: {}", choice );
+		logger.debug( "Loaded Zarr default opening behavior: {}", behavior );
 		logger.debug( "Loaded zarr preferred width: {}", preferredWidth );
-		return new ZarrDragAndDropOpenSettings( choice, preferredWidth );
+		return new ZarrDragAndDropOpenSettings( behavior, preferredWidth );
 	}
 
 	/**
@@ -104,15 +105,15 @@ public class ZarrDragAndDropOpenSettings
 	{
 		if ( prefs == null )
 			return;
-		prefs.put( ZarrDragAndDropOpenSettings.class, ZARR_OPEN_CHOICE_SETTING_NAME, getCurrentChoice().name() );
+		prefs.put( ZarrDragAndDropOpenSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, getOpenBehavior().name() );
 		prefs.put( ZarrDragAndDropOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
-		logger.debug( "Saved zarr default opening choice to preferences: {}", getCurrentChoice() );
+		logger.debug( "Saved zarr default opening behavior to preferences: {}", getOpenBehavior() );
 		logger.debug( "Saved zarr preferred width to preferences: {}", getPreferredMaxWidth() );
 	}
 
 	@Override
 	public String toString()
 	{
-		return "ZarrDefaultOpenSetting{zarrOpenChoice=" + zarrOpenChoice + ", preferredMaxWidth=" + preferredMaxWidth + "}";
+		return "ZarrDefaultOpenSetting{zarrOpenBehavior=" + zarrOpenBehavior + ", preferredMaxWidth=" + preferredMaxWidth + "}";
 	}
 }

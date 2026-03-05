@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import sc.fiji.ome.zarr.util.ZarrDragAndDropOpenSettings;
-import sc.fiji.ome.zarr.util.ZarrOpenChoice;
+import sc.fiji.ome.zarr.util.ZarrOpenBehavior;
 
 /**
  * A FIJI/ImageJ command to select how to open a Zarr dataset.
@@ -29,11 +29,11 @@ public class ZarrDragAndDropOpenSettingsUI extends DynamicCommand
 	private PrefService prefService;
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Default zarr drag and drop open choice", description = "Chose what will happen if you drag and drop a zarr image folder into Fiji", initializer = "initZarrOpenChoices" )
-	private String defaultZarrOpenChoice;
+	@Parameter( label = "Default zarr drag and drop open behavior", description = "Chose the behavior if you drag and drop a zarr image folder into Fiji", initializer = "initZarrOpenBehaviors" )
+	private String defaultZarrOpenBehavior;
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Preferred width for matching resolution choice", description = "For the choice matching resolution a preferred maximum width can be set" )
+	@Parameter( label = "Preferred width for matching resolution choice", description = "For the behavior matching resolution a preferred maximum width can be set" )
 	private int preferredWidth;
 
 	private ZarrDragAndDropOpenSettings settings;
@@ -41,9 +41,10 @@ public class ZarrDragAndDropOpenSettingsUI extends DynamicCommand
 	@Override
 	public void run()
 	{
-		settings.setCurrentChoice( ZarrOpenChoice.getByDescription( defaultZarrOpenChoice ) );
+		settings.setCurrentChoice( ZarrOpenBehavior.getByDescription( defaultZarrOpenBehavior ) );
 		settings.setPreferredMaxWidth( preferredWidth );
-		logger.debug( "Now saving Zarr Default Open settings to preferences. Choice: {}, preferredWidth: {}", settings.getCurrentChoice(),
+		logger.debug( "Now saving Zarr Drag and Drop open settings to preferences. Behavior: {}, preferredWidth: {}",
+				settings.getOpenBehavior(),
 				preferredWidth );
 		settings.saveSettingsToPreferences( prefService );
 	}
@@ -52,18 +53,18 @@ public class ZarrDragAndDropOpenSettingsUI extends DynamicCommand
 	private void init()
 	{
 		settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
-		defaultZarrOpenChoice = settings.getCurrentChoice().getDescription();
+		defaultZarrOpenBehavior = settings.getOpenBehavior().getDescription();
 		preferredWidth = settings.getPreferredMaxWidth();
 	}
 
 	@SuppressWarnings( "unused" )
-	private void initZarrOpenChoices()
+	private void initZarrOpenBehaviors()
 	{
-		getInfo().getMutableInput( "defaultZarrOpenChoice", String.class ).setChoices( enumNamesAsList( ZarrOpenChoice.values() ) );
+		getInfo().getMutableInput( "defaultZarrOpenBehavior", String.class ).setChoices( enumNamesAsList( ZarrOpenBehavior.values() ) );
 	}
 
-	static List< String > enumNamesAsList( final ZarrOpenChoice[] values )
+	static List< String > enumNamesAsList( final ZarrOpenBehavior[] values )
 	{
-		return Arrays.stream( values ).map( ZarrOpenChoice::getDescription ).collect( Collectors.toList() );
+		return Arrays.stream( values ).map( ZarrOpenBehavior::getDescription ).collect( Collectors.toList() );
 	}
 }

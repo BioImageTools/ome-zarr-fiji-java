@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.util.ZarrOpenActions;
-import sc.fiji.ome.zarr.util.ZarrOpenChoice;
+import sc.fiji.ome.zarr.util.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class DnDHandlerPluginTest
@@ -50,22 +50,22 @@ class DnDHandlerPluginTest
 			};
 			dnDHandlerPlugin.setContext( context );
 
-			settings.setCurrentChoice( ZarrOpenChoice.BDV_MULTI_RESOLUTION );
+			settings.setCurrentChoice( ZarrOpenBehavior.BDV_MULTI_RESOLUTION );
 			settings.saveSettingsToPreferences( prefService );
 			dnDHandlerPlugin.open( fileLocation );
 			verify( actionsMock ).openBDVWithImage();
 
-			settings.setCurrentChoice( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION );
+			settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION );
 			settings.saveSettingsToPreferences( prefService );
 			dnDHandlerPlugin.open( fileLocation );
 			verify( actionsMock, times( 1 ) ).openIJWithImage();
 
-			settings.setCurrentChoice( ZarrOpenChoice.IMAGEJ_CUSTOM_RESOLUTION );
+			settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION );
 			settings.saveSettingsToPreferences( prefService );
 			dnDHandlerPlugin.open( fileLocation );
 			verify( actionsMock, times( 2 ) ).openIJWithImage();
 
-			settings.setCurrentChoice( ZarrOpenChoice.SHOW_SELECTION_DIALOG );
+			settings.setCurrentChoice( ZarrOpenBehavior.SHOW_SELECTION_DIALOG );
 			settings.saveSettingsToPreferences( prefService );
 			dnDHandlerPlugin.open( fileLocation );
 			verify( actionChooserMock ).showDialog();

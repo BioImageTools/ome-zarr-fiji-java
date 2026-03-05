@@ -10,29 +10,29 @@ import org.junit.jupiter.api.Test;
 import java.util.NoSuchElementException;
 
 /**
- * Unit tests for the {@link ZarrOpenChoice#getByName(String)} method.
- * This method retrieves the corresponding {@link ZarrOpenChoice} enum value
+ * Unit tests for the {@link ZarrOpenBehavior#getByName(String)} method.
+ * This method retrieves the corresponding {@link ZarrOpenBehavior} enum value
  * by its name or throws a {@link NoSuchElementException} if not found.
  */
-class ZarrOpenChoiceTest
+class ZarrOpenBehaviorTest
 {
 
 	@Test
 	void testGetByNameWithValidEnumName()
 	{
 		// Test that fetching a valid enum name returns the corresponding enum instance
-		ZarrOpenChoice result = ZarrOpenChoice.getByName( "IMAGEJ_HIGHEST_RESOLUTION" );
+		ZarrOpenBehavior result = ZarrOpenBehavior.getByName( "IMAGEJ_HIGHEST_RESOLUTION" );
 		assertNotNull( result );
-		assertEquals( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION, result );
+		assertEquals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION, result );
 	}
 
 	@Test
 	void testGetByDescriptionWithValidDescription()
 	{
 		// Test that fetching a valid description returns the corresponding enum instance
-		ZarrOpenChoice result = ZarrOpenChoice.getByDescription( "Open the highest available single-resolution in ImageJ" );
+		ZarrOpenBehavior result = ZarrOpenBehavior.getByDescription( "Open the highest available single-resolution in ImageJ" );
 		assertNotNull( result );
-		assertEquals( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION, result );
+		assertEquals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION, result );
 	}
 
 	@Test
@@ -40,7 +40,7 @@ class ZarrOpenChoiceTest
 	{
 		// Test a description that does not exist, expect a null result
 		String invalidDescription = "Non-existent description";
-		ZarrOpenChoice result = ZarrOpenChoice.getByDescription( invalidDescription );
+		ZarrOpenBehavior result = ZarrOpenBehavior.getByDescription( invalidDescription );
 		assertNull( result );
 	}
 
@@ -48,7 +48,7 @@ class ZarrOpenChoiceTest
 	void testGetByDescriptionWithNullDescription()
 	{
 		// Test providing a null description, expect a null result
-		ZarrOpenChoice result = ZarrOpenChoice.getByDescription( null );
+		ZarrOpenBehavior result = ZarrOpenBehavior.getByDescription( null );
 		assertNull( result );
 	}
 
@@ -57,13 +57,13 @@ class ZarrOpenChoiceTest
 	{
 		// Test an invalid enum name, expect a NoSuchElementException
 		String invalidEnumName = "INVALID_OPTION";
-		assertThrows( NoSuchElementException.class, () -> ZarrOpenChoice.getByName( invalidEnumName ) );
+		assertThrows( NoSuchElementException.class, () -> ZarrOpenBehavior.getByName( invalidEnumName ) );
 	}
 
 	@Test
 	void testGetByNameWithNullName()
 	{
 		// Test passing null to the method, expect a NoSuchElementException
-		assertThrows( NoSuchElementException.class, () -> ZarrOpenChoice.getByName( null ) );
+		assertThrows( NoSuchElementException.class, () -> ZarrOpenBehavior.getByName( null ) );
 	}
 }

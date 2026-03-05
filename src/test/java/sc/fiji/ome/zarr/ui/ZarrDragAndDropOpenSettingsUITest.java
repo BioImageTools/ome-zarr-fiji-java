@@ -11,7 +11,7 @@ import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
 import sc.fiji.ome.zarr.util.ZarrDragAndDropOpenSettings;
-import sc.fiji.ome.zarr.util.ZarrOpenChoice;
+import sc.fiji.ome.zarr.util.ZarrOpenBehavior;
 
 /**
  * Unit tests for the {@link ZarrDragAndDropOpenSettingsUI#run()} method.
@@ -39,9 +39,9 @@ class ZarrDragAndDropOpenSettingsUITest
 			initMethod.setAccessible( true ); // bypasses private visibility
 			initMethod.invoke( ui );
 
-			Field defaultZarrOpenChoiceField = ZarrDragAndDropOpenSettingsUI.class.getDeclaredField( "defaultZarrOpenChoice" );
-			defaultZarrOpenChoiceField.setAccessible( true );
-			defaultZarrOpenChoiceField.set( ui, ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION.getDescription() );
+			Field defaultZarrOpenBehaviorField = ZarrDragAndDropOpenSettingsUI.class.getDeclaredField( "defaultZarrOpenBehavior" );
+			defaultZarrOpenBehaviorField.setAccessible( true );
+			defaultZarrOpenBehaviorField.set( ui, ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION.getDescription() );
 
 			Field preferredWidthField = ZarrDragAndDropOpenSettingsUI.class.getDeclaredField( "preferredWidth" );
 			preferredWidthField.setAccessible( true );
@@ -51,7 +51,7 @@ class ZarrDragAndDropOpenSettingsUITest
 
 			ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
 
-			assertEquals( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION, settings.getCurrentChoice() );
+			assertEquals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION, settings.getOpenBehavior() );
 			assertEquals( customWidth, settings.getPreferredMaxWidth() );
 
 		}
