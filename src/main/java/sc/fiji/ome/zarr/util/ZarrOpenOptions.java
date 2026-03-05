@@ -8,19 +8,19 @@ import java.util.NoSuchElementException;
 public enum ZarrOpenOptions
 {
 	/**
-	 * Open the highest resolution possible in ImageJ.
+	 * Open the highest available single-resolution in ImageJ.
 	 */
-	IMAGEJ_HIGHEST_RESOLUTION( "Open highest possible resolution in ImageJ" ),
+	IMAGEJ_HIGHEST_RESOLUTION( "Open the highest available single-resolution in ImageJ" ),
 
 	/**
-	 * Open a custom resolution configurable max width pixel in ImageJ.
+	 * Open a matching single-resolution image in ImageJ.
 	 */
-	IMAGEJ_CUSTOM_RESOLUTION( "Open resolution closest to custom in ImageJ" ),
+	IMAGEJ_CUSTOM_RESOLUTION( "Open a matching single-resolution image in ImageJ" ),
 
 	/**
 	 * Open as multi-resolution in BigDataViewer (BDV).
 	 */
-	BDV_MULTI_RESOLUTION( "Open multi resolution in BigDataViewer" ),
+	BDV_MULTI_RESOLUTION( "Open as a multi-resolution source in BigDataViewer" ),
 
 	/**
 	 * Always open the selection dialog with different icons.
