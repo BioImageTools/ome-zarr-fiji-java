@@ -10,22 +10,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Desktop;
-import java.awt.Container;
-import java.awt.Window;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Cast;
 
 import bdv.util.BdvFunctions;
-import bdv.util.BdvOptions;
 import bdv.util.BdvHandle;
 import ij.IJ;
 import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
@@ -86,37 +82,23 @@ public class ZarrOpenActions
 	public void openIJWithImage()
 	{
 		openImage(
-				pyramidalDataset -> context.getService( UIService.class ).show( pyramidalDataset ),
+				pyramidalDataset -> {
+					context.getService( UIService.class ).show( pyramidalDataset );
+					return null;
+				},
 				singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ),
 				"ImageJ"
 		);
 	}
 
-	public void openBDVWithImage()
+	public BdvHandle openBDVWithImage()
 	{
-		openImage(
-				pyramidalDataset -> {
-					BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
-							BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
-
-					Container topLevelContainer = bdvHandle.getViewerPanel().getRootPane().getParent();
-					if ( topLevelContainer instanceof Window )
-					{
-						// notify scijava about "usage" (and "no longer usage" later) of this Dataset
-						// only iff we're able to listen for when Bdv window closes
-						pyramidalDataset.incrementReferences();
-						( ( Window ) topLevelContainer ).addWindowListener( new WindowAdapter()
-						{
-							@Override
-							public void windowClosed( WindowEvent e )
-							{
-								pyramidalDataset.decrementReferences();
-							}
-						} );
-					}
-				},
+		Object result = openImage(
+				BdvUtils::showBdvAndRegisterDataset,
 				singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
-				"BigDataViewer" );
+				"BigDataViewer"
+		);
+		return Cast.unchecked( result );
 	}
 
 	private void showSingleScaleError( final Exception e )
@@ -133,13 +115,15 @@ public class ZarrOpenActions
 		logger.warn( "Could not open dataset as non-Zarr image: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 
-	void openImage( final Consumer< PyramidalDataset< ? > > multiScaleImageOpener, final Consumer< Img< ? > > singleScaleImageOpener,
+	Object openImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener,
+			final Consumer< Img< ? > > singleScaleImageOpener,
 			final String message )
 	{
 		try
 		{
-			openMultiScaleImage( multiScaleImageOpener );
+			Object result = openMultiScaleImage( multiScaleImageOpener );
 			logger.info( "Opened dataset in {}: {}", message, droppedInPath );
+			return result;
 		}
 		catch ( NotAMultiscaleImageException e )
 		{
@@ -158,17 +142,18 @@ public class ZarrOpenActions
 		{
 			showNonZarrError( ex );
 		}
+		return null;
 	}
 
-	private void openMultiScaleImage( final Consumer< PyramidalDataset< ? > > multiScaleImageOpener ) throws NotAMultiscaleImageException
+	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
+			throws NotAMultiscaleImageException
 	{
-
-		// final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( droppedInPath.toString() );
 		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
 				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString() );
 		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
-		multiScaleImageOpener.accept( pyramidalDataset );
+		Object result = multiScaleImageOpener.apply( pyramidalDataset );
 		logger.info( "Opened multiscale image: {}", droppedInPath );
+		return result;
 	}
 
 	private void openSingleScaleImage( final Consumer< Img< ? > > singleScaleImageOpener ) throws NotASingleScaleImageException
