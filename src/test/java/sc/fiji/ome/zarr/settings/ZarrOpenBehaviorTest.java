@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.util;
+package sc.fiji.ome.zarr.settings;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

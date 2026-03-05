@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
-import sc.fiji.ome.zarr.util.ZarrDragAndDropOpenSettings;
-import sc.fiji.ome.zarr.util.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 
 /**
  * Unit tests for the {@link ZarrDragAndDropOpenSettingsUI#run()} method.

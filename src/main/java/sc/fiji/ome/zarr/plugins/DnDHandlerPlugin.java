@@ -49,7 +49,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.util.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 import sc.fiji.ome.zarr.util.ZarrOpenActions;

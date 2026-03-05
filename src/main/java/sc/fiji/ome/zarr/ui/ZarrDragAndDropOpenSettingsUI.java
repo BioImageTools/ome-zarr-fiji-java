@@ -13,8 +13,8 @@ import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sc.fiji.ome.zarr.util.ZarrDragAndDropOpenSettings;
-import sc.fiji.ome.zarr.util.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 
 /**
  * A FIJI/ImageJ command to select how to open a Zarr dataset.

@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.util;
+package sc.fiji.ome.zarr.settings;
 
 import java.lang.invoke.MethodHandles;
 import java.util.NoSuchElementException;

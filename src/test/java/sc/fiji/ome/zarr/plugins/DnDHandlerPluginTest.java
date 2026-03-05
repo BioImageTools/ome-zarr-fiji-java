@@ -15,9 +15,9 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.util.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.util.ZarrOpenActions;
-import sc.fiji.ome.zarr.util.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class DnDHandlerPluginTest
