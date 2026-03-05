@@ -91,7 +91,7 @@ public class ZarrDefaultOpenSettings
 						DEFAULT_PREFERRED_WIDTH
 				);
 		logger.debug( "Loaded Zarr default opening choice: {}", choice );
-		logger.debug( "Loaded zarr custom width: {}", preferredWidth );
+		logger.debug( "Loaded zarr preferred width: {}", preferredWidth );
 		return new ZarrDefaultOpenSettings( choice, preferredWidth );
 	}
 
@@ -106,13 +106,13 @@ public class ZarrDefaultOpenSettings
 			return;
 		prefs.put( ZarrDefaultOpenSettings.class, ZARR_OPEN_CHOICE_SETTING_NAME, getCurrentChoice().name() );
 		prefs.put( ZarrDefaultOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
-		logger.debug( "Saved zarr default opening option to preferences: {}", getCurrentChoice() );
-		logger.debug( "Saved zarr custom width to preferences: {}", getPreferredMaxWidth() );
+		logger.debug( "Saved zarr default opening choice to preferences: {}", getCurrentChoice() );
+		logger.debug( "Saved zarr preferred width to preferences: {}", getPreferredMaxWidth() );
 	}
 
 	@Override
 	public String toString()
 	{
-		return "ZarrDefaultOpenSetting{option=" + zarrOpenChoice + "}";
+		return "ZarrDefaultOpenSetting{zarrOpenChoice=" + zarrOpenChoice + ", preferredMaxWidth=" + preferredMaxWidth + "}";
 	}
 }
