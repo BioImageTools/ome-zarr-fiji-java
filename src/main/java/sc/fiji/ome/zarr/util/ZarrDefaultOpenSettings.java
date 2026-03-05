@@ -87,7 +87,9 @@ public class ZarrDefaultOpenSettings
 	}
 
 	/**
-	 * Saves the setting to the user preferences.
+	 * Saves the setting to the user preferences.<br>
+	 *
+	 * @param prefs A handle to the {@link PrefService}. If {@code null} is provided, no other default place to keep the preferences is assumed, and the function thus saves nothing and silently finishes.
 	 */
 	public void saveSettingsToPreferences( final PrefService prefs )
 	{
