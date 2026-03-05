@@ -93,7 +93,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 
 		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context() );
 		ZarrDefaultOpenSettings setting = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
-		switch ( setting.getChosenOpenOption() )
+		switch ( setting.getCurrentChoice() )
 		{
 		case IMAGEJ_HIGHEST_RESOLUTION:
 		case IMAGEJ_CUSTOM_RESOLUTION:

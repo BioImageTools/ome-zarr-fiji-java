@@ -50,22 +50,22 @@ class DnDHandlerPluginTest
 			};
 			dnDHandlerPlugin.setContext( context );
 
-			settings.setChosenOpenOption( ZarrOpenChoice.BDV_MULTI_RESOLUTION );
+			settings.setCurrentChoice( ZarrOpenChoice.BDV_MULTI_RESOLUTION );
 			settings.saveSettingsToPreferences( prefService );
 			dnDHandlerPlugin.open( fileLocation );
 			verify( actionsMock ).openBDVWithImage();
 
-			settings.setChosenOpenOption( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION );
+			settings.setCurrentChoice( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION );
 			settings.saveSettingsToPreferences( prefService );
 			dnDHandlerPlugin.open( fileLocation );
 			verify( actionsMock, times( 1 ) ).openIJWithImage();
 
-			settings.setChosenOpenOption( ZarrOpenChoice.IMAGEJ_CUSTOM_RESOLUTION );
+			settings.setCurrentChoice( ZarrOpenChoice.IMAGEJ_CUSTOM_RESOLUTION );
 			settings.saveSettingsToPreferences( prefService );
 			dnDHandlerPlugin.open( fileLocation );
 			verify( actionsMock, times( 2 ) ).openIJWithImage();
 
-			settings.setChosenOpenOption( ZarrOpenChoice.SHOW_SELECTION_DIALOG );
+			settings.setCurrentChoice( ZarrOpenChoice.SHOW_SELECTION_DIALOG );
 			settings.saveSettingsToPreferences( prefService );
 			dnDHandlerPlugin.open( fileLocation );
 			verify( actionChooserMock ).showDialog();

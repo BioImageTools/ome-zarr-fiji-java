@@ -51,7 +51,7 @@ class ZarrDefaultOpenSettingUITest
 
 			ZarrDefaultOpenSettings settings = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
 
-			assertEquals( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION, settings.getChosenOpenOption() );
+			assertEquals( ZarrOpenChoice.IMAGEJ_HIGHEST_RESOLUTION, settings.getCurrentChoice() );
 			assertEquals( customWidth, settings.getPreferredMaxWidth() );
 
 		}
