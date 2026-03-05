@@ -11,24 +11,24 @@ public class ZarrDefaultOpenSettings
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	public static final ZarrOpenChoice DEFAULT_OPEN_OPTION = ZarrOpenChoice.IMAGEJ_CUSTOM_RESOLUTION;
+	public static final ZarrOpenChoice DEFAULT_OPEN_CHOICE = ZarrOpenChoice.IMAGEJ_CUSTOM_RESOLUTION;
 
 	/**
 	 * The default max width (in Pixels) for the {@link ZarrOpenChoice#IMAGEJ_CUSTOM_RESOLUTION} option. This is used if the user has not set a custom width in the preferences.
 	 */
-	public static final int DEFAULT_MAX_WIDTH = 1000;
+	public static final int DEFAULT_PREFERRED_WIDTH = 1000;
 
 	private ZarrOpenChoice zarrOpenChoice;
 
 	private int preferredMaxWidth;
 
-	private static final String ZARR_OPEN_OPTION_SETTING_NAME = "ZarrDefaultOpenOption";
+	private static final String ZARR_OPEN_CHOICE_SETTING_NAME = "ZarrDefaultOpenChoice";
 
-	private static final String ZARR_CUSTOM_WIDTH_SETTING_NAME = "ZarrCustomWidth";
+	private static final String ZARR_PREFERRED_WIDTH_SETTING_NAME = "ZarrPreferredWidth";
 
 	public ZarrDefaultOpenSettings()
 	{
-		this( DEFAULT_OPEN_OPTION, DEFAULT_MAX_WIDTH );
+		this( DEFAULT_OPEN_CHOICE, DEFAULT_PREFERRED_WIDTH );
 	}
 
 	public ZarrDefaultOpenSettings( final ZarrOpenChoice zarrOpenChoice, final int preferredMaxWidth )
@@ -69,21 +69,21 @@ public class ZarrDefaultOpenSettings
 
 	public static ZarrDefaultOpenSettings loadSettingsFromPreferences( final PrefService prefs )
 	{
-		ZarrOpenChoice option;
+		ZarrOpenChoice choice;
 		try
 		{
-			option = prefs == null ? DEFAULT_OPEN_OPTION : ZarrOpenChoice
-					.getByName( prefs.get( ZarrDefaultOpenSettings.class, ZARR_OPEN_OPTION_SETTING_NAME, DEFAULT_OPEN_OPTION.name() ) );
+			choice = prefs == null ? DEFAULT_OPEN_CHOICE : ZarrOpenChoice
+					.getByName( prefs.get( ZarrDefaultOpenSettings.class, ZARR_OPEN_CHOICE_SETTING_NAME, DEFAULT_OPEN_CHOICE.name() ) );
 		}
 		catch ( NoSuchElementException e )
 		{
-			option = DEFAULT_OPEN_OPTION;
+			choice = DEFAULT_OPEN_CHOICE;
 		}
-		int customWidth = prefs == null ? DEFAULT_MAX_WIDTH
-				: prefs.getInt( ZarrDefaultOpenSettings.class, ZARR_CUSTOM_WIDTH_SETTING_NAME, DEFAULT_MAX_WIDTH );
-		logger.debug( "Loaded Zarr default opening option: {}", option );
-		logger.debug( "Loaded zarr custom width: {}", customWidth );
-		return new ZarrDefaultOpenSettings( option, customWidth );
+		int preferredWidth = prefs == null ? DEFAULT_PREFERRED_WIDTH
+				: prefs.getInt( ZarrDefaultOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, DEFAULT_PREFERRED_WIDTH );
+		logger.debug( "Loaded Zarr default opening choice: {}", choice );
+		logger.debug( "Loaded zarr custom width: {}", preferredWidth );
+		return new ZarrDefaultOpenSettings( choice, preferredWidth );
 	}
 
 	/**
@@ -95,8 +95,8 @@ public class ZarrDefaultOpenSettings
 	{
 		if ( prefs == null )
 			return;
-		prefs.put( ZarrDefaultOpenSettings.class, ZARR_OPEN_OPTION_SETTING_NAME, getCurrentChoice().name() );
-		prefs.put( ZarrDefaultOpenSettings.class, ZARR_CUSTOM_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
+		prefs.put( ZarrDefaultOpenSettings.class, ZARR_OPEN_CHOICE_SETTING_NAME, getCurrentChoice().name() );
+		prefs.put( ZarrDefaultOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
 		logger.debug( "Saved zarr default opening option to preferences: {}", getCurrentChoice() );
 		logger.debug( "Saved zarr custom width to preferences: {}", getPreferredMaxWidth() );
 	}

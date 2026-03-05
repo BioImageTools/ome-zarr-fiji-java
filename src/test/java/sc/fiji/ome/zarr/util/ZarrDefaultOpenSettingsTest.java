@@ -20,7 +20,7 @@ class ZarrDefaultOpenSettingsTest
 		ZarrDefaultOpenSettings settings = new ZarrDefaultOpenSettings();
 
 		// Verify the default open option is returned
-		assertEquals( ZarrDefaultOpenSettings.DEFAULT_OPEN_OPTION, settings.getCurrentChoice(),
+		assertEquals( ZarrDefaultOpenSettings.DEFAULT_OPEN_CHOICE, settings.getCurrentChoice(),
 				"Default open option should be IMAGEJ_CUSTOM_RES" );
 	}
 
@@ -47,8 +47,8 @@ class ZarrDefaultOpenSettingsTest
 			prefService.clearAll();
 			// Load settings from preferences for the first time and verify default values
 			ZarrDefaultOpenSettings settings = ZarrDefaultOpenSettings.loadSettingsFromPreferences( prefService );
-			assertEquals( ZarrDefaultOpenSettings.DEFAULT_OPEN_OPTION, settings.getCurrentChoice() );
-			assertEquals( ZarrDefaultOpenSettings.DEFAULT_MAX_WIDTH, settings.getPreferredMaxWidth() );
+			assertEquals( ZarrDefaultOpenSettings.DEFAULT_OPEN_CHOICE, settings.getCurrentChoice() );
+			assertEquals( ZarrDefaultOpenSettings.DEFAULT_PREFERRED_WIDTH, settings.getPreferredMaxWidth() );
 
 			// Set custom values and save them to preferences
 			settings.setCurrentChoice( ZarrOpenChoice.IMAGEJ_CUSTOM_RESOLUTION );
