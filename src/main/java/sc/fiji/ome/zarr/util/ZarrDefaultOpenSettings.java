@@ -67,6 +67,12 @@ public class ZarrDefaultOpenSettings
 		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
+	/**
+	 * Loads and returns the settings from the provided preference store.
+	 *
+	 * @param prefs If {@code null} is provided, default settings values from this class are used and returned.
+	 * @return the settings from the provided preference store, or default values if {@code prefs} is {@code null} or if the provided preference store does not contain any information about the default settings.
+	 */
 	public static ZarrDefaultOpenSettings loadSettingsFromPreferences( final PrefService prefs )
 	{
 		ZarrOpenChoice choice;
@@ -80,7 +86,10 @@ public class ZarrDefaultOpenSettings
 			choice = DEFAULT_OPEN_CHOICE;
 		}
 		int preferredWidth = prefs == null ? DEFAULT_PREFERRED_WIDTH
-				: prefs.getInt( ZarrDefaultOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, DEFAULT_PREFERRED_WIDTH );
+				: prefs.getInt(
+						ZarrDefaultOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME,
+						DEFAULT_PREFERRED_WIDTH
+				);
 		logger.debug( "Loaded Zarr default opening choice: {}", choice );
 		logger.debug( "Loaded zarr custom width: {}", preferredWidth );
 		return new ZarrDefaultOpenSettings( choice, preferredWidth );
