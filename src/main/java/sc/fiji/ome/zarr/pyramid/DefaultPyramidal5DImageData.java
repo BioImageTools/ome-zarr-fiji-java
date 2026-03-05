@@ -128,9 +128,6 @@ public class DefaultPyramidal5DImageData<
 
 	private final long[] dimensions;
 
-	//TODO: -- knows resolution along the dimensions
-	//private OMEZarrAxes omeZarrAxes;
-
 	//these act as caches not to create them again and again
 	private final ImgPlus< T > imgPlus;
 
