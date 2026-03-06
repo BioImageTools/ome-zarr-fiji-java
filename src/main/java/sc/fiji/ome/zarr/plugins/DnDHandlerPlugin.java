@@ -30,6 +30,7 @@ package sc.fiji.ome.zarr.plugins;
 
 import net.imglib2.util.Cast;
 
+import org.scijava.Context;
 import org.scijava.io.AbstractIOPlugin;
 import org.scijava.io.IOPlugin;
 import org.scijava.io.location.FileLocation;
@@ -37,6 +38,7 @@ import org.scijava.io.location.Location;
 import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,8 +49,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
+import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
+import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
 public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
@@ -60,6 +64,9 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 
 	@Parameter
 	private BdvHandleService bdvHandleService; //TODO, is it really used down-stream?
+
+	@Parameter
+	private PrefService prefService;
 
 	// ========================= IOPlugin stuff =========================
 	@Override
@@ -84,8 +91,22 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		final FileLocation fileLocation = Cast.unchecked( source );
 		final Path droppedInPath = fileLocation.getFile().toPath();
 
-		//TODO: this should ideally go into a separate thread... as an independent follow-up story after the DnD event is over
-		new DnDActionChooser( droppedInPath, this.context() ).showDialog();
+		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context() );
+		ZarrDragAndDropOpenSettings setting = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
+		switch ( setting.getOpenBehavior() )
+		{
+		case IMAGEJ_HIGHEST_RESOLUTION:
+		case IMAGEJ_CUSTOM_RESOLUTION:
+			actions.openIJWithImage();
+			break;
+		case BDV_MULTI_RESOLUTION:
+			actions.openBDVWithImage();
+			break;
+		case SHOW_SELECTION_DIALOG:
+		default:
+			createDnDActionChooser( context(), actions ).showDialog();
+			break;
+		}
 
 		// Returning such an object makes Scijava's DnD subsystem believe that the dropped object
 		// has been already fully loaded, and Scijava (Fiji) will attempt to display it now (and
@@ -93,6 +114,16 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		// is exactly what is desired now). The processing of this DnD event will then finish finally.
 		// (While our DnDActionChoose window will still be up there...)
 		return FAKE_INPUT;
+	}
+
+	protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context )
+	{
+		return new ZarrOpenActions( path, context );
+	}
+
+	protected DnDActionChooser createDnDActionChooser( final Context context, final ZarrOpenActions actions )
+	{
+		return new DnDActionChooser( context, actions );
 	}
 
 	@Override

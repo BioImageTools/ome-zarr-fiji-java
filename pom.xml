@@ -239,6 +239,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Mockito used in some unit tests -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 
 		<!-- ====================================== -->
 
