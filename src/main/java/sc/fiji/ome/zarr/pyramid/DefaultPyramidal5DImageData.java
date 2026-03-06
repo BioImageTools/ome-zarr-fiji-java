@@ -70,6 +70,7 @@ import bdv.cache.SharedQueue;
 import bdv.util.BdvOptions;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.util.ArrayUtils;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 /**
@@ -340,8 +341,9 @@ public class DefaultPyramidal5DImageData<
 			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : multiscales
 					.getChildrenMetadata() )
 			{
-				levels.add(
-						new ResolutionLevel( single.getPath(), single.getAttributes(), single.getAxes(), null, null, single.getScale() ) );
+				Axis[] axesInReversedOrder = ArrayUtils.reversedCopy( single.getAxes() );
+				levels.add( new ResolutionLevel( single.getPath(), single.getAttributes(), axesInReversedOrder, null, null,
+						single.getScale() ) );
 			}
 			return new Multiscale( multiscales.name, levels );
 		}
@@ -405,8 +407,7 @@ public class DefaultPyramidal5DImageData<
 			for ( int i = 0; i < resolutionLevel.axisNames.length; i++ )
 			{
 				setImgPlusAxis( img, AXIS_MAPPING.get( resolutionLevel.axisNames[ i ] ), resolutionLevel.units[ i ],
-						resolutionLevel.scales[ i ],
-						i );
+						resolutionLevel.scales[ i ], i );
 			}
 		}
 	}
