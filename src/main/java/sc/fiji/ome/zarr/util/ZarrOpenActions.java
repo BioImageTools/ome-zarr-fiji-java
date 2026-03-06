@@ -1,6 +1,7 @@
 package sc.fiji.ome.zarr.util;
 
 import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
@@ -79,13 +80,10 @@ public class ZarrOpenActions
 	 */
 	public void openViewerDialog()
 	{
-		/*
-		// NB this can be used after n5-viewer_fiji 6.1.3 has been released
 		new N5ViewerCreator().runWithDialog( droppedInPath.toString(),
 				e -> logger.warn( "Could not open viewer selection dialog: {}", e.getMessage() ) );
 		if ( logger.isInfoEnabled() )
 			logger.info( "Opened Zarr/N5 viewer with path: {}.", droppedInPath );
-		 */
 	}
 
 	public void openIJWithImage()
