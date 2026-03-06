@@ -118,18 +118,15 @@ public class DefaultPyramidal5DImageData<
 	private final int numResolutionLevels;
 
 	/** The fourth dimension size... */
-	private int numTimepoints = 1;
+	private final int numTimepoints;
 
 	/** The fifth dimension size... */
-	private int numChannels = 1;
+	private final int numChannels;
 
 	/** The total number of dimensions in the image. */
 	private final int numDimensions;
 
 	private final long[] dimensions;
-
-	//TODO: -- knows resolution along the dimensions
-	//private OMEZarrAxes omeZarrAxes;
 
 	//these act as caches not to create them again and again
 	private final ImgPlus< T > imgPlus;
@@ -185,6 +182,8 @@ public class DefaultPyramidal5DImageData<
 		ResolutionLevel resolutionLevel = multiscale.getLevel( resolutionLevelIndex );
 		this.dimensions = resolutionLevel.attributes.getDimensions();
 		this.numDimensions = dimensions.length;
+		this.numTimepoints = getNumTimepointsFromResolutionLevel( resolutionLevel );
+		this.numChannels = getNumChannelsFromResolutionLevel( resolutionLevel );
 
 		CachedCellImg< T, ? > img = N5Utils.openVolatile( reader, resolutionLevel.datasetPath );
 		this.imgPlus = new ImgPlus<>( img, name );
@@ -394,6 +393,48 @@ public class DefaultPyramidal5DImageData<
 		img.setAxis( new DefaultLinearAxis( type, unit, scale ), index );
 	}
 
+	private int getNumChannelsFromResolutionLevel( final ResolutionLevel resolutionLevel )
+	{
+		return getAxisSize( resolutionLevel, Axes.CHANNEL );
+	}
+
+	private int getNumTimepointsFromResolutionLevel( final ResolutionLevel resolutionLevel )
+	{
+		return getAxisSize( resolutionLevel, Axes.TIME );
+	}
+
+	private int getAxisSize( final ResolutionLevel resolutionLevel, final AxisType axisType )
+	{
+		if ( resolutionLevel == null )
+			return 1;
+
+		final int axisIndex = findAxisIndex( resolutionLevel, axisType );
+
+		return axisIndex >= 0 ? ( int ) resolutionLevel.attributes.getDimensions()[ axisIndex ] : 1;
+	}
+
+	private int findAxisIndex( final ResolutionLevel resolutionLevel, final AxisType axisType )
+	{
+		if ( resolutionLevel.axes != null )
+		{
+			for ( int i = 0; i < resolutionLevel.axes.length; i++ )
+			{
+				Axis axis = resolutionLevel.axes[ i ];
+				if ( axisType.equals( AXIS_MAPPING.get( axis.getName() ) ) )
+					return i;
+			}
+		}
+		else if ( resolutionLevel.axisNames != null )
+		{
+			for ( int i = 0; i < resolutionLevel.axisNames.length; i++ )
+			{
+				if ( axisType.equals( AXIS_MAPPING.get( resolutionLevel.axisNames[ i ] ) ) )
+					return i;
+			}
+		}
+		return -1;
+	}
+
 	// ---------------------------------------------------------------------
 	// Interface Implementations
 	// ---------------------------------------------------------------------
@@ -425,8 +466,8 @@ public class DefaultPyramidal5DImageData<
 				sourceAndConverters = new ArrayList<>();
 				SharedQueue queue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 				BdvOptions options = BdvOptions.options().frameTitle( name );
-				this.numTimepoints = N5Viewer.buildN5Sources( reader, Collections.singletonList( metadata ), queue, new ArrayList<>(),
-						sourceAndConverters, options );
+				N5Viewer.buildN5Sources( reader, Collections.singletonList( metadata ), queue, new ArrayList<>(), sourceAndConverters,
+						options );
 			}
 			catch ( IOException e )
 			{
@@ -447,7 +488,6 @@ public class DefaultPyramidal5DImageData<
 	{
 		return null;
 	}
-
 
 	@Override
 	public int numDimensions()
