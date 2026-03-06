@@ -81,13 +81,19 @@ public class ZarrOpenActions
 
 	public void openIJWithImage()
 	{
+		openIJWithImage( null );
+	}
+
+	public void openIJWithImage( final Integer preferredWidth )
+	{
 		openImage(
 				pyramidalDataset -> {
 					context.getService( UIService.class ).show( pyramidalDataset );
 					return null;
 				},
 				singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ),
-				"ImageJ"
+				"ImageJ",
+				preferredWidth
 		);
 	}
 
@@ -96,7 +102,8 @@ public class ZarrOpenActions
 		Object result = openImage(
 				BdvUtils::showBdvAndRegisterDataset,
 				singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
-				"BigDataViewer"
+				"BigDataViewer",
+				null
 		);
 		return Cast.unchecked( result );
 	}
@@ -117,11 +124,11 @@ public class ZarrOpenActions
 
 	Object openImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener,
 			final Consumer< Img< ? > > singleScaleImageOpener,
-			final String message )
+			final String message, final Integer preferredWidth )
 	{
 		try
 		{
-			Object result = openMultiScaleImage( multiScaleImageOpener );
+			Object result = openMultiScaleImage( multiScaleImageOpener, preferredWidth );
 			logger.info( "Opened dataset in {}: {}", message, droppedInPath );
 			return result;
 		}
@@ -145,11 +152,11 @@ public class ZarrOpenActions
 		return null;
 	}
 
-	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
+	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener, final Integer preferredWidth )
 			throws NotAMultiscaleImageException
 	{
 		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
-				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString() );
+				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
 		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
 		Object result = multiScaleImageOpener.apply( pyramidalDataset );
 		logger.info( "Opened multiscale image: {}", droppedInPath );
