@@ -96,8 +96,10 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		switch ( setting.getOpenBehavior() )
 		{
 		case IMAGEJ_HIGHEST_RESOLUTION:
-		case IMAGEJ_CUSTOM_RESOLUTION:
 			actions.openIJWithImage();
+			break;
+		case IMAGEJ_CUSTOM_RESOLUTION:
+			actions.openIJWithImage( setting.getPreferredMaxWidth() );
 			break;
 		case BDV_MULTI_RESOLUTION:
 			actions.openBDVWithImage();

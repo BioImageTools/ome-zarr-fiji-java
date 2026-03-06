@@ -165,6 +165,18 @@ public class DefaultPyramidal5DImageData<
 	 */
 	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString )
 	{
+		this( context, inputPathAsString, null );
+	}
+
+	/**
+	 * Build a dataset from the given OME-Zarr path. The path can be the root of the OME-Zarr dataset or a subfolder within it.
+	 * <br>
+	 * @param context The SciJava context for building the SciJava dataset
+	 * @param inputPathAsString The path to the OME-Zarr dataset.
+	 * @param preferredMaxWidth The preferred maximum width for the ij image to be loaded. If the highest resolution image is wider than this, a downsampled resolution is chosen. This is useful for loading large images that may not fit in memory at full resolution. If {@code null}, no downsampled version will be chosen. Only affects the imgPlus.
+	 */
+	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
+	{
 		this.context = context;
 		this.inputPathAsString = inputPathAsString;
 		this.inputPath = Paths.get( inputPathAsString );
@@ -175,11 +187,10 @@ public class DefaultPyramidal5DImageData<
 
 		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata );
 		final int multiscaleIndex = 0; // TODO: How to select multiscale index?
-		final int resolutionLevelIndex = 0; // TODO: How to select resolution level index?
 		Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
 		this.name = multiscale.getName();
 		this.numResolutionLevels = multiscale.numResolutionLevels();
-		ResolutionLevel resolutionLevel = multiscale.getLevel( resolutionLevelIndex );
+		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
 		this.dimensions = resolutionLevel.attributes.getDimensions();
 		this.numDimensions = dimensions.length;
 		this.numTimepoints = getNumTimepointsFromResolutionLevel( resolutionLevel );
@@ -192,6 +203,28 @@ public class DefaultPyramidal5DImageData<
 		this.ijDataset = new DefaultDataset( context, imgPlus );
 		this.ijDataset.setName( name );
 		this.ijDataset.setRGBMerged( false );
+	}
+
+	private ResolutionLevel selectResolutionLevel( final Integer preferredMaxWidth, final Multiscale multiscale )
+	{
+		ResolutionLevel resolutionLevel = multiscale.getLevel( 0 ); // highest resolution according to OME-Zarr spec
+
+		if ( preferredMaxWidth == null )
+			return resolutionLevel;
+		int numLevels = multiscale.numResolutionLevels();
+		// iterate from the highest resolution to the lowest resolution
+		for ( int i = 0; i < numLevels; i++ )
+		{
+			ResolutionLevel level = multiscale.getLevel( i );
+			if ( level == null )
+				continue;
+			int width = getAxisSize( level, Axes.X );
+			if ( width <= preferredMaxWidth )
+				return level;
+			else if ( i == numLevels - 1 )
+				resolutionLevel = level;
+		}
+		return resolutionLevel;
 	}
 
 	// ---------------------------------------------------------------------

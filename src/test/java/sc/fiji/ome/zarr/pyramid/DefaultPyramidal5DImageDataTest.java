@@ -214,9 +214,61 @@ class DefaultPyramidal5DImageDataTest
 		}
 	}
 
+	@Test
+	void testPreferredMaxWidth() throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			String resource = "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example";
+			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context, 2000 ); // greater than the highest resolution
+			assertEquals( 1000, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 1000, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			pyramidal5DImageData = load( resource, context, 1000 ); // equals the highest resolution
+			assertEquals( 1000, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 1000, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			pyramidal5DImageData = load( resource, context, 900 ); // less than the highest resolution, but greater than the lowest resolution
+			assertEquals( 500, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 500, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			pyramidal5DImageData = load( resource, context, 500 ); // equals the lowest resolution
+			assertEquals( 500, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 500, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			pyramidal5DImageData = load( resource, context, 400 ); // less than the lowest resolution
+			assertEquals( 500, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 500, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+
+			resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr";
+			pyramidal5DImageData = load( resource, context, 100 ); // greater than the highest resolution
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			pyramidal5DImageData = load( resource, context, 64 ); // equals the highest resolution
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			pyramidal5DImageData = load( resource, context, 50 ); // less than the highest resolution, but greater than the lowest resolution
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			pyramidal5DImageData = load( resource, context, 32 ); // equals the lowest resolution
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			pyramidal5DImageData = load( resource, context, 30 ); // less than the lowest resolution
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+		}
+	}
+
 	private DefaultPyramidal5DImageData< ?, ? > load( final String resource, final Context context ) throws URISyntaxException
 	{
+		return load( resource, context, null );
+	}
+
+	private DefaultPyramidal5DImageData< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
+			throws URISyntaxException
+	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new DefaultPyramidal5DImageData<>( context, path.toString() );
+		return new DefaultPyramidal5DImageData<>( context, path.toString(), preferredWidth );
 	}
 }
