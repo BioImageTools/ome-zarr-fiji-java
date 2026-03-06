@@ -5,11 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static sc.fiji.ome.zarr.util.ZarrTestUtils.IMAGE_NAME;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
+
+import javax.swing.SwingUtilities;
 
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
@@ -18,6 +22,7 @@ import net.imglib2.img.Img;
 import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 
+import bdv.util.BdvHandle;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
 class ZarrOpenActionsTest
@@ -32,7 +37,7 @@ class ZarrOpenActionsTest
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
 			AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-			Consumer< PyramidalDataset< ? > > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
+			Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
 			Consumer< Img< ? > > imgConsumer = img -> singleScaleCounter.incrementAndGet();
 			actions.openImage( multiScaleOpeningCounter, imgConsumer, "" );
 			assertEquals( 1, multiScaleCounter.get() );
@@ -55,7 +60,7 @@ class ZarrOpenActionsTest
 				ZarrOpenActions actions = new ZarrOpenActions( path, context );
 				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-				Consumer< PyramidalDataset< ? > > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
+				Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
 				Consumer< Img< ? > > imgConsumer = img -> singleScaleCounter.incrementAndGet();
 				actions.openImage( multiScaleOpeningCounter, imgConsumer, "" );
 				assertEquals( 0, multiScaleCounter.get() );
@@ -79,7 +84,7 @@ class ZarrOpenActionsTest
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
 				ZarrOpenActions actions = new ZarrOpenActions( path, context, System.out::println );
-				Consumer< PyramidalDataset< ? > > multiScaleNoOp = dataset -> {};
+				Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
 				Consumer< Img< ? > > singleScaleNoOp = img -> {};
 				assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
 			}
@@ -87,7 +92,7 @@ class ZarrOpenActionsTest
 	}
 
 	@Test
-	void testOpenDatasetImageJ() throws URISyntaxException
+	void testOpenMultiScaleDatasetInImageJ() throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example" );
 		try (Context context = new Context())
@@ -101,26 +106,63 @@ class ZarrOpenActionsTest
 			assertNotNull( datasets );
 			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
 			Dataset dataset = datasets.get( 0 );
+			// TODO: is it possible somehow to emulate the closing of the ij dataset so that we can check, if dataset is decremented after closing it?
 			assertEquals( IMAGE_NAME, dataset.getName() );
 		}
 	}
 
 	@Test
-	void testOpenDatasetBDV() throws URISyntaxException
+	void testOpenSingleScaleImageInImageJ() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image" );
+		try (Context context = new Context())
+		{
+			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			actions.openIJWithImage();
+
+			DatasetService datasetService = context.getService( DatasetService.class );
+			assertNotNull( datasetService );
+			List< Dataset > datasets = datasetService.getDatasets();
+			assertNotNull( datasets );
+			assertEquals( 0, datasets.size() ); // A single scale image is opened as image not as dataset
+		}
+	}
+
+	@Test
+	void testOpenMultiScaleDatasetBDV() throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
 		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example" );
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
-			actions.openBDVWithImage();
+			BdvHandle bdvHandle = actions.openBDVWithImage();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertNotNull( datasetService );
 			List< Dataset > datasets = datasetService.getDatasets();
 			assertNotNull( datasets );
 			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
-			// TODO: try to get a BdvHandle here, close it and test if dataset.size() is 0 after closing
-			// TODO: add test for single scale image closing
+			bdvHandle.close();
+			// wait until all Swing events are processed
+			SwingUtilities.invokeAndWait( () -> {} );
+			datasets = datasetService.getDatasets();
+			assertEquals( 0, datasets.size() ); // The dataset service has correctly removed the dataset from the cache
+		}
+	}
+
+	@Test
+	void testOpenSingleScaleImageInBDV() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image" );
+		try (Context context = new Context())
+		{
+			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			actions.openBDVWithImage();
+			DatasetService datasetService = context.getService( DatasetService.class );
+			assertNotNull( datasetService );
+			List< Dataset > datasets = datasetService.getDatasets();
+			assertNotNull( datasets );
+			assertEquals( 0, datasets.size() ); // A single scale image is opened as image not as dataset
 		}
 	}
 }
