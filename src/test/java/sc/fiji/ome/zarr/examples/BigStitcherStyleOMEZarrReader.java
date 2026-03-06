@@ -24,6 +24,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import software.amazon.awssdk.services.s3.S3Client;
+
 /**
  * BigStitcher/BigDataViewer-style OME-Zarr reader using n5-zarr.
  * This follows the pattern used by bigdataviewer-omezarr and mobie-io projects.
@@ -101,7 +103,7 @@ public class BigStitcherStyleOMEZarrReader
 			String keyPrefix = parts.length > 1 ? parts[ 1 ] : "";
 
 			n5 = new N5AmazonS3Reader(
-					com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
+					S3Client.builder().build(),
 					bucketName,
 					keyPrefix
 			);
