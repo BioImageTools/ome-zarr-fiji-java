@@ -85,10 +85,16 @@ public class ZarrOpenActions
 
 	public void openIJWithImage()
 	{
+		openIJWithImage( null );
+	}
+
+	public void openIJWithImage( final Integer preferredWidth )
+	{
 		openImage(
 				pyramidalDataset -> context.getService( UIService.class ).show( pyramidalDataset ),
 				singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ),
-				"ImageJ"
+				"ImageJ",
+				preferredWidth
 		);
 	}
 
@@ -116,7 +122,8 @@ public class ZarrOpenActions
 					}
 				},
 				singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
-				"BigDataViewer" );
+				"BigDataViewer",
+				null );
 	}
 
 	private void showSingleScaleError( final Exception e )
@@ -134,11 +141,11 @@ public class ZarrOpenActions
 	}
 
 	void openImage( final Consumer< PyramidalDataset< ? > > multiScaleImageOpener, final Consumer< Img< ? > > singleScaleImageOpener,
-			final String message )
+			final String message, final Integer preferredWidth )
 	{
 		try
 		{
-			openMultiScaleImage( multiScaleImageOpener );
+			openMultiScaleImage( multiScaleImageOpener, preferredWidth );
 			logger.info( "Opened dataset in {}: {}", message, droppedInPath );
 		}
 		catch ( NotAMultiscaleImageException e )
@@ -160,12 +167,11 @@ public class ZarrOpenActions
 		}
 	}
 
-	private void openMultiScaleImage( final Consumer< PyramidalDataset< ? > > multiScaleImageOpener ) throws NotAMultiscaleImageException
+	private void openMultiScaleImage( final Consumer< PyramidalDataset< ? > > multiScaleImageOpener, final Integer preferredWidth )
+			throws NotAMultiscaleImageException
 	{
-
-		// final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( droppedInPath.toString() );
 		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
-				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString() );
+				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
 		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
 		multiScaleImageOpener.accept( pyramidalDataset );
 		logger.info( "Opened multiscale image: {}", droppedInPath );
