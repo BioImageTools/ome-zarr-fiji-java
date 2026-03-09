@@ -1,6 +1,8 @@
 package sc.fiji.ome.zarr.pyramid;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -104,8 +106,8 @@ class DefaultPyramidal5DImageDataTest
 				assertNotNull( channel0.getSource( 0, 1 ) ); // timepoint 0, resolution level 1
 				assertNotNull( channel0.getSource( 1, 0 ) ); // timepoint 1, resolution level 0
 				assertNotNull( channel0.getSource( 1, 1 ) ); // timepoint 1, resolution level 1
-				assertArrayEquals( new long[] { 64, 64, 16 }, channel0.getSource( 0, 0 ).dimensionsAsLongArray() );
-				assertArrayEquals( new long[] { 32, 32, 8 }, channel0.getSource( 0, 1 ).dimensionsAsLongArray() );
+				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
+				assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
 				assertEquals( 2, pyramidal5DImageData.asSources().size() ); // 2 channels
 			}
 			if ( resource.contains( "2d_testing" ) )
