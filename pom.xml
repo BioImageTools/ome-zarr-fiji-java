@@ -182,6 +182,12 @@
 	</repositories>
 
 	<dependencies>
+		<!-- zarr-java (OME-Zarr branch, local SNAPSHOT) -->
+		<dependency>
+			<groupId>dev.zarr</groupId>
+			<artifactId>zarr-java</artifactId>
+			<version>0.1.1-SNAPSHOT</version>
+		</dependency>
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>
 			<artifactId>n5-viewer_fiji</artifactId>
@@ -258,7 +264,7 @@
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>-Xmx1g</argLine>
+							<argLine>-Xmx1g --add-opens=java.base/java.lang=ALL-UNNAMED</argLine>
 						</configuration>
 					</plugin>
 				</plugins>
