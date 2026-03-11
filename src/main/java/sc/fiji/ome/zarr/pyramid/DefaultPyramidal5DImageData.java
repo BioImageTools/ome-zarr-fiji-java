@@ -176,6 +176,7 @@ public class DefaultPyramidal5DImageData<
 	 * @param preferredMaxWidth The preferred maximum width for the ij image to be loaded. If the highest resolution image is wider than this, a downsampled resolution is chosen. This is useful for loading large images that may not fit in memory at full resolution. If {@code null}, no downsampled version will be chosen. Only affects the imgPlus.
 	 */
 	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
+			throws NoMatchingResolutionException
 	{
 		this.context = context;
 		this.inputPathAsString = inputPathAsString;
@@ -206,25 +207,20 @@ public class DefaultPyramidal5DImageData<
 	}
 
 	private ResolutionLevel selectResolutionLevel( final Integer preferredMaxWidth, final Multiscale multiscale )
+			throws NoMatchingResolutionException
 	{
-		ResolutionLevel resolutionLevel = multiscale.getLevel( 0 ); // highest resolution according to OME-Zarr spec
-
+		ResolutionLevel resolutionLevel = multiscale.getLevels().get( 0 ); // highest resolution according to OME-Zarr spec
 		if ( preferredMaxWidth == null )
 			return resolutionLevel;
-		int numLevels = multiscale.numResolutionLevels();
+		int width = 0;
 		// iterate from the highest resolution to the lowest resolution
-		for ( int i = 0; i < numLevels; i++ )
+		for ( ResolutionLevel level : multiscale.getLevels() )
 		{
-			ResolutionLevel level = multiscale.getLevel( i );
-			if ( level == null )
-				continue;
-			int width = getAxisSize( level, Axes.X );
+			width = getAxisSize( level, Axes.X );
 			if ( width <= preferredMaxWidth )
 				return level;
-			else if ( i == numLevels - 1 )
-				resolutionLevel = level;
 		}
-		return resolutionLevel;
+		throw new NoMatchingResolutionException( preferredMaxWidth, width );
 	}
 
 	// ---------------------------------------------------------------------
@@ -293,11 +289,6 @@ public class DefaultPyramidal5DImageData<
 		public int numResolutionLevels()
 		{
 			return resolutionLevels.size();
-		}
-
-		public ResolutionLevel getLevel( int index )
-		{
-			return resolutionLevels.get( index );
 		}
 
 		public List< ResolutionLevel > getLevels()

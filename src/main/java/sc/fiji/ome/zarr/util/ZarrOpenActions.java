@@ -25,6 +25,7 @@ import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
 import ij.IJ;
 import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
+import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
@@ -123,6 +124,13 @@ public class ZarrOpenActions
 		logger.warn( "Could not open dataset as non-Zarr image: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 
+	private void showNonMatchingResolutionError( final Exception e )
+	{
+		errorHandler.accept( "Could not open dataset: " + droppedInPath + "\n\n" + e.getMessage() + "\n\n"
+				+ "Change setting in Plugins > OME-Zarr > Zarr Drag And Drop Open Settings to still open the image." );
+		logger.warn( "Could not open dataset: {}. Error message: {}", droppedInPath, e.getMessage() );
+	}
+
 	Object openImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener,
 			final Consumer< Img< ? > > singleScaleImageOpener,
 			final String message )
@@ -146,15 +154,19 @@ public class ZarrOpenActions
 				showSingleScaleError( ex );
 			}
 		}
-		catch ( IllegalArgumentException ex )
+		catch ( NoMatchingResolutionException e )
 		{
-			showNonZarrError( ex );
+			showNonMatchingResolutionError( e );
+		}
+		catch ( IllegalArgumentException e )
+		{
+			showNonZarrError( e );
 		}
 		return null;
 	}
 
 	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
-			throws NotAMultiscaleImageException
+			throws NotAMultiscaleImageException, NoMatchingResolutionException
 	{
 		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
 				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );

@@ -95,6 +95,19 @@ class ZarrOpenActionsTest
 	}
 
 	@Test
+	void testOpenNonMatchingResolution() throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
+			ZarrOpenActions actions = new ZarrOpenActions( path, context, 10, System.out::println );
+			Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
+			Consumer< Img< ? > > singleScaleNoOp = img -> {};
+			assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
+		}
+	}
+
+	@Test
 	void testOpenMultiScaleDatasetInImageJ() throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example" );
