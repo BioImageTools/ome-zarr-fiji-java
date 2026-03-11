@@ -173,7 +173,10 @@ public class DefaultPyramidal5DImageData<
 	 * <br>
 	 * @param context The SciJava context for building the SciJava dataset
 	 * @param inputPathAsString The path to the OME-Zarr dataset.
-	 * @param preferredMaxWidth The preferred maximum width for the ij image to be loaded. If the highest resolution image is wider than this, a downsampled resolution is chosen. This is useful for loading large images that may not fit in memory at full resolution. If {@code null}, no downsampled version will be chosen. Only affects the imgPlus.
+	 * @param preferredMaxWidth The preferred maximum width for the ij image to be loaded. If the highest resolution image is wider than this, a downsampled resolution is chosen.<br>
+	 * 							This is useful for loading large images that may not fit in memory at full resolution.<br>
+	 * 							If {@code null}, no downsampled version will be chosen (i.e. highest resolution). Only affects the imgPlus.
+	 * @throws NoMatchingResolutionException If the given {@code preferredMaxWidth} is smaller than the width of the smallest resolution level.
 	 */
 	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
 			throws NoMatchingResolutionException
