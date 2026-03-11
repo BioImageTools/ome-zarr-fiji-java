@@ -91,15 +91,13 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		final FileLocation fileLocation = Cast.unchecked( source );
 		final Path droppedInPath = fileLocation.getFile().toPath();
 
-		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context() );
 		ZarrDragAndDropOpenSettings setting = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
+		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context(), setting.getPreferredMaxWidth() );
 		switch ( setting.getOpenBehavior() )
 		{
 		case IMAGEJ_HIGHEST_RESOLUTION:
-			actions.openIJWithImage();
-			break;
 		case IMAGEJ_CUSTOM_RESOLUTION:
-			actions.openIJWithImage( setting.getPreferredMaxWidth() );
+			actions.openIJWithImage();
 			break;
 		case BDV_MULTI_RESOLUTION:
 			actions.openBDVWithImage();
@@ -118,9 +116,9 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		return FAKE_INPUT;
 	}
 
-	protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context )
+	protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context, final Integer preferredWidth )
 	{
-		return new ZarrOpenActions( path, context );
+		return new ZarrOpenActions( path, context, preferredWidth );
 	}
 
 	protected DnDActionChooser createDnDActionChooser( final Context context, final ZarrOpenActions actions )

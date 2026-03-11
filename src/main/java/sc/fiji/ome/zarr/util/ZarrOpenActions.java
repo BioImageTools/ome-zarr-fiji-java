@@ -41,15 +41,23 @@ public class ZarrOpenActions
 
 	private final Consumer< String > errorHandler;
 
+	private final Integer preferredWidth;
+
 	public ZarrOpenActions( final Path droppedInPath, final Context context )
 	{
-		this( droppedInPath, context, IJ::error );
+		this( droppedInPath, context, null, IJ::error );
 	}
 
-	ZarrOpenActions( final Path droppedInPath, final Context context, final Consumer< String > errorHandler )
+	public ZarrOpenActions( final Path droppedInPath, final Context context, final Integer preferredWidth )
+	{
+		this( droppedInPath, context, preferredWidth, IJ::error );
+	}
+
+	ZarrOpenActions( final Path droppedInPath, final Context context, final Integer preferredWidth, final Consumer< String > errorHandler )
 	{
 		this.droppedInPath = droppedInPath;
 		this.context = context;
+		this.preferredWidth = preferredWidth;
 		this.errorHandler = errorHandler;
 	}
 
@@ -81,19 +89,13 @@ public class ZarrOpenActions
 
 	public void openIJWithImage()
 	{
-		openIJWithImage( null );
-	}
-
-	public void openIJWithImage( final Integer preferredWidth )
-	{
 		openImage(
 				pyramidalDataset -> {
 					context.getService( UIService.class ).show( pyramidalDataset );
 					return null;
 				},
 				singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ),
-				"ImageJ",
-				preferredWidth
+				"ImageJ"
 		);
 	}
 
@@ -102,8 +104,7 @@ public class ZarrOpenActions
 		Object result = openImage(
 				BdvUtils::showBdvAndRegisterDataset,
 				singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
-				"BigDataViewer",
-				null
+				"BigDataViewer"
 		);
 		return Cast.unchecked( result );
 	}
@@ -124,11 +125,11 @@ public class ZarrOpenActions
 
 	Object openImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener,
 			final Consumer< Img< ? > > singleScaleImageOpener,
-			final String message, final Integer preferredWidth )
+			final String message )
 	{
 		try
 		{
-			Object result = openMultiScaleImage( multiScaleImageOpener, preferredWidth );
+			Object result = openMultiScaleImage( multiScaleImageOpener );
 			logger.info( "Opened dataset in {}: {}", message, droppedInPath );
 			return result;
 		}
@@ -152,7 +153,7 @@ public class ZarrOpenActions
 		return null;
 	}
 
-	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener, final Integer preferredWidth )
+	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
 			throws NotAMultiscaleImageException
 	{
 		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =

@@ -37,7 +37,7 @@ class DnDHandlerPluginTest
 			DnDHandlerPlugin dnDHandlerPlugin = new DnDHandlerPlugin()
 			{
 				@Override
-				protected ZarrOpenActions createZarrOpenActions( Path path, Context context )
+				protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context, final Integer preferredWidth )
 				{
 					return actionsMock;
 				}
@@ -63,7 +63,7 @@ class DnDHandlerPluginTest
 			settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION );
 			settings.saveSettingsToPreferences( prefService );
 			dnDHandlerPlugin.open( fileLocation );
-			verify( actionsMock, times( 1 ) ).openIJWithImage( 1_000 );
+			verify( actionsMock, times( 2 ) ).openIJWithImage();
 
 			settings.setCurrentChoice( ZarrOpenBehavior.SHOW_SELECTION_DIALOG );
 			settings.saveSettingsToPreferences( prefService );
