@@ -41,6 +41,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 
+import org.janelia.saalfeldlab.n5.DataType;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.bdv.N5Viewer;
@@ -69,6 +70,7 @@ import java.util.Map;
 
 import bdv.cache.SharedQueue;
 import bdv.util.BdvOptions;
+import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
@@ -135,6 +137,10 @@ public class DefaultPyramidal5DImageData<
 
 	private List< SourceAndConverter< T > > sourceAndConverters;
 
+	private final T type;
+
+	private final V volatileType;
+
 	private final String inputPathAsString;
 
 	private final Path inputPath;
@@ -191,7 +197,9 @@ public class DefaultPyramidal5DImageData<
 
 		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata );
 		final int multiscaleIndex = 0; // TODO: How to select multiscale index?
-		Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
+		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
+		this.type = N5Utils.type( multiscale.getDataType() );
+		this.volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 		this.name = multiscale.getName();
 		this.numResolutionLevels = multiscale.numResolutionLevels();
 		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
@@ -278,10 +286,13 @@ public class DefaultPyramidal5DImageData<
 
 		private final List< ResolutionLevel > resolutionLevels;
 
-		private Multiscale( final String name, final List< ResolutionLevel > resolutionLevels )
+		private final DataType dataType;
+
+		private Multiscale( final String name, final List< ResolutionLevel > resolutionLevels, final DataType dataType )
 		{
 			this.name = name;
 			this.resolutionLevels = resolutionLevels;
+			this.dataType = dataType;
 		}
 
 		public String getName()
@@ -297,6 +308,11 @@ public class DefaultPyramidal5DImageData<
 		public List< ResolutionLevel > getLevels()
 		{
 			return resolutionLevels;
+		}
+
+		public DataType getDataType()
+		{
+			return dataType;
 		}
 	}
 
@@ -361,13 +377,15 @@ public class DefaultPyramidal5DImageData<
 		{
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
 			OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
+			if ( multiscales.getChildrenMetadata()[ 0 ] == null || multiscales.getChildrenMetadata().length == 0 )
+				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
 			List< ResolutionLevel > levels = new ArrayList<>();
 			for ( NgffSingleScaleAxesMetadata single : multiscales.getChildrenMetadata() )
 			{
 				levels.add(
 						new ResolutionLevel( single.getPath(), single.getAttributes(), single.getAxes(), null, null, single.getScale() ) );
 			}
-			return new Multiscale( multiscales.name, levels );
+			return new Multiscale( multiscales.name, levels, multiscales.getChildrenMetadata()[ 0 ].getAttributes().getDataType() );
 		}
 	}
 
@@ -380,13 +398,15 @@ public class DefaultPyramidal5DImageData<
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMultiScaleMetadata multiscales =
 					omeNgffMetadata.getMultiscales()[ multiscaleIndex ];
+			if ( multiscales.getChildrenMetadata() == null || multiscales.getChildrenMetadata().length == 0 )
+				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children metadata." );
 			List< ResolutionLevel > levels = new ArrayList<>();
 			for ( N5SingleScaleMetadata single : multiscales.getChildrenMetadata() )
 			{
 				levels.add( new ResolutionLevel( single.getPath(), single.getAttributes(), null, multiscales.axes, multiscales.units(),
 						single.getPixelResolution() ) );
 			}
-			return new Multiscale( multiscales.name, levels );
+			return new Multiscale( multiscales.name, levels, multiscales.getChildrenMetadata()[ 0 ].getAttributes().getDataType() );
 		}
 	}
 
@@ -545,7 +565,7 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public T getType()
 	{
-		return imgPlus.firstElement();
+		return type;
 	}
 
 	@Override
