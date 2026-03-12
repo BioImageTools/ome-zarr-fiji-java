@@ -128,8 +128,6 @@ public class DefaultPyramidal5DImageData<
 	/** The total number of dimensions in the image. */
 	private final int numDimensions;
 
-	private final long[] dimensions;
-
 	//these act as caches not to create them again and again
 	private final ImgPlus< T > imgPlus;
 
@@ -203,8 +201,7 @@ public class DefaultPyramidal5DImageData<
 		this.name = multiscale.getName();
 		this.numResolutionLevels = multiscale.numResolutionLevels();
 		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
-		this.dimensions = resolutionLevel.attributes.getDimensions();
-		this.numDimensions = dimensions.length;
+		this.numDimensions = resolutionLevel.attributes.getDimensions().length;
 		this.numTimepoints = getNumTimepointsFromResolutionLevel( resolutionLevel );
 		this.numChannels = getNumChannelsFromResolutionLevel( resolutionLevel );
 
