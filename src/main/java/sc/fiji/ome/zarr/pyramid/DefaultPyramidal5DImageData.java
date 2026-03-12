@@ -37,6 +37,7 @@ import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.EuclideanSpace;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
@@ -54,6 +55,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
 import org.scijava.Context;
 
@@ -72,6 +74,7 @@ import bdv.cache.SharedQueue;
 import bdv.util.BdvOptions;
 import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.viewer.SourceAndConverter;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
@@ -131,6 +134,11 @@ public class DefaultPyramidal5DImageData<
 	//these act as caches not to create them again and again
 	private final ImgPlus< T > imgPlus;
 
+	private final AffineTransform3D[] transforms;
+
+	private final VoxelDimensions voxelDimensions;
+
+	// this acts as cache not to create them again and again
 	private final Dataset ijDataset;
 
 	private List< SourceAndConverter< T > > sourceAndConverters;
@@ -196,11 +204,20 @@ public class DefaultPyramidal5DImageData<
 		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata );
 		final int multiscaleIndex = 0; // TODO: How to select multiscale index?
 		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
+		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
+		final OmeNgffMetadata omeNgffMetadata = ( OmeNgffMetadata ) metadata;
+		final MultiscaleDatasets multiscaleDatasets =
+				MultiscaleDatasets.sort( omeNgffMetadata.getPaths(), omeNgffMetadata.spatialTransforms3d() );
+		transforms = multiscaleDatasets.getTransforms();
+		double rx = transforms[ resolutionLevel.index ].get( 0, 0 );
+		double ry = transforms[ resolutionLevel.index ].get( 1, 1 );
+		double rz = transforms[ resolutionLevel.index ].get( 2, 2 );
+		voxelDimensions = new FinalVoxelDimensions( omeNgffMetadata.unit(), rx, ry, rz );
+
 		this.type = N5Utils.type( multiscale.getDataType() );
 		this.volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 		this.name = multiscale.getName();
 		this.numResolutionLevels = multiscale.numResolutionLevels();
-		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
 		this.numDimensions = resolutionLevel.attributes.getDimensions().length;
 		this.numTimepoints = getNumTimepointsFromResolutionLevel( resolutionLevel );
 		this.numChannels = getNumChannelsFromResolutionLevel( resolutionLevel );
@@ -530,7 +547,7 @@ public class DefaultPyramidal5DImageData<
 	@Override
 	public VoxelDimensions voxelDimensions()
 	{
-		return null;
+		return voxelDimensions;
 	}
 
 	@Override

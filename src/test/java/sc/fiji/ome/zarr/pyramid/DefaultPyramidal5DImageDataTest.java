@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import net.imagej.Dataset;
@@ -184,7 +183,9 @@ class DefaultPyramidal5DImageDataTest
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			VoxelDimensions voxelDimensions = pyramidal5DImageData.voxelDimensions();
-			assertNull( voxelDimensions ); // NB: not yet implemented
+			assertNotNull( voxelDimensions );
+			assertEquals( "", voxelDimensions.unit() );
+			assertArrayEquals( new double[] { 1, 1, 1 }, voxelDimensions.dimensionsAsDoubleArray() );
 		}
 	}
 
