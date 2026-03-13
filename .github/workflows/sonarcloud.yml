@@ -46,7 +46,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'zulu'
-          cache: 'maven'
+          # cache: 'maven' # TODO: May be activated in the future, but currently there are some issues with the cache that cause the SonarCloud analysis to fail
       - name: Jacoco Report and SonarCloud Analysis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information
