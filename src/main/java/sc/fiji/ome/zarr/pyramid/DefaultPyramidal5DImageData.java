@@ -75,6 +75,7 @@ import java.util.Map;
 
 import bdv.BigDataViewer;
 import bdv.cache.SharedQueue;
+import bdv.tools.brightness.ConverterSetup;
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.util.volatiles.VolatileViews;
@@ -257,7 +258,9 @@ public class DefaultPyramidal5DImageData<
 					channelsVolatile, volatileType, transforms, voxelDimensions, getName(), true );
 			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
 					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, getName(), true );
-			sources.add( createSourceAndConverter( source4D, source4DVolatile ) );
+			final SourceAndConverter< T > sourceAndConverter = createSourceAndConverter( source4D, source4DVolatile );
+			// ConverterSetup converterSetup = BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
+			sources.add( sourceAndConverter );
 		}
 		return sources;
 	}
