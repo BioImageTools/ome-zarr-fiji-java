@@ -37,7 +37,7 @@ class DnDHandlerPluginTest
 			DnDHandlerPlugin dnDHandlerPlugin = new DnDHandlerPlugin()
 			{
 				@Override
-				protected ZarrOpenActions createZarrOpenActions( Path path, Context context )
+				protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context, final Integer preferredWidth )
 				{
 					return actionsMock;
 				}
