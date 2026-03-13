@@ -49,7 +49,6 @@ import net.imglib2.view.Views;
 import org.janelia.saalfeldlab.n5.DataType;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.bdv.N5Viewer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
@@ -257,7 +256,9 @@ public class DefaultPyramidal5DImageData<
 					channelsVolatile, volatileType, transforms, voxelDimensions, getName(), true );
 			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
 					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, getName(), true );
-			sources.add( createSourceAndConverter( source4D, source4DVolatile ) );
+			final SourceAndConverter< T > sourceAndConverter = createSourceAndConverter( source4D, source4DVolatile );
+			// ConverterSetup converterSetup = BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
+			sources.add( sourceAndConverter );
 		}
 		return sources;
 	}
