@@ -1,8 +1,9 @@
 package sc.fiji.ome.zarr.pyramid;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import net.imagej.Dataset;
@@ -86,6 +87,35 @@ class DefaultPyramidal5DImageDataTest
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			assertNotNull( pyramidal5DImageData.asSources() );
+			if ( resource.contains( "5d_testing" ) )
+			{
+				Source< ? > channel0 = pyramidal5DImageData.asSources().get( 0 ).getSpimSource();
+				VoxelDimensions voxelDimensions = channel0.getVoxelDimensions();
+				assertEquals( 2, channel0.getNumMipmapLevels() ); // 2 resolution levels
+				assertInstanceOf( UnsignedByteType.class, channel0.getType() );
+				assertNotNull( voxelDimensions );
+				assertNotNull( channel0.getSource( 0, 0 ) ); // timepoint 0, resolution level 0
+				assertNotNull( channel0.getSource( 0, 1 ) ); // timepoint 0, resolution level 1
+				assertNotNull( channel0.getSource( 1, 0 ) ); // timepoint 1, resolution level 0
+				assertNotNull( channel0.getSource( 1, 1 ) ); // timepoint 1, resolution level 1
+				assertArrayEquals( new long[] { 64, 64, 16 }, channel0.getSource( 0, 0 ).dimensionsAsLongArray() );
+				assertArrayEquals( new long[] { 32, 32, 8 }, channel0.getSource( 0, 1 ).dimensionsAsLongArray() );
+				assertEquals( 2, pyramidal5DImageData.asSources().size() ); // 2 channels
+			}
+			if ( resource.contains( "2d_testing" ) )
+			{
+				assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
+				Source< ? > channel0 = pyramidal5DImageData.asSources().get( 0 ).getSpimSource();
+				VoxelDimensions voxelDimensions = channel0.getVoxelDimensions();
+				assertEquals( 2, channel0.getNumMipmapLevels() ); // 2 resolution levels
+				assertInstanceOf( LongType.class, channel0.getType() );
+				assertNotNull( voxelDimensions );
+				assertNotNull( channel0.getSource( 0, 0 ) ); // timepoint 0, resolution level 0
+				assertNotNull( channel0.getSource( 0, 1 ) ); // timepoint 0, resolution level 1
+				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
+				assertArrayEquals( new long[] { 1000, 1000, 1 }, dimensions );
+				assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
+			}
 		}
 	}
 
@@ -153,7 +183,9 @@ class DefaultPyramidal5DImageDataTest
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			VoxelDimensions voxelDimensions = pyramidal5DImageData.voxelDimensions();
-			assertNull( voxelDimensions ); // NB: not yet implemented
+			assertNotNull( voxelDimensions );
+			assertEquals( "", voxelDimensions.unit() );
+			assertArrayEquals( new double[] { 1, 1, 1 }, voxelDimensions.dimensionsAsDoubleArray() );
 		}
 	}
 
