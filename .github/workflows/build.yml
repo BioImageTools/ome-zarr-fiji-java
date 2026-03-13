@@ -16,6 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Clear Maven Cache # TODO: may be removed in the future, but currently there are some issues with the cache that cause the build to fail
+        run: rm -rf ~/.m2/repository
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
