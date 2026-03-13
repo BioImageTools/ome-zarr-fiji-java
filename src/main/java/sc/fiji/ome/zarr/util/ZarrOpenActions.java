@@ -126,9 +126,9 @@ public class ZarrOpenActions
 
 	private void showNonMatchingResolutionError( final Exception e )
 	{
-		errorHandler.accept( "Could not open dataset: " + droppedInPath + "\n\n" + e.getMessage() + "\n\n"
-				+ "Change setting in Plugins > OME-Zarr > Zarr Drag And Drop Open Settings to still open the image." );
-		logger.warn( "Could not open dataset: {}. Error message: {}", droppedInPath, e.getMessage() );
+		errorHandler.accept( "Safety check failed when opening dataset: " + droppedInPath + "\n\r\n" + e.getMessage() + "\n\r\n"
+				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Zarr Drag And Drop Open Settings to still open the image." );
+		logger.warn( "Not opening dataset: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 
 	Object openImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener,

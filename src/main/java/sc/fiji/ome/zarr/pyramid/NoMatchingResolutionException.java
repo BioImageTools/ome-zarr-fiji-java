@@ -5,7 +5,8 @@ public class NoMatchingResolutionException extends RuntimeException
 
 	public NoMatchingResolutionException( final int preferredWidth, final int minWidth )
 	{
-		super( "No resolution level with width <= " + preferredWidth + " found. Smallest available resolution has a width of " + minWidth
-				+ "." );
+		super( "No resolution level fitting the preferred width <= " + preferredWidth
+				+ " pixels found.\nSmallest available resolution has a width of "
+				+ minWidth + " pixels." );
 	}
 }
