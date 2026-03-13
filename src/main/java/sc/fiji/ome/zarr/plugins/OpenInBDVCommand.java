@@ -37,9 +37,8 @@ import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import bdv.util.BdvFunctions;
-import bdv.util.BdvOptions;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.util.BdvUtils;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
@@ -60,8 +59,7 @@ public class OpenInBDVCommand implements Command
 		{
 			logService.log( 0, "Opening " + dataset.getClass() + " in BDV..." );
 			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
-			BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
-					BdvOptions.options().frameTitle( pyramidalDataset.getName() ) );
+			BdvUtils.showBdvAndRegisterDataset( pyramidalDataset );
 		}
 		else
 		{
