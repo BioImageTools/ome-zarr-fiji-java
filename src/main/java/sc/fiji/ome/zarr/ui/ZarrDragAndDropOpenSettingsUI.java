@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.plugin.Parameter;
@@ -24,17 +25,38 @@ public class ZarrDragAndDropOpenSettingsUI extends DynamicCommand
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	private static final Integer WIDTH = 20;
+
 	@SuppressWarnings( "all" )
 	@Parameter
 	private PrefService prefService;
+
+	@SuppressWarnings( "all" )
+	@Parameter( visibility = ItemVisibility.MESSAGE, required = false, persist = false )
+	private String infoMessage = "<html>"
+			+ "<body width=" + WIDTH + "cm align=left>"
+			+ "Configure how OME-Zarr datasets are opened when dragging them into Fiji.<br>"
+			+ "Choose a default behavior and optionally limit the preferred resolution."
+			+ "</body>"
+			+ "</html>";
 
 	@SuppressWarnings( "all" )
 	@Parameter( label = "Default zarr drag and drop open behavior", description = "Chose the behavior if you drag and drop a zarr image folder into Fiji", initializer = "initZarrOpenBehaviors" )
 	private String defaultZarrOpenBehavior;
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Preferred width for matching resolution choice", description = "For the behavior matching resolution a preferred maximum width can be set" )
+	@Parameter( label = "Preferred width for 'matching resolution' choice" )
 	private int preferredWidth;
+
+	@SuppressWarnings( "all" )
+	@Parameter( visibility = ItemVisibility.MESSAGE, required = false, persist = false )
+	private String preferredWidthInfo = "<html>"
+			+ "<body width=" + WIDTH + "cm align=left>"
+			+ "For the 'matching resolution' behavior, set a preferred maximum width.<br>"
+			+ "Fiji will open the highest available resolution whose width is below this value.<br>"
+			+ "If no such resolution exists, the image will not be opened."
+			+ "</body>"
+			+ "</html>";
 
 	private ZarrDragAndDropOpenSettings settings;
 
