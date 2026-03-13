@@ -25,6 +25,8 @@ import java.util.Map;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import software.amazon.awssdk.services.s3.S3Client;
+
 /**
  * BigStitcher/BigDataViewer-style OME-Zarr writer using n5-zarr.
  * This follows the pattern used by BigStitcher-Spark for creating OME-Zarr output.
@@ -57,7 +59,7 @@ public class BigStitcherStyleOMEZarrWriter
 				String keyPrefix = parts.length > 1 ? parts[ 1 ] : "";
 
 				this.n5 = new N5AmazonS3Writer(
-						com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
+						S3Client.builder().build(),
 						bucketName,
 						keyPrefix
 				);

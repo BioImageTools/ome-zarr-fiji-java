@@ -39,12 +39,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Clear Maven Cache # TODO: May be removed in the future, but currently there are some issues with the cache that cause the SonarCloud analysis to fail
+        run: rm -rf ~/.m2/repository
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'zulu'
-          cache: 'maven'
+          # cache: 'maven' # TODO: May be activated in the future, but currently there are some issues with the cache that cause the SonarCloud analysis to fail
       - name: Jacoco Report and SonarCloud Analysis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information
