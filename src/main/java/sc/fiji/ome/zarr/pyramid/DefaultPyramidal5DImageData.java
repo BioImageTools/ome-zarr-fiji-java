@@ -209,9 +209,7 @@ public class DefaultPyramidal5DImageData<
 		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
 		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
 		final OmeNgffMetadata omeNgffMetadata = ( OmeNgffMetadata ) metadata;
-		final MultiscaleDatasets multiscaleDatasets =
-				MultiscaleDatasets.sort( omeNgffMetadata.getPaths(), omeNgffMetadata.spatialTransforms3d() );
-		transforms = multiscaleDatasets.getTransforms();
+		transforms = omeNgffMetadata.spatialTransforms3d();
 		double rx = transforms[ resolutionLevel.index ].get( 0, 0 );
 		double ry = transforms[ resolutionLevel.index ].get( 1, 1 );
 		double rz = transforms[ resolutionLevel.index ].get( 2, 2 );
