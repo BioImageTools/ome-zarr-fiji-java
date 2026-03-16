@@ -400,7 +400,7 @@ public class DefaultPyramidal5DImageData<
 	{
 		private final String datasetPath;
 
-		private final int index;
+		private final int index; // the position of the resolution level within a multiscale object
 
 		private final DatasetAttributes attributes;
 
