@@ -456,7 +456,7 @@ public class DefaultPyramidal5DImageData<
 		{
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
 			OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
-			if ( multiscales.getChildrenMetadata()[ 0 ] == null || multiscales.getChildrenMetadata().length == 0 )
+			if ( multiscales.getChildrenMetadata().length == 0 || multiscales.getChildrenMetadata()[ 0 ] == null )
 				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
 			List< ResolutionLevel > levels = new ArrayList<>();
 			int index = 0;
