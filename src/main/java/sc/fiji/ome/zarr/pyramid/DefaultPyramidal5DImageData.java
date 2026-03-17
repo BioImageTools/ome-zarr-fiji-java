@@ -61,8 +61,11 @@ import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScale
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
 import org.scijava.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -80,6 +83,7 @@ import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.util.Affine3DUtils;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 /**
@@ -97,6 +101,8 @@ public class DefaultPyramidal5DImageData<
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
 	private static final Map< String, AxisType > AXIS_MAPPING;
 
 	static
@@ -210,10 +216,13 @@ public class DefaultPyramidal5DImageData<
 		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
 		final OmeNgffMetadata omeNgffMetadata = ( OmeNgffMetadata ) metadata;
 		transforms = omeNgffMetadata.spatialTransforms3d();
-		double rx = transforms[ resolutionLevel.index ].get( 0, 0 );
-		double ry = transforms[ resolutionLevel.index ].get( 1, 1 );
-		double rz = transforms[ resolutionLevel.index ].get( 2, 2 );
-		voxelDimensions = new FinalVoxelDimensions( omeNgffMetadata.unit(), rx, ry, rz );
+		AffineTransform3D affineTransform3D = transforms[ resolutionLevel.index ];
+		if ( !Affine3DUtils.isScaling( affineTransform3D, 0.01d ) )
+			logger.warn( "The affine transform is not a strict scaling transform. This may cause problems with the image viewer." );
+		double scaleX = affineTransform3D.get( 0, 0 );
+		double scaleY = affineTransform3D.get( 1, 1 );
+		double scaleZ = affineTransform3D.get( 2, 2 );
+		voxelDimensions = new FinalVoxelDimensions( omeNgffMetadata.unit(), scaleX, scaleY, scaleZ );
 
 		this.type = N5Utils.type( multiscale.getDataType() );
 		this.volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
