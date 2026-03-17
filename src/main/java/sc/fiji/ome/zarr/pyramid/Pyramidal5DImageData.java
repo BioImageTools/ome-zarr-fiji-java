@@ -8,6 +8,7 @@ import java.util.List;
 
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
  * 5D multi-resolution array data
@@ -51,4 +52,9 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	VoxelDimensions voxelDimensions();
 
 	String getName();
+
+	default Omero getOmeroProperties()
+	{
+		return null;
+	}
 }

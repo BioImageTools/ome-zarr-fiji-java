@@ -62,6 +62,7 @@ import org.scijava.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.Color;
 import java.io.File;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
@@ -254,15 +255,17 @@ public class DefaultPyramidal5DImageData<
 		int channelAxisIndex = findAxisIndex( resolutionLevel, Axes.CHANNEL );
 		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )
 		{
+			final Omero.Channel omeroChannel = omero == null || omero.channels == null ? null : omero.channels.get( channelNumber );
+			String cannelLabel = omeroChannel == null || omeroChannel.label == null ? getName() : omeroChannel.label;
 			RandomAccessibleInterval< V >[] channelsVolatile = extractChannels( volatileImgs, channelAxisIndex, channelNumber );
 			RandomAccessibleInterval< T >[] channels = extractChannels( cachedCellImgs, channelAxisIndex, channelNumber );
 			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile = new RandomAccessibleIntervalMipmapSource4D<>(
-					channelsVolatile, volatileType, transforms, voxelDimensions, getName(), true );
+					channelsVolatile, volatileType, transforms, voxelDimensions, cannelLabel, true );
 			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
-					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, getName(), true );
+					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, cannelLabel, true );
 			final SourceAndConverter< T > sourceAndConverter = createSourceAndConverter( source4D, source4DVolatile );
-			// ConverterSetup converterSetup = BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
 			sources.add( sourceAndConverter );
+			BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
 		}
 		return sources;
 	}
@@ -728,5 +731,11 @@ public class DefaultPyramidal5DImageData<
 	public String getName()
 	{
 		return name;
+	}
+
+	@Override
+	public Omero getOmeroProperties()
+	{
+		return omero;
 	}
 }
