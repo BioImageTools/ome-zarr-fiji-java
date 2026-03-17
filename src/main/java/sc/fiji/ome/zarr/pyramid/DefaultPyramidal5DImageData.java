@@ -215,15 +215,8 @@ public class DefaultPyramidal5DImageData<
 		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
 		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
 		final OmeNgffMetadata omeNgffMetadata = ( OmeNgffMetadata ) metadata;
-		transforms = omeNgffMetadata.spatialTransforms3d();
-		AffineTransform3D affineTransform3D = transforms[ resolutionLevel.index ];
-		if ( !Affine3DUtils.isScaling( affineTransform3D, 0.01d ) )
-			logger.warn( "The affine transform is not a strict scaling transform. This may cause problems with the image viewer." );
-		double scaleX = affineTransform3D.get( 0, 0 );
-		double scaleY = affineTransform3D.get( 1, 1 );
-		double scaleZ = affineTransform3D.get( 2, 2 );
-		voxelDimensions = new FinalVoxelDimensions( omeNgffMetadata.unit(), scaleX, scaleY, scaleZ );
-
+		this.transforms = omeNgffMetadata.spatialTransforms3d();
+		this.voxelDimensions = createVoxelDimensions( transforms[ 0 ], omeNgffMetadata.unit() ); // voxel dimensions — index 0 is chosen, i.e., the highest resolution
 		this.type = N5Utils.type( multiscale.getDataType() );
 		this.volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 		this.name = multiscale.getName();
@@ -297,6 +290,18 @@ public class DefaultPyramidal5DImageData<
 		final SourceAndConverter< V > sourceAndConverterVolatile =
 				BigDataViewer.wrapWithTransformedSource( new SourceAndConverter<>( source4DVolatile, converterVolatile ) );
 		return new SourceAndConverter<>( source4D, converter, sourceAndConverterVolatile );
+	}
+
+	private VoxelDimensions createVoxelDimensions( final AffineTransform3D transform, final String unit )
+	{
+		if ( !Affine3DUtils.isScaling( transform, 0.01d ) )
+			logger.warn( "The affine transform is not a strict scaling transform. This may cause problems with the image viewer." );
+
+		double scaleX = transform.get( 0, 0 );
+		double scaleY = transform.get( 1, 1 );
+		double scaleZ = transform.get( 2, 2 );
+
+		return new FinalVoxelDimensions( unit, scaleX, scaleY, scaleZ );
 	}
 
 	private ResolutionLevel selectResolutionLevel( final Integer preferredMaxWidth, final Multiscale multiscale )
