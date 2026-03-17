@@ -542,9 +542,6 @@ public class DefaultPyramidal5DImageData<
 
 	private int getAxisSize( final ResolutionLevel resolutionLevel, final AxisType axisType )
 	{
-		if ( resolutionLevel == null )
-			return 1;
-
 		final int axisIndex = findAxisIndex( resolutionLevel, axisType );
 
 		return axisIndex >= 0 ? ( int ) resolutionLevel.attributes.getDimensions()[ axisIndex ] : 1;
