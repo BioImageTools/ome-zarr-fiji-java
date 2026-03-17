@@ -235,12 +235,11 @@ public class DefaultPyramidal5DImageData<
 		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
 		volatileImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
-		for ( int level = 0; level < numResolutionLevels; level++ )
+		for ( ResolutionLevel level : multiscale.getLevels() )
 		{
-			cachedCellImgs[ level ] = N5Utils.openVolatile( reader, multiscale.getLevels().get( level ).datasetPath );
-			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level ], sharedQueue );
+			cachedCellImgs[ level.index ] = N5Utils.openVolatile( reader, level.datasetPath );
+			volatileImgs[ level.index ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level.index ], sharedQueue );
 		}
-
 		final ImgPlus< T > imgPlus = new ImgPlus<>( cachedCellImgs[ resolutionLevel.index ], name );
 		configureImgPlusAxesFromResolutionLevel( imgPlus, resolutionLevel );
 
