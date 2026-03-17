@@ -6,14 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static sc.fiji.ome.zarr.util.ZarrTestUtils.IMAGE_NAME;
 
-import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imglib2.img.Img;
@@ -24,7 +16,14 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
 import org.scijava.display.DisplayService;
 
+import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import bdv.util.BdvHandle;
 
@@ -41,6 +40,16 @@ class ZarrOpenActionsTest
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr"
+		);
+	}
+
+	static Stream< String > omeZarrSingleImages()
+	{
+		return Stream.of(
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0/image",
+				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr/0",
+				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr/0"
 		);
 	}
 
@@ -146,10 +155,11 @@ class ZarrOpenActionsTest
 		}
 	}
 
-	@Test
-	void testOpenSingleScaleImageInImageJ() throws URISyntaxException
+	@ParameterizedTest
+	@MethodSource( "omeZarrSingleImages" )
+	void testOpenSingleScaleImageInImageJ( String resource ) throws URISyntaxException
 	{
-		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image" );
+		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
@@ -186,10 +196,11 @@ class ZarrOpenActionsTest
 		}
 	}
 
-	@Test
-	void testOpenSingleScaleImageInBDV() throws URISyntaxException
+	@ParameterizedTest
+	@MethodSource( "omeZarrSingleImages" )
+	void testOpenSingleScaleImageInBDV( String resource ) throws URISyntaxException
 	{
-		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image" );
+		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
