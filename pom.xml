@@ -245,6 +245,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Mockito used in some unit tests -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 
 		<!-- ====================================== -->
 
@@ -259,12 +266,13 @@
 			<build>
 				<plugins>
 					<!-- Configure the maven-surefire-plugin to use a heap size of 1gb while running tests. -->
+					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>-Xmx1g --add-opens=java.base/java.lang=ALL-UNNAMED</argLine>
+							<argLine>-Xmx1g -da --add-opens=java.base/java.lang=ALL-UNNAMED</argLine>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -275,12 +283,13 @@
 			<build>
 				<plugins>
 					<!-- Configure the maven-surefire-plugin to use a heap size of 1gb while running tests for jacoco coverage analysis. -->
+					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>@{argLine} -Xmx1g</argLine>
+							<argLine>@{argLine} -Xmx1g -da</argLine>
 						</configuration>
 					</plugin>
 					<plugin>

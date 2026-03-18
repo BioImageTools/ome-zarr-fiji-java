@@ -14,7 +14,6 @@ import java.awt.PointerInfo;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
-import java.nio.file.Path;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -52,9 +51,9 @@ public class DnDActionChooser
 
 	private boolean extendedVersion;
 
-	public DnDActionChooser( final Path path, final Context context )
+	public DnDActionChooser( final Context context, final ZarrOpenActions actions )
 	{
-		this.actions = new ZarrOpenActions( path, context );
+		this.actions = actions;
 		this.context = context;
 
 		this.extendedVersion = true;

@@ -118,18 +118,15 @@ public class DefaultPyramidal5DImageData<
 	private final int numResolutionLevels;
 
 	/** The fourth dimension size... */
-	private int numTimepoints = 1;
+	private final int numTimepoints;
 
 	/** The fifth dimension size... */
-	private int numChannels = 1;
+	private final int numChannels;
 
 	/** The total number of dimensions in the image. */
 	private final int numDimensions;
 
 	private final long[] dimensions;
-
-	//TODO: -- knows resolution along the dimensions
-	//private OMEZarrAxes omeZarrAxes;
 
 	//these act as caches not to create them again and again
 	private final ImgPlus< T > imgPlus;
@@ -168,6 +165,22 @@ public class DefaultPyramidal5DImageData<
 	 */
 	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString )
 	{
+		this( context, inputPathAsString, null );
+	}
+
+	/**
+	 * Build a dataset from the given OME-Zarr path. The path can be the root of the OME-Zarr dataset or a subfolder within it.
+	 * <br>
+	 * @param context The SciJava context for building the SciJava dataset
+	 * @param inputPathAsString The path to the OME-Zarr dataset.
+	 * @param preferredMaxWidth The preferred maximum width for the ij image to be loaded. If the highest resolution image is wider than this, a downsampled resolution is chosen.<br>
+	 * 							This is useful for loading large images that may not fit in memory at full resolution.<br>
+	 * 							If {@code null}, no downsampled version will be chosen (i.e. highest resolution). Only affects the imgPlus.
+	 * @throws NoMatchingResolutionException If the given {@code preferredMaxWidth} is smaller than the width of the smallest resolution level.
+	 */
+	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
+			throws NoMatchingResolutionException
+	{
 		this.context = context;
 		this.inputPathAsString = inputPathAsString;
 		this.inputPath = Paths.get( inputPathAsString );
@@ -178,13 +191,14 @@ public class DefaultPyramidal5DImageData<
 
 		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata );
 		final int multiscaleIndex = 0; // TODO: How to select multiscale index?
-		final int resolutionLevelIndex = 0; // TODO: How to select resolution level index?
 		Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
 		this.name = multiscale.getName();
 		this.numResolutionLevels = multiscale.numResolutionLevels();
-		ResolutionLevel resolutionLevel = multiscale.getLevel( resolutionLevelIndex );
+		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
 		this.dimensions = resolutionLevel.attributes.getDimensions();
 		this.numDimensions = dimensions.length;
+		this.numTimepoints = getNumTimepointsFromResolutionLevel( resolutionLevel );
+		this.numChannels = getNumChannelsFromResolutionLevel( resolutionLevel );
 
 		CachedCellImg< T, ? > img = N5Utils.openVolatile( reader, resolutionLevel.datasetPath );
 		this.imgPlus = new ImgPlus<>( img, name );
@@ -193,6 +207,23 @@ public class DefaultPyramidal5DImageData<
 		this.ijDataset = new DefaultDataset( context, imgPlus );
 		this.ijDataset.setName( name );
 		this.ijDataset.setRGBMerged( false );
+	}
+
+	private ResolutionLevel selectResolutionLevel( final Integer preferredMaxWidth, final Multiscale multiscale )
+			throws NoMatchingResolutionException
+	{
+		ResolutionLevel resolutionLevel = multiscale.getLevels().get( 0 ); // highest resolution according to OME-Zarr spec
+		if ( preferredMaxWidth == null )
+			return resolutionLevel;
+		int width = 0;
+		// iterate from the highest resolution to the lowest resolution
+		for ( ResolutionLevel level : multiscale.getLevels() )
+		{
+			width = getAxisSize( level, Axes.X );
+			if ( width <= preferredMaxWidth )
+				return level;
+		}
+		throw new NoMatchingResolutionException( preferredMaxWidth, width );
 	}
 
 	// ---------------------------------------------------------------------
@@ -261,11 +292,6 @@ public class DefaultPyramidal5DImageData<
 		public int numResolutionLevels()
 		{
 			return resolutionLevels.size();
-		}
-
-		public ResolutionLevel getLevel( int index )
-		{
-			return resolutionLevels.get( index );
 		}
 
 		public List< ResolutionLevel > getLevels()
@@ -394,6 +420,48 @@ public class DefaultPyramidal5DImageData<
 		img.setAxis( new DefaultLinearAxis( type, unit, scale ), index );
 	}
 
+	private int getNumChannelsFromResolutionLevel( final ResolutionLevel resolutionLevel )
+	{
+		return getAxisSize( resolutionLevel, Axes.CHANNEL );
+	}
+
+	private int getNumTimepointsFromResolutionLevel( final ResolutionLevel resolutionLevel )
+	{
+		return getAxisSize( resolutionLevel, Axes.TIME );
+	}
+
+	private int getAxisSize( final ResolutionLevel resolutionLevel, final AxisType axisType )
+	{
+		if ( resolutionLevel == null )
+			return 1;
+
+		final int axisIndex = findAxisIndex( resolutionLevel, axisType );
+
+		return axisIndex >= 0 ? ( int ) resolutionLevel.attributes.getDimensions()[ axisIndex ] : 1;
+	}
+
+	private int findAxisIndex( final ResolutionLevel resolutionLevel, final AxisType axisType )
+	{
+		if ( resolutionLevel.axes != null )
+		{
+			for ( int i = 0; i < resolutionLevel.axes.length; i++ )
+			{
+				Axis axis = resolutionLevel.axes[ i ];
+				if ( axisType.equals( AXIS_MAPPING.get( axis.getName() ) ) )
+					return i;
+			}
+		}
+		else if ( resolutionLevel.axisNames != null )
+		{
+			for ( int i = 0; i < resolutionLevel.axisNames.length; i++ )
+			{
+				if ( axisType.equals( AXIS_MAPPING.get( resolutionLevel.axisNames[ i ] ) ) )
+					return i;
+			}
+		}
+		return -1;
+	}
+
 	// ---------------------------------------------------------------------
 	// Interface Implementations
 	// ---------------------------------------------------------------------
@@ -425,8 +493,8 @@ public class DefaultPyramidal5DImageData<
 				sourceAndConverters = new ArrayList<>();
 				SharedQueue queue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 				BdvOptions options = BdvOptions.options().frameTitle( name );
-				this.numTimepoints = N5Viewer.buildN5Sources( reader, Collections.singletonList( metadata ), queue, new ArrayList<>(),
-						sourceAndConverters, options );
+				N5Viewer.buildN5Sources( reader, Collections.singletonList( metadata ), queue, new ArrayList<>(), sourceAndConverters,
+						options );
 			}
 			catch ( IOException e )
 			{
@@ -447,7 +515,6 @@ public class DefaultPyramidal5DImageData<
 	{
 		return null;
 	}
-
 
 	@Override
 	public int numDimensions()
