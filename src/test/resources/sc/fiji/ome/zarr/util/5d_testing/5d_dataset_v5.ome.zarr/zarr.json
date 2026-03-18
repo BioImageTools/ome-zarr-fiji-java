@@ -60,7 +60,46 @@
             }
           ]
         }
-      ]
+      ],
+      "omero": {
+        "channels": [
+          {
+            "active": true,
+            "coefficient": 1.0,
+            "color": "00FF00",
+            "family": "linear",
+            "inverted": false,
+            "label": "lynEGFP",
+            "window": {
+              "end": 246.0,
+              "max": 255.0,
+              "min": 0.0,
+              "start": 3.0
+            }
+          },
+          {
+            "active": true,
+            "coefficient": 1.0,
+            "color": "FF0000",
+            "family": "linear",
+            "inverted": false,
+            "label": "NLStdTomato",
+            "window": {
+              "end": 133.0,
+              "max": 255.0,
+              "min": 0.0,
+              "start": 6.0
+            }
+          }
+        ],
+        "id": 1,
+        "rdefs": {
+          "defaultT": 0,
+          "defaultZ": 71,
+          "model": "color"
+        },
+        "version": "0.4"
+      }
     }
   },
   "zarr_format": 3,
