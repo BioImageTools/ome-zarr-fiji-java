@@ -1,8 +1,9 @@
 package sc.fiji.ome.zarr.pyramid;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import net.imagej.Dataset;
@@ -14,7 +15,6 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Cast;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
@@ -34,9 +34,17 @@ class DefaultPyramidal5DImageDataTest
 	{
 		return Stream.of(
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
-				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr"
-		// "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example" // NB: OME v05 not supported yet
-		// "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" // NB: OME v05 not supported yet
+				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr",
+				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
+				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr"
+		);
+	}
+
+	static Stream< String > pyramids()
+	{
+		return Stream.of(
+				"sc/fiji/ome/zarr/util/pyramid_testing/pyramid_v4.zarr",
+				"sc/fiji/ome/zarr/util/pyramid_testing/pyramid_v5.zarr"
 		);
 	}
 
@@ -69,7 +77,7 @@ class DefaultPyramidal5DImageDataTest
 				assertEquals( 64, imgPlus.dimension( 1 ) );
 				assertEquals( 16, imgPlus.dimension( 2 ) );
 			}
-			if ( resource.contains( "ome_zarr_v" ) )
+			if ( resource.contains( "2d_testing" ) )
 			{
 				assertEquals( 1000, imgPlus.dimension( 0 ) );
 				assertEquals( 1000, imgPlus.dimension( 1 ) );
@@ -86,6 +94,35 @@ class DefaultPyramidal5DImageDataTest
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			assertNotNull( pyramidal5DImageData.asSources() );
+			if ( resource.contains( "5d_testing" ) )
+			{
+				Source< ? > channel0 = pyramidal5DImageData.asSources().get( 0 ).getSpimSource();
+				VoxelDimensions voxelDimensions = channel0.getVoxelDimensions();
+				assertEquals( 2, channel0.getNumMipmapLevels() ); // 2 resolution levels
+				assertInstanceOf( UnsignedByteType.class, channel0.getType() );
+				assertNotNull( voxelDimensions );
+				assertNotNull( channel0.getSource( 0, 0 ) ); // timepoint 0, resolution level 0
+				assertNotNull( channel0.getSource( 0, 1 ) ); // timepoint 0, resolution level 1
+				assertNotNull( channel0.getSource( 1, 0 ) ); // timepoint 1, resolution level 0
+				assertNotNull( channel0.getSource( 1, 1 ) ); // timepoint 1, resolution level 1
+				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
+				assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
+				assertEquals( 2, pyramidal5DImageData.asSources().size() ); // 2 channels
+			}
+			if ( resource.contains( "2d_testing" ) )
+			{
+				assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
+				Source< ? > channel0 = pyramidal5DImageData.asSources().get( 0 ).getSpimSource();
+				VoxelDimensions voxelDimensions = channel0.getVoxelDimensions();
+				assertEquals( 2, channel0.getNumMipmapLevels() ); // 2 resolution levels
+				assertInstanceOf( LongType.class, channel0.getType() );
+				assertNotNull( voxelDimensions );
+				assertNotNull( channel0.getSource( 0, 0 ) ); // timepoint 0, resolution level 0
+				assertNotNull( channel0.getSource( 0, 1 ) ); // timepoint 0, resolution level 1
+				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
+				assertArrayEquals( new long[] { 1000, 1000, 1 }, dimensions );
+				assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
+			}
 		}
 	}
 
@@ -99,7 +136,7 @@ class DefaultPyramidal5DImageDataTest
 			assertNotNull( dataset );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 5, dataset.numDimensions() ); // NB: xyzct
-			if ( resource.contains( "ome_zarr_v" ) )
+			if ( resource.contains( "2d_testing" ) )
 				assertEquals( 2, dataset.numDimensions() ); // NB: xy
 
 		}
@@ -114,7 +151,7 @@ class DefaultPyramidal5DImageDataTest
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 2, pyramidal5DImageData.numTimepoints() );
-			if ( resource.contains( "ome_zarr_v" ) )
+			if ( resource.contains( "2d_testing" ) )
 				assertEquals( 1, pyramidal5DImageData.numTimepoints() );
 		}
 	}
@@ -128,7 +165,7 @@ class DefaultPyramidal5DImageDataTest
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 2, pyramidal5DImageData.numChannels() );
-			if ( resource.contains( "ome_zarr_v" ) )
+			if ( resource.contains( "2d_testing" ) )
 				assertEquals( 1, pyramidal5DImageData.numChannels() );
 		}
 	}
@@ -153,7 +190,9 @@ class DefaultPyramidal5DImageDataTest
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			VoxelDimensions voxelDimensions = pyramidal5DImageData.voxelDimensions();
-			assertNull( voxelDimensions ); // NB: not yet implemented
+			assertNotNull( voxelDimensions );
+			assertEquals( "", voxelDimensions.unit() );
+			assertArrayEquals( new double[] { 1, 1, 1 }, voxelDimensions.dimensionsAsDoubleArray() );
 		}
 	}
 
@@ -167,7 +206,7 @@ class DefaultPyramidal5DImageDataTest
 			Object type = pyramidal5DImageData.getType();
 			if ( resource.contains( "5d_testing" ) )
 				Assertions.assertInstanceOf( UnsignedByteType.class, type );
-			if ( resource.contains( "ome_zarr_v" ) )
+			if ( resource.contains( "2d_testing" ) )
 				Assertions.assertInstanceOf( LongType.class, type );
 		}
 	}
@@ -183,12 +222,12 @@ class DefaultPyramidal5DImageDataTest
 		}
 	}
 
-	@Test
-	void testGetPyramidLevels() throws URISyntaxException
+	@ParameterizedTest
+	@MethodSource( "pyramids" )
+	void testGetPyramidLevels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
-			String resource = "sc/fiji/ome/zarr/util/pyramid_testing/pyramid_v4.zarr";
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			Source< ? > spimSource = pyramidal5DImageData.asSources().get( 0 ).getSpimSource();
 
