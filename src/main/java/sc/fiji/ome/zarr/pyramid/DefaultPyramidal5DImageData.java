@@ -56,10 +56,8 @@ import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.SpatialMetadataGroup;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
 import org.scijava.Context;
 import org.slf4j.Logger;
@@ -215,9 +213,9 @@ public class DefaultPyramidal5DImageData<
 		final int multiscaleIndex = 0; // TODO: How to select multiscale index?
 		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
 		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
-		final OmeNgffMetadata omeNgffMetadata = ( OmeNgffMetadata ) metadata;
-		this.transforms = omeNgffMetadata.spatialTransforms3d();
-		this.voxelDimensions = createVoxelDimensions( transforms[ 0 ], omeNgffMetadata.unit() ); // voxel dimensions — index 0 is chosen, i.e., the highest resolution
+		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
+		this.transforms = spatialMetadata.spatialTransforms3d();
+		this.voxelDimensions = createVoxelDimensions( transforms[ 0 ], spatialMetadata.unit() ); // voxel dimensions — index 0 is chosen, i.e., the highest resolution
 		this.type = N5Utils.type( multiscale.getDataType() );
 		this.volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 		this.name = multiscale.getName();
