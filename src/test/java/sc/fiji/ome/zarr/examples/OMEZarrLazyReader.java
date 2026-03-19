@@ -18,6 +18,8 @@ import org.janelia.saalfeldlab.n5.zarr.N5ZarrReader;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import software.amazon.awssdk.services.s3.S3Client;
+
 public class OMEZarrLazyReader
 {
 
@@ -45,7 +47,7 @@ public class OMEZarrLazyReader
 
 			// Create S3 reader with Zarr backend
 			n5 = new N5AmazonS3Reader(
-					com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
+					S3Client.builder().build(),
 					bucketName,
 					keyPrefix
 			);
@@ -95,7 +97,7 @@ public class OMEZarrLazyReader
 			String bucketName = parts[ 0 ];
 			String keyPrefix = parts.length > 1 ? parts[ 1 ] : "";
 			n5 = new N5AmazonS3Reader(
-					com.amazonaws.services.s3.AmazonS3ClientBuilder.defaultClient(),
+					S3Client.builder().build(),
 					bucketName,
 					keyPrefix
 			);
