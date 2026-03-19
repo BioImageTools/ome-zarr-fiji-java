@@ -468,6 +468,20 @@ public class DefaultPyramidal5DImageData<
 			this.node = node;
 		}
 
+		protected Multiscale buildMultiscale( final String name,
+				final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata[] children )
+		{
+			final List< ResolutionLevel > levels = new ArrayList<>();
+			int index = 0;
+			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : children )
+			{
+				levels.add( new ResolutionLevel( single.getPath(), index++, single.getAttributes(), single.getAxes(), null, null,
+						single.getScale() ) );
+			}
+			return new Multiscale( name, levels, children[ 0 ].getAttributes().getDataType()
+			);
+		}
+
 		@Override
 		public Omero initOmeroMetadata()
 		{
@@ -506,16 +520,7 @@ public class DefaultPyramidal5DImageData<
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata omeNgffMetadata = Cast.unchecked( n5Metadata );
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales =
 					omeNgffMetadata.multiscales[ multiscaleIndex ]; // NB: v04 multi scale metadata ??
-			List< ResolutionLevel > levels = new ArrayList<>();
-			int index = 0;
-			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : multiscales
-					.getChildrenMetadata() )
-			{
-				levels.add(
-						new ResolutionLevel( single.getPath(), index++, single.getAttributes(), single.getAxes(), null, null,
-								single.getScale() ) );
-			}
-			return new Multiscale( multiscales.name, levels, multiscales.getChildrenMetadata()[ 0 ].getAttributes().getDataType() );
+			return buildMultiscale( multiscales.name, multiscales.getChildrenMetadata() );
 		}
 
 		@Override
@@ -539,15 +544,7 @@ public class DefaultPyramidal5DImageData<
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
 			if ( multiscales.getChildrenMetadata().length == 0 || multiscales.getChildrenMetadata()[ 0 ] == null )
 				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
-			List< ResolutionLevel > levels = new ArrayList<>();
-			int index = 0;
-			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : multiscales.getChildrenMetadata() )
-			{
-				levels.add(
-						new ResolutionLevel( single.getPath(), index++, single.getAttributes(), single.getAxes(), null, null,
-								single.getScale() ) );
-			}
-			return new Multiscale( multiscales.name, levels, multiscales.getChildrenMetadata()[ 0 ].getAttributes().getDataType() );
+			return buildMultiscale( multiscales.name, multiscales.getChildrenMetadata() );
 		}
 
 		@Override
@@ -572,7 +569,7 @@ public class DefaultPyramidal5DImageData<
 					omeNgffMetadata.getMultiscales()[ multiscaleIndex ];
 			if ( multiscales.getChildrenMetadata() == null || multiscales.getChildrenMetadata().length == 0 )
 				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children metadata." );
-			List< ResolutionLevel > levels = new ArrayList<>();
+			final List< ResolutionLevel > levels = new ArrayList<>();
 			int index = 0;
 			for ( N5SingleScaleMetadata single : multiscales.getChildrenMetadata() )
 			{
