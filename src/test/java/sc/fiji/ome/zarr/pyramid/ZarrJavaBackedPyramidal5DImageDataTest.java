@@ -1,8 +1,9 @@
 package sc.fiji.ome.zarr.pyramid;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
@@ -129,7 +130,25 @@ class ZarrJavaBackedPyramidal5DImageDataTest
 		{
 			ZarrJavaBackedPyramidal5DImageData< ? > data = load( resource, context );
 			VoxelDimensions voxelDimensions = data.voxelDimensions();
-			assertNull( voxelDimensions ); // NB: not yet implemented
+			assertNotNull( voxelDimensions );
+			assertEquals( "", voxelDimensions.unit() );
+			assertArrayEquals( new double[] { 1, 1, 1 }, voxelDimensions.dimensionsAsDoubleArray() );
+		}
+	}
+
+	@ParameterizedTest
+	@MethodSource( "omeZarrExamples" )
+	void testPreferredMaxWidth( final String resource ) throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			ZarrJavaBackedPyramidal5DImageData< ? > data = load( resource, context, 2000 );
+			assertEquals( 1000, data.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 1000, data.asDataset().getImgPlus().dimension( 1 ) );
+			data = load( resource, context, 900 );
+			assertEquals( 500, data.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 500, data.asDataset().getImgPlus().dimension( 1 ) );
+			assertThrows( NoMatchingResolutionException.class, () -> load( resource, context, 400 ) );
 		}
 	}
 
@@ -180,5 +199,14 @@ class ZarrJavaBackedPyramidal5DImageDataTest
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
 		return new ZarrJavaBackedPyramidal5DImageData<>( context, path.toString() );
+	}
+
+	private ZarrJavaBackedPyramidal5DImageData< ? > load(
+			final String resource,
+			final Context context,
+			final Integer preferredWidth ) throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( resource );
+		return new ZarrJavaBackedPyramidal5DImageData<>( context, path.toString(), preferredWidth );
 	}
 }

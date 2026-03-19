@@ -34,6 +34,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+
 import org.scijava.Context;
 
 import java.io.IOException;
@@ -46,9 +47,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import bdv.cache.SharedQueue;
 import bdv.util.RandomAccessibleIntervalMipmapSource;
 import bdv.viewer.SourceAndConverter;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
@@ -85,6 +86,8 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 
 	private final int numResolutionLevels;
 
+	private final int selectedResolutionLevelIndex;
+
 	private int numTimepoints = 1;
 
 	private int numChannels = 1;
@@ -107,6 +110,8 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 
 	private final MultiscalesEntry entry;
 
+	private final VoxelDimensions voxelDimensions;
+
 	/**
 	 * Build a dataset from the given OME-Zarr path.
 	 *
@@ -115,6 +120,11 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 	 * @throws NotAMultiscaleImageException if zarr-java cannot open the path as a multiscale image
 	 */
 	public ZarrJavaBackedPyramidal5DImageData( final Context context, final String inputPathAsString )
+	{
+		this( context, inputPathAsString, null );
+	}
+
+	public ZarrJavaBackedPyramidal5DImageData( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
 	{
 		this.context = context;
 		this.inputPathAsString = inputPathAsString;
@@ -140,28 +150,32 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 		}
 
 		this.numResolutionLevels = countResolutionLevels();
+		this.selectedResolutionLevelIndex = selectResolutionLevelIndex( preferredMaxWidth );
 
 		final Array level0Array = openLevel( 0 );
+		final Array selectedArray = openLevel( selectedResolutionLevelIndex );
 		final ucar.ma2.DataType zarrDataType = level0Array.metadata().dataType().getMA2DataType();
 		this.type = typeForZarrDataType( zarrDataType );
 
 		// zarr shape is C-order [t, c, z, y, x]; imglib2 uses F-order [x, y, z, c, t]
-		final long[] zarrShape = level0Array.metadata().shape;
+		final long[] zarrShape = selectedArray.metadata().shape;
 		this.dimensions = reverseToLong( zarrShape );
 		this.numDimensions = dimensions.length;
 
 		this.numTimepoints = getDimSizeForAxis( zarrShape, "t" );
 		this.numChannels = getDimSizeForAxis( zarrShape, "c" );
 
-		final int[] imgChunkShape = reverseToInt( level0Array.metadata().chunkShape() );
+		final int[] imgChunkShape = reverseToInt( selectedArray.metadata().chunkShape() );
 		final ReadOnlyCachedCellImgOptions options = ReadOnlyCachedCellImgOptions.options().cellDimensions( imgChunkShape );
 		final CachedCellImg< T, ? > img = new ReadOnlyCachedCellImgFactory()
-				.create( dimensions, type, new ZarrJavaCellLoader<>( level0Array ), options );
+				.create( dimensions, type, new ZarrJavaCellLoader<>( selectedArray ), options );
 
 		this.name = entry.name != null ? entry.name : inputPath.getFileName().toString();
 
 		this.imgPlus = new ImgPlus<>( img, name );
-		configureImgPlusAxes( imgPlus, entry.axes, getLevel0Scales() );
+		final double[] level0Scales = getLevel0Scales();
+		configureImgPlusAxes( imgPlus, entry.axes, level0Scales );
+		this.voxelDimensions = createVoxelDimensions( level0Scales, entry.axes );
 
 		this.ijDataset = new DefaultDataset( context, imgPlus );
 		this.ijDataset.setName( name );
@@ -201,6 +215,28 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 		{
 			return 1;
 		}
+	}
+
+	
+	private int selectResolutionLevelIndex( final Integer preferredMaxWidth )
+	{
+		if ( preferredMaxWidth == null )
+			return 0;
+
+		final int xAxis = zarrAxisIndex( "x" );
+		if ( xAxis < 0 )
+			return 0;
+
+		int smallestWidth = Integer.MAX_VALUE;
+		for ( int level = 0; level < numResolutionLevels; level++ )
+		{
+			final int width = ( int ) openLevel( level ).metadata().shape[ xAxis ];
+			if ( width <= preferredMaxWidth )
+				return level;
+			smallestWidth = Math.min( smallestWidth, width );
+		}
+
+		throw new NoMatchingResolutionException( preferredMaxWidth, smallestWidth );
 	}
 
 	private Array openLevel( final int levelIndex )
@@ -263,6 +299,37 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 		final double[] s = new double[ n ];
 		Arrays.fill( s, 1.0 );
 		return s;
+	}
+
+	
+	private VoxelDimensions createVoxelDimensions( final double[] level0Scales, final List< Axis > zarrAxes )
+	{
+		double xScale = 1.0;
+		double yScale = 1.0;
+		double zScale = 1.0;
+		String unit = "";
+
+		for ( int i = 0; i < zarrAxes.size(); i++ )
+		{
+			final Axis axis = zarrAxes.get( i );
+			if ( "x".equals( axis.name ) )
+			{
+				xScale = level0Scales[ i ];
+				unit = axis.unit == null ? "" : axis.unit;
+			}
+			else if ( "y".equals( axis.name ) )
+			{
+				yScale = level0Scales[ i ];
+				unit = axis.unit == null ? "" : axis.unit;
+			}
+			else if ( "z".equals( axis.name ) )
+			{
+				zScale = level0Scales[ i ];
+				unit = axis.unit == null ? "" : axis.unit;
+			}
+		}
+
+		return new FinalVoxelDimensions( unit, xScale, yScale, zScale );
 	}
 
 	private double[][] computeMipmapScales( final double[] level0Scales )
@@ -411,7 +478,6 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 		final int nChannels = imgChanDim >= 0 ? ( int ) levels[ 0 ].dimension( imgChanDim ) : 1;
 		this.numChannels = nChannels;
 
-		final SharedQueue queue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final List< SourceAndConverter< T > > result = new ArrayList<>();
 
 		for ( int c = 0; c < nChannels; c++ )
@@ -426,7 +492,7 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 
 			final String sourceName = nChannels > 1 ? name + " [c=" + c + "]" : name;
 			final RandomAccessibleIntervalMipmapSource< T > source =
-					new RandomAccessibleIntervalMipmapSource<>( channelLevels, type, mipmapScales, null, sourceName );
+					new RandomAccessibleIntervalMipmapSource<>( channelLevels, type, mipmapScales, voxelDimensions, sourceName );
 
 			result.add( new SourceAndConverter<>( source, new RealARGBConverter<>( type.getMinValue(), type.getMaxValue() ) ) );
 		}
@@ -442,7 +508,7 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 	@Override
 	public VoxelDimensions voxelDimensions()
 	{
-		return null;
+		return voxelDimensions;
 	}
 
 	@Override
@@ -451,6 +517,7 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 		return numDimensions;
 	}
 
+	@Override
 	public int numResolutionLevels()
 	{
 		return numResolutionLevels;

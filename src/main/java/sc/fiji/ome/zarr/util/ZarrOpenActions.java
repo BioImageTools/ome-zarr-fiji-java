@@ -171,7 +171,7 @@ public class ZarrOpenActions
 		try
 		{
 			final ZarrJavaBackedPyramidal5DImageData< ? > data =
-					new ZarrJavaBackedPyramidal5DImageData<>( context, droppedInPath.toString() );
+					new ZarrJavaBackedPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
 			final Object result = multiScaleImageOpener.apply( data.asPyramidalDataset() );
 			logger.info( "Opened multiscale image with zarr-java backend: {}", droppedInPath );
 			return result;
