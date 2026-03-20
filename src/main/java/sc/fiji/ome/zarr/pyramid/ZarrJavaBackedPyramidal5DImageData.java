@@ -15,12 +15,14 @@ import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
 import net.imagej.axis.DefaultLinearAxis;
+import net.imglib2.Volatile;
+import net.imglib2.converter.Converter;
 import net.imglib2.EuclideanSpace;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
-import net.imglib2.converter.RealARGBConverter;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.ByteType;
@@ -38,6 +40,7 @@ import net.imglib2.view.Views;
 import org.scijava.Context;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -47,11 +50,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import bdv.util.RandomAccessibleIntervalMipmapSource;
+import bdv.BigDataViewer;
+import bdv.cache.SharedQueue;
+import bdv.util.RandomAccessibleIntervalMipmapSource4D;
+import bdv.util.volatiles.VolatileTypeMatcher;
+import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
+import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.util.Cast;
 
 /**
  * An OME-Zarr backed pyramidal 5D image using zarr-java as backend (supports Zarr v2 and v3).
@@ -64,10 +75,13 @@ import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
  *
  * @param <T> Type of the pixels
  */
-public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & RealType< T > >
+public class ZarrJavaBackedPyramidal5DImageData<
+		T extends NativeType< T > & RealType< T >,
+		V extends Volatile< T > & NativeType< V > & RealType< V > >
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
 	private static final Map< String, AxisType > AXIS_MAPPING;
+    private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	static
 	{
@@ -107,10 +121,14 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 	private final MultiscaleImage multiscaleImage;
 
 	private final T type;
+	private final V volatileType;
 
 	private final MultiscalesEntry entry;
 
 	private final VoxelDimensions voxelDimensions;
+	private final AffineTransform3D[] transforms;
+	private final RandomAccessibleInterval< V >[] volatileImgs;
+	private final RandomAccessibleInterval< T >[] cachedCellImgs;
 
 	/**
 	 * Build a dataset from the given OME-Zarr path.
@@ -121,7 +139,8 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 	 */
 	public ZarrJavaBackedPyramidal5DImageData( final Context context, final String inputPathAsString )
 	{
-		this( context, inputPathAsString, null );
+        this( context, inputPathAsString, null );
+        logger.info( "Attempting to open OME-Zarr image with zarr-java backend: {}.", inputPathAsString );
 	}
 
 	public ZarrJavaBackedPyramidal5DImageData( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
@@ -156,6 +175,7 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 		final Array selectedArray = openLevel( selectedResolutionLevelIndex );
 		final ucar.ma2.DataType zarrDataType = level0Array.metadata().dataType().getMA2DataType();
 		this.type = typeForZarrDataType( zarrDataType );
+		this.volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 
 		// zarr shape is C-order [t, c, z, y, x]; imglib2 uses F-order [x, y, z, c, t]
 		final long[] zarrShape = selectedArray.metadata().shape;
@@ -176,6 +196,21 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 		final double[] level0Scales = getLevel0Scales();
 		configureImgPlusAxes( imgPlus, entry.axes, level0Scales );
 		this.voxelDimensions = createVoxelDimensions( level0Scales, entry.axes );
+
+		this.transforms = createTransforms( level0Scales );
+		this.cachedCellImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
+		this.volatileImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
+		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
+		for ( int level = 0; level < numResolutionLevels; level++ )
+		{
+			final Array arr = openLevel( level );
+			final long[] imgShape = reverseToLong( arr.metadata().shape );
+			final int[] imgChunk = reverseToInt( arr.metadata().chunkShape() );
+			final ReadOnlyCachedCellImgOptions opts = ReadOnlyCachedCellImgOptions.options().cellDimensions( imgChunk );
+			this.cachedCellImgs[ level ] = new ReadOnlyCachedCellImgFactory()
+					.create( imgShape, type, new ZarrJavaCellLoader<>( arr ), opts );
+			this.volatileImgs[ level ] = VolatileViews.wrapAsVolatile( this.cachedCellImgs[ level ], sharedQueue );
+		}
 
 		this.ijDataset = new DefaultDataset( context, imgPlus );
 		this.ijDataset.setName( name );
@@ -217,7 +252,7 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 		}
 	}
 
-	
+
 	private int selectResolutionLevelIndex( final Integer preferredMaxWidth )
 	{
 		if ( preferredMaxWidth == null )
@@ -301,7 +336,7 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 		return s;
 	}
 
-	
+
 	private VoxelDimensions createVoxelDimensions( final double[] level0Scales, final List< Axis > zarrAxes )
 	{
 		double xScale = 1.0;
@@ -330,6 +365,21 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 		}
 
 		return new FinalVoxelDimensions( unit, xScale, yScale, zScale );
+	}
+
+	private AffineTransform3D[] createTransforms( final double[] level0Scales )
+	{
+		final double[][] mipmapScales = computeMipmapScales( level0Scales );
+		final AffineTransform3D[] tr = new AffineTransform3D[ numResolutionLevels ];
+		for ( int level = 0; level < numResolutionLevels; level++ )
+		{
+			final AffineTransform3D t = new AffineTransform3D();
+			t.set( mipmapScales[ level ][ 0 ], 0, 0 );
+			t.set( mipmapScales[ level ][ 1 ], 1, 1 );
+			t.set( mipmapScales[ level ][ 2 ], 2, 2 );
+			tr[ level ] = t;
+		}
+		return tr;
 	}
 
 	private double[][] computeMipmapScales( final double[] level0Scales )
@@ -459,44 +509,55 @@ public class ZarrJavaBackedPyramidal5DImageData< T extends NativeType< T > & Rea
 	@SuppressWarnings( "unchecked" )
 	private List< SourceAndConverter< T > > buildSources()
 	{
-		final double[] level0Scales = getLevel0Scales();
-		final double[][] mipmapScales = computeMipmapScales( level0Scales );
-
-		final RandomAccessibleInterval< T >[] levels = new RandomAccessibleInterval[ numResolutionLevels ];
-		for ( int level = 0; level < numResolutionLevels; level++ )
-		{
-			final Array arr = openLevel( level );
-			final long[] imgShape = reverseToLong( arr.metadata().shape );
-			final int[] imgChunk = reverseToInt( arr.metadata().chunkShape() );
-			final ReadOnlyCachedCellImgOptions opts = ReadOnlyCachedCellImgOptions.options().cellDimensions( imgChunk );
-			levels[ level ] = new ReadOnlyCachedCellImgFactory()
-					.create( imgShape, type, new ZarrJavaCellLoader<>( arr ), opts );
-		}
-
 		final int zarrChanIdx = zarrAxisIndex( "c" );
 		final int imgChanDim = zarrChanIdx >= 0 ? ( numDimensions - 1 - zarrChanIdx ) : -1;
-		final int nChannels = imgChanDim >= 0 ? ( int ) levels[ 0 ].dimension( imgChanDim ) : 1;
+		final int nChannels = imgChanDim >= 0 ? ( int ) cachedCellImgs[ 0 ].dimension( imgChanDim ) : 1;
 		this.numChannels = nChannels;
 
 		final List< SourceAndConverter< T > > result = new ArrayList<>();
 
 		for ( int c = 0; c < nChannels; c++ )
 		{
-			final RandomAccessibleInterval< T >[] channelLevels = new RandomAccessibleInterval[ numResolutionLevels ];
+			final RandomAccessibleInterval< T >[] channelLevels = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
+			final RandomAccessibleInterval< V >[] channelVolatileLevels = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
 			for ( int level = 0; level < numResolutionLevels; level++ )
 			{
-				channelLevels[ level ] = imgChanDim >= 0
-						? Views.hyperSlice( levels[ level ], imgChanDim, c )
-						: levels[ level ];
+				final RandomAccessibleInterval< T > channel = imgChanDim >= 0
+						? Views.hyperSlice( cachedCellImgs[ level ], imgChanDim, c )
+						: cachedCellImgs[ level ];
+				final RandomAccessibleInterval< V > channelVolatile = imgChanDim >= 0
+						? Views.hyperSlice( volatileImgs[ level ], imgChanDim, c )
+						: volatileImgs[ level ];
+				channelLevels[ level ] = ensureMinDimensions( channel );
+				channelVolatileLevels[ level ] = ensureMinDimensions( channelVolatile );
 			}
 
 			final String sourceName = nChannels > 1 ? name + " [c=" + c + "]" : name;
-			final RandomAccessibleIntervalMipmapSource< T > source =
-					new RandomAccessibleIntervalMipmapSource<>( channelLevels, type, mipmapScales, voxelDimensions, sourceName );
-
-			result.add( new SourceAndConverter<>( source, new RealARGBConverter<>( type.getMinValue(), type.getMaxValue() ) ) );
+			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
+					new RandomAccessibleIntervalMipmapSource4D<>( channelLevels, type, transforms, voxelDimensions, sourceName, true );
+			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile =
+					new RandomAccessibleIntervalMipmapSource4D<>( channelVolatileLevels, volatileType, transforms, voxelDimensions, sourceName, true );
+			result.add( createSourceAndConverter( source4D, source4DVolatile ) );
 		}
 		return result;
+	}
+
+	private < R > RandomAccessibleInterval< R > ensureMinDimensions( RandomAccessibleInterval< R > img )
+	{
+		while ( img.numDimensions() < 4 )
+			img = Views.addDimension( img, 0, 0 );
+		return img;
+	}
+
+	private SourceAndConverter< T > createSourceAndConverter(
+			final RandomAccessibleIntervalMipmapSource4D< T > source4D,
+			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile )
+	{
+		final Converter< V, ARGBType > converterVolatile = BigDataViewer.createConverterToARGB( volatileType );
+		final Converter< T, ARGBType > converter = BigDataViewer.createConverterToARGB( type );
+		final SourceAndConverter< V > sourceAndConverterVolatile =
+				BigDataViewer.wrapWithTransformedSource( new SourceAndConverter<>( source4DVolatile, converterVolatile ) );
+		return new SourceAndConverter<>( source4D, converter, sourceAndConverterVolatile );
 	}
 
 	@Override
