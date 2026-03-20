@@ -92,7 +92,7 @@
       ],
       "id": 1,
       "rdefs": {
-        "defaultT": 0,
+        "defaultT": 1,
         "defaultZ": 71,
         "model": "color"
       },

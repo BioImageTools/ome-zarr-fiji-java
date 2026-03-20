@@ -114,6 +114,7 @@ class DefaultPyramidal5DImageDataTest
 				assertEquals( 2, pyramidal5DImageData.asSources().size() ); // 2 channels
 				assertEquals( "lynEGFP", pyramidal5DImageData.asSources().get( 0 ).getSpimSource().getName() );
 				assertEquals( "NLStdTomato", pyramidal5DImageData.asSources().get( 1 ).getSpimSource().getName() );
+				assertEquals( 1, pyramidal5DImageData.getOmeroProperties().rdefs.defaultT );
 			}
 			if ( resource.contains( "2d_testing" ) )
 			{

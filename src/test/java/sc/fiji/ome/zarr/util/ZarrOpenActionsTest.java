@@ -203,6 +203,10 @@ class ZarrOpenActionsTest
 			List< Dataset > datasets = datasetService.getDatasets();
 			assertNotNull( datasets );
 			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
+			if ( resource.contains( "5d_testing" ) )
+			{
+				assertEquals( 1, bdvHandle.getViewerPanel().state().getCurrentTimepoint() );
+			}
 			bdvHandle.close();
 			// wait until all Swing events are processed
 			SwingUtilities.invokeAndWait( () -> {} );
