@@ -2,10 +2,11 @@ package sc.fiji.ome.zarr.pyramid;
 
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Array;
-import dev.zarr.zarrjava.ome.MultiscaleImage;
-import dev.zarr.zarrjava.ome.metadata.Axis;
-import dev.zarr.zarrjava.ome.metadata.CoordinateTransformation;
-import dev.zarr.zarrjava.ome.metadata.MultiscalesEntry;
+import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;
+import dev.zarr.zarrjava.experimental.ome.metadata.Axis;
+import dev.zarr.zarrjava.experimental.ome.metadata.transform.CoordinateTransformation;
+import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTransformation;
+import dev.zarr.zarrjava.experimental.ome.metadata.MultiscalesEntry;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.StoreHandle;
 
@@ -312,16 +313,19 @@ public class ZarrJavaBackedPyramidal5DImageData<
 	{
 		if ( entry.datasets == null || entry.datasets.isEmpty() )
 			return defaultScales();
-		final dev.zarr.zarrjava.ome.metadata.Dataset ds = entry.datasets.get( 0 );
+		final dev.zarr.zarrjava.experimental.ome.metadata.Dataset ds = entry.datasets.get( 0 );
 		if ( ds.coordinateTransformations == null )
 			return defaultScales();
 		for ( final CoordinateTransformation ct : ds.coordinateTransformations )
 		{
-			if ( "scale".equals( ct.type ) && ct.scale != null )
+			if ( ct instanceof ScaleCoordinateTransformation )
 			{
-				final double[] scales = new double[ ct.scale.size() ];
+				final ScaleCoordinateTransformation scaleCt = ( ScaleCoordinateTransformation ) ct;
+				if ( scaleCt.scale == null )
+					continue;
+				final double[] scales = new double[ scaleCt.scale.size() ];
 				for ( int i = 0; i < scales.length; i++ )
-					scales[ i ] = ct.scale.get( i );
+					scales[ i ] = scaleCt.scale.get( i );
 				return scales;
 			}
 		}
@@ -398,7 +402,7 @@ public class ZarrJavaBackedPyramidal5DImageData<
 				Arrays.fill( result[ level ], 1.0 );
 				continue;
 			}
-			final dev.zarr.zarrjava.ome.metadata.Dataset ds = entry.datasets.get( level );
+			final dev.zarr.zarrjava.experimental.ome.metadata.Dataset ds = entry.datasets.get( level );
 			if ( ds.coordinateTransformations == null )
 			{
 				Arrays.fill( result[ level ], 1.0 );
@@ -406,13 +410,16 @@ public class ZarrJavaBackedPyramidal5DImageData<
 			}
 			for ( final CoordinateTransformation ct : ds.coordinateTransformations )
 			{
-				if ( "scale".equals( ct.type ) && ct.scale != null )
+				if ( ct instanceof ScaleCoordinateTransformation )
 				{
+					final ScaleCoordinateTransformation scaleCt = ( ScaleCoordinateTransformation ) ct;
+					if ( scaleCt.scale == null )
+						continue;
 					for ( int d = 0; d < 3; d++ )
 					{
 						final int zi = spatialZarrIdx[ d ];
-						if ( zi >= 0 && zi < ct.scale.size() && level0Scales[ zi ] != 0 )
-							result[ level ][ d ] = ct.scale.get( zi ) / level0Scales[ zi ];
+						if ( zi >= 0 && zi < scaleCt.scale.size() && level0Scales[ zi ] != 0 )
+							result[ level ][ d ] = scaleCt.scale.get( zi ) / level0Scales[ zi ];
 						else
 							result[ level ][ d ] = 1.0;
 					}
