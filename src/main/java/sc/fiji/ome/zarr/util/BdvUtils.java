@@ -37,6 +37,8 @@ public class BdvUtils
 		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
 				BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
 
+		setTimepoint( pyramidalDataset.getOmeroProperties(), bdvHandle );
+
 		setChannelProperties( pyramidalDataset, bdvHandle );
 
 		Container topLevelContainer = bdvHandle.getViewerPanel().getRootPane().getParent();
@@ -72,5 +74,11 @@ public class BdvUtils
 				converterSetup.setDisplayRange( omeroChannel.window.start, omeroChannel.window.end );
 			bdvHandle.getViewerPanel().state().setSourceActive( source, omeroChannel == null || omeroChannel.active );
 		}
+	}
+
+	private static void setTimepoint( final Omero omero, final BdvHandle bdvHandle )
+	{
+		int timepoint = omero == null || omero.rdefs == null ? 0 : omero.rdefs.defaultT;
+		bdvHandle.getViewerPanel().state().setCurrentTimepoint( timepoint );
 	}
 }
