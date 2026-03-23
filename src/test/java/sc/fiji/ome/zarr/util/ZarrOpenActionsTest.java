@@ -26,10 +26,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import bdv.tools.brightness.ConverterSetup;
 import bdv.util.BdvHandle;
 
 import javax.swing.SwingUtilities;
 
+import bdv.util.BdvStackSource;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
@@ -222,12 +224,22 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
-			actions.openBDVWithImage();
+			BdvStackSource< ? > bdvStackSource = Cast.unchecked( actions.openBDVWithImage() );
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertNotNull( datasetService );
 			List< Dataset > datasets = datasetService.getDatasets();
 			assertNotNull( datasets );
-			assertEquals( 0, datasets.size() ); // A single scale image is opened as image not as dataset
+			assertEquals( 0, datasets.size() ); // A single scale image is opened in BDV as an image, not as a dataset
+			if ( resource.contains( "5d_testing" ) )
+			{
+				assertNotNull( bdvStackSource );
+				assertEquals( 2, bdvStackSource.getConverterSetups().size() );
+				ConverterSetup converterSetup0 = bdvStackSource.getConverterSetups().get( 0 );
+				assertEquals( 0, converterSetup0.getDisplayRangeMin() ); // omero metadata is not supported for a single scale image
+				assertEquals( 255, converterSetup0.getDisplayRangeMax() );
+				assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup0.getColor().toString() );
+				assertEquals( 0, bdvStackSource.getBdvHandle().getViewerPanel().state().getCurrentTimepoint() );
+			}
 		}
 	}
 }
