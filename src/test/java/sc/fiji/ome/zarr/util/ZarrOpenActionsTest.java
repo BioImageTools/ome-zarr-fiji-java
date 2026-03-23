@@ -23,7 +23,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -68,8 +67,8 @@ class ZarrOpenActionsTest
 			AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
 			Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
-			Consumer< Img< ? > > imgConsumer = img -> singleScaleCounter.incrementAndGet();
-			actions.openImage( multiScaleOpeningCounter, imgConsumer, "" );
+			Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
+			actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter, "" );
 			assertEquals( 1, multiScaleCounter.get() );
 			assertEquals( 0, singleScaleCounter.get() );
 		}
@@ -91,8 +90,8 @@ class ZarrOpenActionsTest
 				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
 				Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
-				Consumer< Img< ? > > imgConsumer = img -> singleScaleCounter.incrementAndGet();
-				actions.openImage( multiScaleOpeningCounter, imgConsumer, "" );
+				Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
+				actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter, "" );
 				assertEquals( 0, multiScaleCounter.get() );
 				assertEquals( 1, singleScaleCounter.get() );
 			}
@@ -115,7 +114,7 @@ class ZarrOpenActionsTest
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
 				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
 				Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
-				Consumer< Img< ? > > singleScaleNoOp = img -> {};
+				Function< Img< ? >, Object > singleScaleNoOp = img -> null;
 				assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
 			}
 		}
@@ -130,7 +129,7 @@ class ZarrOpenActionsTest
 			ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
 			ZarrOpenActions actions = new ZarrOpenActions( path, context, settings, System.out::println );
 			Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
-			Consumer< Img< ? > > singleScaleNoOp = img -> {};
+			Function< Img< ? >, Object > singleScaleNoOp = img -> null;
 			assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
 		}
 	}
@@ -196,7 +195,7 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
-			BdvHandle bdvHandle = actions.openBDVWithImage();
+			BdvHandle bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertNotNull( datasetService );
