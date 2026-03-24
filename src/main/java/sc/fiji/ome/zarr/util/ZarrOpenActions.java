@@ -180,6 +180,11 @@ public class ZarrOpenActions
 		{
 			logger.debug( "zarr-java backend could not open {}: {}. Falling back to N5 backend.", droppedInPath, e.getMessage() );
 		}
+		catch ( RuntimeException e )
+		{
+			logger.warn( "zarr-java backend failed for {} ({}). Falling back to N5 backend.", droppedInPath, e.getMessage() );
+			logger.debug( "zarr-java backend runtime failure details", e );
+		}
 
 		// Fall back to N5 backend (supports Zarr v2 via n5-zarr)
 		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
