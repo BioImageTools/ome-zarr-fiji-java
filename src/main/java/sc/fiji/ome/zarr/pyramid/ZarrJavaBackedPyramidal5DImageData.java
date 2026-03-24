@@ -71,19 +71,21 @@ import sc.fiji.ome.zarr.util.ZarrOpenActions;
  * <p>
  * 5D refers to: x, y, z, t, channels.
  * <p>
- * Use this as an alternative to {@link DefaultPyramidal5DImageData} when Zarr v3 support is
- * required. {@link ZarrOpenActions} will attempt this backend first and fall back to the
+ * Use this as an alternative to {@link DefaultPyramidal5DImageData}
+ * {@link ZarrOpenActions} will attempt this backend first and fall back to the
  * N5-based {@link DefaultPyramidal5DImageData} if zarr-java cannot open the image.
  *
  * @param <T> Type of the pixels
+ * @param <V> Volatile type of the pixels
  */
 public class ZarrJavaBackedPyramidal5DImageData<
 		T extends NativeType< T > & RealType< T >,
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
-	private static final Map< String, AxisType > AXIS_MAPPING;
     private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+    private static final Map< String, AxisType > AXIS_MAPPING;
 
 	static
 	{
@@ -141,8 +143,8 @@ public class ZarrJavaBackedPyramidal5DImageData<
 	 */
 	public ZarrJavaBackedPyramidal5DImageData( final Context context, final String inputPathAsString )
 	{
-        this( context, inputPathAsString, null );
-        logger.info( "Attempting to open OME-Zarr image with zarr-java backend: {}.", inputPathAsString );
+		this( context, inputPathAsString, null );
+		logger.info( "Attempting to open OME-Zarr image with zarr-java backend: {}.", inputPathAsString );
 	}
 
 	public ZarrJavaBackedPyramidal5DImageData( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
@@ -165,7 +167,7 @@ public class ZarrJavaBackedPyramidal5DImageData<
 		{
 			this.entry = multiscaleImage.getMultiscaleNode( 0 );
 		}
-		catch ( ZarrException e )
+		catch ( ZarrException | RuntimeException e )
 		{
 			throw new NotAMultiscaleImageException( "No multiscale metadata at: " + inputPathAsString, e );
 		}
@@ -217,6 +219,7 @@ public class ZarrJavaBackedPyramidal5DImageData<
 		this.ijDataset = new DefaultDataset( context, imgPlus );
 		this.ijDataset.setName( name );
 		this.ijDataset.setRGBMerged( false );
+		this.sourceAndConverters = initSourceAndConverters();
 	}
 
 	// -------------------------------------------------------------------------
@@ -398,17 +401,26 @@ public class ZarrJavaBackedPyramidal5DImageData<
 		for ( int level = 0; level < numResolutionLevels; level++ )
 		{
 			result[ level ] = new double[ 3 ];
-			if ( level == 0 || entry.datasets == null || entry.datasets.size() <= level )
+			if ( entry.datasets == null || entry.datasets.size() <= level )
 			{
-				Arrays.fill( result[ level ], 1.0 );
+				for ( int d = 0; d < 3; d++ )
+				{
+					final int zi = spatialZarrIdx[ d ];
+					result[ level ][ d ] = zi >= 0 && zi < level0Scales.length ? level0Scales[ zi ] : 1.0;
+				}
 				continue;
 			}
 			final dev.zarr.zarrjava.experimental.ome.metadata.Dataset ds = entry.datasets.get( level );
 			if ( ds.coordinateTransformations == null )
 			{
-				Arrays.fill( result[ level ], 1.0 );
+				for ( int d = 0; d < 3; d++ )
+				{
+					final int zi = spatialZarrIdx[ d ];
+					result[ level ][ d ] = zi >= 0 && zi < level0Scales.length ? level0Scales[ zi ] : 1.0;
+				}
 				continue;
 			}
+			boolean foundScale = false;
 			for ( final CoordinateTransformation ct : ds.coordinateTransformations )
 			{
 				if ( ct instanceof ScaleCoordinateTransformation )
@@ -419,12 +431,21 @@ public class ZarrJavaBackedPyramidal5DImageData<
 					for ( int d = 0; d < 3; d++ )
 					{
 						final int zi = spatialZarrIdx[ d ];
-						if ( zi >= 0 && zi < scaleCt.scale.size() && level0Scales[ zi ] != 0 )
-							result[ level ][ d ] = scaleCt.scale.get( zi ) / level0Scales[ zi ];
+						if ( zi >= 0 && zi < scaleCt.scale.size() )
+							result[ level ][ d ] = scaleCt.scale.get( zi );
 						else
-							result[ level ][ d ] = 1.0;
+							result[ level ][ d ] = zi >= 0 && zi < level0Scales.length ? level0Scales[ zi ] : 1.0;
 					}
+					foundScale = true;
 					break;
+				}
+			}
+			if ( !foundScale )
+			{
+				for ( int d = 0; d < 3; d++ )
+				{
+					final int zi = spatialZarrIdx[ d ];
+					result[ level ][ d ] = zi >= 0 && zi < level0Scales.length ? level0Scales[ zi ] : 1.0;
 				}
 			}
 		}
@@ -509,43 +530,44 @@ public class ZarrJavaBackedPyramidal5DImageData<
 	@Override
 	public List< SourceAndConverter< T > > asSources()
 	{
-		if ( sourceAndConverters == null )
-			sourceAndConverters = buildSources();
 		return sourceAndConverters;
 	}
 
 	@SuppressWarnings( "unchecked" )
-	private List< SourceAndConverter< T > > buildSources()
+	private List< SourceAndConverter< T > > initSourceAndConverters()
 	{
 		final int zarrChanIdx = zarrAxisIndex( "c" );
 		final int imgChanDim = zarrChanIdx >= 0 ? ( numDimensions - 1 - zarrChanIdx ) : -1;
 		final int nChannels = imgChanDim >= 0 ? ( int ) cachedCellImgs[ 0 ].dimension( imgChanDim ) : 1;
 		this.numChannels = nChannels;
 
-		final List< SourceAndConverter< T > > result = new ArrayList<>();
-
-		for ( int c = 0; c < nChannels; c++ )
+		final List< SourceAndConverter< T > > sources = new ArrayList<>();
+		for ( int channelNumber = 0; channelNumber < nChannels; channelNumber++ )
 		{
-			final RandomAccessibleInterval< T >[] channelLevels = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
-			final RandomAccessibleInterval< V >[] channelVolatileLevels = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
-			for ( int level = 0; level < numResolutionLevels; level++ )
-			{
-				final RandomAccessibleInterval< T > channel = imgChanDim >= 0
-						? Views.hyperSlice( cachedCellImgs[ level ], imgChanDim, c )
-						: cachedCellImgs[ level ];
-				final RandomAccessibleInterval< V > channelVolatile = imgChanDim >= 0
-						? Views.hyperSlice( volatileImgs[ level ], imgChanDim, c )
-						: volatileImgs[ level ];
-				channelLevels[ level ] = ensureMinDimensions( channel );
-				channelVolatileLevels[ level ] = ensureMinDimensions( channelVolatile );
-			}
-
-			final String sourceName = nChannels > 1 ? name + " [c=" + c + "]" : name;
+			final RandomAccessibleInterval< V >[] channelsVolatile = extractChannels( volatileImgs, imgChanDim, channelNumber );
+			final RandomAccessibleInterval< T >[] channels = extractChannels( cachedCellImgs, imgChanDim, channelNumber );
+			final String sourceName = nChannels > 1 ? name + " [c=" + channelNumber + "]" : name;
 			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
-					new RandomAccessibleIntervalMipmapSource4D<>( channelLevels, type, transforms, voxelDimensions, sourceName, true );
+					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, sourceName, true );
 			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile =
-					new RandomAccessibleIntervalMipmapSource4D<>( channelVolatileLevels, volatileType, transforms, voxelDimensions, sourceName, true );
-			result.add( createSourceAndConverter( source4D, source4DVolatile ) );
+					new RandomAccessibleIntervalMipmapSource4D<>( channelsVolatile, volatileType, transforms, voxelDimensions, sourceName, true );
+			sources.add( createSourceAndConverter( source4D, source4DVolatile ) );
+		}
+		return sources;
+	}
+
+	private < R > RandomAccessibleInterval< R >[] extractChannels(
+			final RandomAccessibleInterval< R >[] sourceImgs,
+			final int channelAxisIndex,
+			final int channelNumber )
+	{
+		final RandomAccessibleInterval< R >[] result = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
+		for ( int level = 0; level < numResolutionLevels; level++ )
+		{
+			final RandomAccessibleInterval< R > img = channelAxisIndex < 0
+					? sourceImgs[ level ]
+					: Views.hyperSlice( sourceImgs[ level ], channelAxisIndex, channelNumber );
+			result[ level ] = ensureMinDimensions( img );
 		}
 		return result;
 	}
