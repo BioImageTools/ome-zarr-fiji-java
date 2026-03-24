@@ -182,7 +182,6 @@
 	</repositories>
 
 	<dependencies>
-		<!-- zarr-java (OME-Zarr branch, local SNAPSHOT) -->
 		<dependency>
 			<groupId>dev.zarr</groupId>
 			<artifactId>zarr-java</artifactId>
@@ -269,7 +268,7 @@
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>-Xmx1g -da --add-opens=java.base/java.lang=ALL-UNNAMED</argLine>
+							<argLine>-Xmx1g -da</argLine>
 						</configuration>
 					</plugin>
 				</plugins>

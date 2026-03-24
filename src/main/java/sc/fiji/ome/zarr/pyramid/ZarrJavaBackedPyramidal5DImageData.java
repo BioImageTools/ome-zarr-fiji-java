@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Cast;
+import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
 /**
  * An OME-Zarr backed pyramidal 5D image using zarr-java as backend (supports Zarr v2 and v3).
