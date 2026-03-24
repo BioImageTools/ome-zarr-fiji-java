@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.util.BdvHandleService;
@@ -92,7 +93,9 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		final Path droppedInPath = fileLocation.getFile().toPath();
 
 		ZarrDragAndDropOpenSettings setting = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
-		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context(), setting.getPreferredMaxWidth() );
+		Integer preferredWidth =
+				setting.getOpenBehavior().equals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION ) ? null : setting.getPreferredMaxWidth();
+		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context(), preferredWidth );
 		switch ( setting.getOpenBehavior() )
 		{
 		case IMAGEJ_HIGHEST_RESOLUTION:
