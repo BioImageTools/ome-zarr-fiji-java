@@ -257,7 +257,7 @@ class ZarrOpenActionsTest
 	}
 
 	@Test
-	void testRunScriptWithNoScriptSpecified() throws URISyntaxException
+	void testRunScriptWithNoScriptSpecified() throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
 		try (MockedStatic< JOptionPane > mocked = Mockito.mockStatic( JOptionPane.class ))
 		{
@@ -276,6 +276,9 @@ class ZarrOpenActionsTest
 				Path path = ZarrTestUtils.resourcePath( resource );
 				ZarrOpenActions actions = new ZarrOpenActions( path, context );
 				actions.runScript();
+
+				// wait until all Swing events are processed
+				SwingUtilities.invokeAndWait( () -> {} );
 
 				boolean found = false;
 				String text = null;
