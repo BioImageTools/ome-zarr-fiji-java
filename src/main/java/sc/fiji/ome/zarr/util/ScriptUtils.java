@@ -99,7 +99,7 @@ public class ScriptUtils
 		}
 	}
 
-	private static String getTemplate()
+	static String getTemplate()
 	{
 		return "# RESAVE THIS SCRIPT AND OPEN IN THE MENU\n" +
 				"# Fiji -> Plugins -> OME-Zarr -> Preset DragAndDrop User Script\n" +

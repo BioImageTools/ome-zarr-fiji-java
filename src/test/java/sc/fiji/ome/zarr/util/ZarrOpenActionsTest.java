@@ -15,9 +15,13 @@ import net.imglib2.util.Cast;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.scijava.Context;
 import org.scijava.display.DisplayService;
+import org.scijava.ui.swing.script.TextEditor;
 
+import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -29,9 +33,11 @@ import java.util.stream.Stream;
 import bdv.tools.brightness.ConverterSetup;
 import bdv.util.BdvHandle;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import bdv.util.BdvStackSource;
+import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
@@ -239,6 +245,46 @@ class ZarrOpenActionsTest
 				assertEquals( 255, converterSetup0.getDisplayRangeMax() );
 				assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup0.getColor().toString() );
 				assertEquals( 0, bdvStackSource.getBdvHandle().getViewerPanel().state().getCurrentTimepoint() );
+			}
+		}
+	}
+
+	@Test
+	void testRunScriptWithNoScriptSpecified() throws URISyntaxException
+	{
+		try (MockedStatic< JOptionPane > mocked = Mockito.mockStatic( JOptionPane.class ))
+		{
+			mocked.when( () -> JOptionPane.showConfirmDialog(
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.anyInt() ) )
+					.thenReturn( JOptionPane.NO_OPTION );
+
+			try (Context context = new Context())
+			{
+				PrefService prefService = context.getService( PrefService.class );
+				prefService.put( PresetScriptPlugin.class, "scriptPath", "--none--" );
+				String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
+				Path path = ZarrTestUtils.resourcePath( resource );
+				ZarrOpenActions actions = new ZarrOpenActions( path, context );
+				actions.runScript();
+
+				boolean found = false;
+				String text = null;
+
+				for ( Window window : Window.getWindows() )
+				{
+					if ( window instanceof TextEditor )
+					{
+						TextEditor editor = ( TextEditor ) window;
+						found = true;
+						text = editor.getTextArea().getText();
+						break;
+					}
+				}
+				assertTrue( found, "TextEditor window should be open" );
+				assertEquals( ScriptUtils.getTemplate(), text );
 			}
 		}
 	}
