@@ -203,7 +203,7 @@ public class ZarrOpenActions
 	{
 		final String path = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
 		logger.info( "Attempt to execute script on path: {}.", path );
-		ScriptUtils.executePresetScript( context, path );
+		ScriptUtils.executePresetScript( context, path, errorHandler );
 	}
 
 	public void showHelp()

@@ -12,8 +12,8 @@ import java.io.File;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 
-import ij.IJ;
 import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 
 public class ScriptUtils
@@ -58,7 +58,7 @@ public class ScriptUtils
 	 * @param ctx scijava context
 	 * @param inputPath path to the input image
 	 */
-	public static void executePresetScript( final Context ctx, final String inputPath )
+	public static void executePresetScript( final Context ctx, final String inputPath, final Consumer< String > errorHandler )
 	{
 		ScriptService scriptService = ctx.getService( ScriptService.class );
 		PrefService prefService = ctx.getService( PrefService.class );
@@ -86,11 +86,12 @@ public class ScriptUtils
 			}
 			catch ( Exception e )
 			{
-				IJ.error(
-						"Script could not be processed on Zarr dataset. " + "\n\r\n" + "Script path: " + scriptPath + "\n"
-								+ "Dataset path: " + inputPath + "\n\n" + "Error message: " + e.getMessage() );
-				logger.warn( " Something went wrong executing the script: {} on this dataset: {}. Message: {}", scriptPath, inputPath,
-						e.getMessage() );
+				errorHandler.accept( "Script could not be processed on Zarr dataset. " + "\n\r\n" + "Script path: " + scriptPath + "\n"
+						+ "Dataset path: " + inputPath + "\n\n" + "Error message: " + e.getMessage() );
+				logger.warn(
+						" Something went wrong executing the script: {} on this dataset: {}. Message: {}", scriptPath, inputPath,
+						e.getMessage()
+				);
 			}
 		}
 		else

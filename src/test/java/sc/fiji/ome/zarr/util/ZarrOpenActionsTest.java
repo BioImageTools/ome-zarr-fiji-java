@@ -274,7 +274,7 @@ class ZarrOpenActionsTest
 				prefService.put( PresetScriptPlugin.class, "scriptPath", "--none--" );
 				String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
 				Path path = ZarrTestUtils.resourcePath( resource );
-				ZarrOpenActions actions = new ZarrOpenActions( path, context );
+				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
 				actions.runScript();
 
 				// wait until all Swing events are processed
@@ -316,7 +316,7 @@ class ZarrOpenActionsTest
 			prefService.put( PresetScriptPlugin.class, "scriptPath", tempFile.getAbsolutePath() );
 			String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
 			Path path = ZarrTestUtils.resourcePath( resource );
-			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
 			actions.runScript();
 
 			boolean foundTextEditor = false;
