@@ -72,6 +72,7 @@ public class ScriptUtils
 
 		if ( Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) )
 		{
+			logger.debug( "Script path is valid: {}. Attempting to run the script.", scriptPath );
 			//the filepath is viable, let's run the script
 			try
 			{
@@ -89,6 +90,7 @@ public class ScriptUtils
 		}
 		else
 		{
+			logger.debug( "Script path is not valid: {}. Opening script editor with template.", scriptPath );
 			//this opens an _always new_ window with the template script,
 			//...at least the user is more likely to notice that this "help" came up
 			final TextEditor editor = new TextEditor( ctx );
