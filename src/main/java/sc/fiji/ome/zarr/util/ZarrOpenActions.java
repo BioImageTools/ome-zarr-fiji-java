@@ -201,9 +201,9 @@ public class ZarrOpenActions
 
 	public void runScript()
 	{
-		final String root = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
-		ScriptUtils.executePresetScript( context, root );
-		logger.info( "Executed script with Zarr root {}", root );
+		final String path = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
+		logger.info( "Attempt to execute script on path: {}.", path );
+		ScriptUtils.executePresetScript( context, path );
 	}
 
 	public void showHelp()
