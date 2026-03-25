@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import ij.IJ;
 import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 
 public class ScriptUtils
@@ -85,7 +86,11 @@ public class ScriptUtils
 			}
 			catch ( Exception e )
 			{
-				logger.warn( " Something went wrong executing the script: {}. Message: {}", scriptPath, e.getMessage() );
+				IJ.error(
+						"Script could not be processed on Zarr dataset. " + "\n\r\n" + "Script path: " + scriptPath + "\n"
+								+ "Dataset path: " + inputPath + "\n\n" + "Error message: " + e.getMessage() );
+				logger.warn( " Something went wrong executing the script: {} on this dataset: {}. Message: {}", scriptPath, inputPath,
+						e.getMessage() );
 			}
 		}
 		else
