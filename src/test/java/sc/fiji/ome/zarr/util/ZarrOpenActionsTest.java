@@ -32,6 +32,8 @@ import bdv.util.BdvHandle;
 import javax.swing.SwingUtilities;
 
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 
 class ZarrOpenActionsTest
 {
@@ -125,7 +127,8 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
-			ZarrOpenActions actions = new ZarrOpenActions( path, context, 10, System.out::println );
+			ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
+			ZarrOpenActions actions = new ZarrOpenActions( path, context, settings, System.out::println );
 			Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
 			Consumer< Img< ? > > singleScaleNoOp = img -> {};
 			assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
