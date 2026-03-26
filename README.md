@@ -23,12 +23,16 @@ If the dropped target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, 
 
 ## Dialog options
 
+from top left to bottom right:
+
 * Open the N5 import dialog at the position of the dropped OME-Zarr.
 * Open the N5 viewer dialog at the position of the dropped OME-Zarr.
 * Open a **single-resolution** image in **ImageJ**, which best matches the preferred width in the user settings.
 * Open **multi-resolution** image in **BigDataViewer**.
 * Run a [pre-defined script](#scriplet-support) (e.g. a macro) on the OME-Zarr.
 * Open this [Readme](https://github.com/BioImageTools/ome-zarr-fiji-java) file.
+
+![dialog.png](doc/dialog.png)
 
 ## Supported OME-Zarr versions
 
