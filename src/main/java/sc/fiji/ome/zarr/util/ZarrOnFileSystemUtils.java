@@ -160,27 +160,6 @@ public class ZarrOnFileSystemUtils
 	}
 
 	/**
-	 * Given several datasets, which often are spatially downscaled variants
-	 * of each other (aka resolution pyramids), it chooses the first one whose
-	 * name ends with 's0' -- typically signifying the best spatial resolution,
-	 * the finest variant. If multiple such exists in the input array, the first
-	 * one is taken. If none such is found, the first element from the input array
-	 * is returned.
-	 *
-	 * @param datasets Non-null (not test thought!) array with "s?" endings.
-	 * @return First array item with "s0" or just the first array item.
-	 */
-	public static String findHighestResolutionByName( final String[] datasets )
-	{
-		for ( String s : datasets )
-		{
-			if ( s.endsWith( "s0" ) )
-				return s;
-		}
-		return datasets[ 0 ];
-	}
-
-	/**
 	 * Returns the relative path from the {@code ancestorPath} to the {@code descendantPath},
 	 * as a list of folder names in the order needed to traverse from {@code ancestorPath}
 	 * to reach {@code descendantPath}.
