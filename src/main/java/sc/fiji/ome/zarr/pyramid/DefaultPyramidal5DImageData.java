@@ -252,12 +252,15 @@ public class DefaultPyramidal5DImageData<
 	{
 		final List< SourceAndConverter< T > > sources = new ArrayList<>();
 		int channelAxisIndex = findAxisIndex( resolutionLevel, Axes.CHANNEL );
+		int timeAxisIndex = findAxisIndex( resolutionLevel, Axes.TIME );
+		int zAxisIndex = findAxisIndex( resolutionLevel, Axes.Z );
+		final DimType dimType = DimType.getByAxes( zAxisIndex, timeAxisIndex );
 		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )
 		{
 			final Omero.Channel omeroChannel = omero == null || omero.channels == null ? null : omero.channels.get( channelNumber );
 			String channelLabel = omeroChannel == null || omeroChannel.label == null ? getName() : omeroChannel.label;
-			RandomAccessibleInterval< V >[] channelsVolatile = extractChannels( volatileImgs, channelAxisIndex, channelNumber );
-			RandomAccessibleInterval< T >[] channels = extractChannels( cachedCellImgs, channelAxisIndex, channelNumber );
+			RandomAccessibleInterval< V >[] channelsVolatile = extractChannels( volatileImgs, channelAxisIndex, channelNumber, dimType );
+			RandomAccessibleInterval< T >[] channels = extractChannels( cachedCellImgs, channelAxisIndex, channelNumber, dimType );
 			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile = new RandomAccessibleIntervalMipmapSource4D<>(
 					channelsVolatile, volatileType, transforms, voxelDimensions, channelLabel, true );
 			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
@@ -270,22 +273,42 @@ public class DefaultPyramidal5DImageData<
 	}
 
 	private < R > RandomAccessibleInterval< R >[] extractChannels( final RandomAccessibleInterval< R >[] sourceImgs,
-			final int channelAxisIndex, final int channelNumber )
+			final int channelAxisIndex, final int channelNumber, final DimType dimType )
 	{
 		final RandomAccessibleInterval< R >[] result = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
 		for ( int level = 0; level < numResolutionLevels; level++ )
 		{
 			RandomAccessibleInterval< R > img =
 					channelAxisIndex < 0 ? sourceImgs[ level ] : Views.hyperSlice( sourceImgs[ level ], channelAxisIndex, channelNumber );
-			result[ level ] = ensureMinDimensions( img );
+			result[ level ] = ensureMinDimensions( img, dimType );
 		}
 		return result;
 	}
 
-	private < R > RandomAccessibleInterval< R > ensureMinDimensions( RandomAccessibleInterval< R > img )
+	private < R > RandomAccessibleInterval< R > ensureMinDimensions( RandomAccessibleInterval< R > img, final DimType type )
 	{
-		while ( img.numDimensions() < 4 )
+		switch ( type )
+		{
+		case XY:
+			// add Z then T
+			img = Views.addDimension( img, 0, 0 ); // Z
+			img = Views.addDimension( img, 0, 0 ); // T
+			break;
+		case XYZ:
+			// add T
 			img = Views.addDimension( img, 0, 0 );
+			break;
+		case XYT:
+			// current: (x,y,t) -> dims [0,1,2]
+			// Step 1: add a new dimension at the end → (x,y,t,z)
+			img = Views.addDimension( img, 0, 0 ); // now dims [0,1,2,3]
+			// Step 2: swap t and z → (x,y,z,t)
+			img = Views.permute( img, 2, 3 );
+			break;
+		case XYZT:
+			// nothing to do
+			break;
+		}
 		return img;
 	}
 
@@ -654,6 +677,25 @@ public class DefaultPyramidal5DImageData<
 			}
 		}
 		return -1;
+	}
+
+	private enum DimType
+	{
+		XY,
+		XYZ,
+		XYT,
+		XYZT;
+
+		public static DimType getByAxes( final int zAxisIndex, final int tAxisIndex )
+		{
+			if ( zAxisIndex < 0 && tAxisIndex < 0 )
+				return XY;
+			if ( zAxisIndex >= 0 && tAxisIndex < 0 )
+				return XYZ;
+			if ( zAxisIndex < 0 )
+				return XYT;
+			return XYZT;
+		}
 	}
 
 	// ---------------------------------------------------------------------
