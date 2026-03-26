@@ -30,6 +30,8 @@ import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 
 public class ZarrOpenActions
 {
@@ -43,23 +45,24 @@ public class ZarrOpenActions
 
 	private final Consumer< String > errorHandler;
 
-	private final Integer preferredWidth;
+	private final ZarrDragAndDropOpenSettings settings;
 
 	public ZarrOpenActions( final Path droppedInPath, final Context context )
 	{
 		this( droppedInPath, context, null, IJ::error );
 	}
 
-	public ZarrOpenActions( final Path droppedInPath, final Context context, final Integer preferredWidth )
+	public ZarrOpenActions( final Path droppedInPath, final Context context, final ZarrDragAndDropOpenSettings settings )
 	{
-		this( droppedInPath, context, preferredWidth, IJ::error );
+		this( droppedInPath, context, settings, IJ::error );
 	}
 
-	ZarrOpenActions( final Path droppedInPath, final Context context, final Integer preferredWidth, final Consumer< String > errorHandler )
+	ZarrOpenActions( final Path droppedInPath, final Context context, final ZarrDragAndDropOpenSettings settings,
+			final Consumer< String > errorHandler )
 	{
 		this.droppedInPath = droppedInPath;
 		this.context = context;
-		this.preferredWidth = preferredWidth;
+		this.settings = settings;
 		this.errorHandler = errorHandler;
 	}
 
@@ -166,6 +169,11 @@ public class ZarrOpenActions
 	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
 			throws NotAMultiscaleImageException, NoMatchingResolutionException
 	{
+		Integer preferredWidth;
+		if ( settings == null || settings.getOpenBehavior().equals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION ) )
+			preferredWidth = null;
+		else
+			preferredWidth = settings.getPreferredMaxWidth();
 		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
 				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
 		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();

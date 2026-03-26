@@ -276,6 +276,9 @@ class DefaultPyramidal5DImageDataTest
 				assertEquals( 500, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
 				// less than the lowest resolution
 				assertThrows( NoMatchingResolutionException.class, () -> load( resource, context, 400 ) );
+				pyramidal5DImageData = load( resource, context, null ); // null preferred width results in the highest resolution
+				assertEquals( 1000, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+				assertEquals( 1000, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
 			}
 			if ( resource.contains( "5d_testing" ) )
 			{
@@ -297,6 +300,10 @@ class DefaultPyramidal5DImageDataTest
 				assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
 				// less than the lowest resolution
 				assertThrows( NoMatchingResolutionException.class, () -> load( resource, context, 30 ) );
+				pyramidal5DImageData = load( resource, context, null ); // null preferred width results in the highest resolution
+				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
 			}
 		}
 	}

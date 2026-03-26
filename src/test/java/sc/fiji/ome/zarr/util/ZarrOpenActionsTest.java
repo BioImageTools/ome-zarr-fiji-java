@@ -1,5 +1,6 @@
 package sc.fiji.ome.zarr.util;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -9,6 +10,7 @@ import static sc.fiji.ome.zarr.util.ZarrTestUtils.IMAGE_NAME;
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imglib2.img.Img;
+import net.imglib2.util.Cast;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,6 +32,8 @@ import bdv.util.BdvHandle;
 import javax.swing.SwingUtilities;
 
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 
 class ZarrOpenActionsTest
 {
@@ -123,7 +127,8 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
-			ZarrOpenActions actions = new ZarrOpenActions( path, context, 10, System.out::println );
+			ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
+			ZarrOpenActions actions = new ZarrOpenActions( path, context, settings, System.out::println );
 			Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
 			Consumer< Img< ? > > singleScaleNoOp = img -> {};
 			assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
@@ -137,7 +142,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			ZarrOpenActions actions = new ZarrOpenActions( path, context ); // preferred width equals null results in the highest resolution
 			actions.openIJWithImage();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
@@ -146,6 +151,16 @@ class ZarrOpenActionsTest
 			assertNotNull( datasets );
 			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
 			Dataset dataset = datasets.get( 0 );
+			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
+			long[] dimensions = pyramidalDataset.getImgPlus().dimensionsAsLongArray();
+			if ( resource.contains( "2d_testing" ) )
+			{
+				assertArrayEquals( new long[] { 1000, 1000 }, dimensions ); // highest resolution
+			}
+			if ( resource.contains( "5d_testing" ) )
+			{
+				assertArrayEquals( new long[] { 64, 64, 16, 2, 2 }, dimensions ); // highest resolution
+			}
 			assertEquals( IMAGE_NAME, dataset.getName() );
 			DisplayService displayService = context.getService( DisplayService.class );
 			assertNotNull( displayService );
