@@ -54,19 +54,17 @@ like to have in Fiji so that the usual Fiji pipelines (meaning the standard
 ImageJ macros, Jython scripts, and even GUI-operated plugins) could work with
 Zarrs and benefit from their chunk-based nature. It is greatly inspired by his
 [previous work on DataStore](https://github.com/fiji-hpc/hpc-datastore/), which
-is
-essentially [a suite of Fiji plugins](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md#clients)
-to manage (create, modify and delete full datasets, read and write images or
-even their
-chunks) [a http-servered N5 datasets](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md).
+is essentially [a suite of Fiji plugins](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md#clients) to manage 
+(create, modify and delete full datasets, read and write images or
+even their chunks) [a http-servered N5 datasets](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md).
 
 So, we basically need a suite of Fiji (in fact scijava) plugins that (are
-“headless” and) all of them would take an URI to some NGFF data plus specific
+“headless” and) all of them would take a URI to some NGFF data plus specific
 parameters depending on a particular function/purpose of a plugin. Examples are
 a query plugin, that tells how many time points are available at a given URI,
 or how many channels are available, or a plugin that can read a full image at a
 given time point and a given channel from URI etc. Using these, it is easy to
-construct e.g. a for-loop over all time points to process an image (at variable
+construct e.g. a for-loop over all timepoints to process an image (at variable
 time point and fixed particular channel) one after another. To optimize the
 work with a particular URI, a scijava service (we could call it `NgffService`)
 should work in conjunction with these plugins. Note that a scijava service is a
