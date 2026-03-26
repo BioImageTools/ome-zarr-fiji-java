@@ -41,7 +41,6 @@ import net.imglib2.view.Views;
 import org.scijava.Context;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -59,8 +58,6 @@ import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.util.Cast;
@@ -83,8 +80,6 @@ public class ZarrJavaBackedPyramidal5DImageData<
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
-    private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
-
     private static final Map< String, AxisType > AXIS_MAPPING;
 
 	static
@@ -144,7 +139,6 @@ public class ZarrJavaBackedPyramidal5DImageData<
 	public ZarrJavaBackedPyramidal5DImageData( final Context context, final String inputPathAsString )
 	{
 		this( context, inputPathAsString, null );
-		logger.info( "Attempting to open OME-Zarr image with zarr-java backend: {}.", inputPathAsString );
 	}
 
 	public ZarrJavaBackedPyramidal5DImageData( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
@@ -393,63 +387,74 @@ public class ZarrJavaBackedPyramidal5DImageData<
 	private double[][] computeMipmapScales( final double[] level0Scales )
 	{
 		final double[][] result = new double[ numResolutionLevels ][];
-		final String[] spatialAxes = { "x", "y", "z" };
-		final int[] spatialZarrIdx = new int[ 3 ];
-		for ( int d = 0; d < 3; d++ )
-			spatialZarrIdx[ d ] = zarrAxisIndex( spatialAxes[ d ] );
+		final int[] spatialZarrIdx = getSpatialZarrIndices();
 
 		for ( int level = 0; level < numResolutionLevels; level++ )
-		{
-			result[ level ] = new double[ 3 ];
-			if ( entry.datasets == null || entry.datasets.size() <= level )
-			{
-				for ( int d = 0; d < 3; d++ )
-				{
-					final int zi = spatialZarrIdx[ d ];
-					result[ level ][ d ] = zi >= 0 && zi < level0Scales.length ? level0Scales[ zi ] : 1.0;
-				}
-				continue;
-			}
-			final dev.zarr.zarrjava.experimental.ome.metadata.Dataset ds = entry.datasets.get( level );
-			if ( ds.coordinateTransformations == null )
-			{
-				for ( int d = 0; d < 3; d++ )
-				{
-					final int zi = spatialZarrIdx[ d ];
-					result[ level ][ d ] = zi >= 0 && zi < level0Scales.length ? level0Scales[ zi ] : 1.0;
-				}
-				continue;
-			}
-			boolean foundScale = false;
-			for ( final CoordinateTransformation ct : ds.coordinateTransformations )
-			{
-				if ( ct instanceof ScaleCoordinateTransformation )
-				{
-					final ScaleCoordinateTransformation scaleCt = ( ScaleCoordinateTransformation ) ct;
-					if ( scaleCt.scale == null )
-						continue;
-					for ( int d = 0; d < 3; d++ )
-					{
-						final int zi = spatialZarrIdx[ d ];
-						if ( zi >= 0 && zi < scaleCt.scale.size() )
-							result[ level ][ d ] = scaleCt.scale.get( zi );
-						else
-							result[ level ][ d ] = zi >= 0 && zi < level0Scales.length ? level0Scales[ zi ] : 1.0;
-					}
-					foundScale = true;
-					break;
-				}
-			}
-			if ( !foundScale )
-			{
-				for ( int d = 0; d < 3; d++ )
-				{
-					final int zi = spatialZarrIdx[ d ];
-					result[ level ][ d ] = zi >= 0 && zi < level0Scales.length ? level0Scales[ zi ] : 1.0;
-				}
-			}
-		}
+			result[ level ] = computeLevelScale( level, level0Scales, spatialZarrIdx );
 		return result;
+	}
+
+	private int[] getSpatialZarrIndices()
+	{
+		final int[] spatialZarrIdx = new int[ 3 ];
+		spatialZarrIdx[ 0 ] = zarrAxisIndex( "x" );
+		spatialZarrIdx[ 1 ] = zarrAxisIndex( "y" );
+		spatialZarrIdx[ 2 ] = zarrAxisIndex( "z" );
+		return spatialZarrIdx;
+	}
+
+	private double[] computeLevelScale( final int level, final double[] level0Scales, final int[] spatialZarrIdx )
+	{
+		final double[] fallback = fallbackSpatialScale( level0Scales, spatialZarrIdx );
+		final ScaleCoordinateTransformation scaleCt = findLevelScaleTransformation( level );
+		if ( scaleCt == null || scaleCt.scale == null )
+			return fallback;
+		return spatialScaleFromTransformation( scaleCt, level0Scales, spatialZarrIdx );
+	}
+
+	private ScaleCoordinateTransformation findLevelScaleTransformation( final int level )
+	{
+		if ( entry.datasets == null || entry.datasets.size() <= level )
+			return null;
+		final dev.zarr.zarrjava.experimental.ome.metadata.Dataset ds = entry.datasets.get( level );
+		if ( ds.coordinateTransformations == null )
+			return null;
+		for ( final CoordinateTransformation ct : ds.coordinateTransformations )
+		{
+			if ( ct instanceof ScaleCoordinateTransformation )
+				return ( ScaleCoordinateTransformation ) ct;
+		}
+		return null;
+	}
+
+	private double[] spatialScaleFromTransformation(
+			final ScaleCoordinateTransformation scaleCt,
+			final double[] level0Scales,
+			final int[] spatialZarrIdx )
+	{
+		final double[] scales = new double[ 3 ];
+		for ( int d = 0; d < 3; d++ )
+		{
+			final int zi = spatialZarrIdx[ d ];
+			if ( zi >= 0 && zi < scaleCt.scale.size() )
+				scales[ d ] = scaleCt.scale.get( zi );
+			else
+				scales[ d ] = fallbackScaleAtAxis( level0Scales, zi );
+		}
+		return scales;
+	}
+
+	private double[] fallbackSpatialScale( final double[] level0Scales, final int[] spatialZarrIdx )
+	{
+		final double[] scales = new double[ 3 ];
+		for ( int d = 0; d < 3; d++ )
+			scales[ d ] = fallbackScaleAtAxis( level0Scales, spatialZarrIdx[ d ] );
+		return scales;
+	}
+
+	private double fallbackScaleAtAxis( final double[] level0Scales, final int zarrIndex )
+	{
+		return zarrIndex >= 0 && zarrIndex < level0Scales.length ? level0Scales[ zarrIndex ] : 1.0;
 	}
 
 	// -------------------------------------------------------------------------
