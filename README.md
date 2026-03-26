@@ -7,14 +7,58 @@
 
 ![demo video showing drag-and-drop of OME-Zarr in Fiji](doc/NGFF+DnD+Fiji.webm)
 
-This repo is currently primarily only a scijava (Fiji) drag-and-drop handler for OME-Zarrs.
+This repo is currently primarily only a Fiji Drag & Drop handler for OME-Zarrs.
 
-An outcome of this handler is three-fold:
+If the dropped target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing
 
-- It either doesn't recognize the dropped target as Zarr v3 and does nothing; or else
-- It opens the N5 Import dialog (which is also available under "Fiji -> File -> Import -> HDF5/N5/Zarr/NGFF..."), unless
-- It was an ALT + drag-and-drop (the ALT key was held down) in which
-  case [BigDataViewer](https://imagej.net/plugins/bdv/) is opened directly.
+# Features
+
+## Drag & Drop of OME-Zarrs from local folders into Fiji
+
+* Users can decide the **default drag & drop behavior** via `Plugins -> OME-Zarr -> Drag & Drop behavior`
+  * Open the highest available single-resolution image in ImageJ.
+  * Open a matching single-resolution image in ImageJ (default). Users can specify a preferred width. The highest available single-resolution image, which is smaller than the preferred width, is opened. This is useful for large OME-Zarrs, which have a single-resolution image smaller than the full resolution, but still large enough to be opened in ImageJ.
+  * Open as a multi-resolution source in BigDataViewer. This is useful for large OME-Zarrs. Channel names, colors, contrast limits, and the timepoint are automatically extracted from the OME-Zarr metadata, if available.
+  * Show a [**dialog**](#dialog-options) with all available opening options.
+
+## Dialog options
+
+* Open the N5 import dialog at the position of the dropped OME-Zarr.
+* Open the N5 viewer dialog at the position of the dropped OME-Zarr.
+* Open a **single-resolution** image in **ImageJ**, which best matches the preferred width in the user settings.
+* Open **multi-resolution** image in **BigDataViewer**.
+* Run a [pre-defined script](#scriplet-support) (e.g. a macro) on the OME-Zarr.
+* Open this [Readme](https://github.com/BioImageTools/ome-zarr-fiji-java) file.
+
+## Supported OME-Zarr versions
+
+* [OME-Zarr v0.5](https://ngff.openmicroscopy.org/0.5/index.html) (Zarr v3)
+* [OME-Zarr v0.4](https://ngff.openmicroscopy.org/0.4/index.html) (Zarr v2)
+* ~~OME-Zarr v0.3 (Zarr v2)~~ (currently not supported)
+* Supports 2D (xy) to 5D (xyzct) images, or any subsets of the latter.
+
+## Dual dataset view
+
+* If an OME-Zarr has been drag & dropped into Fiji, it can be opened as a multi-resolution source in BigDataViewer via `Plugins -> OME-Zarr ->Plugins > OME-Zarr > Open Current Zarr Image in BigDataViewer`. In this case, the data is read into the memory only once and exposed to FIJI/BigDataViewer as a single dataset.
+
+## Multi-resolution vs. single-resolution
+
+* Users can drag & drop OME-Zarrs single-resolution or multi-resolution. The drag & drop handler will automatically detect the type of the OME-Zarr. It depends on the level in the Zarr folder structure that was drag & dropped.
+
+## Read channel information from OME-Zarr metadata
+
+* Works only when a multi-resolution OME-Zarr is drag & dropped and opened in BigDataViewer.
+* The channel names, colors, and contrast limits and their active/inactive state are automatically extracted from the OME-Zarr metadata, if available. The timepoint is also automatically set to the timepoint specified in the metadata, if available.
+
+## Reader Backend
+
+* The reading of OME-Zarrs is done via the [N5 library](https://github.com/saalfeldlab/n5).
+* We plan to also support reading through [zarr-java](https://github.com/zarr-developers/zarr-java).
+
+## Scriplet support
+
+* Users can run a script on the OME-Zarr. The script resource can be a file and can be set in the `Plugins -> OME-Zarr -> Preset Drag & Drop User Script` menu.
+* If no script is set, the script editor opens with a default script.
 
 # Availability
 
