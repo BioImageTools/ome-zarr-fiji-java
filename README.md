@@ -5,8 +5,6 @@
 
 # About
 
-![demo video showing drag-and-drop of OME-Zarr in Fiji](doc/NGFF+DnD+Fiji.webm)
-
 This repo is currently primarily only a Fiji Drag & Drop handler for OME-Zarrs.
 
 If the dropped target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing
