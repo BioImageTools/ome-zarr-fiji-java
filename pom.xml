@@ -182,6 +182,11 @@
 	</repositories>
 
 	<dependencies>
+		<dependency>
+			<groupId>dev.zarr</groupId>
+			<artifactId>zarr-java</artifactId>
+			<version>0.1.1</version>
+		</dependency>
 		<!-- N5 implementations of OME-Zarr including BDV Viewer adaptions -->
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>

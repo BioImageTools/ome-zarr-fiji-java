@@ -30,6 +30,7 @@ import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.ZarrJavaBackedPyramidal5DImageData;
 
 public class ZarrOpenActions
 {
@@ -166,11 +167,31 @@ public class ZarrOpenActions
 	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
 			throws NotAMultiscaleImageException, NoMatchingResolutionException
 	{
+		// Try zarr-java backend first (supports Zarr v2 and v3)
+		try
+		{
+			final ZarrJavaBackedPyramidal5DImageData< ?, ? > data =
+					new ZarrJavaBackedPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
+			final Object result = multiScaleImageOpener.apply( data.asPyramidalDataset() );
+			logger.info( "Opened multiscale image with zarr-java backend: {}", droppedInPath );
+			return result;
+		}
+		catch ( NotAMultiscaleImageException e )
+		{
+			logger.debug( "zarr-java backend could not open {}: {}. Falling back to N5 backend.", droppedInPath, e.getMessage() );
+		}
+		catch ( RuntimeException e )
+		{
+			logger.warn( "zarr-java backend failed for {} ({}). Falling back to N5 backend.", droppedInPath, e.getMessage() );
+			logger.debug( "zarr-java backend runtime failure details", e );
+		}
+
+		// Fall back to N5 backend (supports Zarr v2 via n5-zarr)
 		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
 				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
 		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
 		Object result = multiScaleImageOpener.apply( pyramidalDataset );
-		logger.info( "Opened multiscale image: {}", droppedInPath );
+		logger.info( "Opened multiscale image with N5 backend: {}", droppedInPath );
 		return result;
 	}
 
