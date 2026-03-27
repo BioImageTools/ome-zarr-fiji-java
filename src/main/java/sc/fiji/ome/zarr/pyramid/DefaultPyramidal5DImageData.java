@@ -255,13 +255,13 @@ public class DefaultPyramidal5DImageData<
 		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )
 		{
 			final Omero.Channel omeroChannel = omero == null || omero.channels == null ? null : omero.channels.get( channelNumber );
-			String cannelLabel = omeroChannel == null || omeroChannel.label == null ? getName() : omeroChannel.label;
+			String channelLabel = omeroChannel == null || omeroChannel.label == null ? getName() : omeroChannel.label;
 			RandomAccessibleInterval< V >[] channelsVolatile = extractChannels( volatileImgs, channelAxisIndex, channelNumber );
 			RandomAccessibleInterval< T >[] channels = extractChannels( cachedCellImgs, channelAxisIndex, channelNumber );
 			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile = new RandomAccessibleIntervalMipmapSource4D<>(
-					channelsVolatile, volatileType, transforms, voxelDimensions, cannelLabel, true );
+					channelsVolatile, volatileType, transforms, voxelDimensions, channelLabel, true );
 			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
-					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, cannelLabel, true );
+					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, channelLabel, true );
 			final SourceAndConverter< T > sourceAndConverter = createSourceAndConverter( source4D, source4DVolatile );
 			sources.add( sourceAndConverter );
 			BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
