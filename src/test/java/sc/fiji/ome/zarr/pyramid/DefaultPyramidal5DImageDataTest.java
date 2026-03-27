@@ -21,10 +21,14 @@ import org.scijava.Context;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
 
+import bdv.tools.brightness.ConverterSetup;
+import bdv.util.BdvHandle;
 import bdv.viewer.Source;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class DefaultPyramidal5DImageDataTest
@@ -108,6 +112,9 @@ class DefaultPyramidal5DImageDataTest
 				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
 				assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
 				assertEquals( 2, pyramidal5DImageData.asSources().size() ); // 2 channels
+				assertEquals( "lynEGFP", pyramidal5DImageData.asSources().get( 0 ).getSpimSource().getName() );
+				assertEquals( "NLStdTomato", pyramidal5DImageData.asSources().get( 1 ).getSpimSource().getName() );
+				assertEquals( 1, pyramidal5DImageData.getOmeroProperties().rdefs.defaultT );
 			}
 			if ( resource.contains( "2d_testing" ) )
 			{
@@ -122,6 +129,7 @@ class DefaultPyramidal5DImageDataTest
 				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
 				assertArrayEquals( new long[] { 1000, 1000, 1 }, dimensions );
 				assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
+				assertEquals( ZarrTestUtils.IMAGE_NAME, pyramidal5DImageData.asSources().get( 0 ).getSpimSource().getName() );
 			}
 		}
 	}
@@ -305,6 +313,42 @@ class DefaultPyramidal5DImageDataTest
 				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
 				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
 			}
+		}
+	}
+
+	@ParameterizedTest
+	@MethodSource( "omeZarrExamples" )
+	void testConverterSetup( final String resource ) throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
+			PyramidalDataset< ? > pyramidalDataset = new PyramidalDataset<>( pyramidal5DImageData );
+			BdvHandle bdvHandle = BdvUtils.showBdvAndRegisterDataset( pyramidalDataset );
+			List< ConverterSetup > converterSetups =
+					bdvHandle.getConverterSetups().getConverterSetups( pyramidal5DImageData.asSources() );
+			assertNotNull( converterSetups );
+			if ( resource.contains( "2d_testing" ) ) // dataset without omero properties
+			{
+				assertEquals( 1, converterSetups.size() ); // 1 channel
+				ConverterSetup converterSetup = converterSetups.get( 0 );
+				assertEquals( 0, converterSetup.getDisplayRangeMin() );
+				assertEquals( 65535, converterSetup.getDisplayRangeMax() );
+				assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup.getColor().toString() );
+			}
+			if ( resource.contains( "5d_testing" ) ) // dataset with omero properties
+			{
+				assertEquals( 2, converterSetups.size() ); // 2 channels
+				ConverterSetup converterSetup0 = converterSetups.get( 0 );
+				assertEquals( 3, converterSetup0.getDisplayRangeMin() );
+				assertEquals( 246, converterSetup0.getDisplayRangeMax() );
+				assertEquals( "(r=0,g=255,b=0,a=255)", converterSetup0.getColor().toString() );
+				ConverterSetup converterSetup1 = converterSetups.get( 1 );
+				assertEquals( 6, converterSetup1.getDisplayRangeMin() );
+				assertEquals( 133, converterSetup1.getDisplayRangeMax() );
+				assertEquals( "(r=255,g=0,b=0,a=255)", converterSetup1.getColor().toString() );
+			}
+			bdvHandle.close();
 		}
 	}
 

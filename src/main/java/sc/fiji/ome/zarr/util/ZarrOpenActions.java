@@ -23,7 +23,6 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Cast;
 
 import bdv.util.BdvFunctions;
-import bdv.util.BdvHandle;
 import ij.IJ;
 import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
@@ -101,14 +100,13 @@ public class ZarrOpenActions
 		);
 	}
 
-	public BdvHandle openBDVWithImage()
+	public Object openBDVWithImage()
 	{
-		Object result = openImage(
+		return openImage(
 				BdvUtils::showBdvAndRegisterDataset,
 				singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
 				"BigDataViewer"
 		);
-		return Cast.unchecked( result );
 	}
 
 	private void showSingleScaleError( final Exception e )
@@ -133,7 +131,7 @@ public class ZarrOpenActions
 	}
 
 	Object openImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener,
-			final Consumer< Img< ? > > singleScaleImageOpener,
+			final Function< Img< ? >, Object > singleScaleImageOpener,
 			final String message )
 	{
 		try
@@ -148,7 +146,9 @@ public class ZarrOpenActions
 			logger.info( "Try opening as single-scale image instead." );
 			try
 			{
-				openSingleScaleImage( singleScaleImageOpener );
+				Object result = openSingleScaleImage( singleScaleImageOpener );
+				logger.info( "Opened single scale image in {}: {}", message, droppedInPath );
+				return result;
 			}
 			catch ( NotASingleScaleImageException ex )
 			{
@@ -182,7 +182,7 @@ public class ZarrOpenActions
 		return result;
 	}
 
-	private void openSingleScaleImage( final Consumer< Img< ? > > singleScaleImageOpener ) throws NotASingleScaleImageException
+	private Object openSingleScaleImage( final Function< Img< ? >, Object > singleScaleImageOpener ) throws NotASingleScaleImageException
 	{
 		N5Reader reader = new N5Factory().openReader( ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString() );
 		Img< ? > img;
@@ -194,8 +194,9 @@ public class ZarrOpenActions
 		{
 			throw new NotASingleScaleImageException( droppedInPath.toString(), e );
 		}
-		singleScaleImageOpener.accept( img );
+		Object result = singleScaleImageOpener.apply( img );
 		logger.info( "Opened single scale image: {}", droppedInPath );
+		return result;
 	}
 
 	public void runScript()

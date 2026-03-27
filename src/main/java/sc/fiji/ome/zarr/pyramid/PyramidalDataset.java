@@ -8,6 +8,7 @@ import java.util.List;
 
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
  * A {@code et.imagej.Dataset} that can be viewed
@@ -41,6 +42,11 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 	public int numTimepoints()
 	{
 		return data.numTimepoints();
+	}
+
+	public Omero getOmeroProperties()
+	{
+		return data.getOmeroProperties();
 	}
 
 	public int numResolutions()
