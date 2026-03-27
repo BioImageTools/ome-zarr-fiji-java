@@ -3,13 +3,13 @@
 Two 4D datasets are provided here. Their content is the same,
 they differ only in the version of OME-Zarr used for storage:
 
-- `test_4d_v0.4.ome.zarr` → OME-Zarr v0.4
-- `test_4d_v0.5.ome.zarr` → OME-Zarr v0.5 (current format)
+- `4d_dataset_v4.ome.zarr` → OME-Zarr v0.4
+- `4d_dataset_v5.ome.zarr` → OME-Zarr v0.5 (current format)
 
 Each dataset stores:
 
-- 2 timepoints (T)
-- 2 channels (C)
+- 4 timepoints (T)
+- 3 channels (C)
 - 2D images (Y × X)
 - 2 resolution levels (multiscale pyramid)
 
@@ -46,5 +46,5 @@ python create_4d.py
 
 This will generate:
 
-* `test_4d_v0.4.ome.zarr`
-* `test_4d_v0.5.ome.zarr`
+* `4d_dataset_v4.ome.zarr`
+* `4d_dataset_v5.ome.zarr`

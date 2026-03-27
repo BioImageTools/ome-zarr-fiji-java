@@ -136,7 +136,7 @@ class DefaultPyramidal5DImageDataTest
 				assertNotNull( channel0.getSource( 1, 1 ) ); // timepoint 1, resolution level 1
 				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
 				assertArrayEquals( new long[] { 64, 64, 1 }, dimensions );
-				assertEquals( 2, pyramidal5DImageData.asSources().size() ); // 2 channels
+				assertEquals( 3, pyramidal5DImageData.asSources().size() ); // 3 channels
 			}
 			if ( resource.contains( "2d_testing" ) )
 			{
@@ -184,7 +184,7 @@ class DefaultPyramidal5DImageDataTest
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 2, pyramidal5DImageData.numTimepoints() );
 			if ( resource.contains( "4d_testing" ) )
-				assertEquals( 2, pyramidal5DImageData.numTimepoints() );
+				assertEquals( 4, pyramidal5DImageData.numTimepoints() );
 			if ( resource.contains( "2d_testing" ) )
 				assertEquals( 1, pyramidal5DImageData.numTimepoints() );
 		}
@@ -200,7 +200,7 @@ class DefaultPyramidal5DImageDataTest
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 2, pyramidal5DImageData.numChannels() );
 			if ( resource.contains( "4d_testing" ) )
-				assertEquals( 2, pyramidal5DImageData.numChannels() );
+				assertEquals( 3, pyramidal5DImageData.numChannels() );
 			if ( resource.contains( "2d_testing" ) )
 				assertEquals( 1, pyramidal5DImageData.numChannels() );
 		}
