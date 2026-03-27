@@ -84,7 +84,7 @@ public class BdvUtils
 			SourceAndConverter< ? > source = pyramidalDataset.asSources().get( channelNumber );
 			final Omero.Channel omeroChannel = omeroChannels.get( channelNumber );
 			ConverterSetup converterSetup = bdvHandle.getConverterSetups().getConverterSetup( source );
-			Color color = omeroChannel == null || omeroChannel.color == null ? Color.black : Color.decode( "#" + omeroChannel.color );
+			Color color = omeroChannel == null || omeroChannel.color == null ? Color.white : Color.decode( "#" + omeroChannel.color );
 			int opaque = 255;
 			converterSetup.setColor( new ARGBType( ARGBType.rgba( color.getRed(), color.getGreen(), color.getBlue(), opaque ) ) );
 			if ( omeroChannel != null && omeroChannel.window != null )

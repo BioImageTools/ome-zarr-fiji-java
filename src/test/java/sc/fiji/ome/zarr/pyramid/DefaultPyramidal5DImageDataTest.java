@@ -334,7 +334,7 @@ class DefaultPyramidal5DImageDataTest
 				ConverterSetup converterSetup = converterSetups.get( 0 );
 				assertEquals( 0, converterSetup.getDisplayRangeMin() );
 				assertEquals( 65535, converterSetup.getDisplayRangeMax() );
-				assertEquals( "(r=0,g=0,b=0,a=255)", converterSetup.getColor().toString() );
+				assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup.getColor().toString() );
 			}
 			if ( resource.contains( "5d_testing" ) ) // dataset with omero properties
 			{
