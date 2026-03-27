@@ -11,7 +11,7 @@ public class Omero
 	// Top-level Omero class
 	public int id;
 
-	public String version;
+	public String name;
 
 	public Rdefs rdefs;
 
