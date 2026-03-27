@@ -118,7 +118,7 @@ class DefaultPyramidal5DImageDataTest
 				assertNotNull( channel0.getSource( 1, 1 ) ); // timepoint 1, resolution level 1
 				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
 				assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
-				assertEquals( 2, pyramidal5DImageData.asSources().size() ); // 2 channels
+				assertEquals( 3, pyramidal5DImageData.asSources().size() ); // 3 channels
 				assertEquals( "lynEGFP", pyramidal5DImageData.asSources().get( 0 ).getSpimSource().getName() );
 				assertEquals( "NLStdTomato", pyramidal5DImageData.asSources().get( 1 ).getSpimSource().getName() );
 				assertEquals( 1, pyramidal5DImageData.getOmeroProperties().rdefs.defaultT );
@@ -182,7 +182,7 @@ class DefaultPyramidal5DImageDataTest
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			if ( resource.contains( "5d_testing" ) )
-				assertEquals( 2, pyramidal5DImageData.numTimepoints() );
+				assertEquals( 4, pyramidal5DImageData.numTimepoints() );
 			if ( resource.contains( "4d_testing" ) )
 				assertEquals( 4, pyramidal5DImageData.numTimepoints() );
 			if ( resource.contains( "2d_testing" ) )
@@ -198,7 +198,7 @@ class DefaultPyramidal5DImageDataTest
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			if ( resource.contains( "5d_testing" ) )
-				assertEquals( 2, pyramidal5DImageData.numChannels() );
+				assertEquals( 3, pyramidal5DImageData.numChannels() );
 			if ( resource.contains( "4d_testing" ) )
 				assertEquals( 3, pyramidal5DImageData.numChannels() );
 			if ( resource.contains( "2d_testing" ) )
@@ -368,7 +368,7 @@ class DefaultPyramidal5DImageDataTest
 			}
 			if ( resource.contains( "5d_testing" ) ) // dataset with omero properties
 			{
-				assertEquals( 2, converterSetups.size() ); // 2 channels
+				assertEquals( 3, converterSetups.size() ); // 3 channels
 				ConverterSetup converterSetup0 = converterSetups.get( 0 );
 				assertEquals( 3, converterSetup0.getDisplayRangeMin() );
 				assertEquals( 246, converterSetup0.getDisplayRangeMax() );
