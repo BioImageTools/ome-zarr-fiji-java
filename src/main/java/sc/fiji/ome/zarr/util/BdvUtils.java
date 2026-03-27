@@ -5,8 +5,13 @@ import java.awt.Container;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.invoke.MethodHandles;
+import java.util.List;
 
 import net.imglib2.type.numeric.ARGBType;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import bdv.tools.brightness.ConverterSetup;
 import bdv.util.BdvFunctions;
@@ -18,6 +23,8 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 public class BdvUtils
 {
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
 	private BdvUtils()
 	{
 		// prevent instantiation of this class
@@ -62,10 +69,20 @@ public class BdvUtils
 	private static void setChannelProperties( final PyramidalDataset< ? > pyramidalDataset, final BdvHandle bdvHandle )
 	{
 		Omero omero = pyramidalDataset.getOmeroProperties();
+		if ( omero == null || omero.channels == null || omero.channels.isEmpty() )
+			return;
+		List< Omero.Channel > omeroChannels = omero.channels;
+		if ( omeroChannels.size() != pyramidalDataset.asSources().size() )
+		{
+			logger.warn(
+					"The number of channels in the Omero metadata ({}) does not match the number of sources in the dataset ({}). Channel properties will not be applied.",
+					omeroChannels.size(), pyramidalDataset.asSources().size() );
+			return;
+		}
 		for ( int channelNumber = 0; channelNumber < pyramidalDataset.asSources().size(); channelNumber++ )
 		{
 			SourceAndConverter< ? > source = pyramidalDataset.asSources().get( channelNumber );
-			final Omero.Channel omeroChannel = omero == null || omero.channels == null ? null : omero.channels.get( channelNumber );
+			final Omero.Channel omeroChannel = omeroChannels.get( channelNumber );
 			ConverterSetup converterSetup = bdvHandle.getConverterSetups().getConverterSetup( source );
 			Color color = omeroChannel == null || omeroChannel.color == null ? Color.black : Color.decode( "#" + omeroChannel.color );
 			int opaque = 255;
