@@ -250,8 +250,8 @@ public class DefaultPyramidal5DImageData<
 
 	private List< SourceAndConverter< T > > initSourceAndConverters( final ResolutionLevel resolutionLevel )
 	{
-		// only x,y axes have _fixed_ their dimension index, all the other axes can be absent in the input tensor,
-		// and thus their indices are "floating", and must be thus found here:
+		// only x,y axes have a fixed dimension index, all the other axes can be absent in the input tensor,
+		// and thus their indices are "floating", and must be thus found here
 		// NB: the input tensor is cachedCellImgs and its wrapper volatileImgs at a particular chosen resolution level
 		final int zAxisIndex = findAxisIndex( resolutionLevel, Axes.Z );
 		final int timeAxisIndex = findAxisIndex( resolutionLevel, Axes.TIME );
@@ -268,7 +268,7 @@ public class DefaultPyramidal5DImageData<
 			// for the Mipmap, RAIs must always be xyzt even if z and/or t is not present,
 			// but first the particular channel is taken out, and then 4D is ensured:
 			// NB: the input tensor is an ome-zarr array, which is of the xy[z][t][c] order of dimensions,
-			//     so really only a particular 'c' is extracted, and 'z' and 't' are added if they were missing
+			//     so really only a particular 'c' is extracted, and 'z' and 't' are added if they are missing
 			RandomAccessibleInterval< V >[] channelsVolatile =
 					ensureOrdered4dDimensions( extractChannel( volatileImgs, channelAxisIndex, channelNumber ), zAxisPresent, timeAxisPresent );
 			RandomAccessibleInterval< T >[] channels =
@@ -277,8 +277,8 @@ public class DefaultPyramidal5DImageData<
 			// wrap to create the mipmaps
 			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile = new RandomAccessibleIntervalMipmapSource4D<>(
 					channelsVolatile, volatileType, transforms, voxelDimensions, channelLabel, true );
-			final RandomAccessibleIntervalMipmapSource4D< T > source4D = new RandomAccessibleIntervalMipmapSource4D<>(
-					channels, type, transforms, voxelDimensions, channelLabel, true );
+			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
+					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, channelLabel, true );
 
 			// finally, provide the desired SAC for the current channel
 			final SourceAndConverter< T > sourceAndConverter = createSourceAndConverter( source4D, source4DVolatile );
@@ -300,9 +300,9 @@ public class DefaultPyramidal5DImageData<
 		final RandomAccessibleInterval< R >[] resultImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
 		for ( int level = 0; level < numResolutionLevels; level++ )
 		{
-			resultImgs[ level ] = channelAxisIndex < 0
-					? sourceImgs[ level ]
-					: Views.hyperSlice( sourceImgs[ level ], channelAxisIndex, channelNumber );
+			resultImgs[ level ] = channelAxisIndex < 0 // channel dimension does not exist
+					? sourceImgs[ level ] // return as is
+					: Views.hyperSlice( sourceImgs[ level ], channelAxisIndex, channelNumber ); // channel dimension exists, extract it
 		}
 		return resultImgs;
 	}
@@ -319,23 +319,24 @@ public class DefaultPyramidal5DImageData<
 			RandomAccessibleInterval< R > img = sourceImgs[ level ];
 			if ( zAxisPresent )
 			{
-				if ( !timeAxisPresent )
+				if ( !timeAxisPresent ) // case xyz
 				{
 					img = Views.addDimension( img, 0, 0 );
 				}
+				// NB: else (i.e., case xyzt) does not need to be covered, since it is already in the desired order
 			}
 			else
 			{
 				// zAxis is absent
-				if ( timeAxisPresent )
+				if ( timeAxisPresent ) // case xyt
 				{
-					//insert 1-long Z prior T
+					//insert 1-long Z prior to T
 					img = Views.addDimension( img, 0, 0 ); // now dims [0,1,2,3]
 					img = Views.permute( img, 2, 3 );
 				}
-				else
+				else // case xy
 				{
-					//twice add 1-long dimensions
+					//twice add 1-long dimensions for Z and T
 					img = Views.addDimension( img, 0, 0 );
 					img = Views.addDimension( img, 0, 0 );
 				}
