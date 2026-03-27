@@ -39,7 +39,9 @@ class DefaultPyramidal5DImageDataTest
 		return Stream.of(
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr",
+				"sc/fiji/ome/zarr/util/4d_testing/4d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
+				"sc/fiji/ome/zarr/util/4d_testing/4d_dataset_v5.ome.zarr",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr"
 		);
 	}
@@ -81,6 +83,11 @@ class DefaultPyramidal5DImageDataTest
 				assertEquals( 64, imgPlus.dimension( 1 ) );
 				assertEquals( 16, imgPlus.dimension( 2 ) );
 			}
+			if ( resource.contains( "4d_testing" ) )
+			{
+				assertEquals( 64, imgPlus.dimension( 0 ) );
+				assertEquals( 64, imgPlus.dimension( 1 ) );
+			}
 			if ( resource.contains( "2d_testing" ) )
 			{
 				assertEquals( 1000, imgPlus.dimension( 0 ) );
@@ -116,6 +123,21 @@ class DefaultPyramidal5DImageDataTest
 				assertEquals( "NLStdTomato", pyramidal5DImageData.asSources().get( 1 ).getSpimSource().getName() );
 				assertEquals( 1, pyramidal5DImageData.getOmeroProperties().rdefs.defaultT );
 			}
+			if ( resource.contains( "4d_testing" ) )
+			{
+				Source< ? > channel0 = pyramidal5DImageData.asSources().get( 0 ).getSpimSource();
+				VoxelDimensions voxelDimensions = channel0.getVoxelDimensions();
+				assertEquals( 2, channel0.getNumMipmapLevels() ); // 2 resolution levels
+				assertInstanceOf( UnsignedByteType.class, channel0.getType() );
+				assertNotNull( voxelDimensions );
+				assertNotNull( channel0.getSource( 0, 0 ) ); // timepoint 0, resolution level 0
+				assertNotNull( channel0.getSource( 0, 1 ) ); // timepoint 0, resolution level 1
+				assertNotNull( channel0.getSource( 1, 0 ) ); // timepoint 1, resolution level 0
+				assertNotNull( channel0.getSource( 1, 1 ) ); // timepoint 1, resolution level 1
+				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
+				assertArrayEquals( new long[] { 64, 64, 1 }, dimensions );
+				assertEquals( 3, pyramidal5DImageData.asSources().size() ); // 3 channels
+			}
 			if ( resource.contains( "2d_testing" ) )
 			{
 				assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
@@ -144,6 +166,8 @@ class DefaultPyramidal5DImageDataTest
 			assertNotNull( dataset );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 5, dataset.numDimensions() ); // NB: xyzct
+			if ( resource.contains( "4d_testing" ) )
+				assertEquals( 4, dataset.numDimensions() ); // NB: xyct
 			if ( resource.contains( "2d_testing" ) )
 				assertEquals( 2, dataset.numDimensions() ); // NB: xy
 
@@ -159,6 +183,8 @@ class DefaultPyramidal5DImageDataTest
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 2, pyramidal5DImageData.numTimepoints() );
+			if ( resource.contains( "4d_testing" ) )
+				assertEquals( 4, pyramidal5DImageData.numTimepoints() );
 			if ( resource.contains( "2d_testing" ) )
 				assertEquals( 1, pyramidal5DImageData.numTimepoints() );
 		}
@@ -173,6 +199,8 @@ class DefaultPyramidal5DImageDataTest
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 2, pyramidal5DImageData.numChannels() );
+			if ( resource.contains( "4d_testing" ) )
+				assertEquals( 3, pyramidal5DImageData.numChannels() );
 			if ( resource.contains( "2d_testing" ) )
 				assertEquals( 1, pyramidal5DImageData.numChannels() );
 		}
@@ -213,6 +241,8 @@ class DefaultPyramidal5DImageDataTest
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			Object type = pyramidal5DImageData.getType();
 			if ( resource.contains( "5d_testing" ) )
+				Assertions.assertInstanceOf( UnsignedByteType.class, type );
+			if ( resource.contains( "4d_testing" ) )
 				Assertions.assertInstanceOf( UnsignedByteType.class, type );
 			if ( resource.contains( "2d_testing" ) )
 				Assertions.assertInstanceOf( LongType.class, type );
