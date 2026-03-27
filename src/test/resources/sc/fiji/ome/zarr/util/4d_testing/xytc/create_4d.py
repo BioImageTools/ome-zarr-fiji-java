@@ -8,8 +8,8 @@ from ome_zarr.format import FormatV04, FormatV05
 def create_test_dataset():
     """
     Creates a small 4D OME-Zarr dataset with:
-      - 2 timepoints (T)
-      - 2 channels (C)
+      - 4 timepoints (T)
+      - 3 channels (C)
       - 2D pixel data (Y, X)
       - 2 multiscale levels
       - Writes datasets as:

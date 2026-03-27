@@ -56,6 +56,8 @@ class ZarrOpenActionsTest
 		return Stream.of(
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
+				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v4.ome.zarr",
+				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v5.ome.zarr",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr"
 		);
@@ -66,6 +68,8 @@ class ZarrOpenActionsTest
 		return Stream.of(
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image",
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0/image",
+				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v4.ome.zarr/0",
+				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v5.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr/0"
 		);
@@ -170,6 +174,13 @@ class ZarrOpenActionsTest
 			if ( resource.contains( "2d_testing" ) )
 			{
 				assertArrayEquals( new long[] { 1000, 1000 }, dimensions ); // highest resolution
+			}
+			if ( resource.contains( "4d_testing" ) )
+			{
+				if ( resource.contains( "xytc" ) )
+				{
+					assertArrayEquals( new long[] { 64, 64, 4, 3 }, dimensions ); // highest resolution
+				}
 			}
 			if ( resource.contains( "5d_testing" ) )
 			{
