@@ -58,6 +58,8 @@ class ZarrOpenActionsTest
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
 				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v5.ome.zarr",
+				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v4.ome.zarr",
+				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v5.ome.zarr",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr"
 		);
@@ -70,6 +72,8 @@ class ZarrOpenActionsTest
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0/image",
 				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v4.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v5.ome.zarr/0",
+				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v4.ome.zarr/0",
+				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v5.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr/0"
 		);
@@ -263,6 +267,10 @@ class ZarrOpenActionsTest
 			if ( resource.contains( "4d_testing" ) )
 			{
 				if ( resource.contains( "xytc" ) )
+				{
+					// assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this return 1, but should return 3. Something is mixed up.
+				}
+				if ( resource.contains( "xyzc" ) )
 				{
 					// assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this return 1, but should return 3. Something is mixed up.
 				}
