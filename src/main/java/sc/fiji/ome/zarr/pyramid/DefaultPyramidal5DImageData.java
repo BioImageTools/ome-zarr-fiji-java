@@ -346,48 +346,6 @@ public class DefaultPyramidal5DImageData<
 		return sourceImgs;
 	}
 
-	//could be removed
-	private < R > RandomAccessibleInterval< R >[] extractChannels( final RandomAccessibleInterval< R >[] sourceImgs,
-			final int channelAxisIndex, final int channelNumber, final DimType dimType )
-	{
-		final RandomAccessibleInterval< R >[] result = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
-		for ( int level = 0; level < numResolutionLevels; level++ )
-		{
-			RandomAccessibleInterval< R > img =
-					channelAxisIndex < 0 ? sourceImgs[ level ] : Views.hyperSlice( sourceImgs[ level ], channelAxisIndex, channelNumber );
-			result[ level ] = ensureMinDimensions( img, dimType );
-		}
-		return result;
-	}
-
-	//could be removed
-	private < R > RandomAccessibleInterval< R > ensureMinDimensions( RandomAccessibleInterval< R > img, final DimType type )
-	{
-		switch ( type )
-		{
-		case XY:
-			// add Z then T
-			img = Views.addDimension( img, 0, 0 ); // Z
-			img = Views.addDimension( img, 0, 0 ); // T
-			break;
-		case XYZ:
-			// add T
-			img = Views.addDimension( img, 0, 0 );
-			break;
-		case XYT:
-			// current: (x,y,t) -> dims [0,1,2]
-			// Step 1: add a new dimension at the end → (x,y,t,z)
-			img = Views.addDimension( img, 0, 0 ); // now dims [0,1,2,3]
-			// Step 2: swap t and z → (x,y,z,t)
-			img = Views.permute( img, 2, 3 );
-			break;
-		case XYZT:
-			// nothing to do
-			break;
-		}
-		return img;
-	}
-
 	private SourceAndConverter< T > createSourceAndConverter( final RandomAccessibleIntervalMipmapSource4D< T > source4D,
 			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile )
 	{
@@ -753,26 +711,6 @@ public class DefaultPyramidal5DImageData<
 			}
 		}
 		return -1;
-	}
-
-	//could be removed
-	private enum DimType
-	{
-		XY,
-		XYZ,
-		XYT,
-		XYZT;
-
-		public static DimType getByAxes( final int zAxisIndex, final int tAxisIndex )
-		{
-			if ( zAxisIndex < 0 && tAxisIndex < 0 )
-				return XY;
-			if ( zAxisIndex >= 0 && tAxisIndex < 0 )
-				return XYZ;
-			if ( zAxisIndex < 0 )
-				return XYT;
-			return XYZT;
-		}
 	}
 
 	// ---------------------------------------------------------------------
