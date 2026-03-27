@@ -142,7 +142,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context ); // preferred width equals null results in the highest resolution
+			ZarrOpenActions actions = new ZarrOpenActions( path, context ); // no settings object means that the highest resolution is loaded by default
 			actions.openIJWithImage();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
