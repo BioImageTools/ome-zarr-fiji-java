@@ -36,8 +36,12 @@ public class Affine3DUtils
 		return true;
 	}
 
+
 	/**
-	 * Checks whether the transform represents pure scaling (no rotation or shear).
+	 * Checks whether the transform represents pure scaling (no rotation or shear).	 *
+	 * @param transform the affine transform to be analyzed
+	 * @param epsilon tolerance for floating-point comparisons to consider off-diagonal elements as zero
+	 * @return true if the transformation is a scaling transformation, false otherwise
 	 */
 	public static boolean isScaling( final AffineTransform3D transform, final double epsilon )
 	{
