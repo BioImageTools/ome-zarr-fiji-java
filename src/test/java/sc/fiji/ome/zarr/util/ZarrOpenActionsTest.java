@@ -3,6 +3,7 @@ package sc.fiji.ome.zarr.util;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static sc.fiji.ome.zarr.util.ZarrTestUtils.IMAGE_NAME;
@@ -15,12 +16,21 @@ import net.imglib2.util.Cast;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.scijava.Context;
 import org.scijava.display.DisplayService;
+import org.scijava.prefs.PrefService;
+import org.scijava.ui.swing.script.TextEditor;
 
+import java.awt.Window;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -29,9 +39,12 @@ import java.util.stream.Stream;
 import bdv.tools.brightness.ConverterSetup;
 import bdv.util.BdvHandle;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
+import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
@@ -240,6 +253,92 @@ class ZarrOpenActionsTest
 				assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup0.getColor().toString() );
 				assertEquals( 0, bdvStackSource.getBdvHandle().getViewerPanel().state().getCurrentTimepoint() );
 			}
+		}
+	}
+
+	@Test
+	void testRunScriptWithNoScriptSpecified() throws URISyntaxException, InterruptedException, InvocationTargetException
+	{
+		try (MockedStatic< JOptionPane > mocked = Mockito.mockStatic( JOptionPane.class ))
+		{
+			mocked.when( () -> JOptionPane.showConfirmDialog(
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.anyInt() ) )
+					.thenReturn( JOptionPane.NO_OPTION );
+
+			try (Context context = new Context())
+			{
+				PrefService prefService = context.getService( PrefService.class );
+				prefService.put( PresetScriptPlugin.class, "scriptPath", "--none--" );
+				String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
+				Path path = ZarrTestUtils.resourcePath( resource );
+				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
+				actions.runScript();
+
+				// wait until all Swing events are processed
+				SwingUtilities.invokeAndWait( () -> {} );
+
+				boolean found = false;
+				String text = null;
+
+				for ( Window window : Window.getWindows() )
+				{
+					if ( window instanceof TextEditor )
+					{
+						TextEditor editor = ( TextEditor ) window;
+						found = true;
+						text = editor.getTextArea().getText();
+						break;
+					}
+				}
+				assertTrue( found, "TextEditor window should be open" );
+				assertEquals( ScriptUtils.getTemplate(), text );
+			}
+		}
+	}
+
+	@Test
+	void testRunScriptWithScriptSpecified() throws URISyntaxException, IOException
+	{
+
+		try (Context context = new Context())
+		{
+			PrefService prefService = context.getService( PrefService.class );
+			Path temp = Files.createTempFile( "myScriptFile", ".py" );
+			String template = ScriptUtils.getTemplate(); // template script that opens the image in the BigDataViewer
+			String[] lines = template.split( "\\R" );
+			Files.write( temp, Arrays.asList( lines ) );
+
+			File tempFile = temp.toFile();
+			tempFile.deleteOnExit();
+			prefService.put( PresetScriptPlugin.class, "scriptPath", tempFile.getAbsolutePath() );
+			String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
+			Path path = ZarrTestUtils.resourcePath( resource );
+			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
+			actions.runScript();
+
+			boolean foundTextEditor = false;
+			boolean foundBigDataViewer = false;
+			for ( Window window : Window.getWindows() )
+			{
+				if ( window instanceof TextEditor )
+				{
+					foundTextEditor = true;
+					break;
+				}
+			}
+			for ( Window window : Window.getWindows() )
+			{
+				if ( window instanceof ViewerFrame )
+				{
+					foundBigDataViewer = true;
+					break;
+				}
+			}
+			assertFalse( foundTextEditor, "TextEditor window should not be open" );
+			assertTrue( foundBigDataViewer, "BigDataViewer window should be open" );
 		}
 	}
 }
