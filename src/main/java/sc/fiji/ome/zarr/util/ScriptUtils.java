@@ -34,6 +34,7 @@ public class ScriptUtils
 	 * Otherwise, it returns {@link ScriptUtils#DEFAULT_SCRIPT_TITLE}.
 	 * <br>
 	 * @param ctx scijava context
+	 * @return the script title
 	 */
 	public static String getTooltipText( final Context ctx )
 	{
