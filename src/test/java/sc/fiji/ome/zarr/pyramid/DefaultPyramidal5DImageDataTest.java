@@ -41,9 +41,11 @@ class DefaultPyramidal5DImageDataTest
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v4.ome.zarr",
+				"sc/fiji/ome/zarr/util/4d_testing/xyzt/4d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
 				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v5.ome.zarr",
 				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v5.ome.zarr",
+				"sc/fiji/ome/zarr/util/4d_testing/xyzt/4d_dataset_v5.ome.zarr",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr"
 		);
 	}
@@ -134,18 +136,24 @@ class DefaultPyramidal5DImageDataTest
 				assertNotNull( voxelDimensions );
 				assertNotNull( channel0.getSource( 0, 0 ) ); // timepoint 0, resolution level 0
 				assertNotNull( channel0.getSource( 0, 1 ) ); // timepoint 0, resolution level 1
-				if ( resource.contains( "xytc" ) )
+				if ( resource.contains( "xytc" ) || resource.contains( "xyzt" ) )
 				{
 					assertNotNull( channel0.getSource( 1, 0 ) ); // timepoint 1, resolution level 0
 					assertNotNull( channel0.getSource( 1, 1 ) ); // timepoint 1, resolution level 1
+					assertNotNull( channel0.getSource( 2, 0 ) ); // timepoint 2, resolution level 0
+					assertNotNull( channel0.getSource( 2, 1 ) ); // timepoint 2, resolution level 1
+					assertNotNull( channel0.getSource( 3, 0 ) ); // timepoint 3, resolution level 0
+					assertNotNull( channel0.getSource( 3, 1 ) ); // timepoint 3, resolution level 1
 				}
 				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
 				if ( resource.contains( "xytc" ) )
 					assertArrayEquals( new long[] { 64, 64, 1 }, dimensions );
-				if ( resource.contains( "xyzc" ) )
+				if ( resource.contains( "xyzc" ) || resource.contains( "xyzt" ) )
 					assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
 				if ( resource.contains( "xytc" ) || resource.contains( "xyzc" ) )
 					assertEquals( 3, pyramidal5DImageData.asSources().size() ); // 3 channels
+				if ( resource.contains( "xyzt" ) )
+					assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
 			}
 			if ( resource.contains( "2d_testing" ) )
 			{
@@ -194,7 +202,7 @@ class DefaultPyramidal5DImageDataTest
 				assertEquals( 4, pyramidal5DImageData.numTimepoints() );
 			if ( resource.contains( "4d_testing" ) )
 			{
-				if ( resource.contains( "xytc" ) )
+				if ( resource.contains( "xytc" ) || resource.contains( "xyzt" ) )
 					assertEquals( 4, pyramidal5DImageData.numTimepoints() );
 				if ( resource.contains( "xyzc" ) )
 					assertEquals( 1, pyramidal5DImageData.numTimepoints() );
@@ -214,7 +222,12 @@ class DefaultPyramidal5DImageDataTest
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 3, pyramidal5DImageData.numChannels() );
 			if ( resource.contains( "4d_testing" ) )
-				assertEquals( 3, pyramidal5DImageData.numChannels() );
+			{
+				if ( resource.contains( "xytc" ) || resource.contains( "xyzc" ) )
+					assertEquals( 3, pyramidal5DImageData.numChannels() );
+				if ( resource.contains( "xyzt" ) )
+					assertEquals( 1, pyramidal5DImageData.numChannels() );
+			}
 			if ( resource.contains( "2d_testing" ) )
 				assertEquals( 1, pyramidal5DImageData.numChannels() );
 		}
