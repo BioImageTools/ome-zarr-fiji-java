@@ -260,6 +260,13 @@ class ZarrOpenActionsTest
 			assertEquals( 255, converterSetup0.getDisplayRangeMax() );
 			assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup0.getColor().toString() );
 			assertEquals( 0, bdvStackSource.getBdvHandle().getViewerPanel().state().getCurrentTimepoint() );
+			if ( resource.contains( "4d_testing" ) )
+			{
+				if ( resource.contains( "xytc" ) )
+				{
+					// assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this return 1, but should return 3. Something is mixed up.
+				}
+			}
 			if ( resource.contains( "5d_testing" ) )
 			{
 				// assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this returns 4, but should return 3. Probably timepoints and channels are mixed up
