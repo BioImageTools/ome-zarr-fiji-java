@@ -21,7 +21,7 @@ class MultiscaleImageTest
 	static Stream< String > omeZarrExamples()
 	{
 		return Stream.of(
-				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example"
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr"
 		// "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example" // NB: OME v05 not supported yet
 		);
 	}
@@ -41,8 +41,8 @@ class MultiscaleImageTest
 	{
 		MultiscaleImage< ?, ? > img = load( resource );
 		long[] dimensions = img.dimensions();
-		assertEquals( 1000, dimensions[ 0 ] );
-		assertEquals( 1000, dimensions[ 1 ] );
+		assertEquals( 64, dimensions[ 0 ] );
+		assertEquals( 64, dimensions[ 1 ] );
 	}
 
 	@ParameterizedTest
@@ -95,11 +95,11 @@ class MultiscaleImageTest
 	{
 		MultiscaleImage< ?, ? > img = load( resource );
 		long[] imgDimensions = img.getImg( 0 ).dimensionsAsLongArray();
-		assertEquals( 1000, imgDimensions[ 0 ] );
-		assertEquals( 1000, imgDimensions[ 1 ] );
+		assertEquals( 64, imgDimensions[ 0 ] );
+		assertEquals( 64, imgDimensions[ 1 ] );
 		imgDimensions = img.getVolatileImg( 0 ).dimensionsAsLongArray();
-		assertEquals( 1000, imgDimensions[ 0 ] );
-		assertEquals( 1000, imgDimensions[ 1 ] );
+		assertEquals( 64, imgDimensions[ 0 ] );
+		assertEquals( 64, imgDimensions[ 1 ] );
 	}
 
 	@ParameterizedTest
@@ -109,8 +109,8 @@ class MultiscaleImageTest
 		MultiscaleImage< ?, ? > img = load( resource );
 		RandomAccessibleInterval< ? > randomAccessibleInterval = img.getVolatileImg( 0 );
 		assertNotNull( randomAccessibleInterval );
-		assertEquals( 1000, randomAccessibleInterval.dimension( 0 ) );
-		assertEquals( 1000, randomAccessibleInterval.dimension( 1 ) );
+		assertEquals( 64, randomAccessibleInterval.dimension( 0 ) );
+		assertEquals( 64, randomAccessibleInterval.dimension( 1 ) );
 	}
 
 	private MultiscaleImage< ?, ? > load( String resource ) throws URISyntaxException
