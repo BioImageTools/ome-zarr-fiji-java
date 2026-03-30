@@ -54,8 +54,8 @@ class ZarrOpenActionsTest
 	static Stream< String > omeZarrExamples()
 	{
 		return Stream.of(
-				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
-				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr",
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v5.ome.zarr",
 				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v5.ome.zarr",
 				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v4.ome.zarr",
@@ -70,8 +70,8 @@ class ZarrOpenActionsTest
 	static Stream< String > omeZarrSingleImages()
 	{
 		return Stream.of(
-				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/scale0/image",
-				"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example/scale0/image",
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/scale0/image",
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v5.ome.zarr/scale0/image",
 				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v4.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v5.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v4.ome.zarr/0",
