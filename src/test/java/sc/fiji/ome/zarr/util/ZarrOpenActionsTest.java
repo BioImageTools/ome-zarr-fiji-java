@@ -287,6 +287,7 @@ class ZarrOpenActionsTest
 			{
 				// assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this returns 4, but should return 3. Probably timepoints and channels are mixed up
 			}
+			bdvStackSource.close();
 		}
 	}
 
