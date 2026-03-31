@@ -193,7 +193,7 @@ class ZarrOpenActionsTest
 			long[] dimensions = pyramidalDataset.getImgPlus().dimensionsAsLongArray();
 			if ( resource.contains( "2d_testing" ) )
 			{
-				assertArrayEquals( new long[] { 64, 64 }, dimensions ); // highest resolution
+				assertArrayEquals( new long[] { 64, 64 }, dimensions );
 			}
 			if ( resource.contains( "3d_testing" ) )
 			{
