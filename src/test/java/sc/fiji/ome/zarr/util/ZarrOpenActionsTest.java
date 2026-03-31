@@ -216,6 +216,14 @@ class ZarrOpenActionsTest
 				{
 					// assertArrayEquals( new long[] { 64, 64, 4, 3 }, dimensions ); // highest resolution // TODO: channel and timepoint get mixed up
 				}
+				if ( resource.contains( "xyzc" ) )
+				{
+					assertArrayEquals( new long[] { 64, 64, 16, 3 }, dimensions ); // highest resolution // TODO: channel and z get mixed up
+				}
+				if ( resource.contains( "xyzt" ) )
+				{
+					assertArrayEquals( new long[] { 64, 64, 16, 4 }, dimensions ); // highest resolution // TODO: timepoint and z get mixed up
+				}
 			}
 			if ( resource.contains( "5d_testing" ) )
 			{
