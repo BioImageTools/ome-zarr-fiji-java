@@ -36,9 +36,7 @@ class OmeroMetadataAccessTest {
         final StoreHandle handle = store.resolve();
         final MultiscaleImage multiscaleImage = MultiscaleImage.open(handle);
 
-        final OmeroMetadata omero = extractOmeroMetadata(multiscaleImage);
-//        extractOmeroMetadata can be removed when the next zarr-java version is released with the unified getOmeroMetadata interface:
-//        final OmeroMetadata omero = multiscaleImage.getOmeroMetadata();
+        final OmeroMetadata omero = multiscaleImage.getOmeroMetadata();
 
         assertNotNull(omero);
         assertEquals(Integer.valueOf(1), omero.id);
@@ -63,21 +61,6 @@ class OmeroMetadataAccessTest {
         assertEquals("NLStdTomato", channel1.label);
         assertEquals("FF0000", channel1.color);
         assertWindow(channel1.window, 0.0, 255.0, 6.0, 133.0);
-    }
-
-    private OmeroMetadata extractOmeroMetadata(final MultiscaleImage multiscaleImage) {
-
-        if (multiscaleImage instanceof dev.zarr.zarrjava.experimental.ome.v0_4.MultiscaleImage)
-            return ((dev.zarr.zarrjava.experimental.ome.v0_4.MultiscaleImage) multiscaleImage).getOmeroMetadata();
-
-        if (multiscaleImage instanceof dev.zarr.zarrjava.experimental.ome.v0_5.MultiscaleImage)
-            return ((dev.zarr.zarrjava.experimental.ome.v0_5.MultiscaleImage) multiscaleImage).getOmeroMetadata();
-
-        if (multiscaleImage instanceof dev.zarr.zarrjava.experimental.ome.v0_6.MultiscaleImage)
-            return ((dev.zarr.zarrjava.experimental.ome.v0_6.MultiscaleImage) multiscaleImage).getOmeroMetadata();
-
-        fail("Unexpected multiscale image implementation: " + multiscaleImage.getClass().getName());
-        return null;
     }
 
     private void assertWindow(final OmeroWindow window, final double min, final double max, final double start, final double end) {
