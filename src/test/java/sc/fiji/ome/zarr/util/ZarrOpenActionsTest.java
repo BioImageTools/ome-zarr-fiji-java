@@ -195,6 +195,21 @@ class ZarrOpenActionsTest
 			{
 				assertArrayEquals( new long[] { 64, 64 }, dimensions ); // highest resolution
 			}
+			if ( resource.contains( "3d_testing" ) )
+			{
+				if ( resource.contains( "xyc" ) )
+				{
+					assertArrayEquals( new long[] { 64, 64, 3 }, dimensions );
+				}
+				if ( resource.contains( "xyt" ) )
+				{
+					assertArrayEquals( new long[] { 64, 64, 4 }, dimensions );
+				}
+				if ( resource.contains( "xyz" ) )
+				{
+					assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
+				}
+			}
 			if ( resource.contains( "4d_testing" ) )
 			{
 				if ( resource.contains( "xytc" ) )
@@ -284,6 +299,21 @@ class ZarrOpenActionsTest
 			assertEquals( 255, converterSetup0.getDisplayRangeMax() );
 			assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup0.getColor().toString() );
 			assertEquals( 0, bdvStackSource.getBdvHandle().getViewerPanel().state().getCurrentTimepoint() );
+			if ( resource.contains( "3d_testing" ) )
+			{
+				if ( resource.contains( "xyc" ) )
+				{
+					assertEquals( 3, bdvStackSource.getConverterSetups().size() );
+				}
+				if ( resource.contains( "xyt" ) )
+				{
+					assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
+				}
+				if ( resource.contains( "xyz" ) )
+				{
+					assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
+				}
+			}
 			if ( resource.contains( "4d_testing" ) )
 			{
 				if ( resource.contains( "xytc" ) )
