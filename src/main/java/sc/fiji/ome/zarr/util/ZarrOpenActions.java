@@ -88,9 +88,9 @@ public class ZarrOpenActions
 			logger.info( "Opened Zarr/N5 viewer with path: {}.", droppedInPath );
 	}
 
-	public void openIJWithImage()
+	public Object openIJWithImage()
 	{
-		openImage(
+		return openImage(
 				pyramidalDataset -> {
 					context.getService( UIService.class ).show( pyramidalDataset );
 					return null;

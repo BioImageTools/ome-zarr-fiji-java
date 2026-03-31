@@ -44,6 +44,7 @@ import javax.swing.SwingUtilities;
 
 import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
+import ij.ImagePlus;
 import sc.fiji.ome.zarr.plugins.DragAndDropUserScriptSettings;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
@@ -209,13 +210,14 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
-			actions.openIJWithImage();
+			ImagePlus imagePlus = Cast.unchecked( actions.openIJWithImage() );
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertNotNull( datasetService );
 			List< Dataset > datasets = datasetService.getDatasets();
 			assertNotNull( datasets );
 			assertEquals( 0, datasets.size() ); // A single scale image is opened as image not as dataset
+			imagePlus.close();
 		}
 	}
 
