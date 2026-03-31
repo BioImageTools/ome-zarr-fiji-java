@@ -299,6 +299,10 @@ class ZarrOpenActionsTest
 			assertEquals( 255, converterSetup0.getDisplayRangeMax() );
 			assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup0.getColor().toString() );
 			assertEquals( 0, bdvStackSource.getBdvHandle().getViewerPanel().state().getCurrentTimepoint() );
+			if ( resource.contains( "2d_testing" ) )
+			{
+				assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
+			}
 			if ( resource.contains( "3d_testing" ) )
 			{
 				if ( resource.contains( "xyc" ) )
