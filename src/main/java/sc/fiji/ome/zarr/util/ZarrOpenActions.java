@@ -120,7 +120,7 @@ public class ZarrOpenActions
 	{
 		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
 				+ "The drag & drop for Zarr folders only supports folders that contains zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
-		logger.warn( "Could not open dataset as non-Zarr image: {}. Error message: {}", droppedInPath, e.getMessage() );
+		logger.warn( "Could not open dataset image: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 
 	private void showNonMatchingResolutionError( final Exception e )
@@ -201,9 +201,9 @@ public class ZarrOpenActions
 
 	public void runScript()
 	{
-		final String root = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
-		ScriptUtils.executePresetScript( context, root );
-		logger.info( "Executed script with Zarr root {}", root );
+		final String path = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
+		logger.info( "Attempt to execute script on path: {}.", path );
+		ScriptUtils.executePresetScript( context, path, errorHandler );
 	}
 
 	public void showHelp()

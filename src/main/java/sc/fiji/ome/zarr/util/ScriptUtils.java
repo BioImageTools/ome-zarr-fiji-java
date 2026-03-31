@@ -12,6 +12,7 @@ import java.io.File;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 
 import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
 
@@ -57,7 +58,7 @@ public class ScriptUtils
 	 * @param ctx scijava context
 	 * @param inputPath path to the input image
 	 */
-	public static void executePresetScript( final Context ctx, final String inputPath )
+	public static void executePresetScript( final Context ctx, final String inputPath, final Consumer< String > errorHandler )
 	{
 		ScriptService scriptService = ctx.getService( ScriptService.class );
 		PrefService prefService = ctx.getService( PrefService.class );
@@ -72,6 +73,7 @@ public class ScriptUtils
 
 		if ( Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) )
 		{
+			logger.debug( "Script path is valid: {}. Attempting to run the script.", scriptPath );
 			//the filepath is viable, let's run the script
 			try
 			{
@@ -84,11 +86,17 @@ public class ScriptUtils
 			}
 			catch ( Exception e )
 			{
-				logger.warn( " Something went wrong executing the script: {}. Message: {}", scriptPath, e.getMessage() );
+				errorHandler.accept( "Script could not be processed on Zarr dataset. " + "\n\r\n" + "Script path: " + scriptPath + "\n"
+						+ "Dataset path: " + inputPath + "\n\n" + "Error message: " + e.getMessage() );
+				logger.warn(
+						" Something went wrong executing the script: {} on this dataset: {}. Message: {}", scriptPath, inputPath,
+						e.getMessage()
+				);
 			}
 		}
 		else
 		{
+			logger.debug( "Script path is not valid: {}. Opening script editor with template.", scriptPath );
 			//this opens an _always new_ window with the template script,
 			//...at least the user is more likely to notice that this "help" came up
 			final TextEditor editor = new TextEditor( ctx );
@@ -97,7 +105,7 @@ public class ScriptUtils
 		}
 	}
 
-	private static String getTemplate()
+	static String getTemplate()
 	{
 		return "# RESAVE THIS SCRIPT AND OPEN IN THE MENU\n" +
 				"# Fiji -> Plugins -> OME-Zarr -> Preset DragAndDrop User Script\n" +
