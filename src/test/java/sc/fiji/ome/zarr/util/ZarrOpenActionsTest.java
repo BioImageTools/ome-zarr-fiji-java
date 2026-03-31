@@ -214,7 +214,7 @@ class ZarrOpenActionsTest
 			{
 				if ( resource.contains( "xytc" ) )
 				{
-					// assertArrayEquals( new long[] { 64, 64, 4, 3 }, dimensions ); // highest resolution // TODO: channel and timepoint get mixed up
+					assertArrayEquals( new long[] { 64, 64, 4, 3 }, dimensions ); // highest resolution // TODO: channel and timepoint get mixed up
 				}
 				if ( resource.contains( "xyzc" ) )
 				{
@@ -330,11 +330,11 @@ class ZarrOpenActionsTest
 			{
 				if ( resource.contains( "xytc" ) )
 				{
-					// assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this return 1, but should return 3. Something is mixed up.
+					assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this return 1, but should return 3. Something is mixed up.
 				}
 				if ( resource.contains( "xyzc" ) )
 				{
-					// assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this return 1, but should return 3. Something is mixed up.
+					assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this return 1, but should return 3. Something is mixed up.
 				}
 				if ( resource.contains( "xyzt" ) )
 				{
@@ -343,7 +343,7 @@ class ZarrOpenActionsTest
 			}
 			if ( resource.contains( "5d_testing" ) )
 			{
-				// assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this returns 4, but should return 3. Probably timepoints and channels are mixed up
+				assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this returns 4, but should return 3. Probably timepoints and channels are mixed up
 			}
 			bdvStackSource.close();
 		}
