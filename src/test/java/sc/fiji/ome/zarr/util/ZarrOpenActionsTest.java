@@ -19,6 +19,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.scijava.Context;
+import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
 import org.scijava.prefs.PrefService;
 import org.scijava.ui.swing.script.TextEditor;
@@ -162,7 +163,7 @@ class ZarrOpenActionsTest
 
 	@ParameterizedTest
 	@MethodSource( "omeZarrExamples" )
-	void testOpenMultiScaleDatasetInImageJ(String resource) throws URISyntaxException
+	void testOpenMultiScaleDatasetInImageJ( String resource ) throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
@@ -196,7 +197,10 @@ class ZarrOpenActionsTest
 			assertEquals( IMAGE_NAME, dataset.getName() );
 			DisplayService displayService = context.getService( DisplayService.class );
 			assertNotNull( displayService );
-			displayService.getActiveDisplay().close(); // Close the active display / image
+			SwingUtilities.invokeAndWait( () -> {} ); // wait until all Swing events are processed
+			Display< ? > activeDisplay = displayService.getActiveDisplay();
+			assertNotNull( activeDisplay );
+			activeDisplay.close(); // Close the active display / image
 			assertTrue( displayService.getDisplays().isEmpty() );
 			assertEquals( 0, datasetService.getDatasets().size() ); // The dataset is dereferenced now
 		}
