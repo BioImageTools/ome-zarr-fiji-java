@@ -7,28 +7,34 @@
 
 This repo is currently primarily only a Fiji Drag & Drop handler for OME-Zarrs.
 
-If the dropped target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing
+If the dropped target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing.
 
 # Features
 
 ## Drag & Drop of OME-Zarrs from local folders into Fiji
 
-* Users can decide the **default drag & drop behavior** via `Plugins -> OME-Zarr -> Drag & Drop behavior`
+There are several options for what Fiji can do after dragging and dropping an OME-Zarr folder. 
+
+Users can select the **default drag & drop behavior** via `Plugins -> OME-Zarr -> Drag & Drop behavior`
+
+The options are:
   * Open the highest available single-resolution image in ImageJ.
-  * Open a matching single-resolution image in ImageJ (default). Users can specify a preferred width. The highest available single-resolution image, which is smaller than the preferred width, is opened. This is useful for large OME-Zarrs, which have a single-resolution image smaller than the full resolution, but still large enough to be opened in ImageJ.
+  * Open a matching single-resolution image in ImageJ (**initial default**). Users can preset a maximum image width, and Fiji will open the highest available single-resolution image that is not larger than the preset width. This is useful for avoiding the loading and opening of excessively large images. Fiji simply chooses an appropriately sized level from the resolution pyramids (multiscales) of the dropped OME-Zarr.
   * Open as a multi-resolution source in BigDataViewer. This is useful for large OME-Zarrs. Channel names, colors, contrast limits, and the timepoint are automatically extracted from the OME-Zarr metadata, if available.
   * Show a [**dialog**](#dialog-options) with all available opening options.
 
+Note: [BigDataViewer](https://imagej.net/plugins/bdv/) is part of Fiji, so there's no need to install anything extra. It is an image(s) viewer especially designed for chunk-based, multiresolution data, designed around the principle of loading only pixels that are needed for the current display of the image(s). It is thus suitable for OME-Zarr datasets and easily handles even the huge ones.
+
 ## Dialog options
 
-from top left to bottom right:
+From top left to bottom right:
 
-* Open the N5 import dialog at the position of the dropped OME-Zarr.
-* Open the N5 viewer dialog at the position of the dropped OME-Zarr.
-* Open a **single-resolution** image in **ImageJ**, which best matches the preferred width in the user settings.
-* Open **multi-resolution** image in **BigDataViewer**.
-* Run a [pre-defined script](#scriplet-support) (e.g. a macro) on the OME-Zarr.
-* Open this [Readme](https://github.com/BioImageTools/ome-zarr-fiji-java) file.
+* Open the N5 import dialog at the position of the dropped OME-Zarr. This lists resolution levels found in the OME-Zarr, allowing users to choose one and possibly even crop it and finally open it in the ImageJ window.
+* Open the N5 viewer dialog at the position of the dropped OME-Zarr. This also lists resolution levels found in the OME-Zarr, allowing users to choose one or the full pyramid and have it opened in the BigDataViewer.
+* Directly open a **single-resolution** image in **ImageJ**, which best matches the preferred width in the user settings.
+* Directly Open **multi-resolution** image in **BigDataViewer**.
+* Run a [pre-defined script](#scriplet-support) (e.g., a macro) while passing to it the path to the dropped OME-Zarr. This way, the user can define her own action.
+* Open a web browser pointing to this [Readme](https://github.com/BioImageTools/ome-zarr-fiji-java) file.
 
 ![dialog.png](doc/dialog.png)
 
@@ -41,11 +47,12 @@ from top left to bottom right:
 
 ## Dual dataset view
 
-* If an OME-Zarr has been drag & dropped into Fiji, it can be opened as a multi-resolution source in BigDataViewer via `Plugins -> OME-Zarr ->Plugins > OME-Zarr > Open Current Zarr Image in BigDataViewer`. In this case, the data is read into the memory only once and exposed to FIJI/BigDataViewer as a single dataset.
+* Fiji memorizes the full context of a drag & dropped OME-Zarr. That said, even if the OME-Zarr is opened as a particular resolution in ImageJ via drag & drop, one can still open it in BigDataViewer using all resolution pyramids (via `Plugins -> OME-Zarr ->Plugins > OME-Zarr > Open Current Zarr Image in BigDataViewer`).
+* ~~Or the opposite, even if the dropped OME-Zarr has right away landed in BigDataViewer, it is possible to display a particular resolution of it as Dataset in ImageJ.~~ To sum it up, once OME-Zarr is in Fiji, users don't have to drop it again to display it differently. This is a great way to save RAM (memory) on your computer.
 
 ## Multi-resolution vs. single-resolution
 
-* Users can drag & drop OME-Zarrs single-resolution or multi-resolution. The drag & drop handler will automatically detect the type of the OME-Zarr. It depends on the level in the Zarr folder structure that was drag & dropped.
+* Users can drag & drop the top-level OME-Zarr folder, in which case it is opened as multi-resolution data. However, users can also drag & drop a subfolder of the top-level OME-Zarr folder, in which case it is opened as single-resolution data. The latter is essentially an optional shortcut for opening a particular resolution.
 
 ## Read channel information from OME-Zarr metadata
 
