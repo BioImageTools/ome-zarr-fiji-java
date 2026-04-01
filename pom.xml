@@ -251,14 +251,14 @@
 			</activation>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 1gb while running tests. -->
+					<!-- Configure the maven-surefire-plugin to use a heap size of 2gb while running tests. -->
 					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>-Xmx1g -da</argLine>
+							<argLine>-Xmx2g -da</argLine>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -268,14 +268,14 @@
 			<id>coverage</id>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 1gb while running tests for jacoco coverage analysis. -->
+					<!-- Configure the maven-surefire-plugin to use a heap size of 2gb while running tests for jacoco coverage analysis. -->
 					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>@{argLine} -Xmx1g -da</argLine>
+							<argLine>@{argLine} -Xmx2g -da</argLine>
 						</configuration>
 					</plugin>
 					<plugin>
