@@ -110,7 +110,7 @@ public class ScriptUtils
 	{
 		return "# RESAVE THIS SCRIPT AND OPEN IN THE MENU\n" +
 				"# Fiji -> Plugins -> OME-Zarr -> Preset DragAndDrop User Script\n" +
-				"# to have this available among the drag-and-drop choices.\n" +
+				"# to have this available among the drag & drop choices.\n" +
 				"# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
 				"\n" +
 				"#@ String path\n" +
