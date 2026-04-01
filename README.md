@@ -13,7 +13,7 @@ If the dropped target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, 
 
 ## Drag & Drop of OME-Zarrs from local folders into Fiji
 
-There are several options for what Fiji can do after dragging and dropping an OME-Zarr folder. 
+There are several options for what Fiji can do after dragging & dropping an OME-Zarr folder. 
 
 Users can select the **default drag & drop behavior** via `Plugins -> OME-Zarr -> Drag & Drop behavior`
 
