@@ -64,8 +64,8 @@ class ZarrOpenActionsTest
 				"sc/fiji/ome/zarr/util/3d_testing/xyt/3d_dataset_v5.ome.zarr",
 				"sc/fiji/ome/zarr/util/3d_testing/xyz/3d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/3d_testing/xyz/3d_dataset_v5.ome.zarr",
-				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v4.ome.zarr",
-				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v5.ome.zarr",
+				"sc/fiji/ome/zarr/util/4d_testing/xyct/4d_dataset_v4.ome.zarr",
+				"sc/fiji/ome/zarr/util/4d_testing/xyct/4d_dataset_v5.ome.zarr",
 				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v4.ome.zarr",
 				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v5.ome.zarr",
 				"sc/fiji/ome/zarr/util/4d_testing/xyzt/4d_dataset_v4.ome.zarr",
@@ -86,8 +86,8 @@ class ZarrOpenActionsTest
 				"sc/fiji/ome/zarr/util/3d_testing/xyt/3d_dataset_v5.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/3d_testing/xyz/3d_dataset_v4.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/3d_testing/xyz/3d_dataset_v5.ome.zarr/0",
-				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v4.ome.zarr/0",
-				"sc/fiji/ome/zarr/util/4d_testing/xytc/4d_dataset_v5.ome.zarr/0",
+				"sc/fiji/ome/zarr/util/4d_testing/xyct/4d_dataset_v4.ome.zarr/0",
+				"sc/fiji/ome/zarr/util/4d_testing/xyct/4d_dataset_v5.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v4.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/4d_testing/xyzc/4d_dataset_v5.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/4d_testing/xyzt/4d_dataset_v4.ome.zarr/0",
@@ -212,9 +212,9 @@ class ZarrOpenActionsTest
 			}
 			if ( resource.contains( "4d_testing" ) )
 			{
-				if ( resource.contains( "xytc" ) )
+				if ( resource.contains( "xyct" ) )
 				{
-					assertArrayEquals( new long[] { 64, 64, 4, 3 }, dimensions ); // highest resolution // TODO: channel and timepoint get mixed up
+					assertArrayEquals( new long[] { 64, 64, 3, 4 }, dimensions ); // highest resolution // TODO: channel and timepoint get mixed up
 				}
 				if ( resource.contains( "xyzc" ) )
 				{
@@ -328,7 +328,7 @@ class ZarrOpenActionsTest
 			}
 			if ( resource.contains( "4d_testing" ) )
 			{
-				if ( resource.contains( "xytc" ) )
+				if ( resource.contains( "xyct" ) )
 				{
 					assertEquals( 3, bdvStackSource.getConverterSetups().size() ); // TODO: this return 1, but should return 3. Something is mixed up.
 				}
