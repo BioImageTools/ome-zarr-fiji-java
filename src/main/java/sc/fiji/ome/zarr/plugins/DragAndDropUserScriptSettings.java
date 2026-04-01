@@ -8,8 +8,8 @@ import org.scijava.widget.FileWidget;
 
 import java.io.File;
 
-@Plugin( type = Command.class, menuPath = "Plugins>OME-Zarr>Preset Drag & Drop User Script", name = "DnDUserScript", headless = true )
-public class PresetScriptPlugin implements Command
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Drag & Drop User Script Settings", name = "OMEZarrDnDUserScript", headless = true )
+public class DragAndDropUserScriptSettings implements Command
 {
 
 	@Parameter( label = "Tooltip text:" )
@@ -24,6 +24,6 @@ public class PresetScriptPlugin implements Command
 	@Override
 	public void run()
 	{
-		log.info( "Thanks, memorizing it now..." );
+		log.info( "Thanks, memorizing the path: " + scriptPath );
 	}
 }

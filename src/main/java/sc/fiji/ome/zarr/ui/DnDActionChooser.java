@@ -165,7 +165,7 @@ public class DnDActionChooser
 
 		// script button
 		String scriptName = ScriptUtils.getTooltipText( context );
-		zarrScript.setToolTipText( "Open OME-Zarr Script:\n\n" + scriptName );
+		zarrScript.setToolTipText( "Open OME-Zarr in user script:\n\n" + scriptName );
 		zarrScript.addActionListener( e -> {
 			dialog.dispose();
 			actions.runScript();

@@ -44,7 +44,7 @@ import javax.swing.SwingUtilities;
 
 import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
-import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
+import sc.fiji.ome.zarr.plugins.DragAndDropUserScriptSettings;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
@@ -271,7 +271,7 @@ class ZarrOpenActionsTest
 			try (Context context = new Context())
 			{
 				PrefService prefService = context.getService( PrefService.class );
-				prefService.put( PresetScriptPlugin.class, "scriptPath", "--none--" );
+				prefService.put( DragAndDropUserScriptSettings.class, "scriptPath", "--none--" );
 				String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
 				Path path = ZarrTestUtils.resourcePath( resource );
 				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
@@ -313,7 +313,7 @@ class ZarrOpenActionsTest
 
 			File tempFile = temp.toFile();
 			tempFile.deleteOnExit();
-			prefService.put( PresetScriptPlugin.class, "scriptPath", tempFile.getAbsolutePath() );
+			prefService.put( DragAndDropUserScriptSettings.class, "scriptPath", tempFile.getAbsolutePath() );
 			String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
 			Path path = ZarrTestUtils.resourcePath( resource );
 			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );

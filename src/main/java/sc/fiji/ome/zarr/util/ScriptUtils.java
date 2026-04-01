@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
 
-import sc.fiji.ome.zarr.plugins.PresetScriptPlugin;
+import sc.fiji.ome.zarr.plugins.DragAndDropUserScriptSettings;
 
 public class ScriptUtils
 {
@@ -45,8 +45,8 @@ public class ScriptUtils
 		if ( prefService == null )
 			return DEFAULT_SCRIPT_TITLE;
 
-		final String scriptTitle = prefService.get( PresetScriptPlugin.class, "scriptTitle", DEFAULT_SCRIPT_TITLE );
-		final String scriptPath = prefService.get( PresetScriptPlugin.class, "scriptPath", "--none--" );
+		final String scriptTitle = prefService.get( DragAndDropUserScriptSettings.class, "scriptTitle", DEFAULT_SCRIPT_TITLE );
+		final String scriptPath = prefService.get( DragAndDropUserScriptSettings.class, "scriptPath", "--none--" );
 
 		return Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) ? scriptTitle : DEFAULT_SCRIPT_TITLE;
 	}
@@ -70,7 +70,7 @@ public class ScriptUtils
 		}
 
 		//retrieve the path to the preset script
-		final String scriptPath = prefService.get( PresetScriptPlugin.class, "scriptPath", "--none--" );
+		final String scriptPath = prefService.get( DragAndDropUserScriptSettings.class, "scriptPath", "--none--" );
 
 		if ( Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) )
 		{
@@ -109,8 +109,8 @@ public class ScriptUtils
 	static String getTemplate()
 	{
 		return "# RESAVE THIS SCRIPT AND OPEN IN THE MENU\n" +
-				"# Fiji -> Plugins -> OME-Zarr -> Preset DragAndDrop User Script\n" +
-				"# to have this available among the drag & drop choices.\n" +
+				"# Fiji > Plugins > OME-Zarr > Drag & Drop User Script Settings\n" +
+				"# to have this available among the OME-Zarr drag & drop choices.\n" +
 				"# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
 				"\n" +
 				"#@ String path\n" +
