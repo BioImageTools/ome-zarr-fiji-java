@@ -20,7 +20,7 @@ Users can select the **default drag & drop behavior** via `Plugins -> OME-Zarr -
 The options are:
   * Open the highest available single-resolution image in ImageJ.
   * Open a matching single-resolution image in ImageJ (**initial default**). Users can preset a maximum image width, and Fiji will open the highest available single-resolution image that is not larger than the preset width. This is useful for avoiding the loading and opening of excessively large images. Fiji simply chooses an appropriately sized level from the resolution pyramids (multiscales) of the dropped OME-Zarr.
-  * Open as a multi-resolution source in BigDataViewer. This is useful for large OME-Zarrs. Channel names, colors, contrast limits, and the timepoint are automatically extracted from the OME-Zarr metadata, if available.
+  * Open as a multi-resolution source in BigDataViewer. This is useful for large OME-Zarrs. Channel names, colors, contrast limits, and the time point are automatically extracted from the OME-Zarr metadata, if available.
   * Show a [**dialog**](#dialog-options) with all available opening options.
 
 Note: [BigDataViewer](https://imagej.net/plugins/bdv/) is part of Fiji, so there's no need to install anything extra. It is an image(s) viewer especially designed for chunk-based, multiresolution data, designed around the principle of loading only pixels that are needed for the current display of the image(s). It is thus suitable for OME-Zarr datasets and easily handles even the huge ones.
@@ -57,7 +57,7 @@ From top left to bottom right:
 ## Read channel information from OME-Zarr metadata
 
 * Works only when a multi-resolution OME-Zarr is drag & dropped and opened in BigDataViewer.
-* The channel names, colors, and contrast limits and their active/inactive state are automatically extracted from the OME-Zarr metadata, if available. The timepoint is also automatically set to the timepoint specified in the metadata, if available.
+* The channel names, colors, and contrast limits and their active/inactive state are automatically extracted from the OME-Zarr metadata, if available. The time point is also automatically set to the time point specified in the metadata, if available.
 
 ## Reader Backend
 
@@ -139,7 +139,7 @@ parameters depending on a particular function/purpose of a plugin. Examples are
 a query plugin, that tells how many time points are available at a given URI,
 or how many channels are available, or a plugin that can read a full image at a
 given time point and a given channel from URI etc. Using these, it is easy to
-construct e.g. a for-loop over all timepoints to process an image (at variable
+construct e.g. a for-loop over all time points to process an image (at variable
 time point and fixed particular channel) one after another. To optimize the
 work with a particular URI, a scijava service (we could call it `NgffService`)
 should work in conjunction with these plugins. Note that a scijava service is a
