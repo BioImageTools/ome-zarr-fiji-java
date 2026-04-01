@@ -17,6 +17,9 @@ public class OpenInImageJCommand implements Command
 	@Parameter
 	DatasetService datasetService;
 
+	//there's gotta be a list of available datasets because as soon as a dataset is displayed
+	//with the standard ImageJ window, the dialog is no longer asking and, instead, it is filling
+	//the opened and active dataset for the 'd' right-away
 	@Parameter
 	Dataset d;
 
