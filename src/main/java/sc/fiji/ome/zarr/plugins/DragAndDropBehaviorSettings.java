@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.ui;
+package sc.fiji.ome.zarr.plugins;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
@@ -20,8 +20,8 @@ import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 /**
  * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.
  */
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Drag & Drop Behavior", initializer = "init" )
-public class ZarrDragAndDropOpenSettingsUI extends DynamicCommand
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Drag & Drop Behavior Settings", initializer = "init" )
+public class DragAndDropBehaviorSettings extends DynamicCommand
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 

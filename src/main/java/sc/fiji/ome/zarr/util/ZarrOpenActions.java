@@ -126,7 +126,7 @@ public class ZarrOpenActions
 	private void showNonMatchingResolutionError( final Exception e )
 	{
 		errorHandler.accept( "Safety check failed when opening dataset: " + droppedInPath + "\n\r\n" + e.getMessage() + "\n\r\n"
-				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > OME-Zarr Drag And Drop Open Settings to still open the image." );
+				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Drag & Drop Behavior Settings to still open the image." );
 		logger.warn( "Not opening dataset: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 

@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.ui;
+package sc.fiji.ome.zarr.plugins;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -14,10 +14,10 @@ import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 
 /**
- * Unit tests for the {@link ZarrDragAndDropOpenSettingsUI#run()} method.
+ * Unit tests for the {@link DragAndDropBehaviorSettings#run()} method.
  * This method is responsible for saving user preferences for Zarr dataset opening behavior.
  */
-class ZarrDragAndDropOpenSettingsUITest
+class DragAndDropBehaviorSettingsTest
 {
 
 	@Test
@@ -26,24 +26,24 @@ class ZarrDragAndDropOpenSettingsUITest
 	{
 		try (Context context = new Context())
 		{
-			ZarrDragAndDropOpenSettingsUI ui = new ZarrDragAndDropOpenSettingsUI();
+			DragAndDropBehaviorSettings ui = new DragAndDropBehaviorSettings();
 			PrefService prefService = context.getService( PrefService.class );
 			prefService.clearAll();
 			final int customWidth = 500;
 
-			Field prefServiceField = ZarrDragAndDropOpenSettingsUI.class.getDeclaredField( "prefService" );
+			Field prefServiceField = DragAndDropBehaviorSettings.class.getDeclaredField( "prefService" );
 			prefServiceField.setAccessible( true );
 			prefServiceField.set( ui, prefService );
 
-			Method initMethod = ZarrDragAndDropOpenSettingsUI.class.getDeclaredMethod( "init" );
+			Method initMethod = DragAndDropBehaviorSettings.class.getDeclaredMethod( "init" );
 			initMethod.setAccessible( true ); // bypasses private visibility
 			initMethod.invoke( ui );
 
-			Field defaultZarrOpenBehaviorField = ZarrDragAndDropOpenSettingsUI.class.getDeclaredField( "defaultZarrOpenBehavior" );
+			Field defaultZarrOpenBehaviorField = DragAndDropBehaviorSettings.class.getDeclaredField( "defaultZarrOpenBehavior" );
 			defaultZarrOpenBehaviorField.setAccessible( true );
 			defaultZarrOpenBehaviorField.set( ui, ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION.getDescription() );
 
-			Field preferredWidthField = ZarrDragAndDropOpenSettingsUI.class.getDeclaredField( "preferredWidth" );
+			Field preferredWidthField = DragAndDropBehaviorSettings.class.getDeclaredField( "preferredWidth" );
 			preferredWidthField.setAccessible( true );
 			preferredWidthField.set( ui, customWidth );
 
