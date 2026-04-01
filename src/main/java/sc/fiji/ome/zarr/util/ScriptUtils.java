@@ -87,7 +87,7 @@ public class ScriptUtils
 			}
 			catch ( Exception e )
 			{
-				errorHandler.accept( "Script could not be processed on Zarr dataset. " + "\n\r\n" + "Script path: " + scriptPath + "\n"
+				errorHandler.accept( "Script could not be processed on OME-Zarr dataset. " + "\n\r\n" + "Script path: " + scriptPath + "\n"
 						+ "Dataset path: " + inputPath + "\n\n" + "Error message: " + e.getMessage() );
 				logger.warn(
 						" Something went wrong executing the script: {} on this dataset: {}. Message: {}", scriptPath, inputPath,

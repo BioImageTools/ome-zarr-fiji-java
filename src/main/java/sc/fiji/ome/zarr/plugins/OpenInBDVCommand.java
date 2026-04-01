@@ -40,7 +40,7 @@ import org.scijava.plugin.Plugin;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.util.BdvUtils;
 
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current Zarr Image in BigDataViewer" )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
 {
 	@Parameter

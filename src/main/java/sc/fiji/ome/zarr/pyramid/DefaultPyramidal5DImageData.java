@@ -271,7 +271,7 @@ public class DefaultPyramidal5DImageData<
 		{
 			// for the Mipmap, RAIs must always be xyzt even if z and/or t is not present,
 			// but first the particular channel is taken out, and then 4D is ensured:
-			// NB: the input tensor is an ome-zarr array, which is of the xy[z][t][c] order of dimensions,
+			// NB: the input tensor is an OME-Zarr array, which is of the xy[z][t][c] order of dimensions,
 			//     so really only a particular 'c' is extracted, and 'z' and 't' are added if they are missing
 			RandomAccessibleInterval< V >[] channelsVolatile =
 					ensureOrdered4dDimensions( extractChannel( volatileImgs, channelAxisIndex, channelNumber ), zAxisPresent, timeAxisPresent );
@@ -400,7 +400,7 @@ public class DefaultPyramidal5DImageData<
 			throw new IllegalArgumentException( "Input path is null" );
 		Path path = ZarrOnFileSystemUtils.findRootFolder( inputPath );
 		if ( path == null )
-			throw new IllegalArgumentException( "Could not find root folder for non-Zarr path: " + inputPath );
+			throw new IllegalArgumentException( "Could not find root folder for non-OME-Zarr path: " + inputPath );
 		return path;
 	}
 
