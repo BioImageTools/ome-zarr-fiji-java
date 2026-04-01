@@ -260,11 +260,15 @@ public class DefaultPyramidal5DImageData<
 		final boolean zAxisPresent = zAxisIndex > 0;
 		final boolean timeAxisPresent = timeAxisIndex > 0;
 
+		final boolean isOmeroMetadataValid = omero != null && omero.channels != null && omero.channels.size() == numChannels;
+		if ( isOmeroMetadataValid )
+			logger.debug( "Creating with OMERO metadata: {}", omero );
+		else
+			logger.debug( "Creating without OMERO metadata (not consistent or not available)" );
+
 		final List< SourceAndConverter< T > > sources = new ArrayList<>();
 		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )
 		{
-			final Omero.Channel omeroChannel = omero == null || omero.channels == null ? null : omero.channels.get( channelNumber );
-			String channelLabel = omeroChannel == null || omeroChannel.label == null ? getName() : omeroChannel.label;
 			// for the Mipmap, RAIs must always be xyzt even if z and/or t is not present,
 			// but first the particular channel is taken out, and then 4D is ensured:
 			// NB: the input tensor is an ome-zarr array, which is of the xy[z][t][c] order of dimensions,
@@ -275,6 +279,7 @@ public class DefaultPyramidal5DImageData<
 					ensureOrdered4dDimensions( extractChannel( cachedCellImgs, channelAxisIndex, channelNumber ), zAxisPresent, timeAxisPresent );
 
 			// wrap to create the mipmaps
+			final String channelLabel = isOmeroMetadataValid ? omero.channels.get( channelNumber ).label : getName();
 			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile = new RandomAccessibleIntervalMipmapSource4D<>(
 					channelsVolatile, volatileType, transforms, voxelDimensions, channelLabel, true );
 			final RandomAccessibleIntervalMipmapSource4D< T > source4D =

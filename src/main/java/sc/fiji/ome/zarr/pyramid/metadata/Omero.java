@@ -1,5 +1,7 @@
 package sc.fiji.ome.zarr.pyramid.metadata;
 
+import com.google.gson.Gson;
+
 import java.util.List;
 
 /**
@@ -52,5 +54,11 @@ public class Omero
 
 			public double max;
 		}
+	}
+
+	@Override
+	public String toString()
+	{
+		return new Gson().toJson( this );
 	}
 }
