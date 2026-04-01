@@ -250,6 +250,72 @@ class ZarrOpenActionsTest
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path, context );
 			ImagePlus imagePlus = Cast.unchecked( actions.openIJWithImage() );
+			int channels = imagePlus.getNChannels();
+			int frames = imagePlus.getNFrames();
+			int slices = imagePlus.getNSlices();
+			int[] dimensions = imagePlus.getDimensions();
+			if ( resource.contains( "2d_testing" ) )
+			{
+				assertArrayEquals( new int[] { 64, 64, 1, 1, 1 }, dimensions );
+				assertEquals( 1, channels );
+				assertEquals( 1, frames );
+				assertEquals( 1, slices );
+			}
+			if ( resource.contains( "3d_testing" ) )
+			{
+				if ( resource.contains( "xyc" ) )
+				{
+					assertArrayEquals( new int[] { 64, 64, 3, 1, 1 }, dimensions );
+					assertEquals( 3, channels );
+					assertEquals( 1, frames );
+					assertEquals( 1, slices );
+				}
+				if ( resource.contains( "xyt" ) )
+				{
+					assertArrayEquals( new int[] { 64, 64, 4, 1, 1 }, dimensions );
+					assertEquals( 1, channels );
+					assertEquals( 4, frames );
+					assertEquals( 1, slices );
+				}
+				if ( resource.contains( "xyz" ) )
+				{
+					assertArrayEquals( new int[] { 64, 64, 16, 1, 1 }, dimensions );
+					assertEquals( 1, channels );
+					assertEquals( 1, frames );
+					assertEquals( 16, slices );
+				}
+			}
+			if ( resource.contains( "4d_testing" ) )
+			{
+				if ( resource.contains( "xyct" ) )
+				{
+					assertArrayEquals( new int[] { 64, 64, 3, 4, 1 }, dimensions );
+					assertEquals( 3, channels );
+					assertEquals( 4, frames );
+					assertEquals( 1, slices );
+				}
+				if ( resource.contains( "xyzc" ) )
+				{
+					assertArrayEquals( new int[] { 64, 64, 16, 3, 1 }, dimensions );
+					assertEquals( 3, channels );
+					assertEquals( 1, frames );
+					assertEquals( 16, slices );
+				}
+				if ( resource.contains( "xyzt" ) )
+				{
+					assertArrayEquals( new int[] { 64, 64, 16, 4, 1 }, dimensions );
+					assertEquals( 1, channels );
+					assertEquals( 4, frames );
+					assertEquals( 16, slices );
+				}
+			}
+			if ( resource.contains( "5d_testing" ) )
+			{
+				assertArrayEquals( new int[] { 64, 64, 16, 3, 4 }, dimensions );
+				assertEquals( 3, channels );
+				assertEquals( 4, frames );
+				assertEquals( 16, slices );
+			}
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertNotNull( datasetService );
