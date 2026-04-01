@@ -41,7 +41,7 @@ public class ZarrDragAndDropOpenSettingsUI extends DynamicCommand
 			+ "</html>";
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Default Drag & Drop behavior", description = "Chose the behavior if you drag & drop an OME-Zarr image folder into Fiji", initializer = "initZarrOpenBehaviors" )
+	@Parameter( label = "Default Drag & Drop behavior", description = "Choose the behavior if you drag & drop an OME-Zarr image folder into Fiji", initializer = "initZarrOpenBehaviors" )
 	private String defaultZarrOpenBehavior;
 
 	@SuppressWarnings( "all" )
