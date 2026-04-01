@@ -115,7 +115,7 @@ Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` fo
 in Zurich.
 * 2024: [CZI grant about "OME-Zarr Support for Java/Fiji"](https://chanzuckerberg.com/eoss/proposals/?cycle=6) landed
   at [CEITEC](https://www.ceitec.eu/).
-* 2023: Changes in the [scijava land](https://github.com/scijava) towards more generic drag-and-drop handlers.
+* 2023: Changes in the [scijava land](https://github.com/scijava) towards more generic drag & drop handlers.
 * 2022: It started at
   the ["Fiji + NGFF Hackathon" in Prague](https://forum.image.sc/t/fiji-ngff-hackathon-sep-2022-prague-cze/69191). Code
   state
