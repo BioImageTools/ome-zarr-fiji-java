@@ -114,7 +114,7 @@ public class ZarrOpenActions
 		errorHandler.accept(
 				"Opening a single resolution OME-Zarr dataset, as was found in: " + droppedInPath + ", is currently not supported.\n\n"
 				+ "Consider opening one level higher in the hierarchy instead." );
-		logger.info( "Opening a single resolution OME-Zarr dataset, as was found in: {} is currently not supported.", droppedInPath );
+		logger.info( "Opening a single resolution OME-Zarr dataset, as was found in: {}, is currently not supported.", droppedInPath );
 	}
 
 	private void showSingleScaleError( final Exception e )
