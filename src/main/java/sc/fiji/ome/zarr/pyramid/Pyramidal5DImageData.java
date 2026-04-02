@@ -29,8 +29,9 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 
 	/**
 	 * @return a IJ2 {@code net.imagej.Dataset} wrapping the full resolution
-	 *   5D (XYZCT) image; this will indirectly also serve the ImagePlus.
-	 *
+	 *   5D (XYZCT) image; this will indirectly also serve an ImgPlus.
+	 *   However, it is possible to be unwrapping first to reach an underlying RAI,
+	 *   and then using IJFunctions it is possible to wrap it to get ImagePlus.
 	 */
 	Dataset asDataset();
 
