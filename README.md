@@ -71,6 +71,10 @@ From top left to bottom right:
 * Users can run a script on the OME-Zarr. The script resource can be a file and can be set in the `Plugins -> OME-Zarr -> Preset Drag & Drop User Script` menu.
 * If no script is set, the script editor opens with a default script.
 
+# Example data
+
+* There are some OME-Zarr example datasets in the image data repository. You can download them from [here](https://idr.github.io/ome-ngff-samples/) to your local machine to test the drag & drop.
+
 # Availability
 
 ## Fiji Update Site
