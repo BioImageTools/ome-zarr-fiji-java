@@ -30,7 +30,7 @@ class DnDHandlerPluginTest
 		{
 			PrefService prefService = context.getService( PrefService.class );
 			ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings();
-			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example/" );
+			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/" );
 			FileLocation fileLocation = new FileLocation( path.toUri() );
 			ZarrOpenActions actionsMock = mock( ZarrOpenActions.class );
 			DnDActionChooser actionChooserMock = mock( DnDActionChooser.class );

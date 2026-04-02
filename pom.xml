@@ -200,13 +200,7 @@
 		<!-- for testing/development purposes: include imagej-legacy at test runtime -->
 		<dependency>
 			<groupId>net.imagej</groupId>
-			<artifactId>imagej-legacy</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<!-- for testing/development purposes: include imagej-legacy at test runtime -->
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>fiji</artifactId>
+			<artifactId>imagej</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<!-- for testing/development purposes: include logback-classic at test runtime -->
@@ -257,14 +251,14 @@
 			</activation>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 1gb while running tests. -->
+					<!-- Configure the maven-surefire-plugin to use a heap size of 2gb while running tests. -->
 					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>-Xmx1g -da</argLine>
+							<argLine>-Xmx2g -da</argLine>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -274,14 +268,14 @@
 			<id>coverage</id>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 1gb while running tests for jacoco coverage analysis. -->
+					<!-- Configure the maven-surefire-plugin to use a heap size of 2gb while running tests for jacoco coverage analysis. -->
 					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>@{argLine} -Xmx1g -da</argLine>
+							<argLine>@{argLine} -Xmx2g -da</argLine>
 						</configuration>
 					</plugin>
 					<plugin>
@@ -310,6 +304,19 @@
 					</plugin>
 				</plugins>
 			</build>
+		</profile>
+		<profile>
+			<id>ui-tests</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>sc.fiji</groupId>
+					<artifactId>fiji</artifactId>
+					<scope>provided</scope> <!-- added to test runtime only when profile active -->
+				</dependency>
+			</dependencies>
 		</profile>
 	</profiles>
 </project>
