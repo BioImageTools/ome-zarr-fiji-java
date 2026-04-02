@@ -262,9 +262,9 @@ public class DefaultPyramidal5DImageData<
 
 		final boolean isOmeroMetadataValid = omero != null && omero.channels != null && omero.channels.size() == numChannels;
 		if ( isOmeroMetadataValid )
-			logger.debug( "Creating with OMERO metadata: {}", omero );
+			logger.trace( "Creating with OMERO metadata: {}", omero );
 		else
-			logger.debug( "Creating without OMERO metadata (not consistent or not available)" );
+			logger.trace( "Creating without OMERO metadata (not consistent or not available)" );
 
 		final List< SourceAndConverter< T > > sources = new ArrayList<>();
 		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )

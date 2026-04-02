@@ -26,7 +26,7 @@ public class BdvHandleService extends AbstractService implements SciJavaService
 	@Override
 	public void initialize()
 	{
-		logService.info( "BdvHandleService initialized" );
+		logService.trace( "BdvHandleService initialized" );
 		lastStartedBdv = null;
 	}
 
