@@ -109,6 +109,7 @@ You also need to copy the following `.jar` files to your `Fiji.app/jars` folder 
 
 Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` folder:
 * [s3](https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.30.10/s3-2.30.10.jar)
+* [core](https://repo1.maven.org/maven2/software/amazon/awssdk/auth/2.30.10/auth-2.30.10.jar)
 
 # History
 
