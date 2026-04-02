@@ -73,7 +73,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	public boolean supportsOpen( final Location source )
 	{
 		logger.debug(
-				"Zarr DnD plugin: supportsOpen check, location type={}, path={}", source.getClass().getSimpleName(),
+				"OME-Zarr DnD plugin: supportsOpen check, location type={}, path={}", source.getClass().getSimpleName(),
 				source.getURI().getPath()
 		);
 
@@ -86,7 +86,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	@Override
 	public Object open( final Location source ) throws IOException
 	{
-		logger.debug( "Zarr DnD plugin: opening {}", source.getURI().getPath() );
+		logger.debug( "OME-Zarr DnD plugin: opening {}", source.getURI().getPath() );
 
 		final FileLocation fileLocation = Cast.unchecked( source );
 		final Path droppedInPath = fileLocation.getFile().toPath();

@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.ui;
+package sc.fiji.ome.zarr.plugins;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
@@ -18,10 +18,10 @@ import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 
 /**
- * A FIJI/ImageJ command to select what to do when a zarr image is Drag &amp; Dropped into Fiji.
+ * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.
  */
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Drag & Drop Behavior", initializer = "init" )
-public class ZarrDragAndDropOpenSettingsUI extends DynamicCommand
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Drag & Drop Behavior Settings", initializer = "init" )
+public class DragAndDropBehaviorSettings extends DynamicCommand
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -41,7 +41,7 @@ public class ZarrDragAndDropOpenSettingsUI extends DynamicCommand
 			+ "</html>";
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Default Drag & Drop behavior", description = "Chose the behavior if you drag & drop a zarr image folder into Fiji", initializer = "initZarrOpenBehaviors" )
+	@Parameter( label = "Default Drag & Drop behavior", description = "Choose the behavior if you drag & drop an OME-Zarr image folder into Fiji", initializer = "initZarrOpenBehaviors" )
 	private String defaultZarrOpenBehavior;
 
 	@SuppressWarnings( "all" )
@@ -65,7 +65,7 @@ public class ZarrDragAndDropOpenSettingsUI extends DynamicCommand
 	{
 		settings.setCurrentChoice( ZarrOpenBehavior.getByDescription( defaultZarrOpenBehavior ) );
 		settings.setPreferredMaxWidth( preferredWidth );
-		logger.debug( "Now saving Zarr Drag & Drop settings to user preferences. Behavior: {}, preferredWidth: {}",
+		logger.debug( "Now saving OME-Zarr Drag & Drop settings to user preferences. Behavior: {}, preferredWidth: {}",
 				settings.getOpenBehavior(), preferredWidth );
 		settings.saveSettingsToPreferences( prefService );
 	}

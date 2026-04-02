@@ -91,8 +91,8 @@ public class ZarrDragAndDropOpenSettings
 						ZarrDragAndDropOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME,
 						DEFAULT_PREFERRED_WIDTH
 				);
-		logger.debug( "Loaded Zarr default opening behavior: {}", behavior );
-		logger.debug( "Loaded zarr preferred width: {}", preferredWidth );
+		logger.debug( "Loaded OME-Zarr default opening behavior: {}", behavior );
+		logger.debug( "Loaded OME-Zarr preferred width: {}", preferredWidth );
 		return new ZarrDragAndDropOpenSettings( behavior, preferredWidth );
 	}
 
@@ -107,8 +107,8 @@ public class ZarrDragAndDropOpenSettings
 			return;
 		prefs.put( ZarrDragAndDropOpenSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, getOpenBehavior().name() );
 		prefs.put( ZarrDragAndDropOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
-		logger.debug( "Saved zarr default opening behavior to preferences: {}", getOpenBehavior() );
-		logger.debug( "Saved zarr preferred width to preferences: {}", getPreferredMaxWidth() );
+		logger.debug( "Saved OME-Zarr default opening behavior to preferences: {}", getOpenBehavior() );
+		logger.debug( "Saved OME-Zarr preferred width to preferences: {}", getPreferredMaxWidth() );
 	}
 
 	@Override

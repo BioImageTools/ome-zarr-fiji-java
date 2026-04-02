@@ -3,7 +3,7 @@ package sc.fiji.ome.zarr.settings;
 import java.util.NoSuchElementException;
 
 /**
- * Options for opening Zarr datasets in different viewers and resolutions.
+ * Options for opening OME-Zarr datasets in different viewers and resolutions.
  */
 public enum ZarrOpenBehavior
 {

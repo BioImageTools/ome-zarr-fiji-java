@@ -119,14 +119,14 @@ public class ZarrOpenActions
 	private void showNonZarrError( final Exception e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
-				+ "The drag & drop for Zarr folders only supports folders that contains zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
+				+ "The drag & drop for OME-Zarr folders only supports folders that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
 		logger.warn( "Could not open dataset image: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 
 	private void showNonMatchingResolutionError( final Exception e )
 	{
 		errorHandler.accept( "Safety check failed when opening dataset: " + droppedInPath + "\n\r\n" + e.getMessage() + "\n\r\n"
-				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Zarr Drag And Drop Open Settings to still open the image." );
+				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Drag & Drop Behavior Settings to still open the image." );
 		logger.warn( "Not opening dataset: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 

@@ -135,37 +135,37 @@ public class DnDActionChooser
 	private void initBehaviour( final JDialog dialog )
 	{
 
-		// zarr to FIJI importer button
+		// OME-Zarr to FIJI importer button
 		zarrToIJDialog.addActionListener( e -> {
 			dialog.dispose();
 			actions.openImporterDialog();
 		} );
-		zarrToIJDialog.setToolTipText( "Open Zarr/N5 Importer dialog" );
+		zarrToIJDialog.setToolTipText( "Open OME-Zarr/N5 Importer dialog" );
 
-		// zarr to BDV viewer button
+		// OME-Zarr to BDV viewer button
 		zarrToBDVDialog.addActionListener( e -> {
 			dialog.dispose();
 			actions.openViewerDialog();
 		} );
-		zarrToBDVDialog.setToolTipText( "Open Zarr/N5 BDV Viewer dialog" );
+		zarrToBDVDialog.setToolTipText( "Open OME-Zarr/N5 BDV Viewer dialog" );
 
 		// FIJI button
 		zarrIJHighestResolution.addActionListener( e -> {
 			dialog.dispose();
 			actions.openIJWithImage();
 		} );
-		zarrIJHighestResolution.setToolTipText( "Open Zarr/N5 in ImageJ at highest resolution level" );
+		zarrIJHighestResolution.setToolTipText( "Open OME-Zarr in ImageJ at highest resolution level" );
 
 		// BDV button
 		zarrBDVHighestResolution.addActionListener( e -> {
 			dialog.dispose();
 			actions.openBDVWithImage();
 		} );
-		zarrBDVHighestResolution.setToolTipText( "Open Zarr/N5 in BDV at highest resolution level" );
+		zarrBDVHighestResolution.setToolTipText( "Open OME-Zarr in BDV at highest resolution level" );
 
 		// script button
 		String scriptName = ScriptUtils.getTooltipText( context );
-		zarrScript.setToolTipText( "Open Zarr/N5 Script:\n\n" + scriptName );
+		zarrScript.setToolTipText( "Open OME-Zarr in user script:\n\n" + scriptName );
 		zarrScript.addActionListener( e -> {
 			dialog.dispose();
 			actions.runScript();
@@ -173,7 +173,7 @@ public class DnDActionChooser
 
 		// help button
 		help.addActionListener( e -> dialog.dispose() );
-		help.setToolTipText( "Help about Zarr/N5 actions" );
+		help.setToolTipText( "Help about OME-Zarr actions" );
 		help.addActionListener( e -> actions.showHelp() );
 
 		setupCloseOnKeyboard( dialog );
