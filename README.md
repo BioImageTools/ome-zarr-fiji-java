@@ -109,7 +109,18 @@ You also need to copy the following `.jar` files to your `Fiji.app/jars` folder 
 
 Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` folder:
 * [s3](https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.30.10/s3-2.30.10.jar)
-* [core](https://repo1.maven.org/maven2/software/amazon/awssdk/auth/2.30.10/auth-2.30.10.jar)
+* [auth](https://repo1.maven.org/maven2/software/amazon/awssdk/auth/2.30.10/auth-2.30.10.jar)
+* [annotations](https://repo1.maven.org/maven2/software/amazon/awssdk/annotations/2.30.10/annotations-2.30.10.jar)
+* [aws-core](https://repo1.maven.org/maven2/software/amazon/awssdk/aws-core/2.30.10/aws-core-2.30.10.jar)
+* [identity-spi](https://repo1.maven.org/maven2/software/amazon/awssdk/identity-spi/2.30.10/identity-spi-2.30.10.jar)
+* [sdk-core](https://repo1.maven.org/maven2/software/amazon/awssdk/sdk-core/2.30.10/sdk-core-2.30.10.jar)
+* [utils](https://repo1.maven.org/maven2/software/amazon/awssdk/utils/2.30.10/utils-2.30.10.jar)
+* [regions](https://repo1.maven.org/maven2/software/amazon/awssdk/regions/2.30.10/regions-2.30.10.jar)
+* [http-client-spi](https://repo1.maven.org/maven2/software/amazon/awssdk/http-client-spi/2.30.10/http-client-spi-2.30.10.jar)
+* [profiles](https://repo1.maven.org/maven2/software/amazon/awssdk/profiles/2.30.10/profiles-2.30.10.jar)
+* [retries-spi](https://repo1.maven.org/maven2/software/amazon/awssdk/retries-spi/2.30.10/retries-spi-2.30.10.jar)
+* [endpoints-spi](https://repo1.maven.org/maven2/software/amazon/awssdk/endpoints-spi/2.30.10/endpoints-spi-2.30.10.jar)
+* [http-auth-spi](https://repo1.maven.org/maven2/software/amazon/awssdk/http-auth-spi/2.30.10/http-auth-spi-2.30.10.jar)
 
 # History
 
