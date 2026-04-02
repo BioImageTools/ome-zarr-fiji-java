@@ -109,11 +109,19 @@ public class ZarrOpenActions
 		);
 	}
 
+	private void showSingleScaleNotSupported()
+	{
+		errorHandler.accept(
+				"Opening a single resolution OME-Zarr dataset, as was found in: " + droppedInPath + ", is currently not supported.\n\n"
+				+ "Consider opening one level higher in the hierarchy instead." );
+		logger.info( "Opening a single resolution OME-Zarr dataset, as was found in: {}, is currently not supported.", droppedInPath );
+	}
+
 	private void showSingleScaleError( final Exception e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
 				+ "Consider opening one level higher or lower in the hierarchy instead." );
-		logger.warn( "Could not open dataset as single scale image: {}. Error message: {}", droppedInPath, e.getMessage() );
+		logger.warn( "Could not open dataset as single resolution image: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 
 	private void showNonZarrError( final Exception e )
@@ -146,9 +154,10 @@ public class ZarrOpenActions
 			logger.info( "Try opening as single-scale image instead." );
 			try
 			{
-				Object result = openSingleScaleImage( singleScaleImageOpener );
-				logger.info( "Opened single scale image in {}: {}", message, droppedInPath );
-				return result;
+				showSingleScaleNotSupported();
+				//Object result = openSingleScaleImage( singleScaleImageOpener ); // currently not supported
+				//logger.info( "Opened single scale image in {}: {}", message, droppedInPath );
+				return null;
 			}
 			catch ( NotASingleScaleImageException ex )
 			{

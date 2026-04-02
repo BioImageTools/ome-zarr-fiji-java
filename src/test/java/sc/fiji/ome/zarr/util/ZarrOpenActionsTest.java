@@ -135,7 +135,7 @@ class ZarrOpenActionsTest
 				Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
 				actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter, "" );
 				assertEquals( 0, multiScaleCounter.get() );
-				assertEquals( 1, singleScaleCounter.get() );
+				assertEquals( 0, singleScaleCounter.get() ); // currently not supported
 			}
 		}
 	}
