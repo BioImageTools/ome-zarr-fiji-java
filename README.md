@@ -53,7 +53,8 @@ From top left to bottom right:
 
 ## Multi-resolution vs. single-resolution
 
-* Users can drag & drop the top-level OME-Zarr folder, in which case it is opened as multi-resolution data. However, users can also drag & drop a subfolder of the top-level OME-Zarr folder, in which case it is opened as single-resolution data. The latter is essentially an optional shortcut for opening a particular resolution.
+* Users can drag & drop a top-level OME-Zarr folder, which contains a multi-resolution dataset. It will be opened as multi-resolution data.
+* Drag & dropping a subfolder of the top-level OME-Zarr folder (i.e. single-resolution data) is currently not supported.
 
 ## Read channel information from OME-Zarr metadata
 
