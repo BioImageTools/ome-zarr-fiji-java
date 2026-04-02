@@ -128,7 +128,7 @@ class ZarrOpenActionsTest
 			for ( String invalidPath : validPaths )
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
-				ZarrOpenActions actions = new ZarrOpenActions( path, context );
+				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
 				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
 				Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
