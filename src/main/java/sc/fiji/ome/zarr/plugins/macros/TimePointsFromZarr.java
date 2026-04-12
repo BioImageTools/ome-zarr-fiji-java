@@ -8,7 +8,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in ImageJ" )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Macros > Get Number of Time Points" )
 public class TimePointsFromZarr implements Command
 {
 	@Parameter
