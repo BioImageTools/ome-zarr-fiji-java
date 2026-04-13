@@ -27,6 +27,8 @@ jobs:
       - name: Execute the build
         run: .github/build.sh
         env:
+          CENTRAL_PASS: ${{ secrets.CENTRAL_PASS }}
+          CENTRAL_USER: ${{ secrets.CENTRAL_USER }}
           GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           MAVEN_USER: ${{ secrets.MAVEN_USER }}
