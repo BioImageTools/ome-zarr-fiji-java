@@ -194,12 +194,17 @@
 		<!-- ====================================== -->
 		<!-- test dependencies -->
 		<!-- ====================================== -->
-
-		<!-- for testing/development purposes: include imagej-legacy at test runtime -->
+		<!-- for testing/development purposes: include imagej at test runtime -->
 		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej</artifactId>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji</artifactId>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>net.imagej</groupId>
+					<artifactId>imagej-legacy</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<!-- for testing/development purposes: include logback-classic at test runtime -->
 		<dependency>
