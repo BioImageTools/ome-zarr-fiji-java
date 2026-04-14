@@ -303,18 +303,5 @@
 				</plugins>
 			</build>
 		</profile>
-		<profile>
-			<id>ui-tests</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<dependencies>
-				<dependency>
-					<groupId>sc.fiji</groupId>
-					<artifactId>fiji</artifactId>
-					<scope>provided</scope> <!-- added to test runtime only when profile active -->
-				</dependency>
-			</dependencies>
-		</profile>
 	</profiles>
 </project>
