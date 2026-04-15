@@ -529,6 +529,9 @@ class ZarrOpenActionsTest
 			}
 			assertFalse( foundTextEditor, "TextEditor window should not be open" );
 			assertTrue( foundBigDataViewer, "BigDataViewer window should be open" );
+
+			for ( Window window : Window.getWindows() )
+				window.dispose();
 		}
 	}
 }
