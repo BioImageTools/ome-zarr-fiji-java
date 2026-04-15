@@ -58,8 +58,10 @@ From top left to bottom right:
 
 ## Read channel information from OME-Zarr metadata
 
-* Works only when a multi-resolution OME-Zarr is drag & dropped and opened in BigDataViewer.
 * The channel names, colors, and contrast limits and their active/inactive state are automatically extracted from the OME-Zarr metadata, if available. The time point is also automatically set to the time point specified in the metadata, if available.
+* Works only when a multi-resolution OME-Zarr is drag & dropped and opened in BigDataViewer.
+
+![bdv_channel_information.png](doc/bdv_channel_information.png)
 
 ## Reader Backend
 
