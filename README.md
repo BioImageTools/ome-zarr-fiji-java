@@ -8,7 +8,7 @@
 
 This repo is currently primarily only a Fiji Drag & Drop handler for OME-Zarrs.
 
-If the dropped target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing.
+If the dropped target is not recognized as a **OME-Zarr v0.4 - v0.5** resource, it does nothing.
 
 # Features
 
@@ -43,8 +43,7 @@ From top left to bottom right:
 
 * [OME-Zarr v0.5](https://ngff.openmicroscopy.org/0.5/index.html) (Zarr v3)
 * [OME-Zarr v0.4](https://ngff.openmicroscopy.org/0.4/index.html) (Zarr v2)
-* ~~OME-Zarr v0.3 (Zarr v2)~~ (currently not supported)
-* Supports 2D (xy) to 5D (xyzct) images, or any subsets of the latter.
+* Supports 2D (xy), 3D (xyc, xyt, xyz), 4D (xyct, xyzc, xyzt) and 5D (xyzct) images.
 
 ## Dual dataset view
 
@@ -71,6 +70,11 @@ From top left to bottom right:
 
 * Users can run a script on the OME-Zarr. The script resource can be a file and can be set in the `Plugins -> OME-Zarr -> Preset Drag & Drop User Script` menu.
 * If no script is set, the script editor opens with a default script.
+
+# Known issues
+
+* Reading of OME-Zarrs version <= 0.3 is not supported.
+* With FIJI stable, OME-Zarrs that use Blosc compression cannot be opened on MacOS. Please use FIJI latest, if you encounter this issue. Cf. [FIJI downloads](https://imagej.net/software/fiji/downloads).
 
 # Example data
 
