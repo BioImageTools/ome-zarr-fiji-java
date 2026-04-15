@@ -1,0 +1,61 @@
+name: test-os
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "*-[0-9]+.*"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  mvn-verify:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'zulu'
+          cache: 'maven'
+
+      # Linux-only setup
+      - name: Linux dependencies (Blosc via apt)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libblosc-dev
+          Xvfb :99 -screen 0 1280x1024x24 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV
+
+      # macOS setup
+      - name: macOS dependencies (Blosc via Homebrew)
+        if: runner.os == 'macOS'
+        run: |
+          brew install c-blosc
+          echo "DYLD_LIBRARY_PATH=$(brew --prefix c-blosc)/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "JAVA_TOOL_OPTIONS=-Djava.library.path=$(brew --prefix c-blosc)/lib" >> $GITHUB_ENV
+
+      # Windows setup
+      - name: Windows dependencies (Blosc via vcpkg)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git $env:RUNNER_TEMP\vcpkg
+          cd $env:RUNNER_TEMP\vcpkg
+          .\bootstrap-vcpkg.bat
+          .\vcpkg install blosc:x64-windows
+          echo "JAVA_TOOL_OPTIONS=-Djava.library.path=$env:RUNNER_TEMP\vcpkg\installed\x64-windows\bin" >> $env:GITHUB_ENV
+          echo "$env:RUNNER_TEMP\vcpkg\installed\x64-windows\bin" | Out-File -Append $env:GITHUB_PATH
+
+      # Run tests
+      - name: Run tests with Maven
+        run: mvn -B verify --file pom.xml
