@@ -278,8 +278,9 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
 			ImagePlus imagePlus = Cast.unchecked( actions.openIJWithImage() );
+			assertNotNull( imagePlus );
 			int channels = imagePlus.getNChannels();
 			int frames = imagePlus.getNFrames();
 			int slices = imagePlus.getNSlices();
@@ -391,7 +392,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
 			BdvStackSource< ? > bdvStackSource = Cast.unchecked( actions.openBDVWithImage() );
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertNotNull( datasetService );
