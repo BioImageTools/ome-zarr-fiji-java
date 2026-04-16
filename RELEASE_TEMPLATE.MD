@@ -19,9 +19,9 @@
     * [ ] Run sh /path/to/release-version.sh from the project root directory
     * [ ] Confirm version number
     * [ ] The release script pushes to master on github.com
-        * This triggers a *github Action* which copies the version to be released to maven.scijava.org.
-          cf. https://maven.scijava.org/#browse/search/generic=keyword%3Dome-zarr-fiji)
-* [ ] Download created jar file from scijava Nexus (https://maven.scijava.org/#browse/search/generic=keyword%3Dome-zarr-fiji)
+        * This triggers a *github Action* which copies the version to be released to maven central.
+          cf. https://repo1.maven.org/maven2/sc/fiji/ome-zarr-fiji/
+* [ ] Download created jar file from maven central (https://repo1.maven.org/maven2/sc/fiji/ome-zarr-fiji/)
     * [ ] Delete jar-file from last release version from local Fiji installation path (if any)
     * [ ] Copy jar file of the new version to local Fiji installation path
     * [ ] Copy new dependencies, if any
