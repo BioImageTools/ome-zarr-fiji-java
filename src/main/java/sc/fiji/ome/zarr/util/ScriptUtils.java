@@ -107,6 +107,7 @@ public class ScriptUtils
 			try
 			{
 				ScriptModule module = scriptService.getScript( new File( scriptPath ) ).createModule();
+				module.setContext( ctx );
 				module.setInput( "path", inputPath );
 				logger.info( "Executing script: {}", scriptPath );
 				logger.info( "on String parameter: {}", inputPath );
