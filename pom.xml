@@ -199,12 +199,6 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji</artifactId>
 			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>net.imagej</groupId>
-					<artifactId>imagej-legacy</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<!-- for testing/development purposes: include logback-classic at test runtime -->
 		<dependency>
