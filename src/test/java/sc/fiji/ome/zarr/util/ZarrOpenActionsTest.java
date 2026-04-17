@@ -467,7 +467,12 @@ class ZarrOpenActionsTest
 				prefService.put( DragAndDropUserScriptSettings.class, "scriptPath", "--none--" );
 				String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
 				Path path = ZarrTestUtils.resourcePath( resource );
-				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
+				AtomicBoolean scriptFailed = new AtomicBoolean( false );
+				Consumer< String > errorHandler = errorMessage -> {
+					scriptFailed.set( true );
+					System.out.println( errorMessage );
+				};
+				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, errorHandler );
 				actions.runScript();
 
 				// wait until all Swing events are processed
@@ -487,6 +492,7 @@ class ZarrOpenActionsTest
 					}
 				}
 				assertTrue( found, "TextEditor window should be open" );
+				assertTrue( scriptFailed.get(), "Script should fail" );
 				assertEquals( ScriptUtils.getTemplate(), text );
 			}
 		}

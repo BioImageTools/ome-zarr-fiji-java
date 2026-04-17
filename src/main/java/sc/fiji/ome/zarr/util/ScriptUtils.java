@@ -130,6 +130,8 @@ public class ScriptUtils
 		else
 		{
 			logger.info( "Script path is not valid: {}. Opening script editor with a script template instead.", scriptPath );
+			errorHandler.accept( "Script path is not valid: " + scriptPath
+					+ ".\n\nPlease provide a valid path via Plugins Plugins > OME-Zarr > Drag & Drop User Script Settings.\n\nWill open now script editor with a script template." );
 			//this opens an _always new_ window with the template script,
 			//...at least the user is more likely to notice that this "help" came up
 			final TextEditor editor = new TextEditor( ctx );
