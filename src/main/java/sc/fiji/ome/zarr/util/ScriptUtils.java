@@ -129,7 +129,7 @@ public class ScriptUtils
 		}
 		else
 		{
-			logger.debug( "Script path is not valid: {}. Opening script editor with template.", scriptPath );
+			logger.info( "Script path is not valid: {}. Opening script editor with a script template instead.", scriptPath );
 			//this opens an _always new_ window with the template script,
 			//...at least the user is more likely to notice that this "help" came up
 			final TextEditor editor = new TextEditor( ctx );
