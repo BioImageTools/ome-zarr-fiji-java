@@ -62,7 +62,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -278,8 +280,9 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
 			ImagePlus imagePlus = Cast.unchecked( actions.openIJWithImage() );
+			assertNotNull( imagePlus );
 			int channels = imagePlus.getNChannels();
 			int frames = imagePlus.getNFrames();
 			int slices = imagePlus.getNSlices();
@@ -391,7 +394,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
 			BdvStackSource< ? > bdvStackSource = Cast.unchecked( actions.openBDVWithImage() );
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertNotNull( datasetService );
@@ -464,7 +467,12 @@ class ZarrOpenActionsTest
 				prefService.put( DragAndDropUserScriptSettings.class, "scriptPath", "--none--" );
 				String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
 				Path path = ZarrTestUtils.resourcePath( resource );
-				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
+				AtomicBoolean scriptFailed = new AtomicBoolean( false );
+				Consumer< String > errorHandler = errorMessage -> {
+					scriptFailed.set( true );
+					System.out.println( errorMessage );
+				};
+				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, errorHandler );
 				actions.runScript();
 
 				// wait until all Swing events are processed
@@ -484,6 +492,7 @@ class ZarrOpenActionsTest
 					}
 				}
 				assertTrue( found, "TextEditor window should be open" );
+				assertTrue( scriptFailed.get(), "Script should fail" );
 				assertEquals( ScriptUtils.getTemplate(), text );
 			}
 		}
@@ -506,7 +515,12 @@ class ZarrOpenActionsTest
 			prefService.put( DragAndDropUserScriptSettings.class, "scriptPath", tempFile.getAbsolutePath() );
 			String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
 			Path path = ZarrTestUtils.resourcePath( resource );
-			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
+			AtomicBoolean scriptFailed = new AtomicBoolean( false );
+			Consumer< String > errorHandler = errorMessage -> {
+				scriptFailed.set( true );
+				System.out.println( errorMessage );
+			};
+			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, errorHandler );
 			actions.runScript();
 
 			boolean foundTextEditor = false;
@@ -529,6 +543,7 @@ class ZarrOpenActionsTest
 			}
 			assertFalse( foundTextEditor, "TextEditor window should not be open" );
 			assertTrue( foundBigDataViewer, "BigDataViewer window should be open" );
+			assertFalse( scriptFailed.get(), "Script should not have failed" );
 
 			for ( Window window : Window.getWindows() )
 				window.dispose();

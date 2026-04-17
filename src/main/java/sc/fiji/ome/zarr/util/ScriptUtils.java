@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -94,6 +94,8 @@ public class ScriptUtils
 		if ( scriptService == null || prefService == null )
 		{
 			logger.error( "Failed obtaining Script and/or Pref services. Is Fiji properly initiated?" );
+			errorHandler.accept(
+					"Service for running scripts and/or service for reading preferences are not available. Is Fiji properly initiated?" );
 			return;
 		}
 
@@ -107,6 +109,7 @@ public class ScriptUtils
 			try
 			{
 				ScriptModule module = scriptService.getScript( new File( scriptPath ) ).createModule();
+				module.setContext( ctx );
 				module.setInput( "path", inputPath );
 				logger.info( "Executing script: {}", scriptPath );
 				logger.info( "on String parameter: {}", inputPath );
@@ -115,17 +118,20 @@ public class ScriptUtils
 			}
 			catch ( Exception e )
 			{
-				errorHandler.accept( "Script could not be processed on OME-Zarr dataset. " + "\n\r\n" + "Script path: " + scriptPath + "\n"
-						+ "Dataset path: " + inputPath + "\n\n" + "Error message: " + e.getMessage() );
 				logger.warn(
 						" Something went wrong executing the script: {} on this dataset: {}. Message: {}", scriptPath, inputPath,
 						e.getMessage()
 				);
+				errorHandler.accept( "Script could not be processed on OME-Zarr dataset. " + "\n\r\n" + "Script path: " + scriptPath + "\n"
+						+ "Dataset path: " + inputPath + "\n\n" + "Error message: " + e.getMessage() );
+
 			}
 		}
 		else
 		{
-			logger.debug( "Script path is not valid: {}. Opening script editor with template.", scriptPath );
+			logger.info( "Script path is not valid: {}. Opening script editor with a script template instead.", scriptPath );
+			errorHandler.accept( "Script path is not valid: " + scriptPath
+					+ ".\n\nPlease provide a valid path via Plugins > OME-Zarr > Drag & Drop User Script Settings.\n\nWill open now script editor with a script template." );
 			//this opens an _always new_ window with the template script,
 			//...at least the user is more likely to notice that this "help" came up
 			final TextEditor editor = new TextEditor( ctx );
