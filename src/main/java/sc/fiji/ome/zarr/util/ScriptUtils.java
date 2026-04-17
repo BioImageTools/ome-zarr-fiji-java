@@ -93,9 +93,9 @@ public class ScriptUtils
 		PrefService prefService = ctx.getService( PrefService.class );
 		if ( scriptService == null || prefService == null )
 		{
+			logger.error( "Failed obtaining Script and/or Pref services. Is Fiji properly initiated?" );
 			errorHandler.accept(
 					"Service for running scripts and/or service for reading preferences are not available. Is Fiji properly initiated?" );
-			logger.error( "Failed obtaining Script and/or Pref services. Is Fiji properly initiated?" );
 			return;
 		}
 
