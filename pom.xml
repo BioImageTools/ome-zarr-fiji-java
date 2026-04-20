@@ -10,7 +10,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>ome-zarr-fiji</artifactId>
-	<version>0.3.2-SNAPSHOT</version>
+	<version>0.3.3-SNAPSHOT</version>
 
 	<name>OME-Zarr additional interfaces for Fiji</name>
 	<description>As of now, drag-and-drop scijava (Fiji) handler that opens N5 Importer dialog or BigDataViewer
