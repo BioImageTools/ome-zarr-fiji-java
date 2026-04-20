@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -46,8 +46,6 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 import net.imglib2.view.Views;
 
-import org.janelia.saalfeldlab.n5.DataType;
-import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
@@ -55,7 +53,6 @@ import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
-import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.SpatialMetadataGroup;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
 import org.scijava.Context;
@@ -73,9 +70,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-
 import bdv.BigDataViewer;
 import bdv.cache.SharedQueue;
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
@@ -84,7 +78,11 @@ import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.metadata.Multiscale;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
+import sc.fiji.ome.zarr.pyramid.metadata.ResolutionLevel;
+import sc.fiji.ome.zarr.pyramid.metadata.adapter.MetadataAdapter;
+import sc.fiji.ome.zarr.pyramid.metadata.adapter.MetadataAdapterFactory;
 import sc.fiji.ome.zarr.util.Affine3DUtils;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
@@ -226,7 +224,7 @@ public class DefaultPyramidal5DImageData<
 		this.volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 		this.name = multiscale.getName();
 		this.numResolutionLevels = multiscale.numResolutionLevels();
-		this.numDimensions = resolutionLevel.attributes.getDimensions().length;
+		this.numDimensions = resolutionLevel.getAttributes().getDimensions().length;
 		this.numTimepoints = getNumTimepointsFromResolutionLevel( resolutionLevel );
 		this.numChannels = getNumChannelsFromResolutionLevel( resolutionLevel );
 
@@ -235,10 +233,10 @@ public class DefaultPyramidal5DImageData<
 		volatileImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
 		for ( ResolutionLevel level : multiscale.getLevels() )
 		{
-			cachedCellImgs[ level.index ] = N5Utils.openVolatile( reader, level.datasetPath );
-			volatileImgs[ level.index ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level.index ], sharedQueue );
+			cachedCellImgs[ level.getIndex() ] = N5Utils.openVolatile( reader, level.getDatasetPath() );
+			volatileImgs[ level.getIndex() ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level.getIndex() ], sharedQueue );
 		}
-		final ImgPlus< T > imgPlus = new ImgPlus<>( cachedCellImgs[ resolutionLevel.index ], name );
+		final ImgPlus< T > imgPlus = new ImgPlus<>( cachedCellImgs[ resolutionLevel.getIndex() ], name );
 		configureImgPlusAxesFromResolutionLevel( imgPlus, resolutionLevel );
 
 		this.ijDataset = new DefaultDataset( context, imgPlus );
@@ -436,240 +434,29 @@ public class DefaultPyramidal5DImageData<
 		return n5Metadata;
 	}
 
-	private static class Multiscale
-	{
-
-		private final String name;
-
-		private final List< ResolutionLevel > resolutionLevels;
-
-		private final DataType dataType;
-
-		private Multiscale( final String name, final List< ResolutionLevel > resolutionLevels, final DataType dataType )
-		{
-			this.name = name;
-			this.resolutionLevels = resolutionLevels;
-			this.dataType = dataType;
-		}
-
-		public String getName()
-		{
-			return name;
-		}
-
-		public int numResolutionLevels()
-		{
-			return resolutionLevels.size();
-		}
-
-		public List< ResolutionLevel > getLevels()
-		{
-			return resolutionLevels;
-		}
-
-		public DataType getDataType()
-		{
-			return dataType;
-		}
-	}
-
-	// ---------------------------------------------------------------------
-	// Selected Scale Level Representation
-	// ---------------------------------------------------------------------
-
-	private static class ResolutionLevel
-	{
-		private final String datasetPath;
-
-		private final int index; // the position of the resolution level within a multiscale object
-
-		private final DatasetAttributes attributes;
-
-		private final Axis[] axes; // for OME NGFF v04 metadata
-
-		private final String[] axisNames; // for OME NGFF v03 metadata
-
-		private final String[] units; // for OME NGFF v03 metadata
-
-		private final double[] scales; // down sampling factor
-
-		private ResolutionLevel(
-				final String datasetPath, final int index, final DatasetAttributes attributes, final Axis[] axes, final String[] axisNames,
-				final String[] units, final double[] scales )
-		{
-			this.datasetPath = datasetPath;
-			this.index = index;
-			this.attributes = attributes;
-			this.axes = axes;
-			this.axisNames = axisNames;
-			this.units = units;
-			this.scales = scales;
-		}
-	}
-
-	// ---------------------------------------------------------------------
-	// Metadata Adapter Strategy
-	// ---------------------------------------------------------------------
-
-	private interface MetadataAdapter
-	{
-		Multiscale initMultiscale( final N5Metadata metadata, final int multiscaleIndex );
-
-		Omero initOmeroMetadata();
-	}
-
-	private abstract static class AbstractMetadataAdapter implements MetadataAdapter
-	{
-		protected final N5Reader reader;
-
-		protected final N5TreeNode node;
-
-		public AbstractMetadataAdapter( final N5Reader reader, final N5TreeNode node )
-		{
-			this.reader = reader;
-			this.node = node;
-		}
-
-		protected Multiscale buildMultiscale( final String name,
-				final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata[] children )
-		{
-			final List< ResolutionLevel > levels = new ArrayList<>();
-			int index = 0;
-			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : children )
-			{
-				levels.add( new ResolutionLevel( single.getPath(), index++, single.getAttributes(), single.getAxes(), null, null,
-						single.getScale() ) );
-			}
-			return new Multiscale( name, levels, children[ 0 ].getAttributes().getDataType()
-			);
-		}
-
-		@Override
-		public Omero initOmeroMetadata()
-		{
-			final JsonElement base = reader.getAttribute( node.getPath(), getOmeroKey(), JsonElement.class );
-			return new Gson().fromJson( base, Omero.class );
-		}
-
-		protected abstract String getOmeroKey();
-	}
-
-	private static class MetadataAdapterFactory
-	{
-		static MetadataAdapter getAdapter( final N5Metadata metadata, final N5Reader reader, final N5TreeNode node )
-		{
-			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata )
-				return new V05MetadataAdapter( reader, node );
-			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata )
-				return new V04MetadataAdapter( reader, node );
-			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
-				return new V03MetadataAdapter( reader, node );
-			throw new NotAMultiscaleImageException(
-					"Unsupported multiscale metadata type: " + metadata.getClass() );
-		}
-	}
-
-	private static class V05MetadataAdapter extends AbstractMetadataAdapter
-	{
-		private V05MetadataAdapter( final N5Reader reader, final N5TreeNode node )
-		{
-			super( reader, node );
-		}
-
-		@Override
-		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
-		{
-			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata omeNgffMetadata = Cast.unchecked( n5Metadata );
-			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales =
-					omeNgffMetadata.multiscales[ multiscaleIndex ]; // NB: v04 multi scale metadata ??
-			return buildMultiscale( multiscales.name, multiscales.getChildrenMetadata() );
-		}
-
-		@Override
-		protected String getOmeroKey()
-		{
-			return "ome/omero";
-		}
-	}
-
-	private static class V04MetadataAdapter extends AbstractMetadataAdapter
-	{
-		private V04MetadataAdapter( final N5Reader reader, final N5TreeNode node )
-		{
-			super( reader, node );
-		}
-
-		@Override
-		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
-		{
-			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
-			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
-			if ( multiscales.getChildrenMetadata().length == 0 || multiscales.getChildrenMetadata()[ 0 ] == null )
-				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
-			return buildMultiscale( multiscales.name, multiscales.getChildrenMetadata() );
-		}
-
-		@Override
-		protected String getOmeroKey()
-		{
-			return "omero";
-		}
-	}
-
-	private static class V03MetadataAdapter extends AbstractMetadataAdapter
-	{
-		private V03MetadataAdapter( final N5Reader reader, final N5TreeNode node )
-		{
-			super( reader, node );
-		}
-
-		@Override
-		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
-		{
-			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
-			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMultiScaleMetadata multiscales =
-					omeNgffMetadata.getMultiscales()[ multiscaleIndex ];
-			if ( multiscales.getChildrenMetadata() == null || multiscales.getChildrenMetadata().length == 0 )
-				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children metadata." );
-			final List< ResolutionLevel > levels = new ArrayList<>();
-			int index = 0;
-			for ( N5SingleScaleMetadata single : multiscales.getChildrenMetadata() )
-			{
-				levels.add(
-						new ResolutionLevel( single.getPath(), index++, single.getAttributes(), null, multiscales.axes, multiscales.units(),
-						single.getPixelResolution() ) );
-			}
-			return new Multiscale( multiscales.name, levels, multiscales.getChildrenMetadata()[ 0 ].getAttributes().getDataType() );
-		}
-
-		@Override
-		protected String getOmeroKey()
-		{
-			return "omero";
-		}
-	}
-
 	// ---------------------------------------------------------------------
 	// Axis Configuration
 	// ---------------------------------------------------------------------
 
 	private void configureImgPlusAxesFromResolutionLevel( final ImgPlus< T > img, final ResolutionLevel resolutionLevel )
 	{
-		if ( resolutionLevel.axes != null )
+		final Axis[] axes = resolutionLevel.getAxes();
+		final String[] axisNames = resolutionLevel.getAxisNames();
+		final double[] scales = resolutionLevel.getScales();
+		if ( axes != null )
 		{
-			for ( int i = 0; i < resolutionLevel.axes.length; i++ )
+			for ( int i = 0; i < axes.length; i++ )
 			{
-				Axis axis = resolutionLevel.axes[ i ];
-				setImgPlusAxis( img, AXIS_MAPPING.get( axis.getName() ), axis.getUnit(), resolutionLevel.scales[ i ], i );
+				Axis axis = axes[ i ];
+				setImgPlusAxis( img, AXIS_MAPPING.get( axis.getName() ), axis.getUnit(), scales[ i ], i );
 			}
 		}
-		else if ( resolutionLevel.axisNames != null )
+		else if ( axisNames != null )
 		{
-			for ( int i = 0; i < resolutionLevel.axisNames.length; i++ )
+			final String[] units = resolutionLevel.getUnits();
+			for ( int i = 0; i < axisNames.length; i++ )
 			{
-				setImgPlusAxis( img, AXIS_MAPPING.get( resolutionLevel.axisNames[ i ] ), resolutionLevel.units[ i ],
-						resolutionLevel.scales[ i ],
-						i );
+				setImgPlusAxis( img, AXIS_MAPPING.get( axisNames[ i ] ), units[ i ], scales[ i ], i );
 			}
 		}
 	}
@@ -693,25 +480,28 @@ public class DefaultPyramidal5DImageData<
 	{
 		final int axisIndex = findAxisIndex( resolutionLevel, axisType );
 
-		return axisIndex >= 0 ? ( int ) resolutionLevel.attributes.getDimensions()[ axisIndex ] : 1;
+		return axisIndex >= 0 ? ( int ) resolutionLevel.getAttributes().getDimensions()[ axisIndex ] : 1;
 	}
 
 	private int findAxisIndex( final ResolutionLevel resolutionLevel, final AxisType axisType )
 	{
-		if ( resolutionLevel.axes != null )
+		final Axis[] axes = resolutionLevel.getAxes();
+		if ( axes != null )
 		{
-			for ( int i = 0; i < resolutionLevel.axes.length; i++ )
+			for ( int i = 0; i < axes.length; i++ )
 			{
-				Axis axis = resolutionLevel.axes[ i ];
+				Axis axis = axes[ i ];
 				if ( axisType.equals( AXIS_MAPPING.get( axis.getName() ) ) )
 					return i;
 			}
+			return -1;
 		}
-		else if ( resolutionLevel.axisNames != null )
+		final String[] axisNames = resolutionLevel.getAxisNames();
+		if ( axisNames != null )
 		{
-			for ( int i = 0; i < resolutionLevel.axisNames.length; i++ )
+			for ( int i = 0; i < axisNames.length; i++ )
 			{
-				if ( axisType.equals( AXIS_MAPPING.get( resolutionLevel.axisNames[ i ] ) ) )
+				if ( axisType.equals( AXIS_MAPPING.get( axisNames[ i ] ) ) )
 					return i;
 			}
 		}
@@ -786,7 +576,7 @@ public class DefaultPyramidal5DImageData<
 	}
 
 	@Override
-	public String getName()
+public String getName()
 	{
 		return name;
 	}
