@@ -34,7 +34,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
 
-import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 
 /**
  * Picks the appropriate {@link MetadataAdapter} for a given parsed

@@ -60,6 +60,8 @@ import bdv.util.volatiles.VolatileViews;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
+import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
+
 public class MultiscaleImage<
 		T extends NativeType< T > & RealType< T >,
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
