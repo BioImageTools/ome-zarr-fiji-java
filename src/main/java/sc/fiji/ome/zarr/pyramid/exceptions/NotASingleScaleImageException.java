@@ -26,18 +26,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.exceptions;
 
-public class NotAMultiscaleImageException extends RuntimeException
+public class NotASingleScaleImageException extends RuntimeException
 {
 
-	public NotAMultiscaleImageException( final String path )
+	public NotASingleScaleImageException( final String path )
 	{
-		super( "The dataset at path '" + path + "' is not a valid OME-Zarr multiscale image." );
+		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image." );
 	}
 
-	public NotAMultiscaleImageException( final String path, final Throwable cause )
+	public NotASingleScaleImageException( final String path, final Throwable cause )
 	{
-		super( "The dataset at path '" + path + "' is not a valid OME-Zarr multiscale image. Cause: " + cause.getMessage(), cause );
+		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image. Cause: " + cause.getMessage(), cause );
 	}
 }
