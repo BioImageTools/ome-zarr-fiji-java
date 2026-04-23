@@ -1,3 +1,31 @@
+/*-
+ * #%L
+ * OME-Zarr extras for Fiji
+ * %%
+ * Copyright (C) 2022 - 2026 SciJava developers
+ * %%
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ * #L%
+ */
 package sc.fiji.ome.zarr.util;
 
 import org.janelia.saalfeldlab.n5.N5Reader;
@@ -23,13 +51,14 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Cast;
 
 import bdv.util.BdvFunctions;
-import bdv.util.BdvHandle;
 import ij.IJ;
 import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.pyramid.ZarrJavaBackedPyramidal5DImageData;
 
 public class ZarrOpenActions
@@ -44,23 +73,24 @@ public class ZarrOpenActions
 
 	private final Consumer< String > errorHandler;
 
-	private final Integer preferredWidth;
+	private final ZarrDragAndDropOpenSettings settings;
 
 	public ZarrOpenActions( final Path droppedInPath, final Context context )
 	{
 		this( droppedInPath, context, null, IJ::error );
 	}
 
-	public ZarrOpenActions( final Path droppedInPath, final Context context, final Integer preferredWidth )
+	public ZarrOpenActions( final Path droppedInPath, final Context context, final ZarrDragAndDropOpenSettings settings )
 	{
-		this( droppedInPath, context, preferredWidth, IJ::error );
+		this( droppedInPath, context, settings, IJ::error );
 	}
 
-	ZarrOpenActions( final Path droppedInPath, final Context context, final Integer preferredWidth, final Consumer< String > errorHandler )
+	ZarrOpenActions( final Path droppedInPath, final Context context, final ZarrDragAndDropOpenSettings settings,
+			final Consumer< String > errorHandler )
 	{
 		this.droppedInPath = droppedInPath;
 		this.context = context;
-		this.preferredWidth = preferredWidth;
+		this.settings = settings;
 		this.errorHandler = errorHandler;
 	}
 
@@ -87,9 +117,9 @@ public class ZarrOpenActions
 			logger.info( "Opened Zarr/N5 viewer with path: {}.", droppedInPath );
 	}
 
-	public void openIJWithImage()
+	public Object openIJWithImage()
 	{
-		openImage(
+		return openImage(
 				pyramidalDataset -> {
 					context.getService( UIService.class ).show( pyramidalDataset );
 					return null;
@@ -99,39 +129,46 @@ public class ZarrOpenActions
 		);
 	}
 
-	public BdvHandle openBDVWithImage()
+	public Object openBDVWithImage()
 	{
-		Object result = openImage(
+		return openImage(
 				BdvUtils::showBdvAndRegisterDataset,
 				singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
 				"BigDataViewer"
 		);
-		return Cast.unchecked( result );
+	}
+
+	private void showSingleScaleNotSupported()
+	{
+		errorHandler.accept(
+				"Opening a single resolution OME-Zarr dataset, as was found in: " + droppedInPath + ", is currently not supported.\n\n"
+				+ "Consider opening one level higher in the hierarchy instead." );
+		logger.info( "Opening a single resolution OME-Zarr dataset, as was found in: {}, is currently not supported.", droppedInPath );
 	}
 
 	private void showSingleScaleError( final Exception e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
 				+ "Consider opening one level higher or lower in the hierarchy instead." );
-		logger.warn( "Could not open dataset as single scale image: {}. Error message: {}", droppedInPath, e.getMessage() );
+		logger.warn( "Could not open dataset as single resolution image: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 
 	private void showNonZarrError( final Exception e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
-				+ "The drag & drop for Zarr folders only supports folders that contains zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
-		logger.warn( "Could not open dataset as non-Zarr image: {}. Error message: {}", droppedInPath, e.getMessage() );
+				+ "The drag & drop for OME-Zarr folders only supports folders that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
+		logger.warn( "Could not open dataset image: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 
 	private void showNonMatchingResolutionError( final Exception e )
 	{
 		errorHandler.accept( "Safety check failed when opening dataset: " + droppedInPath + "\n\r\n" + e.getMessage() + "\n\r\n"
-				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Zarr Drag And Drop Open Settings to still open the image." );
+				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Drag & Drop Behavior Settings to still open the image." );
 		logger.warn( "Not opening dataset: {}. Error message: {}", droppedInPath, e.getMessage() );
 	}
 
 	Object openImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener,
-			final Consumer< Img< ? > > singleScaleImageOpener,
+			final Function< Img< ? >, Object > singleScaleImageOpener,
 			final String message )
 	{
 		try
@@ -146,7 +183,10 @@ public class ZarrOpenActions
 			logger.info( "Try opening as single-scale image instead." );
 			try
 			{
-				openSingleScaleImage( singleScaleImageOpener );
+				showSingleScaleNotSupported();
+				//Object result = openSingleScaleImage( singleScaleImageOpener ); // currently not supported
+				//logger.info( "Opened single scale image in {}: {}", message, droppedInPath );
+				return null;
 			}
 			catch ( NotASingleScaleImageException ex )
 			{
@@ -167,6 +207,12 @@ public class ZarrOpenActions
 	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
 			throws NotAMultiscaleImageException, NoMatchingResolutionException
 	{
+		Integer preferredWidth;
+		if ( settings == null || settings.getOpenBehavior().equals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION ) )
+			preferredWidth = null;
+		else
+			preferredWidth = settings.getPreferredMaxWidth();
+
 		// Try zarr-java backend first (supports Zarr v2 and v3)
 		try
 		{
@@ -195,7 +241,7 @@ public class ZarrOpenActions
 		return result;
 	}
 
-	private void openSingleScaleImage( final Consumer< Img< ? > > singleScaleImageOpener ) throws NotASingleScaleImageException
+	private Object openSingleScaleImage( final Function< Img< ? >, Object > singleScaleImageOpener ) throws NotASingleScaleImageException
 	{
 		N5Reader reader = new N5Factory().openReader( ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString() );
 		Img< ? > img;
@@ -207,15 +253,16 @@ public class ZarrOpenActions
 		{
 			throw new NotASingleScaleImageException( droppedInPath.toString(), e );
 		}
-		singleScaleImageOpener.accept( img );
+		Object result = singleScaleImageOpener.apply( img );
 		logger.info( "Opened single scale image: {}", droppedInPath );
+		return result;
 	}
 
 	public void runScript()
 	{
-		final String root = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
-		ScriptUtils.executePresetScript( context, root );
-		logger.info( "Executed script with Zarr root {}", root );
+		final String path = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
+		logger.info( "Attempt to execute script on path: {}.", path );
+		ScriptUtils.executePresetScript( context, path, errorHandler );
 	}
 
 	public void showHelp()

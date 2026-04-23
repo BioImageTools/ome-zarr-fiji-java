@@ -1,18 +1,18 @@
 /*-
  * #%L
- * Expose the Imaris XT interface as an ImageJ2 service backed by ImgLib2.
+ * OME-Zarr extras for Fiji
  * %%
- * Copyright (C) 2019 - 2021 Bitplane AG
+ * Copyright (C) 2022 - 2026 SciJava developers
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -58,7 +58,6 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.SpatialMetadataGroup;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
 import org.scijava.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +73,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+
 import bdv.BigDataViewer;
 import bdv.cache.SharedQueue;
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
@@ -82,6 +84,7 @@ import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 import sc.fiji.ome.zarr.util.Affine3DUtils;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
@@ -143,6 +146,8 @@ public class DefaultPyramidal5DImageData<
 	private final AffineTransform3D[] transforms;
 
 	private final VoxelDimensions voxelDimensions;
+
+	private final Omero omero;
 
 	// this acts as cache not to create them again and again
 	private final Dataset ijDataset;
@@ -209,9 +214,10 @@ public class DefaultPyramidal5DImageData<
 		this.reader = createReader();
 		final N5Metadata metadata = readMetadata();
 
-		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata );
+		MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata, reader, new N5TreeNode( relativePathAsString ) );
 		final int multiscaleIndex = 0; // TODO: How to select multiscale index?
 		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
+		this.omero = adapter.initOmeroMetadata();
 		final ResolutionLevel resolutionLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
 		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
 		this.transforms = spatialMetadata.spatialTransforms3d();
@@ -244,41 +250,105 @@ public class DefaultPyramidal5DImageData<
 
 	private List< SourceAndConverter< T > > initSourceAndConverters( final ResolutionLevel resolutionLevel )
 	{
+		// only x,y axes have a fixed dimension index, all the other axes can be absent in the input tensor,
+		// and thus their indices are "floating", and must be thus found here
+		// NB: the input tensor is cachedCellImgs and its wrapper volatileImgs at a particular chosen resolution level
+		final int zAxisIndex = findAxisIndex( resolutionLevel, Axes.Z );
+		final int timeAxisIndex = findAxisIndex( resolutionLevel, Axes.TIME );
+		final int channelAxisIndex = findAxisIndex( resolutionLevel, Axes.CHANNEL );
+
+		final boolean zAxisPresent = zAxisIndex > 0;
+		final boolean timeAxisPresent = timeAxisIndex > 0;
+
+		final boolean isOmeroMetadataValid = omero != null && omero.channels != null && omero.channels.size() == numChannels;
+		if ( isOmeroMetadataValid )
+			logger.trace( "Creating with OMERO metadata: {}", omero );
+		else
+			logger.trace( "Creating without OMERO metadata (not consistent or not available)" );
+
 		final List< SourceAndConverter< T > > sources = new ArrayList<>();
-		int channelAxisIndex = findAxisIndex( resolutionLevel, Axes.CHANNEL );
 		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )
 		{
-			RandomAccessibleInterval< V >[] channelsVolatile = extractChannels( volatileImgs, channelAxisIndex, channelNumber );
-			RandomAccessibleInterval< T >[] channels = extractChannels( cachedCellImgs, channelAxisIndex, channelNumber );
+			// for the Mipmap, RAIs must always be xyzt even if z and/or t is not present,
+			// but first the particular channel is taken out, and then 4D is ensured:
+			// NB: the input tensor is an OME-Zarr array, which is of the xy[z][t][c] order of dimensions,
+			//     so really only a particular 'c' is extracted, and 'z' and 't' are added if they are missing
+			RandomAccessibleInterval< V >[] channelsVolatile =
+					ensureOrdered4dDimensions( extractChannel( volatileImgs, channelAxisIndex, channelNumber ), zAxisPresent, timeAxisPresent );
+			RandomAccessibleInterval< T >[] channels =
+					ensureOrdered4dDimensions( extractChannel( cachedCellImgs, channelAxisIndex, channelNumber ), zAxisPresent, timeAxisPresent );
+
+			// wrap to create the mipmaps
+			final String channelLabel = isOmeroMetadataValid ? omero.channels.get( channelNumber ).label : getName();
 			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile = new RandomAccessibleIntervalMipmapSource4D<>(
-					channelsVolatile, volatileType, transforms, voxelDimensions, getName(), true );
+					channelsVolatile, volatileType, transforms, voxelDimensions, channelLabel, true );
 			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
-					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, getName(), true );
+					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, channelLabel, true );
+
+			// finally, provide the desired SAC for the current channel
 			final SourceAndConverter< T > sourceAndConverter = createSourceAndConverter( source4D, source4DVolatile );
-			// ConverterSetup converterSetup = BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
 			sources.add( sourceAndConverter );
+			BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
 		}
 		return sources;
 	}
 
-	private < R > RandomAccessibleInterval< R >[] extractChannels( final RandomAccessibleInterval< R >[] sourceImgs,
+	/**
+	 * If the 'c' (channels) dimension is present in sourceImgs, extract it and reduce the dimensionality of the input.
+	 * If it is absent, it is already "as if reduced", so return sourceImgs as is.
+	 */
+	private < R > RandomAccessibleInterval< R >[] extractChannel( final RandomAccessibleInterval< R >[] sourceImgs,
 			final int channelAxisIndex, final int channelNumber )
 	{
-		final RandomAccessibleInterval< R >[] result = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
+		// casting is here only because Java cannot do: new RAI<T>[ numberOfThem ]
+		// while it can only do: RAI[ numberOfThem ]
+		final RandomAccessibleInterval< R >[] resultImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
 		for ( int level = 0; level < numResolutionLevels; level++ )
 		{
-			RandomAccessibleInterval< R > img =
-					channelAxisIndex < 0 ? sourceImgs[ level ] : Views.hyperSlice( sourceImgs[ level ], channelAxisIndex, channelNumber );
-			result[ level ] = ensureMinDimensions( img );
+			resultImgs[ level ] = channelAxisIndex < 0 // channel dimension does not exist
+					? sourceImgs[ level ] // return as is
+					: Views.hyperSlice( sourceImgs[ level ], channelAxisIndex, channelNumber ); // channel dimension exists, extract it
 		}
-		return result;
+		return resultImgs;
 	}
 
-	private < R > RandomAccessibleInterval< R > ensureMinDimensions( RandomAccessibleInterval< R > img )
+	/**
+	 * Make sure images of xyzt are returned when the sourceImgs are expected to be xy[z][t].
+	 * The presence of the two axes is indicated.
+	 */
+	private < R > RandomAccessibleInterval< R >[] ensureOrdered4dDimensions( final RandomAccessibleInterval< R >[] sourceImgs,
+			final boolean zAxisPresent, final boolean timeAxisPresent )
 	{
-		while ( img.numDimensions() < 4 )
-			img = Views.addDimension( img, 0, 0 );
-		return img;
+		for ( int level = 0; level < numResolutionLevels; level++ )
+		{
+			RandomAccessibleInterval< R > img = sourceImgs[ level ];
+			if ( zAxisPresent )
+			{
+				if ( !timeAxisPresent ) // case xyz
+				{
+					img = Views.addDimension( img, 0, 0 );
+				}
+				// NB: else (i.e., case xyzt) does not need to be covered, since it is already in the desired order
+			}
+			else
+			{
+				// zAxis is absent
+				if ( timeAxisPresent ) // case xyt
+				{
+					//insert 1-long Z prior to T
+					img = Views.addDimension( img, 0, 0 ); // now dims [0,1,2,3]
+					img = Views.permute( img, 2, 3 );
+				}
+				else // case xy
+				{
+					//twice add 1-long dimensions for Z and T
+					img = Views.addDimension( img, 0, 0 );
+					img = Views.addDimension( img, 0, 0 );
+				}
+			}
+			sourceImgs[ level ] = img;
+		}
+		return sourceImgs;
 	}
 
 	private SourceAndConverter< T > createSourceAndConverter( final RandomAccessibleIntervalMipmapSource4D< T > source4D,
@@ -330,7 +400,7 @@ public class DefaultPyramidal5DImageData<
 			throw new IllegalArgumentException( "Input path is null" );
 		Path path = ZarrOnFileSystemUtils.findRootFolder( inputPath );
 		if ( path == null )
-			throw new IllegalArgumentException( "Could not find root folder for non-Zarr path: " + inputPath );
+			throw new IllegalArgumentException( "Could not find root folder for non-OME-Zarr path: " + inputPath );
 		return path;
 	}
 
@@ -444,47 +514,90 @@ public class DefaultPyramidal5DImageData<
 	private interface MetadataAdapter
 	{
 		Multiscale initMultiscale( final N5Metadata metadata, final int multiscaleIndex );
+
+		Omero initOmeroMetadata();
+	}
+
+	private abstract static class AbstractMetadataAdapter implements MetadataAdapter
+	{
+		protected final N5Reader reader;
+
+		protected final N5TreeNode node;
+
+		public AbstractMetadataAdapter( final N5Reader reader, final N5TreeNode node )
+		{
+			this.reader = reader;
+			this.node = node;
+		}
+
+		protected Multiscale buildMultiscale( final String name,
+				final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata[] children )
+		{
+			final List< ResolutionLevel > levels = new ArrayList<>();
+			int index = 0;
+			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : children )
+			{
+				levels.add( new ResolutionLevel( single.getPath(), index++, single.getAttributes(), single.getAxes(), null, null,
+						single.getScale() ) );
+			}
+			return new Multiscale( name, levels, children[ 0 ].getAttributes().getDataType()
+			);
+		}
+
+		@Override
+		public Omero initOmeroMetadata()
+		{
+			final JsonElement base = reader.getAttribute( node.getPath(), getOmeroKey(), JsonElement.class );
+			return new Gson().fromJson( base, Omero.class );
+		}
+
+		protected abstract String getOmeroKey();
 	}
 
 	private static class MetadataAdapterFactory
 	{
-		static MetadataAdapter getAdapter( final N5Metadata metadata )
+		static MetadataAdapter getAdapter( final N5Metadata metadata, final N5Reader reader, final N5TreeNode node )
 		{
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata )
-				return new V05MetadataAdapter();
+				return new V05MetadataAdapter( reader, node );
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata )
-				return new V04MetadataAdapter();
+				return new V04MetadataAdapter( reader, node );
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
-				return new V03MetadataAdapter();
+				return new V03MetadataAdapter( reader, node );
 			throw new NotAMultiscaleImageException(
 					"Unsupported multiscale metadata type: " + metadata.getClass() );
 		}
 	}
 
-	private static class V05MetadataAdapter implements MetadataAdapter
+	private static class V05MetadataAdapter extends AbstractMetadataAdapter
 	{
+		private V05MetadataAdapter( final N5Reader reader, final N5TreeNode node )
+		{
+			super( reader, node );
+		}
 
 		@Override
 		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
 		{
-			OmeNgffV05Metadata omeNgffMetadata = Cast.unchecked( n5Metadata );
+			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata omeNgffMetadata = Cast.unchecked( n5Metadata );
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales =
 					omeNgffMetadata.multiscales[ multiscaleIndex ]; // NB: v04 multi scale metadata ??
-			List< ResolutionLevel > levels = new ArrayList<>();
-			int index = 0;
-			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : multiscales
-					.getChildrenMetadata() )
-			{
-				levels.add(
-						new ResolutionLevel( single.getPath(), index++, single.getAttributes(), single.getAxes(), null, null,
-								single.getScale() ) );
-			}
-			return new Multiscale( multiscales.name, levels, multiscales.getChildrenMetadata()[ 0 ].getAttributes().getDataType() );
+			return buildMultiscale( multiscales.name, multiscales.getChildrenMetadata() );
+		}
+
+		@Override
+		protected String getOmeroKey()
+		{
+			return "ome/omero";
 		}
 	}
 
-	private static class V04MetadataAdapter implements MetadataAdapter
+	private static class V04MetadataAdapter extends AbstractMetadataAdapter
 	{
+		private V04MetadataAdapter( final N5Reader reader, final N5TreeNode node )
+		{
+			super( reader, node );
+		}
 
 		@Override
 		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
@@ -493,20 +606,22 @@ public class DefaultPyramidal5DImageData<
 			org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales = omeNgffMetadata.multiscales[ multiscaleIndex ];
 			if ( multiscales.getChildrenMetadata().length == 0 || multiscales.getChildrenMetadata()[ 0 ] == null )
 				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
-			List< ResolutionLevel > levels = new ArrayList<>();
-			int index = 0;
-			for ( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : multiscales.getChildrenMetadata() )
-			{
-				levels.add(
-						new ResolutionLevel( single.getPath(), index++, single.getAttributes(), single.getAxes(), null, null,
-								single.getScale() ) );
-			}
-			return new Multiscale( multiscales.name, levels, multiscales.getChildrenMetadata()[ 0 ].getAttributes().getDataType() );
+			return buildMultiscale( multiscales.name, multiscales.getChildrenMetadata() );
+		}
+
+		@Override
+		protected String getOmeroKey()
+		{
+			return "omero";
 		}
 	}
 
-	private static class V03MetadataAdapter implements MetadataAdapter
+	private static class V03MetadataAdapter extends AbstractMetadataAdapter
 	{
+		private V03MetadataAdapter( final N5Reader reader, final N5TreeNode node )
+		{
+			super( reader, node );
+		}
 
 		@Override
 		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
@@ -516,7 +631,7 @@ public class DefaultPyramidal5DImageData<
 					omeNgffMetadata.getMultiscales()[ multiscaleIndex ];
 			if ( multiscales.getChildrenMetadata() == null || multiscales.getChildrenMetadata().length == 0 )
 				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children metadata." );
-			List< ResolutionLevel > levels = new ArrayList<>();
+			final List< ResolutionLevel > levels = new ArrayList<>();
 			int index = 0;
 			for ( N5SingleScaleMetadata single : multiscales.getChildrenMetadata() )
 			{
@@ -525,6 +640,12 @@ public class DefaultPyramidal5DImageData<
 						single.getPixelResolution() ) );
 			}
 			return new Multiscale( multiscales.name, levels, multiscales.getChildrenMetadata()[ 0 ].getAttributes().getDataType() );
+		}
+
+		@Override
+		protected String getOmeroKey()
+		{
+			return "omero";
 		}
 	}
 
@@ -668,5 +789,11 @@ public class DefaultPyramidal5DImageData<
 	public String getName()
 	{
 		return name;
+	}
+
+	@Override
+	public Omero getOmeroProperties()
+	{
+		return omero;
 	}
 }

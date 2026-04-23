@@ -8,8 +8,8 @@ they differ only in the version of OME-Zarr used for storage:
 
 Each dataset stores:
 
-- 2 timepoints (T)
-- 2 channels (C)
+- 4 timepoints (T)
+- 3 channels (C)
 - 3D volumes (Z × Y × X)
 - 2 resolution levels (multiscale pyramid)
 

@@ -2,17 +2,17 @@
  * #%L
  * OME-Zarr extras for Fiji
  * %%
- * Copyright (C) 2022 - 2025 SciJava developers
+ * Copyright (C) 2022 - 2026 SciJava developers
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -54,7 +54,7 @@ public class ZarrOnFileSystemUtils
 	/**
 	 * Determines whether the given path appears to be the root of a Zarr dataset.
 	 * <p>
-	 * The method checks for the presence of well-known Zarr metadata files:
+	 * The method checks for the presence of well-known Zarr (and consequently OME-Zarr) metadata files:
 	 * <ul>
 	 *   <li>{@code .zgroup}, {@code .zattrs} or {@code .zarray} for Zarr v2</li>
 	 *   <li>{@code zarr.json} for Zarr v3</li>
@@ -76,11 +76,11 @@ public class ZarrOnFileSystemUtils
 
 	/**
 	 * Traverses up the folder tree as long as {@link #isZarrFolder(Path)}
-	 * says we are inside a Zarr dataset. The last such folder is returned, which is
+	 * says we are inside an OME-Zarr dataset. The last such folder is returned, which is
 	 * supposed to be the top-level/root folder of the pointed at dataset.
 	 *
-	 * @param somewhereInZarrFolder Pointer (folder) to somewhere inside an OME Zarr.
-	 * @return Root of that OME Zarr, or NULL if the provided path is NOT within an OME Zarr.
+	 * @param somewhereInZarrFolder Pointer (folder) to somewhere inside an OME-Zarr.
+	 * @return Root of that OME-Zarr, or NULL if the provided path is NOT within an OME-Zarr.
 	 */
 	public static Path findRootFolder( final Path somewhereInZarrFolder )
 	{
@@ -97,24 +97,24 @@ public class ZarrOnFileSystemUtils
 	}
 
 	/**
-	 * Attempts to locate the root image folder for a given starting path within a Zarr dataset.
+	 * Attempts to locate the root image folder for a given starting path within a OME-Zarr dataset.
 	 * <p>
 	 * The method works as follows:
 	 * <ol>
 	 *     <li>Starts at the given {@code startingFolder} and traverses upward through parent folders
-	 *     as long as each folder qualifies as a Zarr folder according to {@link #isZarrFolder(Path)}.</li>
-	 *     <li>The top-most Zarr folder found is considered the "top-level Zarr folder".</li>
-	 *     <li>If a folder below the top-level Zarr folder was visited during traversal, it is returned
+	 *     as long as each folder qualifies as a OME-Zarr folder according to {@link #isZarrFolder(Path)}.</li>
+	 *     <li>The top-most OME-Zarr folder found is considered the "top-level OME-Zarr folder".</li>
+	 *     <li>If a folder below the top-level OME-Zarr folder was visited during traversal, it is returned
 	 *     as the image folder.</li>
-	 *     <li>If no such folder exists, the method inspects the top-level Zarr folder. If it contains
+	 *     <li>If no such folder exists, the method inspects the top-level OME-Zarr folder. If it contains
 	 *     <b>exactly one</b> subfolder (excluding any folder named "OME"), that subfolder is returned as
 	 *     the image folder.</li>
 	 *     <li>If no suitable candidate folder is found or an I/O error occurs while listing subfolders,
 	 *     the method returns {@code null}.</li>
 	 * </ol>
 	 *
-	 * @param startingFolder the folder path somewhere within a Zarr dataset to start the search from; must not be {@code null}
-	 * @return the path to the candidate image folder below the top-level Zarr folder, or {@code null} if no suitable folder is found
+	 * @param startingFolder the folder path somewhere within a OME-Zarr dataset to start the search from; must not be {@code null}
+	 * @return the path to the candidate image folder below the top-level OME-Zarr folder, or {@code null} if no suitable folder is found
 	 */
 	public static Path findImageRootFolder( final Path startingFolder )
 	{
@@ -122,23 +122,23 @@ public class ZarrOnFileSystemUtils
 		Path topLevelZarrFolder = null;
 		Path imageFolder = null;
 
-		// Traverse up the folder tree as long as we're inside a Zarr folder
+		// Traverse up the folder tree as long as we're inside a OME-Zarr folder
 		while ( isZarrFolder( currentFolder ) )
 		{
-			imageFolder = topLevelZarrFolder; // last visited folder just below potential top-level Zarr
+			imageFolder = topLevelZarrFolder; // last visited folder just below potential top-level OME-Zarr
 			topLevelZarrFolder = currentFolder;
 			currentFolder = currentFolder.getParent();
 		}
 
-		// If no Zarr folder was ever found
+		// If no OME-Zarr folder was ever found
 		if ( topLevelZarrFolder == null )
 			return null;
 
-		// If there was a folder below top-level Zarr while traversing up, return it
+		// If there was a folder below top-level OME-Zarr while traversing up, return it
 		if ( imageFolder != null )
 			return imageFolder;
 
-		// Otherwise, check if top-level Zarr has only one suitable subfolder
+		// Otherwise, check if top-level OME-Zarr has only one suitable subfolder
 		try (Stream< Path > stream = Files.list( topLevelZarrFolder ))
 		{
 			Path[] subFolders = stream
@@ -157,27 +157,6 @@ public class ZarrOnFileSystemUtils
 		}
 
 		return imageFolder;
-	}
-
-	/**
-	 * Given several datasets, which often are spatially downscaled variants
-	 * of each other (aka resolution pyramids), it chooses the first one whose
-	 * name ends with 's0' -- typically signifying the best spatial resolution,
-	 * the finest variant. If multiple such exists in the input array, the first
-	 * one is taken. If none such is found, the first element from the input array
-	 * is returned.
-	 *
-	 * @param datasets Non-null (not test thought!) array with "s?" endings.
-	 * @return First array item with "s0" or just the first array item.
-	 */
-	public static String findHighestResolutionByName( final String[] datasets )
-	{
-		for ( String s : datasets )
-		{
-			if ( s.endsWith( "s0" ) )
-				return s;
-		}
-		return datasets[ 0 ];
 	}
 
 	/**

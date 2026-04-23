@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -12,7 +10,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>ome-zarr-fiji</artifactId>
-	<version>0.2.1-SNAPSHOT</version>
+	<version>0.3.3-SNAPSHOT</version>
 
 	<name>OME-Zarr additional interfaces for Fiji</name>
 	<description>As of now, drag-and-drop scijava (Fiji) handler that opens N5 Importer dialog or BigDataViewer
@@ -153,16 +151,16 @@
 		<license.organizationName>SciJava</license.organizationName>
 		<license.copyrightOwners>SciJava developers</license.copyrightOwners>
 
-		<n5.version>4.0.0-alpha-11</n5.version>
+		<n5.version>4.0.0-alpha-12</n5.version>
 		<n5-aws-s3.version>4.4.0-alpha-9</n5-aws-s3.version>
 		<n5-blosc.version>2.0.0-alpha-4</n5-blosc.version>
 		<n5-google-cloud.version>5.2.0-alpha-7</n5-google-cloud.version>
-		<n5-hdf5>2.3.0-alpha-6</n5-hdf5>
+		<n5-hdf5>2.3.0-alpha-7</n5-hdf5>
 		<n5-ij.version>4.5.0-alpha-7</n5-ij.version>
-		<n5-imglib2.version>7.1.0-alpha-7</n5-imglib2.version>
-		<n5-universe.version>2.4.0-alpha-8</n5-universe.version>
+		<n5-imglib2.version>7.1.0-alpha-8</n5-imglib2.version>
+		<n5-universe.version>2.4.0-alpha-9</n5-universe.version>
 		<n5-viewer_fiji.version>6.2.0-alpha-5</n5-viewer_fiji.version>
-		<n5-zarr.version>2.0.0-alpha-7</n5-zarr.version>
+		<n5-zarr.version>2.0.0-alpha-8</n5-zarr.version>
 		<n5-zstandard.version>2.0.0-alpha-4</n5-zstandard.version>
 
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -172,6 +170,8 @@
 		</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.language>java</sonar.language>
 		<sonar.verbose>false</sonar.verbose>
+
+		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 	</properties>
 
 	<repositories>
@@ -201,14 +201,7 @@
 		<!-- ====================================== -->
 		<!-- test dependencies -->
 		<!-- ====================================== -->
-
-		<!-- for testing/development purposes: include imagej-legacy at test runtime -->
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej-legacy</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<!-- for testing/development purposes: include imagej-legacy at test runtime -->
+		<!-- for testing/development purposes: include imagej at test runtime -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji</artifactId>
@@ -244,7 +237,8 @@
 		<!-- Mockito used in some unit tests -->
 		<dependency>
 			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
+			<artifactId>mockito-inline</artifactId>
+			<version>5.2.0</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -261,14 +255,15 @@
 			</activation>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 1gb while running tests. -->
+					<!-- Configure the maven-surefire-plugin to use a heap size of 2gb while running tests. -->
 					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>-Xmx1g -da</argLine>
+							<forkCount>0</forkCount>
+							<argLine>-Xmx2g -da -Dimagej.legacy.disable=true</argLine>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -278,14 +273,14 @@
 			<id>coverage</id>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 1gb while running tests for jacoco coverage analysis. -->
+					<!-- Configure the maven-surefire-plugin to use a heap size of 2gb while running tests for jacoco coverage analysis. -->
 					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>@{argLine} -Xmx1g -da</argLine>
+							<argLine>@{argLine} -Xmx2g -da</argLine>
 						</configuration>
 					</plugin>
 					<plugin>

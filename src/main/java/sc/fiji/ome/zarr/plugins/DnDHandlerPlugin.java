@@ -2,17 +2,17 @@
  * #%L
  * OME-Zarr extras for Fiji
  * %%
- * Copyright (C) 2022 - 2025 SciJava developers
+ * Copyright (C) 2022 - 2026 SciJava developers
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -73,7 +73,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	public boolean supportsOpen( final Location source )
 	{
 		logger.debug(
-				"Zarr DnD plugin: supportsOpen check, location type={}, path={}", source.getClass().getSimpleName(),
+				"OME-Zarr DnD plugin: supportsOpen check, location type={}, path={}", source.getClass().getSimpleName(),
 				source.getURI().getPath()
 		);
 
@@ -86,14 +86,14 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	@Override
 	public Object open( final Location source ) throws IOException
 	{
-		logger.debug( "Zarr DnD plugin: opening {}", source.getURI().getPath() );
+		logger.debug( "OME-Zarr DnD plugin: opening {}", source.getURI().getPath() );
 
 		final FileLocation fileLocation = Cast.unchecked( source );
 		final Path droppedInPath = fileLocation.getFile().toPath();
 
-		ZarrDragAndDropOpenSettings setting = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
-		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context(), setting.getPreferredMaxWidth() );
-		switch ( setting.getOpenBehavior() )
+		ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
+		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context(), settings );
+		switch ( settings.getOpenBehavior() )
 		{
 		case IMAGEJ_HIGHEST_RESOLUTION:
 		case IMAGEJ_CUSTOM_RESOLUTION:
@@ -116,9 +116,9 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		return FAKE_INPUT;
 	}
 
-	protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context, final Integer preferredWidth )
+	protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context, final ZarrDragAndDropOpenSettings settings )
 	{
-		return new ZarrOpenActions( path, context, preferredWidth );
+		return new ZarrOpenActions( path, context, settings );
 	}
 
 	protected DnDActionChooser createDnDActionChooser( final Context context, final ZarrOpenActions actions )

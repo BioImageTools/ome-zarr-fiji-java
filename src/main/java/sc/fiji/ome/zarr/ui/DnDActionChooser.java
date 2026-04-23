@@ -1,3 +1,31 @@
+/*-
+ * #%L
+ * OME-Zarr extras for Fiji
+ * %%
+ * Copyright (C) 2022 - 2026 SciJava developers
+ * %%
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ * #L%
+ */
 package sc.fiji.ome.zarr.ui;
 
 import org.scijava.Context;
@@ -135,37 +163,37 @@ public class DnDActionChooser
 	private void initBehaviour( final JDialog dialog )
 	{
 
-		// zarr to FIJI importer button
+		// OME-Zarr to FIJI importer button
 		zarrToIJDialog.addActionListener( e -> {
 			dialog.dispose();
 			actions.openImporterDialog();
 		} );
-		zarrToIJDialog.setToolTipText( "Open Zarr/N5 Importer dialog" );
+		zarrToIJDialog.setToolTipText( "Open OME-Zarr/N5 Importer dialog" );
 
-		// zarr to BDV viewer button
+		// OME-Zarr to BDV viewer button
 		zarrToBDVDialog.addActionListener( e -> {
 			dialog.dispose();
 			actions.openViewerDialog();
 		} );
-		zarrToBDVDialog.setToolTipText( "Open Zarr/N5 BDV Viewer dialog" );
+		zarrToBDVDialog.setToolTipText( "Open OME-Zarr/N5 BDV Viewer dialog" );
 
 		// FIJI button
 		zarrIJHighestResolution.addActionListener( e -> {
 			dialog.dispose();
 			actions.openIJWithImage();
 		} );
-		zarrIJHighestResolution.setToolTipText( "Open Zarr/N5 in ImageJ at highest resolution level" );
+		zarrIJHighestResolution.setToolTipText( "Open OME-Zarr in ImageJ at highest resolution level" );
 
 		// BDV button
 		zarrBDVHighestResolution.addActionListener( e -> {
 			dialog.dispose();
 			actions.openBDVWithImage();
 		} );
-		zarrBDVHighestResolution.setToolTipText( "Open Zarr/N5 in BDV at highest resolution level" );
+		zarrBDVHighestResolution.setToolTipText( "Open OME-Zarr in BDV at highest resolution level" );
 
 		// script button
 		String scriptName = ScriptUtils.getTooltipText( context );
-		zarrScript.setToolTipText( "Open Zarr/N5 Script:\n\n" + scriptName );
+		zarrScript.setToolTipText( "Open OME-Zarr in user script:\n\n" + scriptName );
 		zarrScript.addActionListener( e -> {
 			dialog.dispose();
 			actions.runScript();
@@ -173,7 +201,7 @@ public class DnDActionChooser
 
 		// help button
 		help.addActionListener( e -> dialog.dispose() );
-		help.setToolTipText( "Help about Zarr/N5 actions" );
+		help.setToolTipText( "Help about OME-Zarr actions" );
 		help.addActionListener( e -> actions.showHelp() );
 
 		setupCloseOnKeyboard( dialog );
