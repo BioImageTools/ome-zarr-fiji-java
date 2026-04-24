@@ -60,6 +60,7 @@ import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.pyramid.backend.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
 
 public class ZarrOpenActions
 {
@@ -207,38 +208,35 @@ public class ZarrOpenActions
 	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
 			throws NotAMultiscaleImageException, NoMatchingResolutionException
 	{
-		Integer preferredWidth;
+		final Integer preferredWidth;
 		if ( settings == null || settings.getOpenBehavior().equals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION ) )
 			preferredWidth = null;
 		else
 			preferredWidth = settings.getPreferredMaxWidth();
 
-		// Try zarr-java backend first (supports Zarr v2 and v3)
-		try
+		final ZarrReaderBackend backend = settings == null
+				? ZarrDragAndDropOpenSettings.DEFAULT_READER_BACKEND
+				: settings.getReaderBackend();
+
+		final DefaultPyramidal5DImageData< ?, ? > data;
+		switch ( backend )
+		{
+		case ZARR_JAVA:
 		{
 			@SuppressWarnings( { "rawtypes", "unchecked" } )
-			final DefaultPyramidal5DImageData< ?, ? > data =
+			final DefaultPyramidal5DImageData< ?, ? > zarrJavaData =
 					new DefaultPyramidal5DImageData( context, new ZarrJavaPyramidBackend( droppedInPath.toString(), preferredWidth ) );
-			final Object result = multiScaleImageOpener.apply( data.asPyramidalDataset() );
-			logger.info( "Opened multiscale image with zarr-java backend: {}", droppedInPath );
-			return result;
+			data = zarrJavaData;
+			break;
 		}
-		catch ( NotAMultiscaleImageException e )
-		{
-			logger.debug( "zarr-java backend could not open {}: {}. Falling back to N5 backend.", droppedInPath, e.getMessage() );
-		}
-		catch ( RuntimeException e )
-		{
-			logger.warn( "zarr-java backend failed for {} ({}). Falling back to N5 backend.", droppedInPath, e.getMessage() );
-			logger.debug( "zarr-java backend runtime failure details", e );
+		case N5:
+		default:
+			data = new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
+			break;
 		}
 
-		// Fall back to N5 backend (supports Zarr v2 via n5-zarr)
-		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
-				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
-		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
-		Object result = multiScaleImageOpener.apply( pyramidalDataset );
-		logger.info( "Opened multiscale image with N5 backend: {}", droppedInPath );
+		final Object result = multiScaleImageOpener.apply( data.asPyramidalDataset() );
+		logger.info( "Opened multiscale image with {} backend: {}", backend, droppedInPath );
 		return result;
 	}
 
