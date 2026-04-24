@@ -22,6 +22,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
+import sc.fiji.ome.zarr.pyramid.backend.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
@@ -128,11 +129,12 @@ public class BackendBenchmark
 		}
 	}
 
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	private static void benchZarrJavaOpen( final String dataset )
 	{
 		try (Context context = new Context())
 		{
-			new ZarrJavaBackedPyramidal5DImageData<>( context, dataset );
+			new DefaultPyramidal5DImageData( context, new ZarrJavaPyramidBackend( dataset ) );
 		}
 	}
 
@@ -212,7 +214,8 @@ public class BackendBenchmark
 		final RandomAccessibleInterval< ? > n5WrappedLevel0 = n5Wrapped.asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final Context zjContext = new Context();
-		final ZarrJavaBackedPyramidal5DImageData< ?, ? > zjWrapped = new ZarrJavaBackedPyramidal5DImageData<>( zjContext, dataset );
+		@SuppressWarnings( { "rawtypes", "unchecked" } )
+		final DefaultPyramidal5DImageData< ?, ? > zjWrapped = new DefaultPyramidal5DImageData( zjContext, new ZarrJavaPyramidBackend( dataset ) );
 		final RandomAccessibleInterval< ? > zjWrappedLevel0 = zjWrapped.asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final N5OpenContext n5Pure = openN5Context( Paths.get( dataset ) );

@@ -57,9 +57,9 @@ import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.backend.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
-import sc.fiji.ome.zarr.pyramid.ZarrJavaBackedPyramidal5DImageData;
 
 public class ZarrOpenActions
 {
@@ -216,8 +216,9 @@ public class ZarrOpenActions
 		// Try zarr-java backend first (supports Zarr v2 and v3)
 		try
 		{
-			final ZarrJavaBackedPyramidal5DImageData< ?, ? > data =
-					new ZarrJavaBackedPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
+			@SuppressWarnings( { "rawtypes", "unchecked" } )
+			final DefaultPyramidal5DImageData< ?, ? > data =
+					new DefaultPyramidal5DImageData( context, new ZarrJavaPyramidBackend( droppedInPath.toString(), preferredWidth ) );
 			final Object result = multiScaleImageOpener.apply( data.asPyramidalDataset() );
 			logger.info( "Opened multiscale image with zarr-java backend: {}", droppedInPath );
 			return result;
