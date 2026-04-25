@@ -36,7 +36,6 @@ import net.imagej.DefaultDataset;
 import net.imglib2.EuclideanSpace;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
-import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.converter.Converter;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -164,7 +163,8 @@ public class DefaultPyramidal5DImageData<
 
 			final String channelLabel = contents.channelLabels[ channelNumber ];
 			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile =
-					new RandomAccessibleIntervalMipmapSource4D<>( channelsVolatile, volatileType, transforms, voxelDimensions, channelLabel, true );
+					new RandomAccessibleIntervalMipmapSource4D<>( channelsVolatile, volatileType, transforms, voxelDimensions, channelLabel,
+							true );
 			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
 					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, channelLabel, true );
 
