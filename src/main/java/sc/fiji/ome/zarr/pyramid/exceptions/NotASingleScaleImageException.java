@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,15 +26,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.exceptions;
 
-public class NoMatchingResolutionException extends RuntimeException
+public class NotASingleScaleImageException extends RuntimeException
 {
 
-	public NoMatchingResolutionException( final int preferredWidth, final int minWidth )
+	public NotASingleScaleImageException( final String path )
 	{
-		super( "No resolution level fitting the preferred width <= " + preferredWidth
-				+ " pixels found.\nSmallest available resolution has a width of "
-				+ minWidth + " pixels." );
+		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image." );
+	}
+
+	public NotASingleScaleImageException( final String path, final Throwable cause )
+	{
+		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image. Cause: " + cause.getMessage(), cause );
 	}
 }

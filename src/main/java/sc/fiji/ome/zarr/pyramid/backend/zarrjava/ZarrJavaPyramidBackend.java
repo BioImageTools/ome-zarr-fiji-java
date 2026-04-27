@@ -81,8 +81,8 @@ import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
-import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
@@ -136,7 +136,8 @@ public class ZarrJavaPyramidBackend<
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
 
 		final int numResolutionLevels = countResolutionLevels( multiscaleImage );
-		final int selectedResolutionLevelIndex = selectResolutionLevelIndex( multiscaleImage, entry, numResolutionLevels, preferredMaxWidth );
+		final int selectedResolutionLevelIndex =
+				selectResolutionLevelIndex( multiscaleImage, entry, numResolutionLevels, preferredMaxWidth );
 
 		final Array level0Array = openLevel( multiscaleImage, 0 );
 		final Array selectedArray = openLevel( multiscaleImage, selectedResolutionLevelIndex );
@@ -533,16 +534,26 @@ public class ZarrJavaPyramidBackend<
 	@SuppressWarnings( "unchecked" )
 	private static < T extends NativeType< T > & RealType< T > > T typeForZarrDataType( final ucar.ma2.DataType dt )
 	{
-		if ( dt == ucar.ma2.DataType.FLOAT ) return ( T ) new FloatType();
-		if ( dt == ucar.ma2.DataType.DOUBLE ) return ( T ) new DoubleType();
-		if ( dt == ucar.ma2.DataType.BYTE ) return ( T ) new ByteType();
-		if ( dt == ucar.ma2.DataType.UBYTE ) return ( T ) new UnsignedByteType();
-		if ( dt == ucar.ma2.DataType.SHORT ) return ( T ) new ShortType();
-		if ( dt == ucar.ma2.DataType.USHORT ) return ( T ) new UnsignedShortType();
-		if ( dt == ucar.ma2.DataType.INT ) return ( T ) new IntType();
-		if ( dt == ucar.ma2.DataType.UINT ) return ( T ) new UnsignedIntType();
-		if ( dt == ucar.ma2.DataType.LONG ) return ( T ) new LongType();
-		if ( dt == ucar.ma2.DataType.ULONG ) return ( T ) new UnsignedLongType();
+		if ( dt == ucar.ma2.DataType.FLOAT )
+			return ( T ) new FloatType();
+		if ( dt == ucar.ma2.DataType.DOUBLE )
+			return ( T ) new DoubleType();
+		if ( dt == ucar.ma2.DataType.BYTE )
+			return ( T ) new ByteType();
+		if ( dt == ucar.ma2.DataType.UBYTE )
+			return ( T ) new UnsignedByteType();
+		if ( dt == ucar.ma2.DataType.SHORT )
+			return ( T ) new ShortType();
+		if ( dt == ucar.ma2.DataType.USHORT )
+			return ( T ) new UnsignedShortType();
+		if ( dt == ucar.ma2.DataType.INT )
+			return ( T ) new IntType();
+		if ( dt == ucar.ma2.DataType.UINT )
+			return ( T ) new UnsignedIntType();
+		if ( dt == ucar.ma2.DataType.LONG )
+			return ( T ) new LongType();
+		if ( dt == ucar.ma2.DataType.ULONG )
+			return ( T ) new UnsignedLongType();
 		throw new IllegalArgumentException( "Unsupported zarr data type: " + dt );
 	}
 
