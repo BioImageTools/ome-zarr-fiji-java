@@ -46,23 +46,36 @@ public class ZarrDragAndDropOpenSettings
 	 */
 	public static final int DEFAULT_PREFERRED_WIDTH = 1000;
 
+	public static final ZarrReaderBackend DEFAULT_READER_BACKEND = ZarrReaderBackend.N5;
+
 	private ZarrOpenBehavior zarrOpenBehavior;
 
 	private int preferredMaxWidth;
+
+	private ZarrReaderBackend readerBackend;
 
 	private static final String ZARR_OPEN_BEHAVIOR_SETTING_NAME = "ZarrOpenBehavior";
 
 	private static final String ZARR_PREFERRED_WIDTH_SETTING_NAME = "ZarrPreferredWidth";
 
+	private static final String ZARR_READER_BACKEND_SETTING_NAME = "ZarrReaderBackend";
+
 	public ZarrDragAndDropOpenSettings()
 	{
-		this( DEFAULT_OPEN_BEHAVIOR, DEFAULT_PREFERRED_WIDTH );
+		this( DEFAULT_OPEN_BEHAVIOR, DEFAULT_PREFERRED_WIDTH, DEFAULT_READER_BACKEND );
 	}
 
 	public ZarrDragAndDropOpenSettings( final ZarrOpenBehavior zarrOpenBehavior, final int preferredMaxWidth )
 	{
+		this( zarrOpenBehavior, preferredMaxWidth, DEFAULT_READER_BACKEND );
+	}
+
+	public ZarrDragAndDropOpenSettings( final ZarrOpenBehavior zarrOpenBehavior, final int preferredMaxWidth,
+			final ZarrReaderBackend readerBackend )
+	{
 		this.zarrOpenBehavior = zarrOpenBehavior;
 		this.preferredMaxWidth = preferredMaxWidth;
+		this.readerBackend = readerBackend;
 	}
 
 	public ZarrOpenBehavior getOpenBehavior()
@@ -96,6 +109,22 @@ public class ZarrDragAndDropOpenSettings
 	}
 
 	/**
+	 * Gets the Zarr reader backend used to decode datasets.
+	 */
+	public ZarrReaderBackend getReaderBackend()
+	{
+		return readerBackend;
+	}
+
+	/**
+	 * Sets the Zarr reader backend used to decode datasets.
+	 */
+	public void setReaderBackend( final ZarrReaderBackend readerBackend )
+	{
+		this.readerBackend = readerBackend;
+	}
+
+	/**
 	 * Loads and returns the settings from the provided preference store.
 	 *
 	 * @param prefs If {@code null} is provided, default settings values from this class are used and returned.
@@ -119,9 +148,21 @@ public class ZarrDragAndDropOpenSettings
 						ZarrDragAndDropOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME,
 						DEFAULT_PREFERRED_WIDTH
 				);
+		ZarrReaderBackend backend;
+		try
+		{
+			backend = prefs == null ? DEFAULT_READER_BACKEND : ZarrReaderBackend
+					.getByName(
+							prefs.get( ZarrDragAndDropOpenSettings.class, ZARR_READER_BACKEND_SETTING_NAME, DEFAULT_READER_BACKEND.name() ) );
+		}
+		catch ( NoSuchElementException e )
+		{
+			backend = DEFAULT_READER_BACKEND;
+		}
 		logger.debug( "Loaded OME-Zarr default opening behavior: {}", behavior );
 		logger.debug( "Loaded OME-Zarr preferred width: {}", preferredWidth );
-		return new ZarrDragAndDropOpenSettings( behavior, preferredWidth );
+		logger.debug( "Loaded OME-Zarr reader backend: {}", backend );
+		return new ZarrDragAndDropOpenSettings( behavior, preferredWidth, backend );
 	}
 
 	/**
@@ -135,13 +176,17 @@ public class ZarrDragAndDropOpenSettings
 			return;
 		prefs.put( ZarrDragAndDropOpenSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, getOpenBehavior().name() );
 		prefs.put( ZarrDragAndDropOpenSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
+		prefs.put( ZarrDragAndDropOpenSettings.class, ZARR_READER_BACKEND_SETTING_NAME, getReaderBackend().name() );
 		logger.debug( "Saved OME-Zarr default opening behavior to preferences: {}", getOpenBehavior() );
 		logger.debug( "Saved OME-Zarr preferred width to preferences: {}", getPreferredMaxWidth() );
+		logger.debug( "Saved OME-Zarr reader backend to preferences: {}", getReaderBackend() );
 	}
 
 	@Override
 	public String toString()
 	{
-		return "ZarrDefaultOpenSetting{zarrOpenBehavior=" + zarrOpenBehavior + ", preferredMaxWidth=" + preferredMaxWidth + "}";
+		return "ZarrDefaultOpenSetting{zarrOpenBehavior=" + zarrOpenBehavior
+				+ ", preferredMaxWidth=" + preferredMaxWidth
+				+ ", readerBackend=" + readerBackend + "}";
 	}
 }
