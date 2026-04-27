@@ -126,6 +126,11 @@
 			<groupId>org.scijava</groupId>
 			<artifactId>script-editor</artifactId>
 		</dependency>
+		<!-- LinkHandler / Links API used by LinkHandlerPlugin. -->
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-desktop</artifactId>
+		</dependency>
 		<!-- N5ViewerCreator (n5.bdv) + N5Importer (n5.ij) used by ZarrOpenActions. -->
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>
@@ -147,13 +152,6 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji</artifactId>
 			<scope>test</scope>
-			<!-- Exclude scijava-desktop here to be able to run tests without a dependency built with target java 11 -->
-			<exclusions>
-				<exclusion>
-					<groupId>org.scijava</groupId>
-					<artifactId>scijava-desktop</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
