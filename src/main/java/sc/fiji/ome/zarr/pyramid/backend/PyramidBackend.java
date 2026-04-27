@@ -32,13 +32,15 @@ import net.imglib2.Volatile;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+
 /**
  * Plug-point for reading an OME-Zarr multi-resolution image.
  * <p>
  * An implementation encapsulates everything specific to one reader library
  * (N5, zarr-java, ...): discovering multiscale metadata, selecting a resolution
  * level, opening cached cell images, and assembling axis information. The
- * backend-agnostic {@link sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData}
+ * backend-agnostic {@link Pyramidal5DImageDataImpl}
  * calls {@link #load()} once and derives its state from the returned
  * {@link PyramidContents}.
  *

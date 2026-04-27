@@ -72,7 +72,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  * @param <T> pixel type
  * @param <V> volatile pixel type
  */
-public class DefaultPyramidal5DImageData<
+public class Pyramidal5DImageDataImpl<
 		T extends NativeType< T > & RealType< T >,
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
 		implements EuclideanSpace, Pyramidal5DImageData< T >
@@ -104,7 +104,7 @@ public class DefaultPyramidal5DImageData<
 	/**
 	 * Open an OME-Zarr image with the default N5 backend.
 	 */
-	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString )
+	public Pyramidal5DImageDataImpl( final Context context, final String inputPathAsString )
 	{
 		this( context, inputPathAsString, null );
 	}
@@ -118,7 +118,7 @@ public class DefaultPyramidal5DImageData<
 	 * @throws NoMatchingResolutionException if {@code preferredMaxWidth} is
 	 *   smaller than the width of the smallest resolution level
 	 */
-	public DefaultPyramidal5DImageData( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
+	public Pyramidal5DImageDataImpl( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
 	{
 		this( context, new N5PyramidBackend<>( inputPathAsString, preferredMaxWidth ) );
 	}
@@ -126,7 +126,7 @@ public class DefaultPyramidal5DImageData<
 	/**
 	 * Open an OME-Zarr image using the supplied {@link PyramidBackend}.
 	 */
-	public DefaultPyramidal5DImageData( final Context context, final PyramidBackend< T, V > backend )
+	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T, V > backend )
 	{
 		final PyramidContents< T, V > contents = backend.load();
 		this.name = contents.name;

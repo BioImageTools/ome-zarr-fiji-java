@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -58,7 +58,7 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
-class DefaultPyramidal5DImageDataTest
+class Pyramidal5DImageDataImplTest
 {
 
 	static Stream< String > omeZarrExamples()
@@ -211,7 +211,7 @@ class DefaultPyramidal5DImageDataTest
 	{
 		try (Context context = new Context())
 		{
-			DefaultPyramidal5DImageData< ?, ? > dataset = load( resource, context );
+			Pyramidal5DImageDataImpl< ?, ? > dataset = load( resource, context );
 			assertNotNull( dataset );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 5, dataset.numDimensions() ); // NB: xyzct
@@ -372,33 +372,33 @@ class DefaultPyramidal5DImageDataTest
 					( ( resource.contains( "4d_testing" ) && resource.contains( "xyzc" ) )
 							|| ( resource.contains( "4d_testing" ) && resource.contains( "xyzt" ) ) )
 					|| ( resource.contains( "3d_testing" ) && resource.contains( "xyz" ) );
-				Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context, 100 ); // greater than the highest resolution
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
-				if ( is3D )
-					assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
-				pyramidal5DImageData = load( resource, context, 64 ); // equals the highest resolution
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
-				if ( is3D )
-					assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
-				pyramidal5DImageData = load( resource, context, 50 ); // less than the highest resolution, but greater than the lowest resolution
-				assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-				assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
-				if ( is3D )
-					assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
-				pyramidal5DImageData = load( resource, context, 32 ); // equals the lowest resolution
-				assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-				assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
-				if ( is3D )
-					assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
-				// less than the lowest resolution
-				assertThrows( NoMatchingResolutionException.class, () -> load( resource, context, 30 ) );
-				pyramidal5DImageData = load( resource, context, null ); // null preferred width results in the highest resolution
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
-				if ( is3D )
-					assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context, 100 ); // greater than the highest resolution
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			if ( is3D )
+				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			pyramidal5DImageData = load( resource, context, 64 ); // equals the highest resolution
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			if ( is3D )
+				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			pyramidal5DImageData = load( resource, context, 50 ); // less than the highest resolution, but greater than the lowest resolution
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			if ( is3D )
+				assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			pyramidal5DImageData = load( resource, context, 32 ); // equals the lowest resolution
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			if ( is3D )
+				assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			// less than the lowest resolution
+			assertThrows( NoMatchingResolutionException.class, () -> load( resource, context, 30 ) );
+			pyramidal5DImageData = load( resource, context, null ); // null preferred width results in the highest resolution
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			if ( is3D )
+				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
 		}
 	}
 
@@ -438,15 +438,15 @@ class DefaultPyramidal5DImageDataTest
 		}
 	}
 
-	private DefaultPyramidal5DImageData< ?, ? > load( final String resource, final Context context ) throws URISyntaxException
+	private Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context ) throws URISyntaxException
 	{
 		return load( resource, context, null );
 	}
 
-	private DefaultPyramidal5DImageData< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
+	private Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
 			throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new DefaultPyramidal5DImageData<>( context, path.toString(), preferredWidth );
+		return new Pyramidal5DImageDataImpl<>( context, path.toString(), preferredWidth );
 	}
 }

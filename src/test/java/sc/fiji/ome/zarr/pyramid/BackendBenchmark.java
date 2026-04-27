@@ -8,11 +8,9 @@ import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.StoreHandle;
 import net.imglib2.Cursor;
-import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import org.scijava.Context;
 import org.slf4j.LoggerFactory;
-import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
@@ -48,11 +46,12 @@ import java.util.logging.Logger;
 public class BackendBenchmark
 {
 	private static final int WARMUP_ROUNDS = 2;
+
 	private static final int MEASURE_ROUNDS = 5;
 
 	private static final List< String > DATASETS = Arrays.asList(
-            "/home/hannes/Documents/projects/scm/data/3.66.9-6.141020_15-41-29.00.ome.zarr/0",
-            "sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
+			"/home/hannes/Documents/projects/scm/data/3.66.9-6.141020_15-41-29.00.ome.zarr/0",
+			"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
 			"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
 			"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr",
 			"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr"
@@ -125,7 +124,7 @@ public class BackendBenchmark
 	{
 		try (Context context = new Context())
 		{
-			new DefaultPyramidal5DImageData<>( context, dataset );
+			new Pyramidal5DImageDataImpl<>( context, dataset );
 		}
 	}
 
@@ -134,7 +133,7 @@ public class BackendBenchmark
 	{
 		try (Context context = new Context())
 		{
-			new DefaultPyramidal5DImageData( context, new ZarrJavaPyramidBackend( dataset ) );
+			new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( dataset ) );
 		}
 	}
 
@@ -194,13 +193,13 @@ public class BackendBenchmark
 		if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata )
 		{
 			final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata v04 =
-					(org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata) metadata;
+					( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata ) metadata;
 			return v04.multiscales[ 0 ].getChildrenMetadata()[ 0 ].getPath();
 		}
 		if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
 		{
 			final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata v03 =
-					(org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata) metadata;
+					( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata ) metadata;
 			final N5SingleScaleMetadata[] children = v03.getMultiscales()[ 0 ].getChildrenMetadata();
 			return children[ 0 ].getPath();
 		}
@@ -210,12 +209,12 @@ public class BackendBenchmark
 	private static OpenedReadContexts openReadContexts( final String dataset ) throws Exception
 	{
 		final Context n5Context = new Context();
-		final DefaultPyramidal5DImageData< ?, ? > n5Wrapped = new DefaultPyramidal5DImageData<>( n5Context, dataset );
+		final Pyramidal5DImageDataImpl< ?, ? > n5Wrapped = new Pyramidal5DImageDataImpl<>( n5Context, dataset );
 		final RandomAccessibleInterval< ? > n5WrappedLevel0 = n5Wrapped.asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final Context zjContext = new Context();
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
-		final DefaultPyramidal5DImageData< ?, ? > zjWrapped = new DefaultPyramidal5DImageData( zjContext, new ZarrJavaPyramidBackend( dataset ) );
+		final Pyramidal5DImageDataImpl< ?, ? > zjWrapped = new Pyramidal5DImageDataImpl( zjContext, new ZarrJavaPyramidBackend( dataset ) );
 		final RandomAccessibleInterval< ? > zjWrappedLevel0 = zjWrapped.asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final N5OpenContext n5Pure = openN5Context( Paths.get( dataset ) );
@@ -298,6 +297,7 @@ public class BackendBenchmark
 	private static final class N5OpenContext
 	{
 		private final N5Reader reader;
+
 		private final N5Metadata metadata;
 
 		private N5OpenContext( final N5Reader reader, final N5Metadata metadata )
@@ -310,11 +310,17 @@ public class BackendBenchmark
 	private static final class OpenedReadContexts implements AutoCloseable
 	{
 		private final RandomAccessibleInterval< ? > n5WrappedLevel0;
+
 		private final RandomAccessibleInterval< ? > zjWrappedLevel0;
+
 		private final RandomAccessibleInterval< ? > pureN5Level0;
+
 		private final Array pureZjLevel0;
+
 		private final Context n5Context;
+
 		private final Context zjContext;
+
 		private final N5Reader pureN5Reader;
 
 		private OpenedReadContexts(
@@ -338,8 +344,8 @@ public class BackendBenchmark
 		@Override
 		public void close()
 		{
-            pureN5Reader.close();
-            try
+			pureN5Reader.close();
+			try
 			{
 				n5Context.dispose();
 			}

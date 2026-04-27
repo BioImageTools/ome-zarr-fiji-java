@@ -66,7 +66,7 @@ class ZarrJavaBackedPyramidal5DImageDataTest
 	{
 		try (Context context = new Context())
 		{
-			DefaultPyramidal5DImageData< ?, ? > data = load( resource, context );
+			Pyramidal5DImageDataImpl< ?, ? > data = load( resource, context );
 			PyramidalDataset< ? > pyramidalDataset = data.asPyramidalDataset();
 			assertNotNull( pyramidalDataset );
 		}
@@ -180,7 +180,7 @@ class ZarrJavaBackedPyramidal5DImageDataTest
 	{
 		try (Context context = new Context())
 		{
-			DefaultPyramidal5DImageData< ?, ? > dataset = load( resource, context );
+			Pyramidal5DImageDataImpl< ?, ? > dataset = load( resource, context );
 			assertNotNull( dataset );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 5, dataset.numDimensions() ); // NB: xyzct
@@ -200,7 +200,7 @@ class ZarrJavaBackedPyramidal5DImageDataTest
 	{
 		try (Context context = new Context())
 		{
-			DefaultPyramidal5DImageData< ?, ? > data = load( resource, context );
+			Pyramidal5DImageDataImpl< ?, ? > data = load( resource, context );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 4, data.numTimepoints() );
 			if ( resource.contains( "2d_testing" ) )
@@ -242,7 +242,7 @@ class ZarrJavaBackedPyramidal5DImageDataTest
 	{
 		try (Context context = new Context())
 		{
-			DefaultPyramidal5DImageData< ?, ? > data = load( resource, context );
+			Pyramidal5DImageDataImpl< ?, ? > data = load( resource, context );
 			assertEquals( 2, data.numResolutionLevels() );
 			assertEquals( 2, data.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() );
 		}
@@ -254,7 +254,7 @@ class ZarrJavaBackedPyramidal5DImageDataTest
 	{
 		try (Context context = new Context())
 		{
-			DefaultPyramidal5DImageData< ?, ? > data = load( resource, context );
+			Pyramidal5DImageDataImpl< ?, ? > data = load( resource, context );
 			VoxelDimensions voxelDimensions = data.voxelDimensions();
 			assertNotNull( voxelDimensions );
 			assertEquals( "", voxelDimensions.unit() );
@@ -280,7 +280,7 @@ class ZarrJavaBackedPyramidal5DImageDataTest
 	{
 		try (Context context = new Context())
 		{
-			DefaultPyramidal5DImageData< ?, ? > data = load( resource, context );
+			Pyramidal5DImageDataImpl< ?, ? > data = load( resource, context );
 			assertEquals( ZarrTestUtils.IMAGE_NAME, data.getName() );
 		}
 	}
@@ -358,19 +358,19 @@ class ZarrJavaBackedPyramidal5DImageDataTest
 	}
 
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	private DefaultPyramidal5DImageData< ?, ? > load( final String resource, final Context context ) throws URISyntaxException
+	private Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context ) throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new DefaultPyramidal5DImageData( context, new ZarrJavaPyramidBackend( path.toString() ) );
+		return new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( path.toString() ) );
 	}
 
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	private DefaultPyramidal5DImageData< ?, ? > load(
+	private Pyramidal5DImageDataImpl< ?, ? > load(
 			final String resource,
 			final Context context,
 			final Integer preferredWidth ) throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new DefaultPyramidal5DImageData( context, new ZarrJavaPyramidBackend( path.toString(), preferredWidth ) );
+		return new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( path.toString(), preferredWidth ) );
 	}
 }

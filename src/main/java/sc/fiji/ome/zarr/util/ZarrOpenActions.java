@@ -52,7 +52,7 @@ import net.imglib2.util.Cast;
 
 import bdv.util.BdvFunctions;
 import ij.IJ;
-import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
@@ -143,7 +143,7 @@ public class ZarrOpenActions
 	{
 		errorHandler.accept(
 				"Opening a single resolution OME-Zarr dataset, as was found in: " + droppedInPath + ", is currently not supported.\n\n"
-				+ "Consider opening one level higher in the hierarchy instead." );
+						+ "Consider opening one level higher in the hierarchy instead." );
 		logger.info( "Opening a single resolution OME-Zarr dataset, as was found in: {}, is currently not supported.", droppedInPath );
 	}
 
@@ -218,20 +218,20 @@ public class ZarrOpenActions
 				? ZarrDragAndDropOpenSettings.DEFAULT_READER_BACKEND
 				: settings.getReaderBackend();
 
-		final DefaultPyramidal5DImageData< ?, ? > data;
+		final Pyramidal5DImageDataImpl< ?, ? > data;
 		switch ( backend )
 		{
 		case ZARR_JAVA:
 		{
 			@SuppressWarnings( { "rawtypes", "unchecked" } )
-			final DefaultPyramidal5DImageData< ?, ? > zarrJavaData =
-					new DefaultPyramidal5DImageData( context, new ZarrJavaPyramidBackend( droppedInPath.toString(), preferredWidth ) );
+			final Pyramidal5DImageDataImpl< ?, ? > zarrJavaData =
+					new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( droppedInPath.toString(), preferredWidth ) );
 			data = zarrJavaData;
 			break;
 		}
 		case N5:
 		default:
-			data = new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
+			data = new Pyramidal5DImageDataImpl<>( context, droppedInPath.toString(), preferredWidth );
 			break;
 		}
 
