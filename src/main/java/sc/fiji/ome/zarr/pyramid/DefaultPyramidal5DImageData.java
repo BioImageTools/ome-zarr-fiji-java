@@ -28,6 +28,9 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
+import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
+
 import net.imagej.Dataset;
 import net.imagej.DefaultDataset;
 import net.imagej.ImgPlus;
