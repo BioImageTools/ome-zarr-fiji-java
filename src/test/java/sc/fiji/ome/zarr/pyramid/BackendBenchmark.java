@@ -22,7 +22,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
-import sc.fiji.ome.zarr.pyramid.backend.ZarrJavaPyramidBackend;
+import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 

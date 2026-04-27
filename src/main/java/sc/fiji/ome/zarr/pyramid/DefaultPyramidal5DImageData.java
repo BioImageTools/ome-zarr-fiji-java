@@ -50,9 +50,9 @@ import bdv.BigDataViewer;
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import sc.fiji.ome.zarr.pyramid.backend.N5PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**

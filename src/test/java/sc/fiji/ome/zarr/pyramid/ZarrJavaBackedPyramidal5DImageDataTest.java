@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 
 import bdv.viewer.Source;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import sc.fiji.ome.zarr.pyramid.backend.ZarrJavaPyramidBackend;
+import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class ZarrJavaBackedPyramidal5DImageDataTest

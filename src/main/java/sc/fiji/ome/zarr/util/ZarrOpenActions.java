@@ -57,7 +57,7 @@ import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
-import sc.fiji.ome.zarr.pyramid.backend.ZarrJavaPyramidBackend;
+import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.settings.ZarrReaderBackend;

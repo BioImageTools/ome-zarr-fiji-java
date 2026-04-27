@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid.backend;
+package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -78,7 +78,8 @@ import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
-import sc.fiji.ome.zarr.pyramid.ZarrJavaCellLoader;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 /**
