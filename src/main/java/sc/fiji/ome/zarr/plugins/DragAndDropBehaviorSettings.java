@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
 
 /**
  * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.
@@ -86,6 +87,19 @@ public class DragAndDropBehaviorSettings extends DynamicCommand
 			+ "</body>"
 			+ "</html>";
 
+	@SuppressWarnings( "all" )
+	@Parameter( label = "Reader backend", description = "Choose which library is used to read OME-Zarr datasets", initializer = "initZarrReaderBackends" )
+	private String readerBackendChoice;
+
+	@SuppressWarnings( "all" )
+	@Parameter( visibility = ItemVisibility.MESSAGE, required = false, persist = false )
+	private String readerBackendInfo = "<html>"
+			+ "<body width=" + WIDTH + "cm align=left>"
+			+ "N5 supports OME-Zarr v0.4 (Zarr v2) - v0.5 (Zarr v3).<br>"
+			+ "zarr-java supports OME-Zarr v0.4 (Zarr v2) - v0.3 (Zarr v3)."
+			+ "</body>"
+			+ "</html>";
+
 	private ZarrDragAndDropOpenSettings settings;
 
 	@Override
@@ -93,8 +107,9 @@ public class DragAndDropBehaviorSettings extends DynamicCommand
 	{
 		settings.setCurrentChoice( ZarrOpenBehavior.getByDescription( defaultZarrOpenBehavior ) );
 		settings.setPreferredMaxWidth( preferredWidth );
-		logger.debug( "Now saving OME-Zarr Drag & Drop settings to user preferences. Behavior: {}, preferredWidth: {}",
-				settings.getOpenBehavior(), preferredWidth );
+		settings.setReaderBackend( ZarrReaderBackend.getByDescription( readerBackendChoice ) );
+		logger.debug( "Now saving OME-Zarr Drag & Drop settings to user preferences. Behavior: {}, preferredWidth: {}, readerBackend: {}",
+				settings.getOpenBehavior(), preferredWidth, settings.getReaderBackend() );
 		settings.saveSettingsToPreferences( prefService );
 	}
 
@@ -104,6 +119,7 @@ public class DragAndDropBehaviorSettings extends DynamicCommand
 		settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
 		defaultZarrOpenBehavior = settings.getOpenBehavior().getDescription();
 		preferredWidth = settings.getPreferredMaxWidth();
+		readerBackendChoice = settings.getReaderBackend().getDescription();
 	}
 
 	@SuppressWarnings( "unused" )
@@ -112,8 +128,20 @@ public class DragAndDropBehaviorSettings extends DynamicCommand
 		getInfo().getMutableInput( "defaultZarrOpenBehavior", String.class ).setChoices( enumNamesAsList( ZarrOpenBehavior.values() ) );
 	}
 
+	@SuppressWarnings( "unused" )
+	private void initZarrReaderBackends()
+	{
+		getInfo().getMutableInput( "readerBackendChoice", String.class )
+				.setChoices( readerBackendDescriptions( ZarrReaderBackend.values() ) );
+	}
+
 	static List< String > enumNamesAsList( final ZarrOpenBehavior[] values )
 	{
 		return Arrays.stream( values ).map( ZarrOpenBehavior::getDescription ).collect( Collectors.toList() );
+	}
+
+	static List< String > readerBackendDescriptions( final ZarrReaderBackend[] values )
+	{
+		return Arrays.stream( values ).map( ZarrReaderBackend::getDescription ).collect( Collectors.toList() );
 	}
 }
