@@ -28,6 +28,8 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
+import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
