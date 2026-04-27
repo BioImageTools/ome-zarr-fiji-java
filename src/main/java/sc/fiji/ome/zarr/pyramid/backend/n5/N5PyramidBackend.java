@@ -167,7 +167,7 @@ public class N5PyramidBackend<
 		final int zAxisIndex = findAxisIndex( selectedLevel, Axes.Z );
 		final int timeAxisIndex = findAxisIndex( selectedLevel, Axes.TIME );
 
-		final String[] channelLabels = buildChannelLabels( name, omero, numChannels );
+		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
 
 		return PyramidContents.< T, V >builder()
 				.name( name )
@@ -189,20 +189,6 @@ public class N5PyramidBackend<
 				.channelLabels( channelLabels )
 				.omero( omero )
 				.build();
-	}
-
-	private static String[] buildChannelLabels( final String fallbackName, final Omero omero, final int numChannels )
-	{
-		final boolean omeroValid = omero != null && omero.channels != null && omero.channels.size() == numChannels;
-		if ( omeroValid )
-			logger.trace( "Creating with OMERO metadata: {}", omero );
-		else
-			logger.trace( "Creating without OMERO metadata (not consistent or not available)" );
-
-		final String[] labels = new String[ numChannels ];
-		for ( int i = 0; i < numChannels; i++ )
-			labels[ i ] = omeroValid ? omero.channels.get( i ).label : fallbackName;
-		return labels;
 	}
 
 	// ---------------------------------------------------------------------

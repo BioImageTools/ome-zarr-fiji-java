@@ -31,6 +31,7 @@ package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,6 +43,10 @@ import dev.zarr.zarrjava.core.Array;
 import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;
 import dev.zarr.zarrjava.experimental.ome.metadata.Axis;
 import dev.zarr.zarrjava.experimental.ome.metadata.MultiscalesEntry;
+import dev.zarr.zarrjava.experimental.ome.metadata.OmeroChannel;
+import dev.zarr.zarrjava.experimental.ome.metadata.OmeroMetadata;
+import dev.zarr.zarrjava.experimental.ome.metadata.OmeroRdefs;
+import dev.zarr.zarrjava.experimental.ome.metadata.OmeroWindow;
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.CoordinateTransformation;
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
@@ -80,6 +85,7 @@ import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 /**
@@ -172,8 +178,8 @@ public class ZarrJavaPyramidBackend<
 		final int zAxisIndex = imglibAxisIndex( entry.axes, "z", numDimensions );
 		final int timeAxisIndex = imglibAxisIndex( entry.axes, "t", numDimensions );
 
-		final String[] channelLabels = new String[ numChannels ];
-		Arrays.fill( channelLabels, name );
+		final Omero omero = convertOmero( multiscaleImage.getOmeroMetadata() );
+		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
 
 		return PyramidContents.< T, V >builder()
 				.name( name )
@@ -193,8 +199,64 @@ public class ZarrJavaPyramidBackend<
 				.zAxisPresent( zAxisIndex >= 0 )
 				.timeAxisPresent( timeAxisIndex >= 0 )
 				.channelLabels( channelLabels )
-				.omero( null )
+				.omero( omero )
 				.build();
+	}
+
+	private static Omero convertOmero( final OmeroMetadata source )
+	{
+		if ( source == null )
+			return null;
+		final Omero omero = new Omero();
+		omero.id = source.id != null ? source.id : 0;
+		omero.version = source.version;
+		omero.rdefs = convertRdefs( source.rdefs );
+		if ( source.channels != null )
+		{
+			final List< Omero.Channel > channels = new ArrayList<>( source.channels.size() );
+			for ( final OmeroChannel channel : source.channels )
+				channels.add( convertChannel( channel ) );
+			omero.channels = channels;
+		}
+		return omero;
+	}
+
+	private static Omero.Rdefs convertRdefs( final OmeroRdefs source )
+	{
+		if ( source == null )
+			return null;
+		final Omero.Rdefs rdefs = new Omero.Rdefs();
+		rdefs.defaultT = source.defaultT != null ? source.defaultT : 0;
+		rdefs.defaultZ = source.defaultZ != null ? source.defaultZ : 0;
+		rdefs.model = source.model;
+		return rdefs;
+	}
+
+	private static Omero.Channel convertChannel( final OmeroChannel source )
+	{
+		if ( source == null )
+			return null;
+		final Omero.Channel channel = new Omero.Channel();
+		channel.active = source.active != null && source.active;
+		channel.coefficient = source.coefficient != null ? source.coefficient : 0.0;
+		channel.color = source.color;
+		channel.family = source.family;
+		channel.inverted = source.inverted != null && source.inverted;
+		channel.label = source.label;
+		channel.window = convertWindow( source.window );
+		return channel;
+	}
+
+	private static Omero.Channel.Window convertWindow( final OmeroWindow source )
+	{
+		if ( source == null )
+			return null;
+		final Omero.Channel.Window window = new Omero.Channel.Window();
+		window.start = source.start != null ? source.start : 0.0;
+		window.end = source.end != null ? source.end : 0.0;
+		window.min = source.min != null ? source.min : 0.0;
+		window.max = source.max != null ? source.max : 0.0;
+		return window;
 	}
 
 	// ---------------------------------------------------------------------
