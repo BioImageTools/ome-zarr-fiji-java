@@ -36,9 +36,9 @@ import java.util.NoSuchElementException;
 public enum ZarrReaderBackend
 {
 	/**
-	 * Read via the N5 universe library (supports Zarr v2 and v3 through n5-zarr).
+	 * Read via the N5 library (supports Zarr v2 and v3 through n5-zarr).
 	 */
-	N5( "N5 universe" ),
+	N5( "N5" ),
 
 	/**
 	 * Read via the zarr-java library (supports Zarr v2 and v3).
