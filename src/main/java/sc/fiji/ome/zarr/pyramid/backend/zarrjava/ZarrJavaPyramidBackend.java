@@ -29,6 +29,7 @@
 package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -114,25 +115,25 @@ public class ZarrJavaPyramidBackend<
 		AXIS_MAPPING = Collections.unmodifiableMap( map );
 	}
 
-	private final String inputPathAsString;
+	private final URI inputUri;
 
 	private final Integer preferredMaxWidth;
 
-	public ZarrJavaPyramidBackend( final String inputPathAsString )
+	public ZarrJavaPyramidBackend( final URI inputUri )
 	{
-		this( inputPathAsString, null );
+		this( inputUri, null );
 	}
 
-	public ZarrJavaPyramidBackend( final String inputPathAsString, final Integer preferredMaxWidth )
+	public ZarrJavaPyramidBackend( final URI inputUri, final Integer preferredMaxWidth )
 	{
-		this.inputPathAsString = inputPathAsString;
+		this.inputUri = inputUri;
 		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
 	@Override
 	public PyramidContents< T, V > load()
 	{
-		final Path inputPath = Paths.get( inputPathAsString );
+		final Path inputPath = Paths.get( inputUri );
 		final MultiscaleImage multiscaleImage = openMultiscaleImage( inputPath );
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
 
@@ -283,7 +284,7 @@ public class ZarrJavaPyramidBackend<
 		}
 		catch ( ZarrException | IOException e )
 		{
-			throw new NotAMultiscaleImageException( inputPathAsString, e );
+			throw new NotAMultiscaleImageException( inputUri.toString(), e );
 		}
 	}
 
@@ -300,7 +301,7 @@ public class ZarrJavaPyramidBackend<
 			// or an IndexOutOfBoundsException when the array is empty
 			// surface those as a missing-metadata error rather than letting them
 			// bubble up unhandled.
-			throw new NotAMultiscaleImageException( "No multiscale metadata at: " + inputPathAsString, e );
+			throw new NotAMultiscaleImageException( "No multiscale metadata at: " + inputUri, e );
 		}
 	}
 
@@ -350,7 +351,7 @@ public class ZarrJavaPyramidBackend<
 		}
 		catch ( IOException | ZarrException e )
 		{
-			throw new PyramidLevelAccessException( inputPathAsString, levelIndex, e );
+			throw new PyramidLevelAccessException( inputUri.toString(), levelIndex, e );
 		}
 	}
 

@@ -32,6 +32,7 @@ import net.imagej.Dataset;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
+import java.net.URI;
 import java.util.List;
 
 import bdv.viewer.SourceAndConverter;
@@ -98,13 +99,15 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	 * {@link ZarrDragAndDropOpenSettings}, falling back to the N5 backend if no
 	 * settings service is present.
 	 *
+	 * @param uri location of the OME-Zarr root; either a {@code file:} URI for
+	 *   local datasets or an {@code http(s):} URI for remote datasets
 	 * @param preferredWidth maximum width along x for the returned dataset;
 	 *   {@code null} selects the highest available resolution
 	 * @throws NoMatchingResolutionException if {@code preferredWidth} is smaller
 	 *   than the width of the coarsest resolution level
 	 */
 	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > open(
-			final Context context, final String path, final Integer preferredWidth )
+			final Context context, final URI uri, final Integer preferredWidth )
 	{
 		final ZarrReaderBackend backend = ZarrDragAndDropOpenSettings
 				.loadSettingsFromPreferences( context.getService( PrefService.class ) )
@@ -112,30 +115,34 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 		switch ( backend )
 		{
 		case ZARR_JAVA:
-			return openWithZarrJava( context, path, preferredWidth );
+			return openWithZarrJava( context, uri, preferredWidth );
 		case N5:
 		default:
-			return openWithN5( context, path, preferredWidth );
+			return openWithN5( context, uri, preferredWidth );
 		}
 	}
 
 	/**
 	 * Opens an OME-Zarr image using the N5-universe backend.
 	 *
+	 * @param uri location of the OME-Zarr root; either a {@code file:} URI for
+	 *   local datasets or an {@code http(s):} URI for remote datasets
 	 * @param preferredWidth maximum width along x for the returned dataset;
 	 *   {@code null} selects the highest available resolution
 	 * @throws NoMatchingResolutionException if {@code preferredWidth} is smaller
 	 *   than the width of the coarsest resolution level
 	 */
 	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithN5(
-			final Context context, final String path, final Integer preferredWidth )
+			final Context context, final URI uri, final Integer preferredWidth )
 	{
-		return new Pyramidal5DImageDataImpl<>( context, path, preferredWidth );
+		return new Pyramidal5DImageDataImpl<>( context, uri, preferredWidth );
 	}
 
 	/**
 	 * Opens an OME-Zarr image using the zarr-java backend.
 	 *
+	 * @param uri location of the OME-Zarr root; either a {@code file:} URI for
+	 *   local datasets or an {@code http(s):} URI for remote datasets
 	 * @param preferredWidth maximum width along x for the returned dataset;
 	 *   {@code null} selects the highest available resolution
 	 * @throws NoMatchingResolutionException if {@code preferredWidth} is smaller
@@ -143,8 +150,8 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	 */
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithZarrJava(
-			final Context context, final String path, final Integer preferredWidth )
+			final Context context, final URI uri, final Integer preferredWidth )
 	{
-		return new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( path, preferredWidth ) );
+		return new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( uri, preferredWidth ) );
 	}
 }

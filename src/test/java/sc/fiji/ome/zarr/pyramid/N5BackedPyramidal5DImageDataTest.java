@@ -44,6 +44,6 @@ class N5BackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTestBase
 			throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new Pyramidal5DImageDataImpl<>( context, new N5PyramidBackend( path.toString(), preferredWidth ) );
+		return new Pyramidal5DImageDataImpl<>( context, new N5PyramidBackend( path.toUri(), preferredWidth ) );
 	}
 }

@@ -28,6 +28,8 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
+import java.nio.file.Paths;
+
 import org.scijava.Context;
 
 import bdv.util.volatiles.SharedQueue;
@@ -80,7 +82,7 @@ public class OMEZarrData
 		// "primary image data structure in ImageJ".
 		return new Pyramidal5DImageDataImpl<>(
 				context,
-				multiscalePaths[ 0 ]
+				Paths.get( multiscalePaths[ 0 ] ).toUri()
 		/*, multiscaleImage*/
 		);
 	}

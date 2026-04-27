@@ -28,6 +28,7 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -104,24 +105,29 @@ public class Pyramidal5DImageDataImpl<
 
 	/**
 	 * Open an OME-Zarr image with the default N5 backend.
+	 *
+	 * @param inputUri location of the OME-Zarr root; either a {@code file:} URI
+	 *   for local datasets or an {@code http(s):} URI for remote datasets
 	 */
-	public Pyramidal5DImageDataImpl( final Context context, final String inputPathAsString )
+	public Pyramidal5DImageDataImpl( final Context context, final URI inputUri )
 	{
-		this( context, inputPathAsString, null );
+		this( context, inputUri, null );
 	}
 
 	/**
 	 * Open an OME-Zarr image with the default N5 backend, downsampling to at
 	 * most {@code preferredMaxWidth} pixels along x.
 	 *
+	 * @param inputUri location of the OME-Zarr root; either a {@code file:} URI
+	 *   for local datasets or an {@code http(s):} URI for remote datasets
 	 * @param preferredMaxWidth maximum width for the ImageJ dataset; if
 	 *   {@code null}, the highest resolution is used
 	 * @throws NoMatchingResolutionException if {@code preferredMaxWidth} is
 	 *   smaller than the width of the smallest resolution level
 	 */
-	public Pyramidal5DImageDataImpl( final Context context, final String inputPathAsString, final Integer preferredMaxWidth )
+	public Pyramidal5DImageDataImpl( final Context context, final URI inputUri, final Integer preferredMaxWidth )
 	{
-		this( context, new N5PyramidBackend<>( inputPathAsString, preferredMaxWidth ) );
+		this( context, new N5PyramidBackend<>( inputUri, preferredMaxWidth ) );
 	}
 
 	/**

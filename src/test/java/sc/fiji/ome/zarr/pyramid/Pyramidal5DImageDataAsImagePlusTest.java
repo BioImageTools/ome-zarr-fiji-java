@@ -59,7 +59,7 @@ class Pyramidal5DImageDataAsImagePlusTest
 
 		try (Context context = new Context())
 		{
-			Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toString(), null );
+			Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toUri(), null );
 			final Dataset dataset = pyramidal5DImageData.asDataset();
 			final ImagePlus imagePlus = context.service( ConvertService.class ).convert( dataset, ImagePlus.class );
 
