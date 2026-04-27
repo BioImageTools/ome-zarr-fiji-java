@@ -26,31 +26,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.backend;
 
-import net.imagej.ImageJ;
+import net.imglib2.Volatile;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
-import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 
-public class MultiscaleImageDemo
+/**
+ * Plug-point for reading an OME-Zarr multi-resolution image.
+ * <p>
+ * An implementation encapsulates everything specific to one reader library
+ * (N5, zarr-java, ...): discovering multiscale metadata, selecting a resolution
+ * level, opening cached cell images, and assembling axis information. The
+ * backend-agnostic {@link Pyramidal5DImageDataImpl}
+ * calls {@link #load()} once and derives its state from the returned
+ * {@link PyramidContents}.
+ *
+ * @param <T> pixel type
+ * @param <V> volatile pixel type
+ */
+public interface PyramidBackend<
+		T extends NativeType< T > & RealType< T >,
+		V extends Volatile< T > & NativeType< V > & RealType< V > >
 {
-	public static void main( String[] args )
-	{
-		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
-		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
-		// final String multiscalePath = "/Users/hahmann/Data/13457537.zarr"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457537.zarr/0
-
-		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath );
-
-		// Show as imagePlus
-		final ImageJ imageJ = new ImageJ();
-		imageJ.ui().showUI();
-		final Pyramidal5DImageDataImpl< ?, ? > pyramidal5DImageData =
-				new Pyramidal5DImageDataImpl<>( imageJ.context(), "image" /*, multiscaleImage */ );
-		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
-		imageJ.ui().show( pyramidalDataset );
-
-		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true );
-	}
+	/**
+	 * Open the multi-resolution image and return all state needed by the
+	 * concrete pyramidal image data class. Called exactly once per image.
+	 */
+	PyramidContents< T, V > load();
 }
