@@ -163,6 +163,9 @@
 		<n5-zarr.version>2.0.0-alpha-8</n5-zarr.version>
 		<n5-zstandard.version>2.0.0-alpha-4</n5-zstandard.version>
 
+		<scijava-desktop.version>1.0.0</scijava-desktop.version>
+		<scijava.jvm.version>11</scijava.jvm.version>
+
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
@@ -191,6 +194,11 @@
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>script-editor</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-desktop</artifactId>
+			<version>${scijava-desktop.version}</version>
 		</dependency>
 
 		<!-- ====================================== -->
