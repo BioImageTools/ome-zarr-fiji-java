@@ -123,7 +123,7 @@ public class BackendBenchmark
 	{
 		try (Context context = new Context())
 		{
-			new Pyramidal5DImageDataImpl<>( context, dataset );
+			new Pyramidal5DImageDataImpl<>( context, Paths.get( dataset ).toUri() );
 		}
 	}
 
@@ -132,7 +132,7 @@ public class BackendBenchmark
 	{
 		try (Context context = new Context())
 		{
-			new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( dataset ) );
+			new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ) );
 		}
 	}
 
@@ -208,12 +208,13 @@ public class BackendBenchmark
 	private static OpenedReadContexts openReadContexts( final String dataset ) throws Exception
 	{
 		final Context n5Context = new Context();
-		final Pyramidal5DImageDataImpl< ?, ? > n5Wrapped = new Pyramidal5DImageDataImpl<>( n5Context, dataset );
+		final Pyramidal5DImageDataImpl< ?, ? > n5Wrapped = new Pyramidal5DImageDataImpl<>( n5Context, Paths.get( dataset ).toUri() );
 		final RandomAccessibleInterval< ? > n5WrappedLevel0 = n5Wrapped.asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final Context zjContext = new Context();
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
-		final Pyramidal5DImageDataImpl< ?, ? > zjWrapped = new Pyramidal5DImageDataImpl( zjContext, new ZarrJavaPyramidBackend( dataset ) );
+		final Pyramidal5DImageDataImpl< ?, ? > zjWrapped =
+				new Pyramidal5DImageDataImpl( zjContext, new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ) );
 		final RandomAccessibleInterval< ? > zjWrappedLevel0 = zjWrapped.asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final N5OpenContext n5Pure = openN5Context( Paths.get( dataset ) );

@@ -218,6 +218,7 @@ public class ZarrOpenActions
 				? ZarrDragAndDropOpenSettings.DEFAULT_READER_BACKEND
 				: settings.getReaderBackend();
 
+		final URI inputUri = droppedInPath.toUri();
 		final Pyramidal5DImageDataImpl< ?, ? > data;
 		switch ( backend )
 		{
@@ -225,13 +226,13 @@ public class ZarrOpenActions
 		{
 			@SuppressWarnings( { "rawtypes", "unchecked" } )
 			final Pyramidal5DImageDataImpl< ?, ? > zarrJavaData =
-					new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( droppedInPath.toString(), preferredWidth ) );
+					new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( inputUri, preferredWidth ) );
 			data = zarrJavaData;
 			break;
 		}
 		case N5:
 		default:
-			data = new Pyramidal5DImageDataImpl<>( context, droppedInPath.toString(), preferredWidth );
+			data = new Pyramidal5DImageDataImpl<>( context, inputUri, preferredWidth );
 			break;
 		}
 

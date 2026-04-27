@@ -30,6 +30,7 @@ package sc.fiji.ome.zarr.pyramid.backend.n5;
 
 import java.io.File;
 import java.lang.invoke.MethodHandles;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -110,25 +111,25 @@ public class N5PyramidBackend<
 		AXIS_MAPPING = Collections.unmodifiableMap( map );
 	}
 
-	private final String inputPathAsString;
+	private final URI inputUri;
 
 	private final Integer preferredMaxWidth;
 
-	public N5PyramidBackend( final String inputPathAsString )
+	public N5PyramidBackend( final URI inputUri )
 	{
-		this( inputPathAsString, null );
+		this( inputUri, null );
 	}
 
-	public N5PyramidBackend( final String inputPathAsString, final Integer preferredMaxWidth )
+	public N5PyramidBackend( final URI inputUri, final Integer preferredMaxWidth )
 	{
-		this.inputPathAsString = inputPathAsString;
+		this.inputUri = inputUri;
 		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
 	@Override
 	public PyramidContents< T, V > load()
 	{
-		final Path inputPath = Paths.get( inputPathAsString );
+		final Path inputPath = Paths.get( inputUri );
 		final Path rootPath = resolveRootPath( inputPath );
 		final String relativePath = resolveRelativePath( rootPath, inputPath );
 		final N5Reader reader = createReader( rootPath );
@@ -214,14 +215,14 @@ public class N5PyramidBackend<
 	private N5Reader createReader( final Path rootPath )
 	{
 		if ( rootPath == null )
-			throw new IllegalStateException( "Invalid OME-Zarr path: " + inputPathAsString );
+			throw new IllegalStateException( "Invalid OME-Zarr URI: " + inputUri );
 		return new N5Factory().openReader( rootPath.toUri().toString() );
 	}
 
 	private N5Metadata readMetadata( final N5Reader reader, final String relativePath )
 	{
 		if ( relativePath == null )
-			throw new NotAMultiscaleImageException( "Invalid OME-Zarr path: " + inputPathAsString );
+			throw new NotAMultiscaleImageException( "Invalid OME-Zarr URI: " + inputUri );
 
 		final N5TreeNode node = new N5TreeNode( relativePath );
 		final List< N5MetadataParser< ? > > parsers =
@@ -231,7 +232,7 @@ public class N5PyramidBackend<
 		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, new ArrayList<>( parsers ) );
 		final N5Metadata n5Metadata = node.getMetadata();
 		if ( n5Metadata == null )
-			throw new NotAMultiscaleImageException( inputPathAsString );
+			throw new NotAMultiscaleImageException( inputUri.toString() );
 		return n5Metadata;
 	}
 
