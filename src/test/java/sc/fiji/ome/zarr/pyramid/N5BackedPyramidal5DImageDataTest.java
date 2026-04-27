@@ -28,45 +28,22 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
-import org.junit.jupiter.api.Test;
 import org.scijava.Context;
-import org.scijava.convert.ConvertService;
 
-import ij.ImagePlus;
-import net.imagej.Dataset;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
-/**
- * Demonstrates how to open an OME-Zarr dataset and obtain a legacy ImageJ1
- * {@link ImagePlus} handle from it. The intermediate IJ2 {@link Dataset} is
- * converted to an {@code ImagePlus} via SciJava's {@link ConvertService};
- * the converter itself is provided by {@code imagej-legacy} dependency on the
- * classpath.
- */
-class Pyramidal5DImageDataAsImagePlusTest
+class N5BackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTestBase
 {
-	@Test
-	void testOpenAsImagePlus() throws URISyntaxException
+	@Override
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	public Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
+			throws URISyntaxException
 	{
-		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" );
-
-		try (Context context = new Context())
-		{
-			Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toString(), null );
-			final Dataset dataset = pyramidal5DImageData.asDataset();
-			final ImagePlus imagePlus = context.service( ConvertService.class ).convert( dataset, ImagePlus.class );
-
-			assertNotNull( imagePlus );
-			// order of dimensions for imagePlus: width, height, channels, slices, frames
-			assertArrayEquals( new int[] { 64, 64, 3, 16, 4 }, imagePlus.getDimensions() );
-			assertEquals( ZarrTestUtils.IMAGE_NAME, imagePlus.getTitle() );
-		}
+		Path path = ZarrTestUtils.resourcePath( resource );
+		return new Pyramidal5DImageDataImpl<>( context, new N5PyramidBackend( path.toString(), preferredWidth ) );
 	}
 }
