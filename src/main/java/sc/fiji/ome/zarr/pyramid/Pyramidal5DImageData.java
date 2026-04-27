@@ -36,7 +36,12 @@ import java.util.List;
 
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import org.scijava.Context;
+import org.scijava.prefs.PrefService;
+import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
+import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
 
 /**
  * 5D multi-resolution array data
@@ -84,5 +89,60 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	default Omero getOmeroProperties()
 	{
 		return null;
+	}
+
+	/**
+	 * Opens an OME-Zarr image using the backend configured in the context's
+	 * {@link ZarrDragAndDropOpenSettings}, falling back to the N5 backend if no
+	 * settings service is present.
+	 *
+	 * @param preferredWidth maximum width along x for the returned dataset;
+	 *   {@code null} selects the highest available resolution
+	 * @throws NoMatchingResolutionException if {@code preferredWidth} is smaller
+	 *   than the width of the coarsest resolution level
+	 */
+	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > open(
+			final Context context, final String path, final Integer preferredWidth )
+	{
+		final ZarrReaderBackend backend = ZarrDragAndDropOpenSettings
+				.loadSettingsFromPreferences( context.getService( PrefService.class ) )
+				.getReaderBackend();
+		switch ( backend )
+		{
+		case ZARR_JAVA:
+			return openWithZarrJava( context, path, preferredWidth );
+		case N5:
+		default:
+			return openWithN5( context, path, preferredWidth );
+		}
+	}
+
+	/**
+	 * Opens an OME-Zarr image using the N5-universe backend.
+	 *
+	 * @param preferredWidth maximum width along x for the returned dataset;
+	 *   {@code null} selects the highest available resolution
+	 * @throws NoMatchingResolutionException if {@code preferredWidth} is smaller
+	 *   than the width of the coarsest resolution level
+	 */
+	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithN5(
+			final Context context, final String path, final Integer preferredWidth )
+	{
+		return new Pyramidal5DImageDataImpl<>( context, path, preferredWidth );
+	}
+
+	/**
+	 * Opens an OME-Zarr image using the zarr-java backend.
+	 *
+	 * @param preferredWidth maximum width along x for the returned dataset;
+	 *   {@code null} selects the highest available resolution
+	 * @throws NoMatchingResolutionException if {@code preferredWidth} is smaller
+	 *   than the width of the coarsest resolution level
+	 */
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithZarrJava(
+			final Context context, final String path, final Integer preferredWidth )
+	{
+		return new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( path, preferredWidth ) );
 	}
 }
