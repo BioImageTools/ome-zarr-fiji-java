@@ -47,7 +47,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
 
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -58,7 +57,13 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
-class Pyramidal5DImageDataImplTest
+/**
+ * Shared parameterized tests for {@link Pyramidal5DImageDataImpl}, run against
+ * each {@link sc.fiji.ome.zarr.pyramid.backend.PyramidBackend} implementation
+ * by a concrete class that implements this interface and supplies
+ * {@link #load(String, Context, Integer)}.
+ */
+interface Pyramidal5DImageDataTestBase
 {
 
 	static Stream< String > omeZarrExamples()
@@ -91,9 +96,18 @@ class Pyramidal5DImageDataImplTest
 		);
 	}
 
+	Pyramidal5DImageDataImpl< ?, ? > load( String resource, Context context, Integer preferredWidth )
+			throws URISyntaxException;
+
+	default Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context )
+			throws URISyntaxException
+	{
+		return load( resource, context, null );
+	}
+
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testAsPyramidalDataset( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testAsPyramidalDataset( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -104,8 +118,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testAsDataset( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testAsDataset( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -126,8 +140,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testAsSources( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testAsSources( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -206,8 +220,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testNumDimensions( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testNumDimensions( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -226,8 +240,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testNumTimepoints( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testNumTimepoints( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -254,8 +268,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testNumChannels( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testNumChannels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -282,8 +296,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testNumResolutionLevels( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testNumResolutionLevels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -294,8 +308,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testVoxelDimensions( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testVoxelDimensions( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -308,8 +322,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testGetType( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testGetType( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -320,8 +334,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testGetName( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testGetName( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -331,8 +345,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "pyramids" )
-	void testGetPyramidLevels( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#pyramids" )
+	default void testGetPyramidLevels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -363,8 +377,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testPreferredMaxWidth( final String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testPreferredMaxWidth( final String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -403,8 +417,8 @@ class Pyramidal5DImageDataImplTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testConverterSetup( final String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testConverterSetup( final String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -436,17 +450,5 @@ class Pyramidal5DImageDataImplTest
 			}
 			bdvHandle.close();
 		}
-	}
-
-	private Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context ) throws URISyntaxException
-	{
-		return load( resource, context, null );
-	}
-
-	private Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
-			throws URISyntaxException
-	{
-		Path path = ZarrTestUtils.resourcePath( resource );
-		return new Pyramidal5DImageDataImpl<>( context, path.toString(), preferredWidth );
 	}
 }
