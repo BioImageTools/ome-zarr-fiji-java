@@ -52,7 +52,7 @@ import net.imglib2.util.Cast;
 
 import bdv.util.BdvFunctions;
 import ij.IJ;
-import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotASingleScaleImageException;
@@ -211,8 +211,8 @@ public class ZarrOpenActions
 			preferredWidth = null;
 		else
 			preferredWidth = settings.getPreferredMaxWidth();
-		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
-				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
+		final Pyramidal5DImageDataImpl< ?, ? > pyramidal5DImageData =
+				new Pyramidal5DImageDataImpl<>( context, droppedInPath.toString(), preferredWidth );
 		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
 		Object result = multiScaleImageOpener.apply( pyramidalDataset );
 		logger.info( "Opened multiscale image: {}", droppedInPath );
