@@ -74,10 +74,26 @@ public class PasteOmeZarrUrlCommand implements Command
 	@Override
 	public void run()
 	{
-		final URI uri = parseClipboardUri( readClipboard(), IJ::error );
+		pasteFromClipboard( context, prefService, IJ::error );
+	}
+
+	/**
+	 * Reads a URL or path from the system clipboard and opens it as an OME-Zarr
+	 * dataset, using the same backend, resolution, and open-behavior settings
+	 * as the drag-and-drop pipeline. Reused by both the menu command and the
+	 * toolbar button.
+	 *
+	 * @param errorHandler called with a user-facing message when the clipboard
+	 *   is empty, the contents can't be parsed, or the location does not point
+	 *   at an OME-Zarr dataset
+	 */
+	public static void pasteFromClipboard( final Context context, final PrefService prefService,
+			final Consumer< String > errorHandler )
+	{
+		final URI uri = parseClipboardUri( readClipboard(), errorHandler );
 		if ( uri == null )
 			return;
-		open( uri );
+		open( context, prefService, uri );
 	}
 
 	/**
@@ -155,7 +171,7 @@ public class PasteOmeZarrUrlCommand implements Command
 		}
 	}
 
-	private String readClipboard()
+	private static String readClipboard()
 	{
 		try
 		{
@@ -172,10 +188,10 @@ public class PasteOmeZarrUrlCommand implements Command
 		}
 	}
 
-	private void open( final URI uri )
+	private static void open( final Context context, final PrefService prefService, final URI uri )
 	{
 		final ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
-		final ZarrOpenActions actions = createZarrOpenActions( uri, context, settings );
+		final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings );
 		switch ( settings.getOpenBehavior() )
 		{
 		case IMAGEJ_HIGHEST_RESOLUTION:
@@ -187,19 +203,8 @@ public class PasteOmeZarrUrlCommand implements Command
 			break;
 		case SHOW_SELECTION_DIALOG:
 		default:
-			createDnDActionChooser( context, actions ).showDialog();
+			new DnDActionChooser( context, actions ).showDialog();
 			break;
 		}
-	}
-
-	protected ZarrOpenActions createZarrOpenActions( final URI uri, final Context context,
-			final ZarrDragAndDropOpenSettings settings )
-	{
-		return new ZarrOpenActions( uri, context, settings );
-	}
-
-	protected DnDActionChooser createDnDActionChooser( final Context context, final ZarrOpenActions actions )
-	{
-		return new DnDActionChooser( context, actions );
 	}
 }
