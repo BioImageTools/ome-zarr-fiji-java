@@ -53,15 +53,14 @@ import sc.fiji.ome.zarr.util.ZarrTestUtils;
 class Pyramidal5DImageDataAsImagePlusTest
 {
 	@Test
-	void testOpenAsImagePlus() throws URISyntaxException
+	void testOpenAsImagePlusConvertService() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" );
 
 		try (Context context = new Context())
 		{
-			final Pyramidal5DImageData< ? > image = new DefaultPyramidal5DImageData<>( context, path.toString() );
-			final Dataset dataset = image.asDataset();
-			final ImagePlus imagePlus = context.service( ConvertService.class ).convert( dataset, ImagePlus.class );
+			final Pyramidal5DImageData< ? > pyramidal5DImageData = new DefaultPyramidal5DImageData<>( context, path.toString() );
+			final ImagePlus imagePlus = pyramidal5DImageData.asImagePlus();
 
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
