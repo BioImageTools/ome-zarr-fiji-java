@@ -186,7 +186,7 @@
 		<dependency>
 			<groupId>dev.zarr</groupId>
 			<artifactId>zarr-java</artifactId>
-			<version>0.1.2</version>
+			<version>0.1.3-SNAPSHOT</version>
 		</dependency>
 		<!-- N5 implementations of OME-Zarr including BDV Viewer adaptions -->
 		<dependency>
