@@ -51,6 +51,8 @@ import dev.zarr.zarrjava.experimental.ome.metadata.OmeroWindow;
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.CoordinateTransformation;
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
+import dev.zarr.zarrjava.store.HttpStore;
+import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
 
 import net.imagej.ImgPlus;
@@ -133,8 +135,7 @@ public class ZarrJavaPyramidBackend<
 	@Override
 	public PyramidContents< T, V > load()
 	{
-		final Path inputPath = Paths.get( inputUri );
-		final MultiscaleImage multiscaleImage = openMultiscaleImage( inputPath );
+		final MultiscaleImage multiscaleImage = openMultiscaleImage();
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
 
 		final int numResolutionLevels = countResolutionLevels( multiscaleImage );
@@ -154,7 +155,7 @@ public class ZarrJavaPyramidBackend<
 		final int numTimepoints = getDimSizeForAxis( entry.axes, zarrShape, "t" );
 		final int numChannels = getDimSizeForAxis( entry.axes, zarrShape, "c" );
 
-		final String name = entry.name != null ? entry.name : inputPath.getFileName().toString();
+		final String name = entry.name != null ? entry.name : defaultName();
 		final double[] level0Scales = getLevel0Scales( entry, numDimensions );
 
 		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
@@ -266,7 +267,17 @@ public class ZarrJavaPyramidBackend<
 	// Store / path helpers
 	// ---------------------------------------------------------------------
 
-	private MultiscaleImage openMultiscaleImage( final Path inputPath )
+	private MultiscaleImage openMultiscaleImage()
+	{
+		final String scheme = inputUri.getScheme();
+		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
+			return openMultiscaleImageFromFilesystem( Paths.get( inputUri ) );
+		if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
+			return openMultiscaleImageOverHttp( inputUri );
+		throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
+	}
+
+	private MultiscaleImage openMultiscaleImageFromFilesystem( final Path inputPath )
 	{
 		try
 		{
@@ -286,6 +297,37 @@ public class ZarrJavaPyramidBackend<
 		{
 			throw new NotAMultiscaleImageException( inputUri.toString(), e );
 		}
+	}
+
+	/**
+	 * Open the OME-Zarr referenced by an http(s) URI. The URI is assumed to point
+	 * at the OME-Zarr root – we cannot walk up the URL hierarchy to discover it
+	 * the way we do on a local filesystem.
+	 */
+	private MultiscaleImage openMultiscaleImageOverHttp( final URI httpUri )
+	{
+		try
+		{
+			final Store store = new HttpStore( httpUri.toString() );
+			return MultiscaleImage.open( store.resolve() );
+		}
+		catch ( ZarrException | IOException e )
+		{
+			throw new NotAMultiscaleImageException( inputUri.toString(), e );
+		}
+	}
+
+	/** Fallback dataset name when the multiscales entry has none. */
+	private String defaultName()
+	{
+		if ( "file".equalsIgnoreCase( inputUri.getScheme() ) )
+			return Paths.get( inputUri ).getFileName().toString();
+		final String path = inputUri.getPath();
+		if ( path == null || path.isEmpty() )
+			return "";
+		final String trimmed = path.endsWith( "/" ) ? path.substring( 0, path.length() - 1 ) : path;
+		final int slash = trimmed.lastIndexOf( '/' );
+		return slash >= 0 ? trimmed.substring( slash + 1 ) : trimmed;
 	}
 
 	private MultiscalesEntry readMultiscalesEntry( final MultiscaleImage multiscaleImage )
