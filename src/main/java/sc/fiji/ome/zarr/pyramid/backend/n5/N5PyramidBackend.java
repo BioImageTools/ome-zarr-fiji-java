@@ -129,13 +129,11 @@ public class N5PyramidBackend<
 	@Override
 	public PyramidContents< T, V > load()
 	{
-		final Path inputPath = Paths.get( inputUri );
-		final Path rootPath = resolveRootPath( inputPath );
-		final String relativePath = resolveRelativePath( rootPath, inputPath );
-		final N5Reader reader = createReader( rootPath );
-		final N5Metadata metadata = readMetadata( reader, relativePath );
+		final ReaderTarget target = resolveReaderTarget();
+		final N5Reader reader = new N5Factory().openReader( target.readerUri );
+		final N5Metadata metadata = readMetadata( reader, target.relativePath );
 
-		final MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata, reader, new N5TreeNode( relativePath ) );
+		final MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata, reader, new N5TreeNode( target.relativePath ) );
 		final int multiscaleIndex = 0;
 		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
 		final Omero omero = adapter.initOmeroMetadata();
@@ -196,6 +194,27 @@ public class N5PyramidBackend<
 	// Path / reader helpers
 	// ---------------------------------------------------------------------
 
+	/**
+	 * Where the underlying N5 reader should be opened, and where – relative to
+	 * that reader root – the OME-Zarr metadata lives. For local paths we walk
+	 * up the filesystem to the OME-Zarr root and remember the descent. For
+	 * remote URLs we trust that the caller passed the OME-Zarr root.
+	 */
+	private ReaderTarget resolveReaderTarget()
+	{
+		final String scheme = inputUri.getScheme();
+		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
+		{
+			final Path inputPath = Paths.get( inputUri );
+			final Path rootPath = resolveRootPath( inputPath );
+			final List< String > elements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
+			return new ReaderTarget( rootPath.toUri().toString(), String.join( File.separator, elements ) );
+		}
+		if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
+			return new ReaderTarget( inputUri.toString(), "" );
+		throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
+	}
+
 	private Path resolveRootPath( final Path inputPath )
 	{
 		if ( inputPath == null )
@@ -206,17 +225,17 @@ public class N5PyramidBackend<
 		return path;
 	}
 
-	private String resolveRelativePath( final Path rootPath, final Path inputPath )
+	private static final class ReaderTarget
 	{
-		final List< String > elements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
-		return String.join( File.separator, elements );
-	}
+		private final String readerUri;
 
-	private N5Reader createReader( final Path rootPath )
-	{
-		if ( rootPath == null )
-			throw new IllegalStateException( "Invalid OME-Zarr URI: " + inputUri );
-		return new N5Factory().openReader( rootPath.toUri().toString() );
+		private final String relativePath;
+
+		private ReaderTarget( final String readerUri, final String relativePath )
+		{
+			this.readerUri = readerUri;
+			this.relativePath = relativePath;
+		}
 	}
 
 	private N5Metadata readMetadata( final N5Reader reader, final String relativePath )
