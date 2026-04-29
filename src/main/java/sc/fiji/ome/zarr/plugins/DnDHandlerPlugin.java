@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -90,9 +91,10 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 
 		final FileLocation fileLocation = Cast.unchecked( source );
 		final Path droppedInPath = fileLocation.getFile().toPath();
+		final URI inputUri = droppedInPath.toUri();
 
 		ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
-		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context(), settings );
+		ZarrOpenActions actions = createZarrOpenActions( inputUri, context(), settings );
 		switch ( settings.getOpenBehavior() )
 		{
 		case IMAGEJ_HIGHEST_RESOLUTION:
@@ -116,9 +118,9 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		return FAKE_INPUT;
 	}
 
-	protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context, final ZarrDragAndDropOpenSettings settings )
+	protected ZarrOpenActions createZarrOpenActions( final URI inputUri, final Context context, final ZarrDragAndDropOpenSettings settings )
 	{
-		return new ZarrOpenActions( path, context, settings );
+		return new ZarrOpenActions( inputUri, context, settings );
 	}
 
 	protected DnDActionChooser createDnDActionChooser( final Context context, final ZarrOpenActions actions )

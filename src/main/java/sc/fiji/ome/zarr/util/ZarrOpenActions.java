@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.awt.Desktop;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -68,7 +68,7 @@ public class ZarrOpenActions
 
 	private static final String HELP_URL = "https://github.com/BioImageTools/ome-zarr-fiji-java/";
 
-	private final Path droppedInPath;
+	private final URI inputUri;
 
 	private final Context context;
 
@@ -76,23 +76,34 @@ public class ZarrOpenActions
 
 	private final ZarrDragAndDropOpenSettings settings;
 
-	public ZarrOpenActions( final Path droppedInPath, final Context context )
+	public ZarrOpenActions( final URI inputUri, final Context context )
 	{
-		this( droppedInPath, context, null, IJ::error );
+		this( inputUri, context, null, IJ::error );
 	}
 
-	public ZarrOpenActions( final Path droppedInPath, final Context context, final ZarrDragAndDropOpenSettings settings )
+	public ZarrOpenActions( final URI inputUri, final Context context, final ZarrDragAndDropOpenSettings settings )
 	{
-		this( droppedInPath, context, settings, IJ::error );
+		this( inputUri, context, settings, IJ::error );
 	}
 
-	ZarrOpenActions( final Path droppedInPath, final Context context, final ZarrDragAndDropOpenSettings settings,
+	ZarrOpenActions( final URI inputUri, final Context context, final ZarrDragAndDropOpenSettings settings,
 			final Consumer< String > errorHandler )
 	{
-		this.droppedInPath = droppedInPath;
+		this.inputUri = inputUri;
 		this.context = context;
 		this.settings = settings;
 		this.errorHandler = errorHandler;
+	}
+
+	/**
+	 * String suitable for being shown to the user or pre-filled into a path
+	 * field: an OS-native path for {@code file:} URIs, the URI string otherwise.
+	 */
+	private String displayLocation()
+	{
+		return "file".equalsIgnoreCase( inputUri.getScheme() )
+				? Paths.get( inputUri ).toString()
+				: inputUri.toString();
 	}
 
 	/**
@@ -101,9 +112,9 @@ public class ZarrOpenActions
 	 */
 	public void openImporterDialog()
 	{
-		new N5Importer().runWithDialog( droppedInPath.toString(), Collections.emptyList() );
+		new N5Importer().runWithDialog( displayLocation(), Collections.emptyList() );
 		if ( logger.isInfoEnabled() )
-			logger.info( "Opened Zarr/N5 importer dialog with path: {}.", droppedInPath );
+			logger.info( "Opened Zarr/N5 importer dialog with location: {}.", inputUri );
 	}
 
 	/**
@@ -112,10 +123,10 @@ public class ZarrOpenActions
 	 */
 	public void openViewerDialog()
 	{
-		new N5ViewerCreator().runWithDialog( droppedInPath.toString(),
+		new N5ViewerCreator().runWithDialog( displayLocation(),
 				e -> logger.warn( "Could not open viewer selection dialog: {}", e.getMessage() ) );
 		if ( logger.isInfoEnabled() )
-			logger.info( "Opened Zarr/N5 viewer with path: {}.", droppedInPath );
+			logger.info( "Opened Zarr/N5 viewer with location: {}.", inputUri );
 	}
 
 	public Object openIJWithImage()
@@ -142,30 +153,30 @@ public class ZarrOpenActions
 	private void showSingleScaleNotSupported()
 	{
 		errorHandler.accept(
-				"Opening a single resolution OME-Zarr dataset, as was found in: " + droppedInPath + ", is currently not supported.\n\n"
+				"Opening a single resolution OME-Zarr dataset, as was found in: " + inputUri + ", is currently not supported.\n\n"
 						+ "Consider opening one level higher in the hierarchy instead." );
-		logger.info( "Opening a single resolution OME-Zarr dataset, as was found in: {}, is currently not supported.", droppedInPath );
+		logger.info( "Opening a single resolution OME-Zarr dataset, as was found in: {}, is currently not supported.", inputUri );
 	}
 
 	private void showSingleScaleError( final Exception e )
 	{
-		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
+		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
 				+ "Consider opening one level higher or lower in the hierarchy instead." );
-		logger.warn( "Could not open dataset as single resolution image: {}. Error message: {}", droppedInPath, e.getMessage() );
+		logger.warn( "Could not open dataset as single resolution image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
 	private void showNonZarrError( final Exception e )
 	{
-		errorHandler.accept( "Could not open dataset as image: " + droppedInPath + "\n\n"
+		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
 				+ "The drag & drop for OME-Zarr folders only supports folders that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
-		logger.warn( "Could not open dataset image: {}. Error message: {}", droppedInPath, e.getMessage() );
+		logger.warn( "Could not open dataset image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
 	private void showNonMatchingResolutionError( final Exception e )
 	{
-		errorHandler.accept( "Safety check failed when opening dataset: " + droppedInPath + "\n\r\n" + e.getMessage() + "\n\r\n"
+		errorHandler.accept( "Safety check failed when opening dataset: " + inputUri + "\n\r\n" + e.getMessage() + "\n\r\n"
 				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Drag & Drop Behavior Settings to still open the image." );
-		logger.warn( "Not opening dataset: {}. Error message: {}", droppedInPath, e.getMessage() );
+		logger.warn( "Not opening dataset: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
 	Object openImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener,
@@ -175,7 +186,7 @@ public class ZarrOpenActions
 		try
 		{
 			Object result = openMultiScaleImage( multiScaleImageOpener );
-			logger.info( "Opened dataset in {}: {}", message, droppedInPath );
+			logger.info( "Opened dataset in {}: {}", message, inputUri );
 			return result;
 		}
 		catch ( NotAMultiscaleImageException e )
@@ -186,7 +197,7 @@ public class ZarrOpenActions
 			{
 				showSingleScaleNotSupported();
 				//Object result = openSingleScaleImage( singleScaleImageOpener ); // currently not supported
-				//logger.info( "Opened single scale image in {}: {}", message, droppedInPath );
+				//logger.info( "Opened single scale image in {}: {}", message, inputUri );
 				return null;
 			}
 			catch ( NotASingleScaleImageException ex )
@@ -218,7 +229,6 @@ public class ZarrOpenActions
 				? ZarrDragAndDropOpenSettings.DEFAULT_READER_BACKEND
 				: settings.getReaderBackend();
 
-		final URI inputUri = droppedInPath.toUri();
 		final Pyramidal5DImageDataImpl< ?, ? > data;
 		switch ( backend )
 		{
@@ -237,13 +247,13 @@ public class ZarrOpenActions
 		}
 
 		final Object result = multiScaleImageOpener.apply( data.asPyramidalDataset() );
-		logger.info( "Opened multiscale image with {} backend: {}", backend, droppedInPath );
+		logger.info( "Opened multiscale image with {} backend: {}", backend, inputUri );
 		return result;
 	}
 
 	private Object openSingleScaleImage( final Function< Img< ? >, Object > singleScaleImageOpener ) throws NotASingleScaleImageException
 	{
-		N5Reader reader = new N5Factory().openReader( ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString() );
+		N5Reader reader = new N5Factory().openReader( inputUri.toString() );
 		Img< ? > img;
 		try
 		{
@@ -251,18 +261,18 @@ public class ZarrOpenActions
 		}
 		catch ( Exception e )
 		{
-			throw new NotASingleScaleImageException( droppedInPath.toString(), e );
+			throw new NotASingleScaleImageException( inputUri.toString(), e );
 		}
 		Object result = singleScaleImageOpener.apply( img );
-		logger.info( "Opened single scale image: {}", droppedInPath );
+		logger.info( "Opened single scale image: {}", inputUri );
 		return result;
 	}
 
 	public void runScript()
 	{
-		final String path = ZarrOnFileSystemUtils.getUriFromPath( droppedInPath ).toString();
-		logger.info( "Attempt to execute script on path: {}.", path );
-		ScriptUtils.executePresetScript( context, path, errorHandler );
+		final String location = inputUri.toString();
+		logger.info( "Attempt to execute script on location: {}.", location );
+		ScriptUtils.executePresetScript( context, location, errorHandler );
 	}
 
 	public void showHelp()
