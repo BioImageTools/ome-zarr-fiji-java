@@ -53,20 +53,47 @@ import sc.fiji.ome.zarr.util.ZarrTestUtils;
 class Pyramidal5DImageDataAsImagePlusTest
 {
 	@Test
-	void testOpenAsImagePlus() throws URISyntaxException
+	void testOpenAsImagePlusConvertService() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" );
 
 		try (Context context = new Context())
 		{
-			final Pyramidal5DImageData< ? > image = new DefaultPyramidal5DImageData<>( context, path.toString() );
-			final Dataset dataset = image.asDataset();
-			final ImagePlus imagePlus = context.service( ConvertService.class ).convert( dataset, ImagePlus.class );
+			final Pyramidal5DImageData< ? > pyramidal5DImageData = new DefaultPyramidal5DImageData<>( context, path.toString() );
+			final ImagePlus imagePlus = pyramidal5DImageData.asImagePlus();
 
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
 			assertArrayEquals( new int[] { 64, 64, 3, 16, 4 }, imagePlus.getDimensions() );
 			assertEquals( ZarrTestUtils.IMAGE_NAME, imagePlus.getTitle() );
+		}
+	}
+
+	@Test
+	void testOpenAsImagePlusSourceAndConverter() throws URISyntaxException
+	{
+		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" );
+
+		try (Context context = new Context())
+		{
+			final PyramidalDataset< ? > pyramidalDataset =
+					new DefaultPyramidal5DImageData<>( context, path.toString() ).asPyramidalDataset();
+			int resolutionLevel = 0;
+			int channel = 0; // NB: 3 channels, channel 0 has the name: lynEGFP
+			int timepoint = 0;
+			ImagePlus imagePlus = pyramidalDataset.getImagePlus( resolutionLevel, channel, timepoint );
+
+			assertNotNull( imagePlus );
+			// order of dimensions for imagePlus: width, height, slices. Channel and timepoint are 1.
+			assertArrayEquals( new int[] { 64, 64, 16, 1, 1 }, imagePlus.getDimensions() );
+			assertEquals( "lynEGFP", imagePlus.getTitle() );
+
+			resolutionLevel = 1;
+			imagePlus = pyramidalDataset.getImagePlus( resolutionLevel, channel, timepoint );
+			assertNotNull( imagePlus );
+			// order of dimensions for imagePlus: width, height, slices. Channel and timepoint are 1.
+			assertArrayEquals( new int[] { 32, 32, 8, 1, 1 }, imagePlus.getDimensions() );
+			assertEquals( "lynEGFP", imagePlus.getTitle() );
 		}
 	}
 }
