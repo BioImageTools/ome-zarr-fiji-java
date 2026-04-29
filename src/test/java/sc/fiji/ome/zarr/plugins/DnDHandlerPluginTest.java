@@ -39,6 +39,7 @@ import org.scijava.io.location.FileLocation;
 import org.scijava.prefs.PrefService;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
@@ -65,7 +66,7 @@ class DnDHandlerPluginTest
 			DnDHandlerPlugin dnDHandlerPlugin = new DnDHandlerPlugin()
 			{
 				@Override
-				protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context,
+				protected ZarrOpenActions createZarrOpenActions( final URI inputUri, final Context context,
 						final ZarrDragAndDropOpenSettings settings )
 				{
 					return actionsMock;

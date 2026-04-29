@@ -135,7 +135,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
 			Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
@@ -158,7 +158,7 @@ class ZarrOpenActionsTest
 			for ( String invalidPath : validPaths )
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
-				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
+				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
 				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
 				Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
@@ -182,7 +182,7 @@ class ZarrOpenActionsTest
 			for ( String invalidPath : invalidPaths )
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
-				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
+				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
 				Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
 				Function< Img< ? >, Object > singleScaleNoOp = img -> null;
 				assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
@@ -197,7 +197,7 @@ class ZarrOpenActionsTest
 		{
 			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
 			ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
-			ZarrOpenActions actions = new ZarrOpenActions( path, context, settings, System.out::println );
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, System.out::println );
 			Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
 			Function< Img< ? >, Object > singleScaleNoOp = img -> null;
 			assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
@@ -211,7 +211,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context ); // no settings object means that the highest resolution is loaded by default
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context ); // no settings object means that the highest resolution is loaded by default
 			actions.openIJWithImage();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
@@ -280,7 +280,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
 			ImagePlus imagePlus = Cast.unchecked( actions.openIJWithImage() );
 			assertNotNull( imagePlus );
 			int channels = imagePlus.getNChannels();
@@ -366,7 +366,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context );
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			BdvHandle bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
 
 			DatasetService datasetService = context.getService( DatasetService.class );
@@ -394,7 +394,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, System.out::println );
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
 			BdvStackSource< ? > bdvStackSource = Cast.unchecked( actions.openBDVWithImage() );
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertNotNull( datasetService );
@@ -472,7 +472,7 @@ class ZarrOpenActionsTest
 					scriptFailed.set( true );
 					System.out.println( errorMessage );
 				};
-				ZarrOpenActions actions = new ZarrOpenActions( path, context, null, errorHandler );
+				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, errorHandler );
 				actions.runScript();
 
 				// wait until all Swing events are processed
@@ -520,7 +520,7 @@ class ZarrOpenActionsTest
 				scriptFailed.set( true );
 				System.out.println( errorMessage );
 			};
-			ZarrOpenActions actions = new ZarrOpenActions( path, context, null, errorHandler );
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, errorHandler );
 			actions.runScript();
 
 			boolean foundTextEditor = false;
