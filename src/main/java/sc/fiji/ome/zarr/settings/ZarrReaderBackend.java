@@ -26,31 +26,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.settings;
 
-import net.imagej.ImageJ;
+import java.util.NoSuchElementException;
 
-import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
-
-public class MultiscaleImageDemo
+/**
+ * Selects the library used to read OME-Zarr datasets.
+ */
+public enum ZarrReaderBackend
 {
-	public static void main( String[] args )
+	/**
+	 * Read via the N5 library (supports Zarr v2 and v3 through n5-zarr).
+	 */
+	N5( "N5" ),
+
+	/**
+	 * Read via the zarr-java library (supports Zarr v2 and v3).
+	 */
+	ZARR_JAVA( "zarr-java" );
+
+	private final String description;
+
+	ZarrReaderBackend( final String description )
 	{
-		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
-		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
-		// final String multiscalePath = "/Users/hahmann/Data/13457537.zarr"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457537.zarr/0
+		this.description = description;
+	}
 
-		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath );
+	public static ZarrReaderBackend getByName( final String name )
+	{
+		for ( final ZarrReaderBackend option : values() )
+			if ( option.name().equals( name ) )
+				return option;
+		throw new NoSuchElementException( name );
+	}
 
-		// Show as imagePlus
-		final ImageJ imageJ = new ImageJ();
-		imageJ.ui().showUI();
-		final Pyramidal5DImageDataImpl< ?, ? > pyramidal5DImageData =
-				new Pyramidal5DImageDataImpl<>( imageJ.context(), "image" /*, multiscaleImage */ );
-		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
-		imageJ.ui().show( pyramidalDataset );
+	public static ZarrReaderBackend getByDescription( final String description )
+	{
+		for ( final ZarrReaderBackend option : values() )
+			if ( option.description.equals( description ) )
+				return option;
+		return null;
+	}
 
-		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true );
+	public String getDescription()
+	{
+		return description;
 	}
 }

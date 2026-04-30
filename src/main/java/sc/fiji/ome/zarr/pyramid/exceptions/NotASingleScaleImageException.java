@@ -26,31 +26,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.exceptions;
 
-import net.imagej.ImageJ;
-
-import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
-
-public class MultiscaleImageDemo
+public class NotASingleScaleImageException extends RuntimeException
 {
-	public static void main( String[] args )
+
+	public NotASingleScaleImageException( final String path )
 	{
-		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
-		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
-		// final String multiscalePath = "/Users/hahmann/Data/13457537.zarr"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457537.zarr/0
+		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image." );
+	}
 
-		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath );
-
-		// Show as imagePlus
-		final ImageJ imageJ = new ImageJ();
-		imageJ.ui().showUI();
-		final Pyramidal5DImageDataImpl< ?, ? > pyramidal5DImageData =
-				new Pyramidal5DImageDataImpl<>( imageJ.context(), "image" /*, multiscaleImage */ );
-		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
-		imageJ.ui().show( pyramidalDataset );
-
-		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true );
+	public NotASingleScaleImageException( final String path, final Throwable cause )
+	{
+		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image. Cause: " + cause.getMessage(), cause );
 	}
 }

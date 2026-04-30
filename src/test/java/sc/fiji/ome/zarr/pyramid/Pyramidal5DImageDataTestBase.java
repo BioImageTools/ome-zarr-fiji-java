@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -47,7 +47,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
 
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -55,10 +54,17 @@ import bdv.tools.brightness.ConverterSetup;
 import bdv.util.BdvHandle;
 import bdv.viewer.Source;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
-class DefaultPyramidal5DImageDataTest
+/**
+ * Shared parameterized tests for {@link Pyramidal5DImageDataImpl}, run against
+ * each {@link sc.fiji.ome.zarr.pyramid.backend.PyramidBackend} implementation
+ * by a concrete class that implements this interface and supplies
+ * {@link #load(String, Context, Integer)}.
+ */
+interface Pyramidal5DImageDataTestBase
 {
 
 	static Stream< String > omeZarrExamples()
@@ -91,9 +97,18 @@ class DefaultPyramidal5DImageDataTest
 		);
 	}
 
+	Pyramidal5DImageDataImpl< ?, ? > load( String resource, Context context, Integer preferredWidth )
+			throws URISyntaxException;
+
+	default Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context )
+			throws URISyntaxException
+	{
+		return load( resource, context, null );
+	}
+
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testAsPyramidalDataset( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testAsPyramidalDataset( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -104,8 +119,8 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testAsDataset( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testAsDataset( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -126,8 +141,8 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testAsSources( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testAsSources( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -206,12 +221,12 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testNumDimensions( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testNumDimensions( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
-			DefaultPyramidal5DImageData< ?, ? > dataset = load( resource, context );
+			Pyramidal5DImageDataImpl< ?, ? > dataset = load( resource, context );
 			assertNotNull( dataset );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 5, dataset.numDimensions() ); // NB: xyzct
@@ -226,8 +241,8 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testNumTimepoints( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testNumTimepoints( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -254,8 +269,8 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testNumChannels( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testNumChannels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -282,8 +297,8 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testNumResolutionLevels( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testNumResolutionLevels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -294,8 +309,8 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testVoxelDimensions( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testVoxelDimensions( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -308,8 +323,8 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testGetType( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testGetType( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -320,8 +335,8 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testGetName( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testGetName( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -331,8 +346,8 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "pyramids" )
-	void testGetPyramidLevels( String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#pyramids" )
+	default void testGetPyramidLevels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -363,8 +378,8 @@ class DefaultPyramidal5DImageDataTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testPreferredMaxWidth( final String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testPreferredMaxWidth( final String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -372,39 +387,39 @@ class DefaultPyramidal5DImageDataTest
 					( ( resource.contains( "4d_testing" ) && resource.contains( "xyzc" ) )
 							|| ( resource.contains( "4d_testing" ) && resource.contains( "xyzt" ) ) )
 					|| ( resource.contains( "3d_testing" ) && resource.contains( "xyz" ) );
-				Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context, 100 ); // greater than the highest resolution
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
-				if ( is3D )
-					assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
-				pyramidal5DImageData = load( resource, context, 64 ); // equals the highest resolution
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
-				if ( is3D )
-					assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
-				pyramidal5DImageData = load( resource, context, 50 ); // less than the highest resolution, but greater than the lowest resolution
-				assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-				assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
-				if ( is3D )
-					assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
-				pyramidal5DImageData = load( resource, context, 32 ); // equals the lowest resolution
-				assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-				assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
-				if ( is3D )
-					assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
-				// less than the lowest resolution
-				assertThrows( NoMatchingResolutionException.class, () -> load( resource, context, 30 ) );
-				pyramidal5DImageData = load( resource, context, null ); // null preferred width results in the highest resolution
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-				assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
-				if ( is3D )
-					assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context, 100 ); // greater than the highest resolution
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			if ( is3D )
+				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			pyramidal5DImageData = load( resource, context, 64 ); // equals the highest resolution
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			if ( is3D )
+				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			pyramidal5DImageData = load( resource, context, 50 ); // less than the highest resolution, but greater than the lowest resolution
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			if ( is3D )
+				assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			pyramidal5DImageData = load( resource, context, 32 ); // equals the lowest resolution
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			if ( is3D )
+				assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+			// less than the lowest resolution
+			assertThrows( NoMatchingResolutionException.class, () -> load( resource, context, 30 ) );
+			pyramidal5DImageData = load( resource, context, null ); // null preferred width results in the highest resolution
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			if ( is3D )
+				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
 		}
 	}
 
 	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testConverterSetup( final String resource ) throws URISyntaxException
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" )
+	default void testConverterSetup( final String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
@@ -436,17 +451,5 @@ class DefaultPyramidal5DImageDataTest
 			}
 			bdvHandle.close();
 		}
-	}
-
-	private DefaultPyramidal5DImageData< ?, ? > load( final String resource, final Context context ) throws URISyntaxException
-	{
-		return load( resource, context, null );
-	}
-
-	private DefaultPyramidal5DImageData< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
-			throws URISyntaxException
-	{
-		Path path = ZarrTestUtils.resourcePath( resource );
-		return new DefaultPyramidal5DImageData<>( context, path.toString(), preferredWidth );
 	}
 }

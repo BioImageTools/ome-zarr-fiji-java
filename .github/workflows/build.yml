@@ -24,6 +24,13 @@ jobs:
           cache: 'maven'
       - name: Set up CI environment
         run: .github/setup.sh
+      - name: Build zarr-java 0.1.3-SNAPSHOT from PR #71
+        # zarr-java 0.1.3-SNAPSHOT is not deployed to any Maven repository
+        # yet, so we build and install it into the local Maven repo before
+        # the main build. Source: https://github.com/zarr-developers/zarr-java/pull/71
+        run: |
+          git clone --depth 1 -b attach-shaded-jar-as-classifier https://github.com/stefanhahmann/zarr-java.git "$RUNNER_TEMP/zarr-java"
+          (cd "$RUNNER_TEMP/zarr-java" && mvn -B -DskipTests -Dgpg.skip=true install)
       - name: Execute the build
         run: .github/build.sh
         env:

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,18 +26,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.exceptions;
 
-public class NotASingleScaleImageException extends RuntimeException
+/**
+ * Thrown when a pyramid backend cannot read a specific resolution level of
+ * an OME-Zarr dataset — e.g. the underlying zarr library rejected the
+ * request with an {@code IOException} or {@code ZarrException}, the chunks
+ * are missing or corrupted, or a remote read failed. The multiscale
+ * metadata itself parsed fine; otherwise
+ * {@link NotAMultiscaleImageException} would have been thrown earlier.
+ */
+public class PyramidLevelAccessException extends RuntimeException
 {
 
-	public NotASingleScaleImageException( final String path )
+	public PyramidLevelAccessException( final String path, final int levelIndex, final Throwable cause )
 	{
-		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image." );
-	}
-
-	public NotASingleScaleImageException( final String path, final Throwable cause )
-	{
-		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image. Cause: " + cause.getMessage(), cause );
+		super( "Cannot open resolution level " + levelIndex + " of: " + path, cause );
 	}
 }

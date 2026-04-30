@@ -28,6 +28,8 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
+import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
+
 import static sc.fiji.ome.zarr.pyramid.Multiscales.MULTI_SCALE_KEY;
 
 import net.imglib2.RandomAccessibleInterval;
