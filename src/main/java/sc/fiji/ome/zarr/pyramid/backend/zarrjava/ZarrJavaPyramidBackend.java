@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Array;
@@ -84,6 +85,7 @@ import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.PyramidLevelAccessException;
@@ -279,18 +281,21 @@ public class ZarrJavaPyramidBackend<
 
 	private MultiscaleImage openMultiscaleImageFromFilesystem( final Path inputPath )
 	{
+		StoreHandle handle;
 		try
 		{
 			final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
 			final Path zarrRoot = rootPath != null ? rootPath : inputPath;
 			final FilesystemStore store = new FilesystemStore( zarrRoot );
 
-			StoreHandle handle = store.resolve();
+			handle = store.resolve();
 			if ( rootPath != null && !rootPath.equals( inputPath ) )
 			{
 				for ( final String segment : ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath ) )
 					handle = handle.resolve( segment );
 			}
+			if ( hasOmeChild( handle ) )
+				throw new MultiImageDatasetException( inputUri.toString() );
 			return MultiscaleImage.open( handle );
 		}
 		catch ( ZarrException | IOException e )
@@ -306,14 +311,40 @@ public class ZarrJavaPyramidBackend<
 	 */
 	private MultiscaleImage openMultiscaleImageOverHttp( final URI httpUri )
 	{
+		StoreHandle handle;
 		try
 		{
 			final Store store = new HttpStore( httpUri.toString() );
-			return MultiscaleImage.open( store.resolve() );
+			handle = store.resolve();
+			if ( hasOmeChild( handle ) )
+				throw new MultiImageDatasetException( inputUri.toString() );
+			return MultiscaleImage.open( handle );
 		}
 		catch ( ZarrException | IOException e )
 		{
 			throw new NotAMultiscaleImageException( inputUri.toString(), e );
+		}
+	}
+
+	/**
+	 * Detects an {@code OME/} child group at {@code handle} — the marker for
+	 * a {@code bioformats2raw.layout} collection (and, more loosely, for any
+	 * OME-Zarr container whose root carries OME-XML metadata rather than a
+	 * single multiscale image). Case-insensitive because some implementations
+	 * use {@code OME} and others {@code ome}. Returns {@code false} if
+	 * {@link StoreHandle#listChildren()} fails (e.g. http stores that don't
+	 * expose directory listings) so a transient listing error never promotes
+	 * a generic failure into a misleading "multi-image" message.
+	 */
+	private static boolean hasOmeChild( final StoreHandle handle )
+	{
+		try (final Stream< String > children = handle.listChildren())
+		{
+			return children.anyMatch( "OME"::equalsIgnoreCase );
+		}
+		catch ( final RuntimeException e )
+		{
+			return false;
 		}
 	}
 
