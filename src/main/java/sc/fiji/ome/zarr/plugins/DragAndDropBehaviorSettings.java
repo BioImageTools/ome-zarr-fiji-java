@@ -42,14 +42,14 @@ import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
 
 /**
  * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.
  */
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Drag & Drop Behavior Settings", initializer = "init" )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Settings > Opening Behavior Settings", initializer = "init" )
 public class DragAndDropBehaviorSettings extends DynamicCommand
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
@@ -64,13 +64,13 @@ public class DragAndDropBehaviorSettings extends DynamicCommand
 	@Parameter( visibility = ItemVisibility.MESSAGE, required = false, persist = false )
 	private String infoMessage = "<html>"
 			+ "<body width=" + WIDTH + "cm align=left>"
-			+ "Configure the behavior when OME-Zarr datasets are drag & dropped into Fiji.<br>"
-			+ "Choose a default behavior and optionally limit the preferred resolution."
+			+ "Configure the behavior when OME-Zarr datasets are drag & dropped (local folders) or copy & pasted (local and remote paths) into Fiji.<br>"
+			+ "Choose a default behavior, optionally limit the preferred resolution and choose the reader backend libary."
 			+ "</body>"
 			+ "</html>";
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Default Drag & Drop behavior", description = "Choose the behavior if you drag & drop an OME-Zarr image folder into Fiji", initializer = "initZarrOpenBehaviors" )
+	@Parameter( label = "Default opening behavior", description = "Choose the opening behavior if you drag & drop local OME-Zarr folders or copy & paste OME-Zarr paths (local/remote) into Fiji", initializer = "initZarrOpenBehaviors" )
 	private String defaultZarrOpenBehavior;
 
 	@SuppressWarnings( "all" )
@@ -100,7 +100,7 @@ public class DragAndDropBehaviorSettings extends DynamicCommand
 			+ "</body>"
 			+ "</html>";
 
-	private ZarrDragAndDropOpenSettings settings;
+	private ZarrOpeningSettings settings;
 
 	@Override
 	public void run()
@@ -108,7 +108,7 @@ public class DragAndDropBehaviorSettings extends DynamicCommand
 		settings.setCurrentChoice( ZarrOpenBehavior.getByDescription( defaultZarrOpenBehavior ) );
 		settings.setPreferredMaxWidth( preferredWidth );
 		settings.setReaderBackend( ZarrReaderBackend.getByDescription( readerBackendChoice ) );
-		logger.debug( "Now saving OME-Zarr Drag & Drop settings to user preferences. Behavior: {}, preferredWidth: {}, readerBackend: {}",
+		logger.debug( "Now saving OME-Zarr settings to user preferences. Behavior: {}, preferredWidth: {}, readerBackend: {}",
 				settings.getOpenBehavior(), preferredWidth, settings.getReaderBackend() );
 		settings.saveSettingsToPreferences( prefService );
 	}
@@ -116,7 +116,7 @@ public class DragAndDropBehaviorSettings extends DynamicCommand
 	@SuppressWarnings( "unused" )
 	private void init()
 	{
-		settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
+		settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 		defaultZarrOpenBehavior = settings.getOpenBehavior().getDescription();
 		preferredWidth = settings.getPreferredMaxWidth();
 		readerBackendChoice = settings.getReaderBackend().getDescription();

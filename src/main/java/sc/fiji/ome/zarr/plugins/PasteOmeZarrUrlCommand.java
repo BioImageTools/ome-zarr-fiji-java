@@ -49,8 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ij.IJ;
-import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
-import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.ZarrLocations;
 import sc.fiji.ome.zarr.util.ZarrOpenActions;
@@ -190,7 +189,7 @@ public class PasteOmeZarrUrlCommand implements Command
 
 	private static void open( final Context context, final PrefService prefService, final URI uri )
 	{
-		final ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
+		final ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 		final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings );
 		switch ( settings.getOpenBehavior() )
 		{

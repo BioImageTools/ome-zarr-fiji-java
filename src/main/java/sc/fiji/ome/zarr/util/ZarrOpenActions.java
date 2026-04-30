@@ -58,7 +58,7 @@ import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
-import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
 
@@ -74,19 +74,19 @@ public class ZarrOpenActions
 
 	private final Consumer< String > errorHandler;
 
-	private final ZarrDragAndDropOpenSettings settings;
+	private final ZarrOpeningSettings settings;
 
 	public ZarrOpenActions( final URI inputUri, final Context context )
 	{
 		this( inputUri, context, null, IJ::error );
 	}
 
-	public ZarrOpenActions( final URI inputUri, final Context context, final ZarrDragAndDropOpenSettings settings )
+	public ZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings )
 	{
 		this( inputUri, context, settings, IJ::error );
 	}
 
-	ZarrOpenActions( final URI inputUri, final Context context, final ZarrDragAndDropOpenSettings settings,
+	ZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings,
 			final Consumer< String > errorHandler )
 	{
 		this.inputUri = inputUri;
@@ -168,14 +168,14 @@ public class ZarrOpenActions
 	private void showNonZarrError( final Exception e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
-				+ "The drag & drop for OME-Zarr folders only supports folders that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
+				+ "The opener for OME-Zarr folders only supports folders that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
 		logger.warn( "Could not open dataset image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
 	private void showNonMatchingResolutionError( final Exception e )
 	{
 		errorHandler.accept( "Safety check failed when opening dataset: " + inputUri + "\n\r\n" + e.getMessage() + "\n\r\n"
-				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Drag & Drop Behavior Settings to still open the image." );
+				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Settings > Opening Behavior Settings to still open the image." );
 		logger.warn( "Not opening dataset: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
@@ -226,7 +226,7 @@ public class ZarrOpenActions
 			preferredWidth = settings.getPreferredMaxWidth();
 
 		final ZarrReaderBackend backend = settings == null
-				? ZarrDragAndDropOpenSettings.DEFAULT_READER_BACKEND
+				? ZarrOpeningSettings.DEFAULT_READER_BACKEND
 				: settings.getReaderBackend();
 
 		final Pyramidal5DImageDataImpl< ?, ? > data;

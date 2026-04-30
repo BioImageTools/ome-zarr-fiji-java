@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,20 +35,20 @@ import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
 /**
- * Unit tests for the {@link ZarrDragAndDropOpenSettings#getOpenBehavior()} method.
+ * Unit tests for the {@link ZarrOpeningSettings#getOpenBehavior()} method.
  * This method retrieves the current chosen open option for Zarr datasets.
  */
-class ZarrDragAndDropOpenSettingsTest
+class ZarrOpeningSettingsTest
 {
 
 	@Test
 	void testGetOpenBehaviorSet()
 	{
 		// Instantiate ZarrDefaultOpenSettings without custom values
-		ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings();
+		ZarrOpeningSettings settings = new ZarrOpeningSettings();
 
 		// Verify the default open option is returned
-		assertEquals( ZarrDragAndDropOpenSettings.DEFAULT_OPEN_BEHAVIOR, settings.getOpenBehavior(),
+		assertEquals( ZarrOpeningSettings.DEFAULT_OPEN_BEHAVIOR, settings.getOpenBehavior(),
 				"Default open option should be IMAGEJ_CUSTOM_RES" );
 	}
 
@@ -56,7 +56,7 @@ class ZarrDragAndDropOpenSettingsTest
 	void testGetOpenBehavior()
 	{
 		// Instantiate ZarrDefaultOpenSettings
-		ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings();
+		ZarrOpeningSettings settings = new ZarrOpeningSettings();
 
 		// Set a new open option
 		settings.setCurrentChoice( ZarrOpenBehavior.BDV_MULTI_RESOLUTION );
@@ -74,9 +74,9 @@ class ZarrDragAndDropOpenSettingsTest
 			PrefService prefService = context.getService( PrefService.class );
 			prefService.clearAll();
 			// Load settings from preferences for the first time and verify default values
-			ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
-			assertEquals( ZarrDragAndDropOpenSettings.DEFAULT_OPEN_BEHAVIOR, settings.getOpenBehavior() );
-			assertEquals( ZarrDragAndDropOpenSettings.DEFAULT_PREFERRED_WIDTH, settings.getPreferredMaxWidth() );
+			ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
+			assertEquals( ZarrOpeningSettings.DEFAULT_OPEN_BEHAVIOR, settings.getOpenBehavior() );
+			assertEquals( ZarrOpeningSettings.DEFAULT_PREFERRED_WIDTH, settings.getPreferredMaxWidth() );
 
 			// Set custom values and save them to preferences
 			settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION );
@@ -84,7 +84,7 @@ class ZarrDragAndDropOpenSettingsTest
 			settings.saveSettingsToPreferences( prefService );
 
 			// Load settings from preferences again and verify custom values
-			ZarrDragAndDropOpenSettings settings2 = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
+			ZarrOpeningSettings settings2 = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 			assertEquals( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, settings2.getOpenBehavior() );
 			assertEquals( 500, settings2.getPreferredMaxWidth() );
 		}

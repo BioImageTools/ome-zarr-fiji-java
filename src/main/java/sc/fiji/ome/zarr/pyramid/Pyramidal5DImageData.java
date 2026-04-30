@@ -43,7 +43,7 @@ import org.scijava.prefs.PrefService;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
-import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
 
 /**
@@ -96,7 +96,7 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 
 	/**
 	 * Opens an OME-Zarr image using the backend configured in the context's
-	 * {@link ZarrDragAndDropOpenSettings}, falling back to the N5 backend if no
+	 * {@link ZarrOpeningSettings}, falling back to the N5 backend if no
 	 * settings service is present.
 	 *
 	 * @param uri location of the OME-Zarr root; either a {@code file:} URI for
@@ -109,7 +109,7 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > open(
 			final Context context, final URI uri, final Integer preferredWidth )
 	{
-		final ZarrReaderBackend backend = ZarrDragAndDropOpenSettings
+		final ZarrReaderBackend backend = ZarrOpeningSettings
 				.loadSettingsFromPreferences( context.getService( PrefService.class ) )
 				.getReaderBackend();
 		switch ( backend )
