@@ -43,7 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
 
-import sc.fiji.ome.zarr.plugins.DragAndDropUserScriptSettings;
+import sc.fiji.ome.zarr.plugins.UserScriptSettings;
 
 public class ScriptUtils
 {
@@ -74,8 +74,8 @@ public class ScriptUtils
 		if ( prefService == null )
 			return DEFAULT_SCRIPT_TITLE;
 
-		final String scriptTitle = prefService.get( DragAndDropUserScriptSettings.class, "scriptTitle", DEFAULT_SCRIPT_TITLE );
-		final String scriptPath = prefService.get( DragAndDropUserScriptSettings.class, "scriptPath", "--none--" );
+		final String scriptTitle = prefService.get( UserScriptSettings.class, "scriptTitle", DEFAULT_SCRIPT_TITLE );
+		final String scriptPath = prefService.get( UserScriptSettings.class, "scriptPath", "--none--" );
 
 		return Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) ? scriptTitle : DEFAULT_SCRIPT_TITLE;
 	}
@@ -102,7 +102,7 @@ public class ScriptUtils
 		}
 
 		//retrieve the path to the preset script
-		final String scriptPath = prefService.get( DragAndDropUserScriptSettings.class, "scriptPath", "--none--" );
+		final String scriptPath = prefService.get( UserScriptSettings.class, "scriptPath", "--none--" );
 
 		if ( Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) )
 		{
@@ -133,7 +133,7 @@ public class ScriptUtils
 		{
 			logger.info( "Script path is not valid: {}. Opening script editor with a script template instead.", scriptPath );
 			errorHandler.accept( "Script path is not valid: " + scriptPath
-					+ ".\n\nPlease provide a valid path via Plugins > OME-Zarr > Drag & Drop User Script Settings.\n\nWill open now script editor with a script template." );
+					+ ".\n\nPlease provide a valid path via Plugins > OME-Zarr > Settings > User Script Settings.\n\nWill open now script editor with a script template." );
 			//this opens an _always new_ window with the template script,
 			//...at least the user is more likely to notice that this "help" came up
 			final TextEditor editor = new TextEditor( ctx );
@@ -145,8 +145,8 @@ public class ScriptUtils
 	static String getTemplate()
 	{
 		return "# RESAVE THIS SCRIPT AND OPEN IN THE MENU\n" +
-				"# Fiji > Plugins > OME-Zarr > Drag & Drop User Script Settings\n" +
-				"# to have this available among the OME-Zarr drag & drop choices.\n" +
+				"# Fiji > Plugins > OME-Zarr > Settings > User Script Settings\n" +
+				"# to have this available among the OME-Zarr opening choices.\n" +
 				"# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
 				"\n" +
 				"#@ String path\n" +

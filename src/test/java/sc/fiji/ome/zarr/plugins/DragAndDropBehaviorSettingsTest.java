@@ -42,7 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
-import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
 
@@ -82,7 +82,7 @@ class DragAndDropBehaviorSettingsTest
 
 			ui.run();
 
-			ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
+			ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 
 			assertEquals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION, settings.getOpenBehavior() );
 			assertEquals( customWidth, settings.getPreferredMaxWidth() );
