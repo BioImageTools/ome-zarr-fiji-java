@@ -53,6 +53,7 @@ import net.imglib2.util.Cast;
 import bdv.util.BdvFunctions;
 import ij.IJ;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotASingleScaleImageException;
@@ -150,6 +151,12 @@ public class ZarrOpenActions
 		);
 	}
 
+	private void showMultiImageNotSupported( final MultiImageDatasetException e )
+	{
+		errorHandler.accept( e.getMessage() + "\n\n" + "Consider opening one level lower in the hierarchy instead." );
+		logger.info( e.getMessage() );
+	}
+
 	private void showSingleScaleNotSupported()
 	{
 		errorHandler.accept(
@@ -188,6 +195,11 @@ public class ZarrOpenActions
 			Object result = openMultiScaleImage( multiScaleImageOpener );
 			logger.info( "Opened dataset in {}: {}", message, inputUri );
 			return result;
+		}
+		catch ( MultiImageDatasetException e )
+		{
+			logger.warn( "Tried to open a multi image dataset: {}", e.getMessage() );
+			showMultiImageNotSupported( e );
 		}
 		catch ( NotAMultiscaleImageException e )
 		{

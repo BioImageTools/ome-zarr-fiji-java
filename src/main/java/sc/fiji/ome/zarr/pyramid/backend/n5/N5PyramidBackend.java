@@ -75,6 +75,7 @@ import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
@@ -251,8 +252,38 @@ public class N5PyramidBackend<
 		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, new ArrayList<>( parsers ) );
 		final N5Metadata n5Metadata = node.getMetadata();
 		if ( n5Metadata == null )
+		{
+			if ( hasOmeFolder( reader, relativePath ) )
+				throw new MultiImageDatasetException( inputUri.toString() );
 			throw new NotAMultiscaleImageException( inputUri.toString() );
+		}
 		return n5Metadata;
+	}
+
+	/**
+	 * Detects an {@code OME/} child group at {@code relativePath} — the
+	 * marker for a {@code bioformats2raw.layout} collection (and, more
+	 * loosely, for any OME-Zarr container whose root carries OME-XML
+	 * metadata rather than a single multiscale image). Case-insensitive
+	 * because some implementations use {@code OME} and others {@code ome}.
+	 */
+	private static boolean hasOmeFolder( final N5Reader reader, final String relativePath )
+	{
+		try
+		{
+			final String[] children = reader.list( relativePath );
+			if ( children == null )
+				return false;
+			for ( final String child : children )
+				if ( "OME".equalsIgnoreCase( child ) )
+					return true;
+		}
+		catch ( final RuntimeException e )
+		{
+			// Listing failed (e.g. path doesn't exist or remote read errored);
+			// treat as "no OME folder".
+		}
+		return false;
 	}
 
 	private VoxelDimensions createVoxelDimensions( final AffineTransform3D transform, final String unit )
