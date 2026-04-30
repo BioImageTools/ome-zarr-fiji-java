@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static sc.fiji.ome.zarr.util.ZarrTestUtils.IMAGE_NAME;
 
@@ -64,6 +65,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -186,6 +188,62 @@ class ZarrOpenActionsTest
 				Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
 				Function< Img< ? >, Object > singleScaleNoOp = img -> null;
 				assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
+			}
+		}
+	}
+
+	@Test
+	void testOpenBioformats2rawCollectionRootReportsMultiImage() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath(
+				"sc/fiji/ome/zarr/util/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr" );
+		try (Context context = new Context())
+		{
+			AtomicReference< String > capturedError = new AtomicReference<>();
+			Consumer< String > errorHandler = capturedError::set;
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, errorHandler );
+			AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
+			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
+			Function< PyramidalDataset< ? >, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
+			Function< Img< ? >, Object > singleScaleOpener = img -> singleScaleCounter.incrementAndGet();
+			assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener, "" ) );
+			assertEquals( 0, multiScaleCounter.get(),
+					"Multi-image collection must not be opened as a single multiscale image" );
+			assertEquals( 0, singleScaleCounter.get() );
+			assertNotNull( capturedError.get(),
+					"Error handler should have been called with the multi-image message" );
+			assertTrue( capturedError.get().contains( "multiple images" ),
+					"Expected multi-image message, got: " + capturedError.get() );
+		}
+	}
+
+	@Test
+	void testOpenBioformats2rawCollectionChildOpens() throws URISyntaxException
+	{
+		String[] childPaths = {
+				"sc/fiji/ome/zarr/util/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr/0",
+				"sc/fiji/ome/zarr/util/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr/1"
+		};
+		try (Context context = new Context())
+		{
+			for ( String childPath : childPaths )
+			{
+				Path path = ZarrTestUtils.resourcePath( childPath );
+				AtomicReference< String > capturedError = new AtomicReference<>();
+				Consumer< String > errorHandler = capturedError::set;
+				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, errorHandler );
+				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
+				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
+				Function< PyramidalDataset< ? >, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
+				Function< Img< ? >, Object > singleScaleOpener = img -> singleScaleCounter.incrementAndGet();
+				assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener, "" ),
+						"Opening child image " + childPath + " should not throw" );
+				assertEquals( 1, multiScaleCounter.get(),
+						"Child image " + childPath + " should be opened as a multiscale image" );
+				assertEquals( 0, singleScaleCounter.get() );
+				assertNull( capturedError.get(),
+						"Error handler should not have been called for child " + childPath
+								+ ", got: " + capturedError.get() );
 			}
 		}
 	}
