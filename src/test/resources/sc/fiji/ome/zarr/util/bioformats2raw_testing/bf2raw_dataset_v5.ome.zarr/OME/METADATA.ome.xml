@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OME xmlns="http://www.openmicroscopy.org/Schemas/OME/2016-06"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.openmicroscopy.org/Schemas/OME/2016-06 http://www.openmicroscopy.org/Schemas/OME/2016-06/ome.xsd">
+    <Image ID="Image:0" Name="image_0">
+        <Pixels ID="Pixels:0" DimensionOrder="XYZCT" Type="uint8"
+                SizeX="64" SizeY="64" SizeZ="1" SizeC="1" SizeT="1"
+                BigEndian="false" Interleaved="false">
+            <Channel ID="Channel:0:0" SamplesPerPixel="1"/>
+            <MetadataOnly/>
+        </Pixels>
+    </Image>
+    <Image ID="Image:1" Name="image_1">
+        <Pixels ID="Pixels:1" DimensionOrder="XYZCT" Type="uint8"
+                SizeX="64" SizeY="64" SizeZ="1" SizeC="1" SizeT="1"
+                BigEndian="false" Interleaved="false">
+            <Channel ID="Channel:1:0" SamplesPerPixel="1"/>
+            <MetadataOnly/>
+        </Pixels>
+    </Image>
+</OME>
