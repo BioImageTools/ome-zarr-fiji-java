@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,7 +32,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-
 import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.io.location.FileLocation;
@@ -44,7 +43,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.util.ZarrOpenActions;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
@@ -58,7 +57,7 @@ class DnDHandlerPluginTest
 		try (Context context = new Context())
 		{
 			PrefService prefService = context.getService( PrefService.class );
-			ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings();
+			ZarrOpeningSettings settings = new ZarrOpeningSettings();
 			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/" );
 			FileLocation fileLocation = new FileLocation( path.toUri() );
 			ZarrOpenActions actionsMock = mock( ZarrOpenActions.class );
@@ -67,7 +66,7 @@ class DnDHandlerPluginTest
 			{
 				@Override
 				protected ZarrOpenActions createZarrOpenActions( final URI inputUri, final Context context,
-						final ZarrDragAndDropOpenSettings settings )
+						final ZarrOpeningSettings settings )
 				{
 					return actionsMock;
 				}

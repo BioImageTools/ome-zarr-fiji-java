@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -77,9 +77,9 @@ import javax.swing.SwingUtilities;
 import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
 import ij.ImagePlus;
-import sc.fiji.ome.zarr.plugins.DragAndDropUserScriptSettings;
+import sc.fiji.ome.zarr.plugins.UserScriptSettings;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
-import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 
 class ZarrOpenActionsTest
@@ -196,7 +196,7 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
-			ZarrDragAndDropOpenSettings settings = new ZarrDragAndDropOpenSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
+			ZarrOpeningSettings settings = new ZarrOpeningSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, System.out::println );
 			Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
 			Function< Img< ? >, Object > singleScaleNoOp = img -> null;
@@ -361,7 +361,7 @@ class ZarrOpenActionsTest
 
 	@ParameterizedTest
 	@MethodSource( "omeZarrExamples" )
-	void testOpenMultiScaleDatasetBDV(String resource) throws URISyntaxException, InterruptedException, InvocationTargetException
+	void testOpenMultiScaleDatasetBDV( String resource ) throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
@@ -464,7 +464,7 @@ class ZarrOpenActionsTest
 			try (Context context = new Context())
 			{
 				PrefService prefService = context.getService( PrefService.class );
-				prefService.put( DragAndDropUserScriptSettings.class, "scriptPath", "--none--" );
+				prefService.put( UserScriptSettings.class, "scriptPath", "--none--" );
 				String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
 				Path path = ZarrTestUtils.resourcePath( resource );
 				AtomicBoolean scriptFailed = new AtomicBoolean( false );
@@ -512,7 +512,7 @@ class ZarrOpenActionsTest
 
 			File tempFile = temp.toFile();
 			tempFile.deleteOnExit();
-			prefService.put( DragAndDropUserScriptSettings.class, "scriptPath", tempFile.getAbsolutePath() );
+			prefService.put( UserScriptSettings.class, "scriptPath", tempFile.getAbsolutePath() );
 			String resource = "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr";
 			Path path = ZarrTestUtils.resourcePath( resource );
 			AtomicBoolean scriptFailed = new AtomicBoolean( false );

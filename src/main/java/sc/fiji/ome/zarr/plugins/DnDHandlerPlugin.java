@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -50,7 +50,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 import sc.fiji.ome.zarr.util.ZarrOpenActions;
@@ -93,7 +93,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		final Path droppedInPath = fileLocation.getFile().toPath();
 		final URI inputUri = droppedInPath.toUri();
 
-		ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
+		ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 		ZarrOpenActions actions = createZarrOpenActions( inputUri, context(), settings );
 		switch ( settings.getOpenBehavior() )
 		{
@@ -118,7 +118,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		return FAKE_INPUT;
 	}
 
-	protected ZarrOpenActions createZarrOpenActions( final URI inputUri, final Context context, final ZarrDragAndDropOpenSettings settings )
+	protected ZarrOpenActions createZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings )
 	{
 		return new ZarrOpenActions( inputUri, context, settings );
 	}
