@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,6 +33,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.scijava.Context;
@@ -40,6 +44,7 @@ import org.scijava.prefs.PrefService;
 
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
 
 /**
  * Unit tests for the {@link DragAndDropBehaviorSettings#run()} method.
@@ -83,5 +88,42 @@ class DragAndDropBehaviorSettingsTest
 			assertEquals( customWidth, settings.getPreferredMaxWidth() );
 
 		}
+	}
+
+	@Test
+	void testEnumNamesAsListReturnsAllDescriptionsInDeclarationOrder()
+	{
+		final List< String > expected =
+				Arrays.stream( ZarrOpenBehavior.values() ).map( ZarrOpenBehavior::getDescription ).collect( Collectors.toList() );
+		final List< String > actual = DragAndDropBehaviorSettings.enumNamesAsList( ZarrOpenBehavior.values() );
+		assertEquals( expected, actual );
+		// Sanity-check a couple of entries explicitly so the test catches a
+		// mistaken switch from getDescription() to name() or to toString().
+		assertEquals( "Open the highest available single-resolution in ImageJ", actual.get( 0 ) );
+		assertEquals( ZarrOpenBehavior.values().length, actual.size() );
+	}
+
+	@Test
+	void testEnumNamesAsListIsEmptyForEmptyInput()
+	{
+		assertEquals( Collections.emptyList(), DragAndDropBehaviorSettings.enumNamesAsList( new ZarrOpenBehavior[ 0 ] ) );
+	}
+
+	@Test
+	void testReaderBackendDescriptionsReturnsAllDescriptionsInDeclarationOrder()
+	{
+		final List< String > expected =
+				Arrays.stream( ZarrReaderBackend.values() ).map( ZarrReaderBackend::getDescription ).collect( Collectors.toList() );
+		final List< String > actual = DragAndDropBehaviorSettings.readerBackendDescriptions( ZarrReaderBackend.values() );
+		assertEquals( expected, actual );
+		// Anchored explicit values: these are the strings the settings dialog
+		// presents to the user, so a stealth rename should fail this test.
+		assertEquals( Arrays.asList( "N5", "zarr-java" ), actual );
+	}
+
+	@Test
+	void testReaderBackendDescriptionsIsEmptyForEmptyInput()
+	{
+		assertEquals( Collections.emptyList(), DragAndDropBehaviorSettings.readerBackendDescriptions( new ZarrReaderBackend[ 0 ] ) );
 	}
 }
