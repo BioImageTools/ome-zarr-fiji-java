@@ -50,8 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import ij.IJ;
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
-import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
-import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.ZarrLocations;
 
 /**
@@ -92,12 +90,12 @@ public class PasteOmeZarrUrlCommand implements Command
 		final URI uri = parseClipboardUri( readClipboard(), errorHandler );
 		if ( uri == null )
 			return;
-		open( context, prefService, uri );
+		ZarrOpenActions.openWithSettings( uri, context, prefService );
 	}
 
 	/**
 	 * Resolve the pasted clipboard text to a URI suitable for
-	 * {@link ZarrOpenActions}. Handles three input forms:
+	 * {@link ZarrOpenActions#openWithSettings}. Handles three input forms:
 	 * <ul>
 	 *   <li>{@code http://} or {@code https://} URLs &ndash; used as-is</li>
 	 *   <li>{@code file:} URIs &ndash; used as-is</li>
@@ -187,23 +185,4 @@ public class PasteOmeZarrUrlCommand implements Command
 		}
 	}
 
-	private static void open( final Context context, final PrefService prefService, final URI uri )
-	{
-		final ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-		final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings );
-		switch ( settings.getOpenBehavior() )
-		{
-		case IMAGEJ_HIGHEST_RESOLUTION:
-		case IMAGEJ_CUSTOM_RESOLUTION:
-			actions.openIJWithImage();
-			break;
-		case BDV_MULTI_RESOLUTION:
-			actions.openBDVWithImage();
-			break;
-		case SHOW_SELECTION_DIALOG:
-		default:
-			new DnDActionChooser( context, actions ).showDialog();
-			break;
-		}
-	}
 }
