@@ -30,7 +30,6 @@ package sc.fiji.ome.zarr.plugins;
 
 import net.imglib2.util.Cast;
 
-import org.scijava.Context;
 import org.scijava.io.AbstractIOPlugin;
 import org.scijava.io.IOPlugin;
 import org.scijava.io.location.FileLocation;
@@ -50,8 +49,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
-import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
-import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
@@ -93,22 +90,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		final Path droppedInPath = fileLocation.getFile().toPath();
 		final URI inputUri = droppedInPath.toUri();
 
-		ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-		ZarrOpenActions actions = createZarrOpenActions( inputUri, context(), settings );
-		switch ( settings.getOpenBehavior() )
-		{
-		case IMAGEJ_HIGHEST_RESOLUTION:
-		case IMAGEJ_CUSTOM_RESOLUTION:
-			actions.openIJWithImage();
-			break;
-		case BDV_MULTI_RESOLUTION:
-			actions.openBDVWithImage();
-			break;
-		case SHOW_SELECTION_DIALOG:
-		default:
-			createDnDActionChooser( context(), actions ).showDialog();
-			break;
-		}
+		ZarrOpenActions.openWithSettings( inputUri, context(), prefService );
 
 		// Returning such an object makes Scijava's DnD subsystem believe that the dropped object
 		// has been already fully loaded, and Scijava (Fiji) will attempt to display it now (and
@@ -116,16 +98,6 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		// is exactly what is desired now). The processing of this DnD event will then finish finally.
 		// (While our DnDActionChoose window will still be up there...)
 		return FAKE_INPUT;
-	}
-
-	protected ZarrOpenActions createZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings )
-	{
-		return new ZarrOpenActions( inputUri, context, settings );
-	}
-
-	protected DnDActionChooser createDnDActionChooser( final Context context, final ZarrOpenActions actions )
-	{
-		return new DnDActionChooser( context, actions );
 	}
 
 	@Override

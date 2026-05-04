@@ -28,76 +28,41 @@
  */
 package sc.fiji.ome.zarr.plugins;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.scijava.Context;
 import org.scijava.io.location.FileLocation;
 import org.scijava.prefs.PrefService;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
-import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
-import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
-import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class DnDHandlerPluginTest
 {
 	@Test
-	void testOpen() throws URISyntaxException, IOException
+	void openDelegatesToZarrOpenActions() throws URISyntaxException, IOException
 	{
-
 		try (Context context = new Context())
 		{
-			PrefService prefService = context.getService( PrefService.class );
-			ZarrOpeningSettings settings = new ZarrOpeningSettings();
-			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/" );
-			FileLocation fileLocation = new FileLocation( path.toUri() );
-			ZarrOpenActions actionsMock = mock( ZarrOpenActions.class );
-			DnDActionChooser actionChooserMock = mock( DnDActionChooser.class );
-			DnDHandlerPlugin dnDHandlerPlugin = new DnDHandlerPlugin()
-			{
-				@Override
-				protected ZarrOpenActions createZarrOpenActions( final URI inputUri, final Context context,
-						final ZarrOpeningSettings settings )
-				{
-					return actionsMock;
-				}
+			final PrefService prefService = context.getService( PrefService.class );
+			final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/" );
+			final FileLocation fileLocation = new FileLocation( path.toUri() );
 
-				@Override
-				protected DnDActionChooser createDnDActionChooser( final Context context, final ZarrOpenActions actions )
-				{
-					return actionChooserMock;
-				}
-			};
+			final DnDHandlerPlugin dnDHandlerPlugin = new DnDHandlerPlugin();
 			dnDHandlerPlugin.setContext( context );
 
-			settings.setCurrentChoice( ZarrOpenBehavior.BDV_MULTI_RESOLUTION );
-			settings.saveSettingsToPreferences( prefService );
-			dnDHandlerPlugin.open( fileLocation );
-			verify( actionsMock ).openBDVWithImage();
-
-			settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION );
-			settings.saveSettingsToPreferences( prefService );
-			dnDHandlerPlugin.open( fileLocation );
-			verify( actionsMock, times( 1 ) ).openIJWithImage();
-
-			settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION );
-			settings.saveSettingsToPreferences( prefService );
-			dnDHandlerPlugin.open( fileLocation );
-			verify( actionsMock, times( 2 ) ).openIJWithImage();
-
-			settings.setCurrentChoice( ZarrOpenBehavior.SHOW_SELECTION_DIALOG );
-			settings.saveSettingsToPreferences( prefService );
-			dnDHandlerPlugin.open( fileLocation );
-			verify( actionChooserMock ).showDialog();
+			try (MockedStatic< ZarrOpenActions > mocked = Mockito.mockStatic( ZarrOpenActions.class ))
+			{
+				dnDHandlerPlugin.open( fileLocation );
+				mocked.verify( () -> ZarrOpenActions.openWithSettings( path.toUri(), context, prefService ), times( 1 ) );
+			}
 		}
 	}
 }
