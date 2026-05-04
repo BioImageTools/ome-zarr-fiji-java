@@ -59,6 +59,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.SpatialMetadataGroup;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
 import org.scijava.Context;
+import org.scijava.convert.ConvertService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,7 @@ import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.SourceAndConverter;
+import ij.ImagePlus;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
@@ -795,5 +797,11 @@ public class DefaultPyramidal5DImageData<
 	public Omero getOmeroProperties()
 	{
 		return omero;
+	}
+
+	@Override
+	public ImagePlus asImagePlus()
+	{
+		return context.service( ConvertService.class ).convert( asDataset(), ImagePlus.class );
 	}
 }

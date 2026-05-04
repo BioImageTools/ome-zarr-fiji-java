@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -29,12 +29,15 @@
 package sc.fiji.ome.zarr.pyramid;
 
 import net.imagej.DefaultDataset;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import java.util.List;
 
 import bdv.viewer.SourceAndConverter;
+import ij.ImagePlus;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
@@ -90,5 +93,22 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 	public String getPyramidName()
 	{
 		return data.getName();
+	}
+
+	/**
+	 * Converts this {@code PyramidalDataset} into an {@code ImagePlus} object for a given resolution level,
+	 * channel, and timepoint.
+	 *
+	 * @param resolutionLevel The resolution level to use for extracting the image data.
+	 * @param channel The channel index to extract from the dataset.
+	 * @param timepoint The timepoint index to extract from the dataset.
+	 * @return An {@code ImagePlus} object representing the extracted image data.
+	 */
+	public ImagePlus getImagePlus( final int resolutionLevel, final int channel, final int timepoint )
+	{
+		final SourceAndConverter< T > sourceAndConverter = this.asSources().get( channel );
+		final RandomAccessibleInterval< T > randomAccessibleInterval =
+				sourceAndConverter.getSpimSource().getSource( timepoint, resolutionLevel );
+		return ImageJFunctions.wrap( randomAccessibleInterval, sourceAndConverter.getSpimSource().getName() );
 	}
 }
