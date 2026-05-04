@@ -256,7 +256,7 @@
 			</activation>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 2gb while running tests. -->
+					<!-- Configure the maven-surefire-plugin to use a heap size of 4gb while running tests. -->
 					<!-- forkCount=1 with reuseForks=true runs tests in a single forked JVM; -->
 					<!-- without this, argLine (and therefore -Xmx) would be ignored because -->
 					<!-- tests would share Maven's own JVM (whose heap defaults are smaller and -->
@@ -269,7 +269,7 @@
 						<configuration>
 							<forkCount>1</forkCount>
 							<reuseForks>true</reuseForks>
-							<argLine>-Xmx2g -da -Dimagej.legacy.disable=true</argLine>
+							<argLine>-Xmx4g -da -Dimagej.legacy.disable=true</argLine>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -279,7 +279,7 @@
 			<id>coverage</id>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 2gb while running tests for jacoco coverage analysis. -->
+					<!-- Configure the maven-surefire-plugin to use a heap size of 4gb while running tests for jacoco coverage analysis. -->
 					<!-- forkCount=1 with reuseForks=true keeps the jacoco agent argLine effective -->
 					<!-- against a forked test JVM rather than Maven's own (see comment in the -->
 					<!-- default profile above). -->
@@ -291,7 +291,7 @@
 						<configuration>
 							<forkCount>1</forkCount>
 							<reuseForks>true</reuseForks>
-							<argLine>@{argLine} -Xmx2g -da</argLine>
+							<argLine>@{argLine} -Xmx4g -da</argLine>
 						</configuration>
 					</plugin>
 					<plugin>
