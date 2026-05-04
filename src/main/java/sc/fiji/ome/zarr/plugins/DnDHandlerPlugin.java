@@ -49,11 +49,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-import sc.fiji.ome.zarr.ui.DnDActionChooser;
+import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
+import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
-import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
 public class DnDHandlerPlugin extends AbstractIOPlugin< Object >

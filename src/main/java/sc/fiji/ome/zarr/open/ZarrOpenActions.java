@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.util;
+package sc.fiji.ome.zarr.open;
 
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
@@ -61,6 +61,8 @@ import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
+import sc.fiji.ome.zarr.util.BdvUtils;
+import sc.fiji.ome.zarr.util.ScriptUtils;
 
 public class ZarrOpenActions
 {

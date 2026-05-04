@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.util;
+package sc.fiji.ome.zarr.open;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -81,6 +81,8 @@ import sc.fiji.ome.zarr.plugins.UserScriptSettings;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.util.ScriptUtils;
+import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class ZarrOpenActionsTest
 {

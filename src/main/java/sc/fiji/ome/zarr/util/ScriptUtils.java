@@ -81,10 +81,11 @@ public class ScriptUtils
 	}
 
 	/**
-	 * Executes either a preset script and passes 'inputPath' arg to it provided
-	 * the preset script is a valid file; otherwise it opens a script editor
-	 * on a default example script provided in {@link ScriptUtils#getTemplate()}.
-	 * <br>
+	 * Executes a preset script and passes the dataset location as the
+	 * {@code "path"} input variable, provided the preset script is a valid file;
+	 * otherwise opens a script editor on the default example script provided by
+	 * {@link ScriptUtils#getTemplate()}.
+	 *
 	 * @param ctx scijava context
 	 * @param inputUri URI or filesystem path string identifying the OME-Zarr
 	 *   dataset location; passed to the script module as the {@code "path"} input
@@ -142,7 +143,7 @@ public class ScriptUtils
 		}
 	}
 
-	static String getTemplate()
+	public static String getTemplate()
 	{
 		return "# RESAVE THIS SCRIPT AND OPEN IN THE MENU\n" +
 				"# Fiji > Plugins > OME-Zarr > Settings > User Script Settings\n" +
