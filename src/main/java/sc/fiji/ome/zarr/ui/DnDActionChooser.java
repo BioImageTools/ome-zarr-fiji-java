@@ -53,8 +53,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import sc.fiji.ome.zarr.ui.util.CreateIcon;
+import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.util.ScriptUtils;
-import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
 public class DnDActionChooser
 {

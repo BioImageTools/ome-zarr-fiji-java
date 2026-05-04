@@ -140,7 +140,7 @@ public class ScriptUtils
 		}
 	}
 
-	static String getTemplate()
+	public static String getTemplate()
 	{
 		return "# RESAVE THIS SCRIPT AND OPEN IN THE MENU\n" +
 				"# Fiji > Plugins > OME-Zarr > Settings > User Script Settings\n" +

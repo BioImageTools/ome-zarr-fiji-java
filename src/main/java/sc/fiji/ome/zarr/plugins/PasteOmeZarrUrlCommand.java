@@ -49,10 +49,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ij.IJ;
+import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.ZarrLocations;
-import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
 /**
  * Reads a URL or path from the system clipboard and opens it as an OME-Zarr
