@@ -34,6 +34,7 @@ import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.scijava.Context;
+import org.scijava.prefs.PrefService;
 import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,7 @@ import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
+import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 
@@ -77,6 +79,34 @@ public class ZarrOpenActions
 	private final Consumer< String > errorHandler;
 
 	private final ZarrOpeningSettings settings;
+
+	/**
+	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
+	 * {@code inputUri} via the action selected by the user's configured
+	 * {@link ZarrOpenBehavior}: ImageJ display, BigDataViewer display, or the
+	 * {@link DnDActionChooser} selection dialog. Shared entry point for the
+	 * drag-and-drop handler and the "paste URL" command.
+	 */
+	public static void openWithSettings( final URI inputUri, final Context context )
+	{
+		final PrefService prefService = context.getService( PrefService.class );
+		final ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
+		final ZarrOpenActions actions = new ZarrOpenActions( inputUri, context, settings );
+		switch ( settings.getOpenBehavior() )
+		{
+		case IMAGEJ_HIGHEST_RESOLUTION:
+		case IMAGEJ_CUSTOM_RESOLUTION:
+			actions.openIJWithImage();
+			break;
+		case BDV_MULTI_RESOLUTION:
+			actions.openBDVWithImage();
+			break;
+		case SHOW_SELECTION_DIALOG:
+		default:
+			new DnDActionChooser( context, actions ).showDialog();
+			break;
+		}
+	}
 
 	public ZarrOpenActions( final URI inputUri, final Context context )
 	{

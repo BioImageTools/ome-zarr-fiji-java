@@ -45,6 +45,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.scijava.Context;
@@ -81,6 +82,7 @@ import sc.fiji.ome.zarr.plugins.UserScriptSettings;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
@@ -128,6 +130,49 @@ class ZarrOpenActionsTest
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr/0",
 				"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr/0"
 		);
+	}
+
+	@Test
+	void openWithSettingsDispatchesToConfiguredOpenAction() throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			final PrefService prefService = context.getService( PrefService.class );
+			final ZarrOpeningSettings settings = new ZarrOpeningSettings();
+			final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/" );
+
+			try (MockedConstruction< ZarrOpenActions > actionsConstruction =
+					Mockito.mockConstruction( ZarrOpenActions.class );
+				 MockedConstruction< DnDActionChooser > chooserConstruction =
+					Mockito.mockConstruction( DnDActionChooser.class ))
+			{
+				settings.setCurrentChoice( ZarrOpenBehavior.BDV_MULTI_RESOLUTION );
+				settings.saveSettingsToPreferences( prefService );
+				ZarrOpenActions.openWithSettings( path.toUri(), context );
+
+				settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION );
+				settings.saveSettingsToPreferences( prefService );
+				ZarrOpenActions.openWithSettings( path.toUri(), context );
+
+				settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION );
+				settings.saveSettingsToPreferences( prefService );
+				ZarrOpenActions.openWithSettings( path.toUri(), context );
+
+				settings.setCurrentChoice( ZarrOpenBehavior.SHOW_SELECTION_DIALOG );
+				settings.saveSettingsToPreferences( prefService );
+				ZarrOpenActions.openWithSettings( path.toUri(), context );
+
+				final List< ZarrOpenActions > actionsInstances = actionsConstruction.constructed();
+				assertEquals( 4, actionsInstances.size() );
+				Mockito.verify( actionsInstances.get( 0 ), Mockito.times( 1 ) ).openBDVWithImage();
+				Mockito.verify( actionsInstances.get( 1 ), Mockito.times( 1 ) ).openIJWithImage();
+				Mockito.verify( actionsInstances.get( 2 ), Mockito.times( 1 ) ).openIJWithImage();
+
+				final List< DnDActionChooser > chooserInstances = chooserConstruction.constructed();
+				assertEquals( 1, chooserInstances.size() );
+				Mockito.verify( chooserInstances.get( 0 ), Mockito.times( 1 ) ).showDialog();
+			}
+		}
 	}
 
 	@ParameterizedTest
