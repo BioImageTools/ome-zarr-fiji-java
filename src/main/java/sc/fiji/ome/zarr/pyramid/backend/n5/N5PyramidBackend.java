@@ -75,6 +75,7 @@ import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
@@ -251,8 +252,26 @@ public class N5PyramidBackend<
 		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, new ArrayList<>( parsers ) );
 		final N5Metadata n5Metadata = node.getMetadata();
 		if ( n5Metadata == null )
+		{
+			if ( isBioformats2rawLayout( reader, relativePath ) )
+				throw new MultiImageDatasetException( inputUri.toString() );
 			throw new NotAMultiscaleImageException( inputUri.toString() );
+		}
 		return n5Metadata;
+	}
+
+	private static boolean isBioformats2rawLayout( final N5Reader reader, final String relativePath )
+	{
+		try
+		{
+			final JsonElement ome = reader.getAttribute( relativePath, "ome", JsonElement.class );
+			return ome != null && ome.isJsonObject() && ome.getAsJsonObject().has( "bioformats2raw.layout" );
+		}
+		catch ( final RuntimeException e )
+		{
+			logger.debug( "Could not read 'ome' attribute from '{}': {}", relativePath, e.getMessage() );
+			return false;
+		}
 	}
 
 	private VoxelDimensions createVoxelDimensions( final AffineTransform3D transform, final String unit )

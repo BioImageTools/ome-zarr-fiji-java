@@ -143,8 +143,8 @@ class ZarrOpenActionsTest
 
 			try (MockedConstruction< ZarrOpenActions > actionsConstruction =
 					Mockito.mockConstruction( ZarrOpenActions.class );
-				 MockedConstruction< DnDActionChooser > chooserConstruction =
-					Mockito.mockConstruction( DnDActionChooser.class ))
+					MockedConstruction< DnDActionChooser > chooserConstruction =
+							Mockito.mockConstruction( DnDActionChooser.class ))
 			{
 				settings.setCurrentChoice( ZarrOpenBehavior.BDV_MULTI_RESOLUTION );
 				settings.saveSettingsToPreferences( prefService );

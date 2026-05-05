@@ -29,6 +29,7 @@
 package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,6 +42,8 @@ import java.util.Map;
 
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Array;
+import dev.zarr.zarrjava.core.Attributes;
+import dev.zarr.zarrjava.core.Group;
 import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;
 import dev.zarr.zarrjava.experimental.ome.metadata.Axis;
 import dev.zarr.zarrjava.experimental.ome.metadata.MultiscalesEntry;
@@ -79,11 +82,15 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import bdv.cache.SharedQueue;
 import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.PyramidLevelAccessException;
@@ -104,6 +111,8 @@ public class ZarrJavaPyramidBackend<
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
 		implements PyramidBackend< T, V >
 {
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
 	private static final Map< String, AxisType > AXIS_MAPPING;
 
 	static
@@ -120,6 +129,8 @@ public class ZarrJavaPyramidBackend<
 	private final URI inputUri;
 
 	private final Integer preferredMaxWidth;
+
+	private StoreHandle activeHandle = null;
 
 	public ZarrJavaPyramidBackend( final URI inputUri )
 	{
@@ -279,22 +290,25 @@ public class ZarrJavaPyramidBackend<
 
 	private MultiscaleImage openMultiscaleImageFromFilesystem( final Path inputPath )
 	{
+		StoreHandle handle = null;
 		try
 		{
 			final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
 			final Path zarrRoot = rootPath != null ? rootPath : inputPath;
 			final FilesystemStore store = new FilesystemStore( zarrRoot );
 
-			StoreHandle handle = store.resolve();
+			handle = store.resolve();
 			if ( rootPath != null && !rootPath.equals( inputPath ) )
 			{
 				for ( final String segment : ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath ) )
 					handle = handle.resolve( segment );
 			}
+			activeHandle = handle;
 			return MultiscaleImage.open( handle );
 		}
 		catch ( ZarrException | IOException e )
 		{
+			checkForBioformats2rawLayout( handle );
 			throw new NotAMultiscaleImageException( inputUri.toString(), e );
 		}
 	}
@@ -306,14 +320,43 @@ public class ZarrJavaPyramidBackend<
 	 */
 	private MultiscaleImage openMultiscaleImageOverHttp( final URI httpUri )
 	{
+		StoreHandle handle = null;
 		try
 		{
 			final Store store = new HttpStore( httpUri.toString() );
-			return MultiscaleImage.open( store.resolve() );
+			handle = store.resolve();
+			activeHandle = handle;
+			return MultiscaleImage.open( handle );
 		}
 		catch ( ZarrException | IOException e )
 		{
+			checkForBioformats2rawLayout( handle );
 			throw new NotAMultiscaleImageException( inputUri.toString(), e );
+		}
+	}
+
+	/**
+	 * Reads the zarr.json attributes and throws {@link MultiImageDatasetException}
+	 * if the {@code bioformats2raw.layout} marker is present in the {@code ome}
+	 * attribute. Called after {@link MultiscaleImage#open} fails so we never
+	 * make an extra network round-trip for datasets that open normally.
+	 */
+	private void checkForBioformats2rawLayout( final StoreHandle handle )
+	{
+		try
+		{
+			final Attributes attrs = Group.open( handle ).metadata().attributes();
+			final Object ome = attrs.get( "ome" );
+			if ( ome instanceof Map && ( ( Map< ?, ? > ) ome ).containsKey( "bioformats2raw.layout" ) )
+				throw new MultiImageDatasetException( inputUri.toString() );
+		}
+		catch ( MultiImageDatasetException e )
+		{
+			throw e;
+		}
+		catch ( Exception e )
+		{
+			logger.debug( "Could not read group attributes from {}: {}", inputUri, e.getMessage() );
 		}
 	}
 
@@ -343,6 +386,8 @@ public class ZarrJavaPyramidBackend<
 			// or an IndexOutOfBoundsException when the array is empty
 			// surface those as a missing-metadata error rather than letting them
 			// bubble up unhandled.
+			if ( activeHandle != null )
+				checkForBioformats2rawLayout( activeHandle );
 			throw new NotAMultiscaleImageException( "No multiscale metadata at: " + inputUri, e );
 		}
 	}
