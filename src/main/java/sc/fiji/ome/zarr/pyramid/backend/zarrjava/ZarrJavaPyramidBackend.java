@@ -55,7 +55,6 @@ import dev.zarr.zarrjava.experimental.ome.metadata.transform.CoordinateTransform
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.HttpStore;
-import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
 
 import net.imagej.ImgPlus;
@@ -290,27 +289,15 @@ public class ZarrJavaPyramidBackend<
 
 	private MultiscaleImage openMultiscaleImageFromFilesystem( final Path inputPath )
 	{
-		StoreHandle handle = null;
-		try
+		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
+		final Path zarrRoot = rootPath != null ? rootPath : inputPath;
+		StoreHandle handle = new FilesystemStore( zarrRoot ).resolve();
+		if ( rootPath != null && !rootPath.equals( inputPath ) )
 		{
-			final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
-			final Path zarrRoot = rootPath != null ? rootPath : inputPath;
-			final FilesystemStore store = new FilesystemStore( zarrRoot );
-
-			handle = store.resolve();
-			if ( rootPath != null && !rootPath.equals( inputPath ) )
-			{
-				for ( final String segment : ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath ) )
-					handle = handle.resolve( segment );
-			}
-			activeHandle = handle;
-			return MultiscaleImage.open( handle );
+			for ( final String segment : ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath ) )
+				handle = handle.resolve( segment );
 		}
-		catch ( ZarrException | IOException e )
-		{
-			checkForBioformats2rawLayout( handle );
-			throw new NotAMultiscaleImageException( inputUri.toString(), e );
-		}
+		return openMultiscaleImageFromHandle( handle );
 	}
 
 	/**
@@ -320,11 +307,13 @@ public class ZarrJavaPyramidBackend<
 	 */
 	private MultiscaleImage openMultiscaleImageOverHttp( final URI httpUri )
 	{
-		StoreHandle handle = null;
+		return openMultiscaleImageFromHandle( new HttpStore( httpUri.toString() ).resolve() );
+	}
+
+	private MultiscaleImage openMultiscaleImageFromHandle( final StoreHandle handle )
+	{
 		try
 		{
-			final Store store = new HttpStore( httpUri.toString() );
-			handle = store.resolve();
 			activeHandle = handle;
 			return MultiscaleImage.open( handle );
 		}
