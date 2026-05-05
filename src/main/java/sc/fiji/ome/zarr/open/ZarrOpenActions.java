@@ -47,6 +47,8 @@ import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.google.gson.JsonSyntaxException;
+
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Cast;
@@ -207,7 +209,7 @@ public class ZarrOpenActions
 	private void showNonZarrError( final Exception e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
-				+ "The opener for OME-Zarr folders only supports folders that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
+				+ "The opener for OME-Zarr only supports locations that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
 		logger.warn( "Could not open dataset image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
@@ -253,7 +255,7 @@ public class ZarrOpenActions
 		{
 			showNonMatchingResolutionError( e );
 		}
-		catch ( IllegalArgumentException e )
+		catch ( IllegalArgumentException | JsonSyntaxException e )
 		{
 			showNonZarrError( e );
 		}
