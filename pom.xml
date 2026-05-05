@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -182,6 +183,11 @@
 	</repositories>
 
 	<dependencies>
+		<dependency>
+			<groupId>dev.zarr</groupId>
+			<artifactId>zarr-java</artifactId>
+			<version>0.1.3</version>
+		</dependency>
 		<!-- N5 implementations of OME-Zarr including BDV Viewer adaptions -->
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>
@@ -250,15 +256,20 @@
 			</activation>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 2gb while running tests. -->
+					<!-- Configure the maven-surefire-plugin to use a heap size of 4gb while running tests. -->
+					<!-- forkCount=1 with reuseForks=true runs tests in a single forked JVM; -->
+					<!-- without this, argLine (and therefore -Xmx) would be ignored because -->
+					<!-- tests would share Maven's own JVM (whose heap defaults are smaller and -->
+					<!-- vary per CI runner — macOS GitHub runners OOM under that setup). -->
 					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<forkCount>0</forkCount>
-							<argLine>-Xmx2g -da -Dimagej.legacy.disable=true</argLine>
+							<forkCount>1</forkCount>
+							<reuseForks>true</reuseForks>
+							<argLine>-Xmx4g -da -Dimagej.legacy.disable=true</argLine>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -268,14 +279,19 @@
 			<id>coverage</id>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 2gb while running tests for jacoco coverage analysis. -->
+					<!-- Configure the maven-surefire-plugin to use a heap size of 4gb while running tests for jacoco coverage analysis. -->
+					<!-- forkCount=1 with reuseForks=true keeps the jacoco agent argLine effective -->
+					<!-- against a forked test JVM rather than Maven's own (see comment in the -->
+					<!-- default profile above). -->
 					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<argLine>@{argLine} -Xmx2g -da</argLine>
+							<forkCount>1</forkCount>
+							<reuseForks>true</reuseForks>
+							<argLine>@{argLine} -Xmx4g -da</argLine>
 						</configuration>
 					</plugin>
 					<plugin>

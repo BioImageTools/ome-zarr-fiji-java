@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -52,13 +52,15 @@ import net.imglib2.util.Cast;
 
 import bdv.util.BdvFunctions;
 import ij.IJ;
-import sc.fiji.ome.zarr.pyramid.DefaultPyramidal5DImageData;
-import sc.fiji.ome.zarr.pyramid.NoMatchingResolutionException;
-import sc.fiji.ome.zarr.pyramid.NotAMultiscaleImageException;
-import sc.fiji.ome.zarr.pyramid.NotASingleScaleImageException;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
 
 public class ZarrOpenActions
 {
@@ -141,7 +143,7 @@ public class ZarrOpenActions
 	{
 		errorHandler.accept(
 				"Opening a single resolution OME-Zarr dataset, as was found in: " + droppedInPath + ", is currently not supported.\n\n"
-				+ "Consider opening one level higher in the hierarchy instead." );
+						+ "Consider opening one level higher in the hierarchy instead." );
 		logger.info( "Opening a single resolution OME-Zarr dataset, as was found in: {}, is currently not supported.", droppedInPath );
 	}
 
@@ -206,16 +208,35 @@ public class ZarrOpenActions
 	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
 			throws NotAMultiscaleImageException, NoMatchingResolutionException
 	{
-		Integer preferredWidth;
+		final Integer preferredWidth;
 		if ( settings == null || settings.getOpenBehavior().equals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION ) )
 			preferredWidth = null;
 		else
 			preferredWidth = settings.getPreferredMaxWidth();
-		final DefaultPyramidal5DImageData< ?, ? > pyramidal5DImageData =
-				new DefaultPyramidal5DImageData<>( context, droppedInPath.toString(), preferredWidth );
-		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
-		Object result = multiScaleImageOpener.apply( pyramidalDataset );
-		logger.info( "Opened multiscale image: {}", droppedInPath );
+
+		final ZarrReaderBackend backend = settings == null
+				? ZarrDragAndDropOpenSettings.DEFAULT_READER_BACKEND
+				: settings.getReaderBackend();
+
+		final Pyramidal5DImageDataImpl< ?, ? > data;
+		switch ( backend )
+		{
+		case ZARR_JAVA:
+		{
+			@SuppressWarnings( { "rawtypes", "unchecked" } )
+			final Pyramidal5DImageDataImpl< ?, ? > zarrJavaData =
+					new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( droppedInPath.toString(), preferredWidth ) );
+			data = zarrJavaData;
+			break;
+		}
+		case N5:
+		default:
+			data = new Pyramidal5DImageDataImpl<>( context, droppedInPath.toString(), preferredWidth );
+			break;
+		}
+
+		final Object result = multiScaleImageOpener.apply( data.asPyramidalDataset() );
+		logger.info( "Opened multiscale image with {} backend: {}", backend, droppedInPath );
 		return result;
 	}
 

@@ -28,29 +28,22 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
-import net.imagej.ImageJ;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 
-import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
+import org.scijava.Context;
 
-public class MultiscaleImageDemo
+import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
+import sc.fiji.ome.zarr.util.ZarrTestUtils;
+
+class ZarrJavaBackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTestBase
 {
-	public static void main( String[] args )
+	@Override
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	public Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
+			throws URISyntaxException
 	{
-		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
-		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
-		// final String multiscalePath = "/Users/hahmann/Data/13457537.zarr"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457537.zarr/0
-
-		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath );
-
-		// Show as imagePlus
-		final ImageJ imageJ = new ImageJ();
-		imageJ.ui().showUI();
-		final Pyramidal5DImageDataImpl< ?, ? > pyramidal5DImageData =
-				new Pyramidal5DImageDataImpl<>( imageJ.context(), "image" /*, multiscaleImage */ );
-		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
-		imageJ.ui().show( pyramidalDataset );
-
-		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true );
+		Path path = ZarrTestUtils.resourcePath( resource );
+		return new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( path.toString(), preferredWidth ) );
 	}
 }
