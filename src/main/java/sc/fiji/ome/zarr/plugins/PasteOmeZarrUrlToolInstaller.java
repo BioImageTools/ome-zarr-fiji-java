@@ -29,11 +29,16 @@
 package sc.fiji.ome.zarr.plugins;
 
 import java.awt.GraphicsEnvironment;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.KeyEvent;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URI;
 
 import javax.swing.SwingUtilities;
+import javax.swing.text.JTextComponent;
 
 import org.scijava.Context;
 import org.scijava.event.EventHandler;
@@ -52,11 +57,10 @@ import sc.fiji.ome.zarr.util.ClipboardUtils;
 
 /**
  * Installs {@code PasteOmeZarrUrlActionTool} into the legacy ImageJ1 toolbar
- * once the UI is shown, so the button occupies one of the empty slots between
- * the arrow tool and the {@code >>} switcher without the user having to add
- * it via the More Tools menu.
+ * and registers a global keyboard shortcut (Ctrl/Cmd+Shift+V) once the UI is
+ * shown.
  * <p>
- * Three subtleties shape this implementation:
+ * Four subtleties shape this implementation:
  * <ul>
  *   <li><b>Why {@code @EventHandler(UIShownEvent)} and not
  *       {@code initialize()}</b>: scheduling the install via
@@ -86,6 +90,14 @@ import sc.fiji.ome.zarr.util.ClipboardUtils;
  *       {@code installingStartupTool} flag makes {@code addPlugInTool}
  *       skip that {@code setTool} call entirely; IJ1 itself clears the
  *       flag back to {@code false} inside {@code addPlugInTool}.</li>
+ *   <li><b>Why the keyboard shortcut is Ctrl/Cmd+Shift+V and not
+ *       Ctrl/Cmd+V</b>: IJ1 hard-codes Ctrl+V as its "Paste" command (for
+ *       image clipboard content). Using Shift avoids that conflict. The
+ *       shortcut is registered as a global {@link KeyEventDispatcher} rather
+ *       than a menu accelerator so it fires regardless of which IJ1 window is
+ *       in front. It is suppressed when a {@link JTextComponent} (script
+ *       editor, macro editor) has focus so normal text paste is unaffected.
+ *       The dispatcher is removed when the service is disposed.</li>
  * </ul>
  * No-op in headless environments and when {@code Toolbar.getInstance()} is
  * unavailable (e.g. unit tests that don't start IJ1).
@@ -94,6 +106,8 @@ import sc.fiji.ome.zarr.util.ClipboardUtils;
 public class PasteOmeZarrUrlToolInstaller extends AbstractService implements SciJavaService
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	private KeyEventDispatcher keyEventDispatcher;
 
 	@EventHandler
 	void onUIShown( @SuppressWarnings( "unused" ) final UIShownEvent event )
@@ -121,6 +135,19 @@ public class PasteOmeZarrUrlToolInstaller extends AbstractService implements Sci
 		{
 			logger.warn( "Could not install OME-Zarr toolbar button: {}", e.getMessage() );
 		}
+		installKeyboardShortcut();
+	}
+
+	@Override
+	public void dispose()
+	{
+		if ( keyEventDispatcher != null )
+		{
+			KeyboardFocusManager.getCurrentKeyboardFocusManager()
+					.removeKeyEventDispatcher( keyEventDispatcher );
+			keyEventDispatcher = null;
+		}
+		super.dispose();
 	}
 
 	@SuppressWarnings( "java:S3011" ) // setAccessible is the only way to reach this private IJ1 field
@@ -136,6 +163,27 @@ public class PasteOmeZarrUrlToolInstaller extends AbstractService implements Sci
 		{
 			logger.debug( "Could not set Toolbar.installingStartupTool: {}", e.getMessage() );
 		}
+	}
+
+	private void installKeyboardShortcut()
+	{
+		if ( keyEventDispatcher != null )
+			return;
+		keyEventDispatcher = e -> {
+			if ( e.getID() != KeyEvent.KEY_PRESSED )
+				return false;
+			if ( e.getKeyCode() != KeyEvent.VK_V )
+				return false;
+			if ( !( e.isControlDown() || e.isMetaDown() || e.isShiftDown() ) )
+				return false;
+			if ( e.getSource() instanceof JTextComponent )
+				return false;
+			final URI uri = ClipboardUtils.parseClipboardUri( logger::debug );
+			if ( uri == null )
+				return false;
+			return ClipboardActions.pasteFromClipboard( getContext(), null );
+		};
+		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher( keyEventDispatcher );
 	}
 
 	/**

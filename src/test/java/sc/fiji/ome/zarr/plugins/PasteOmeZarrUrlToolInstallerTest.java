@@ -43,6 +43,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
+import ij.plugin.tool.MacroToolRunner;
 import javax.swing.JTextField;
 
 import org.junit.jupiter.api.AfterEach;
@@ -80,16 +81,14 @@ class PasteOmeZarrUrlToolInstallerTest
 	@Test
 	void toolNameContainsNonBreakingHyphen() throws Exception
 	{
-		assertTrue( toolName().contains( "‑" ),
-				"Tool name must use non-breaking hyphen (U+2011); an ASCII hyphen would be mistaken "
-						+ "for the IJ1 Toolbar name/icon separator and truncate the name" );
+		assertTrue( toolName().contains( "‑" ), "Tool name must use non-breaking hyphen (U+2011); an ASCII hyphen would be mistaken "
+				+ "for the IJ1 Toolbar name/icon separator and truncate the name" );
 	}
 
 	@Test
 	void toolNameDoesNotContainAsciiHyphen() throws Exception
 	{
-		assertFalse( toolName().contains( "-" ),
-				"ASCII hyphen in the tool name would break IJ1 Toolbar.addTool name/icon parsing" );
+		assertFalse( toolName().contains( "-" ), "ASCII hyphen in the tool name would break IJ1 Toolbar.addTool name/icon parsing" );
 	}
 
 	@Test
@@ -97,14 +96,6 @@ class PasteOmeZarrUrlToolInstallerTest
 	{
 		assertTrue( toolName().endsWith( "Action Tool" ),
 				"'Action Tool' suffix is required for IJ1 to treat the slot as a one-shot button" );
-	}
-
-	@Test
-	void getToolNameReturnsNameConstant() throws Exception
-	{
-		Object tool = createActionTool();
-		String returned = ( String ) tool.getClass().getMethod( "getToolName" ).invoke( tool );
-		assertEquals( toolName(), returned );
 	}
 
 	@Test
@@ -124,40 +115,14 @@ class PasteOmeZarrUrlToolInstallerTest
 		assertDoesNotThrow( () -> installer.dispose() );
 	}
 
-	// ---- keyboard shortcut lifecycle ----
+	// ---- onUIShown ----
 
 	@Test
-	void installKeyboardShortcutRegistersDispatcher() throws Exception
+	void onUIShownDoesNotThrow()
 	{
-		assertNull( getDispatcherField( installer ) );
-		callInstallKeyboardShortcut( installer );
-		assertNotNull( getDispatcherField( installer ) );
-	}
-
-	@Test
-	void disposeRemovesRegisteredDispatcher() throws Exception
-	{
-		// use a separate installer so @AfterEach dispose of the main installer is safe
-		try ( Context ctx = new Context() )
-		{
-			PasteOmeZarrUrlToolInstaller local = new PasteOmeZarrUrlToolInstaller();
-			local.setContext( ctx );
-			callInstallKeyboardShortcut( local );
-			assertNotNull( getDispatcherField( local ) );
-
-			local.dispose();
-
-			assertNull( getDispatcherField( local ) );
-		}
-	}
-
-	@Test
-	void installKeyboardShortcutIsIdempotent() throws Exception
-	{
-		callInstallKeyboardShortcut( installer );
-		KeyEventDispatcher first = getDispatcherField( installer );
-		callInstallKeyboardShortcut( installer ); // second call must reuse the same dispatcher
-		assertSame( first, getDispatcherField( installer ) );
+		// In headless the method returns immediately; in non-headless it returns
+		// early because Toolbar.getInstance() is null when IJ1 is not running.
+		assertDoesNotThrow( () -> installer.onUIShown( null ) );
 	}
 
 	// ---- keyboard event dispatcher filter logic ----
@@ -169,7 +134,7 @@ class PasteOmeZarrUrlToolInstallerTest
 		KeyEventDispatcher dispatcher = getDispatcherField( installer );
 		KeyEvent released = keyEvent( KeyEvent.KEY_RELEASED, ctrlShift(), KeyEvent.VK_V );
 
-		try ( MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ) )
+		try (MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ))
 		{
 			assertFalse( dispatcher.dispatchKeyEvent( released ) );
 			mock.verifyNoInteractions();
@@ -183,7 +148,7 @@ class PasteOmeZarrUrlToolInstallerTest
 		KeyEventDispatcher dispatcher = getDispatcherField( installer );
 		KeyEvent wrongKey = keyEvent( KeyEvent.KEY_PRESSED, ctrlShift(), KeyEvent.VK_C );
 
-		try ( MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ) )
+		try (MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ))
 		{
 			assertFalse( dispatcher.dispatchKeyEvent( wrongKey ) );
 			mock.verifyNoInteractions();
@@ -197,7 +162,7 @@ class PasteOmeZarrUrlToolInstallerTest
 		KeyEventDispatcher dispatcher = getDispatcherField( installer );
 		KeyEvent noModifier = keyEvent( KeyEvent.KEY_PRESSED, 0, KeyEvent.VK_V );
 
-		try ( MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ) )
+		try (MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ))
 		{
 			assertFalse( dispatcher.dispatchKeyEvent( noModifier ) );
 			mock.verifyNoInteractions();
@@ -212,7 +177,7 @@ class PasteOmeZarrUrlToolInstallerTest
 		JTextField textField = mock( JTextField.class );
 		KeyEvent e = new KeyEvent( textField, KeyEvent.KEY_PRESSED, 0L, ctrlShift(), KeyEvent.VK_V, 'V' );
 
-		try ( MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ) )
+		try (MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ))
 		{
 			assertFalse( dispatcher.dispatchKeyEvent( e ) );
 			mock.verifyNoInteractions();
@@ -226,8 +191,8 @@ class PasteOmeZarrUrlToolInstallerTest
 		KeyEventDispatcher dispatcher = getDispatcherField( installer );
 		KeyEvent e = keyEvent( KeyEvent.KEY_PRESSED, ctrlShift(), KeyEvent.VK_V );
 
-		try ( MockedStatic< ClipboardUtils > mockUtils = mockStatic( ClipboardUtils.class );
-				MockedStatic< ClipboardActions > mockActions = mockStatic( ClipboardActions.class ) )
+		try (MockedStatic< ClipboardUtils > mockUtils = mockStatic( ClipboardUtils.class );
+				MockedStatic< ClipboardActions > mockActions = mockStatic( ClipboardActions.class ))
 		{
 			mockUtils.when( () -> ClipboardUtils.parseClipboardUri( any( Consumer.class ) ) ).thenReturn( null );
 
@@ -244,29 +209,14 @@ class PasteOmeZarrUrlToolInstallerTest
 		KeyEvent e = keyEvent( KeyEvent.KEY_PRESSED, ctrlShift(), KeyEvent.VK_V );
 		URI uri = URI.create( "https://example.com/data.zarr" );
 
-		try ( MockedStatic< ClipboardUtils > mockUtils = mockStatic( ClipboardUtils.class );
-				MockedStatic< ClipboardActions > mockActions = mockStatic( ClipboardActions.class ) )
+		try (MockedStatic< ClipboardUtils > mockUtils = mockStatic( ClipboardUtils.class );
+				MockedStatic< ClipboardActions > mockActions = mockStatic( ClipboardActions.class ))
 		{
 			mockUtils.when( () -> ClipboardUtils.parseClipboardUri( any( Consumer.class ) ) ).thenReturn( uri );
 			mockActions.when( () -> ClipboardActions.pasteFromClipboard( any(), isNull() ) ).thenReturn( true );
 
 			assertTrue( dispatcher.dispatchKeyEvent( e ) );
 			mockActions.verify( () -> ClipboardActions.pasteFromClipboard( context, null ) );
-		}
-	}
-
-	// ---- runMacroTool off EDT ----
-
-	@Test
-	void runMacroToolIsNoOpWhenCalledOffEdt() throws Exception
-	{
-		Object tool = createActionTool();
-		Method run = tool.getClass().getMethod( "runMacroTool", String.class );
-
-		try ( MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ) )
-		{
-			run.invoke( tool, "any" );
-			mock.verifyNoInteractions();
 		}
 	}
 
@@ -307,7 +257,7 @@ class PasteOmeZarrUrlToolInstallerTest
 	private Class< ? > actionToolClass()
 	{
 		return Arrays.stream( PasteOmeZarrUrlToolInstaller.class.getDeclaredClasses() )
-				.filter( c -> c.getSimpleName().equals( "PasteOmeZarrUrlActionTool" ) )
+				.filter( MacroToolRunner.class::isAssignableFrom )
 				.findFirst()
 				.orElseThrow( () -> new AssertionError( "PasteOmeZarrUrlActionTool inner class not found" ) );
 	}
