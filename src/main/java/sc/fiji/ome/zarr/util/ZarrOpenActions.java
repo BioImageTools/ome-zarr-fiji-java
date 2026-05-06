@@ -270,9 +270,8 @@ public class ZarrOpenActions
 
 	public void runScript()
 	{
-		final String location = inputUri.toString();
-		logger.info( "Attempt to execute script on location: {}.", location );
-		ScriptUtils.executePresetScript( context, location, errorHandler );
+		logger.info( "Attempt to execute script on location: {}.", inputUri );
+		ScriptUtils.executePresetScript( context, inputUri, errorHandler );
 	}
 
 	public void showHelp()
