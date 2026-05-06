@@ -164,48 +164,38 @@ public class DnDActionChooser
 	{
 
 		// OME-Zarr to FIJI importer button
-		zarrToIJDialog.addActionListener( e -> {
-			dialog.dispose();
-			actions.openImporterDialog();
-		} );
+		zarrToIJDialog.addActionListener( e -> disposeAndRun( dialog, actions::openImporterDialog ) );
 		zarrToIJDialog.setToolTipText( "Open OME-Zarr/N5 Importer dialog" );
 
 		// OME-Zarr to BDV viewer button
-		zarrToBDVDialog.addActionListener( e -> {
-			dialog.dispose();
-			actions.openViewerDialog();
-		} );
+		zarrToBDVDialog.addActionListener( e -> disposeAndRun( dialog, actions::openViewerDialog ) );
 		zarrToBDVDialog.setToolTipText( "Open OME-Zarr/N5 BDV Viewer dialog" );
 
 		// FIJI button
-		zarrIJHighestResolution.addActionListener( e -> {
-			dialog.dispose();
-			actions.openIJWithImage();
-		} );
+		zarrIJHighestResolution.addActionListener( e -> disposeAndRun( dialog, actions::openIJWithImage ) );
 		zarrIJHighestResolution.setToolTipText( "Open OME-Zarr in ImageJ at highest resolution level" );
 
 		// BDV button
-		zarrBDVHighestResolution.addActionListener( e -> {
-			dialog.dispose();
-			actions.openBDVWithImage();
-		} );
+		zarrBDVHighestResolution.addActionListener( e -> disposeAndRun( dialog, actions::openBDVWithImage ) );
 		zarrBDVHighestResolution.setToolTipText( "Open OME-Zarr in BDV at highest resolution level" );
 
 		// script button
 		String scriptName = ScriptUtils.getTooltipText( context );
 		zarrScript.setToolTipText( "Open OME-Zarr in user script:\n\n" + scriptName );
-		zarrScript.addActionListener( e -> {
-			dialog.dispose();
-			actions.runScript();
-		} );
+		zarrScript.addActionListener( e -> disposeAndRun( dialog, actions::runScript ) );
 
 		// help button
-		help.addActionListener( e -> dialog.dispose() );
 		help.setToolTipText( "Help about OME-Zarr actions" );
-		help.addActionListener( e -> actions.showHelp() );
+		help.addActionListener( e -> disposeAndRun( dialog, actions::showHelp ) );
 
 		setupCloseOnKeyboard( dialog );
 		setupCloseOnMouseLeave( dialog );
+	}
+
+	private void disposeAndRun( final JDialog dialog, final Runnable action )
+	{
+		dialog.dispose();
+		new Thread( action ).start();
 	}
 
 	private Point getMouseLocation()
