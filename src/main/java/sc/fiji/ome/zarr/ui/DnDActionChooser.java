@@ -79,6 +79,8 @@ public class DnDActionChooser
 
 	private boolean extendedVersion;
 
+	JDialog currentDialog;
+
 	public DnDActionChooser( final Context context, final ZarrOpenActions actions )
 	{
 		this.actions = actions;
@@ -118,6 +120,23 @@ public class DnDActionChooser
 		}
 	}
 
+	public void dispose()
+	{
+		if ( SwingUtilities.isEventDispatchThread() )
+			doDispose();
+		else
+			SwingUtilities.invokeLater( this::doDispose );
+	}
+
+	private void doDispose()
+	{
+		if ( currentDialog != null )
+		{
+			currentDialog.dispose();
+			currentDialog = null;
+		}
+	}
+
 	private void doShow()
 	{
 		final Point mouseLocation = getMouseLocation();
@@ -125,6 +144,7 @@ public class DnDActionChooser
 			return;
 
 		final JDialog dialog = createDialog();
+		currentDialog = dialog;
 		final JPanel panel = initLayout();
 		initBehaviour( dialog );
 
