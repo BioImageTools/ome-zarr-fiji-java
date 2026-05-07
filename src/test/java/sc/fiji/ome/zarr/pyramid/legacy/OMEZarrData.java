@@ -26,13 +26,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.legacy;
 
 import java.nio.file.Paths;
 
 import org.scijava.Context;
 
 import bdv.util.volatiles.SharedQueue;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 
 import javax.annotation.Nullable;
 

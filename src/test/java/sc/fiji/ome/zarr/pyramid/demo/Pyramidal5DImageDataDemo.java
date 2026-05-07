@@ -26,24 +26,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.demo;
 
-import java.net.URISyntaxException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import org.scijava.Context;
+import net.imagej.ImageJ;
 
-import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
-import sc.fiji.ome.zarr.util.ZarrTestUtils;
+import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
-class N5BackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTestBase
+public class Pyramidal5DImageDataDemo
 {
-	@Override
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
-			throws URISyntaxException
+	public static void main( String[] args )
 	{
-		Path path = ZarrTestUtils.resourcePath( resource );
-		return new Pyramidal5DImageDataImpl<>( context, new N5PyramidBackend( path.toUri(), preferredWidth ) );
+		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
+		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
+
+		// Show as imagePlus
+		final ImageJ imageJ = new ImageJ();
+		imageJ.ui().showUI();
+		final Pyramidal5DImageDataImpl< ?, ? > pyramidal5DImageData =
+				new Pyramidal5DImageDataImpl<>( imageJ.context(), Paths.get( multiscalePath ).toUri() );
+		PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
+		imageJ.ui().show( pyramidalDataset );
+
+		// Also show the displayed image in BDV
+		imageJ.command().run( OpenInBDVCommand.class, true );
 	}
 }

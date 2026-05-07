@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
 
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;

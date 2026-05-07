@@ -1,4 +1,4 @@
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.backend;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -20,6 +20,8 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
+
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
@@ -40,7 +42,7 @@ import java.util.logging.Logger;
 /**
  * Simple backend benchmark without extra dependencies.
  * Run with:
- * mvn -q -DskipTests -Dexec.classpathScope=test -Dexec.mainClass=sc.fiji.ome.zarr.pyramid.BackendBenchmark exec:java
+ * mvn -q -DskipTests -Dexec.classpathScope=test -Dexec.mainClass=sc.fiji.ome.zarr.pyramid.backend.BackendBenchmark exec:java
  */
 public class BackendBenchmark
 {

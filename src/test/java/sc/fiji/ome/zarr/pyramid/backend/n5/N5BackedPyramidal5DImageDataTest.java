@@ -26,17 +26,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.backend.n5;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import org.scijava.Context;
 
-import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
-class ZarrJavaBackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTestBase
+public class N5BackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTestBase
 {
 	@Override
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
@@ -44,6 +45,6 @@ class ZarrJavaBackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTest
 			throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( path.toUri(), preferredWidth ) );
+		return new Pyramidal5DImageDataImpl<>( context, new N5PyramidBackend( path.toUri(), preferredWidth ) );
 	}
 }

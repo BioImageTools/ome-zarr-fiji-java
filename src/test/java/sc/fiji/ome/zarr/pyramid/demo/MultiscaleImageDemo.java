@@ -26,13 +26,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.demo;
 
 import java.nio.file.Paths;
 
 import net.imagej.ImageJ;
 
 import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
+import sc.fiji.ome.zarr.pyramid.legacy.MultiscaleImage;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
 public class MultiscaleImageDemo
 {
