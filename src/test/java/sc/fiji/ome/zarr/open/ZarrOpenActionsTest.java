@@ -75,6 +75,9 @@ import bdv.tools.brightness.ConverterSetup;
 import bdv.util.BdvHandle;
 
 import javax.swing.JOptionPane;
+
+import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
+import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import javax.swing.SwingUtilities;
 
 import bdv.viewer.ViewerFrame;
@@ -180,6 +183,29 @@ class ZarrOpenActionsTest
 				assertEquals( 1, chooserInstances.size() );
 				Mockito.verify( chooserInstances.get( 0 ), Mockito.times( 1 ) ).showDialog();
 			}
+		}
+	}
+
+	@Test
+	void openImporterDialogDoesNotThrow() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr" );
+		try (Context context = new Context(); MockedConstruction< N5Importer > ignored = Mockito.mockConstruction( N5Importer.class ))
+		{
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			assertDoesNotThrow( actions::openImporterDialog );
+		}
+	}
+
+	@Test
+	void openViewerDialogDoesNotThrow() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr" );
+		try (Context context = new Context();
+				MockedConstruction< N5ViewerCreator > ignored = Mockito.mockConstruction( N5ViewerCreator.class ))
+		{
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			assertDoesNotThrow( actions::openViewerDialog );
 		}
 	}
 
