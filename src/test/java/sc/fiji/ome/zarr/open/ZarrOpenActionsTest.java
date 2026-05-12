@@ -59,9 +59,13 @@ import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.InetSocketAddress;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import com.sun.net.httpserver.HttpServer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -183,6 +187,61 @@ class ZarrOpenActionsTest
 				assertEquals( 1, chooserInstances.size() );
 				Mockito.verify( chooserInstances.get( 0 ), Mockito.times( 1 ) ).showDialog();
 			}
+		}
+	}
+
+	@ParameterizedTest
+	@MethodSource( "readerBackends" )
+	void openWithSettingsOpensV5DatasetFromHttpUri( ZarrReaderBackend backend )
+			throws URISyntaxException, IOException, InterruptedException, InvocationTargetException
+	{
+		Path datasetRoot = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v5.ome.zarr" );
+		HttpServer httpServer = HttpServer.create( new InetSocketAddress( "127.0.0.1", 0 ), 0 );
+		httpServer.createContext( "/", exchange -> {
+			String relativePath = exchange.getRequestURI().getPath().substring( 1 );
+			Path filePath = datasetRoot.resolve( relativePath );
+			boolean isHead = "HEAD".equals( exchange.getRequestMethod() );
+			if ( !relativePath.isEmpty() && Files.exists( filePath ) && !Files.isDirectory( filePath ) )
+			{
+				byte[] content = Files.readAllBytes( filePath );
+				exchange.sendResponseHeaders( 200, isHead ? -1 : content.length );
+				if ( !isHead )
+				{
+					exchange.getResponseBody().write( content );
+				}
+			}
+			else
+			{
+				exchange.sendResponseHeaders( 404, -1 );
+			}
+			exchange.close();
+		} );
+		httpServer.start();
+		try
+		{
+			URI httpUri = URI.create( "http://127.0.0.1:" + httpServer.getAddress().getPort() + "/" );
+			try (Context context = new Context())
+			{
+				PrefService prefService = context.getService( PrefService.class );
+				ZarrOpeningSettings settings = new ZarrOpeningSettings();
+				settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION );
+				settings.setReaderBackend( backend );
+				settings.saveSettingsToPreferences( prefService );
+
+				ZarrOpenActions.openWithSettings( httpUri, context );
+
+				DatasetService datasetService = context.getService( DatasetService.class );
+				assertEquals( 1, datasetService.getDatasets().size() );
+				assertEquals( IMAGE_NAME, datasetService.getDatasets().get( 0 ).getName() );
+				SwingUtilities.invokeAndWait( () -> {} );
+				DisplayService displayService = context.getService( DisplayService.class );
+				assertNotNull( displayService.getActiveDisplay() );
+				displayService.getActiveDisplay().close();
+			}
+		}
+		finally
+		{
+			httpServer.stop( 0 );
 		}
 	}
 
