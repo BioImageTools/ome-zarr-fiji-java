@@ -61,7 +61,8 @@ class ZarrOverHttpUtilsTest
 		return Stream.of(
 				"/dataset/zarr.json",
 				"/dataset/.zgroup",
-				"/dataset/.zarray"
+				"/dataset/.zarray",
+				"/dataset/.zattrs"
 		);
 	}
 
