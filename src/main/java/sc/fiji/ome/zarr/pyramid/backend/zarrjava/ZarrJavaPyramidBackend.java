@@ -31,7 +31,6 @@ package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,6 +54,7 @@ import dev.zarr.zarrjava.experimental.ome.metadata.transform.CoordinateTransform
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.HttpStore;
+import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
 
 import net.imagej.ImgPlus;
@@ -96,7 +96,6 @@ import sc.fiji.ome.zarr.pyramid.exceptions.PyramidLevelAccessException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
-import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the zarr-java library.
@@ -280,34 +279,14 @@ public class ZarrJavaPyramidBackend<
 	private MultiscaleImage openMultiscaleImage()
 	{
 		final String scheme = inputUri.getScheme();
+		Store store;
 		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
-			return openMultiscaleImageFromFilesystem( Paths.get( inputUri ) );
-		if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
-			return openMultiscaleImageOverHttp( inputUri );
-		throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
-	}
-
-	private MultiscaleImage openMultiscaleImageFromFilesystem( final Path inputPath )
-	{
-		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
-		final Path zarrRoot = rootPath != null ? rootPath : inputPath;
-		StoreHandle handle = new FilesystemStore( zarrRoot ).resolve();
-		if ( rootPath != null && !rootPath.equals( inputPath ) )
-		{
-			for ( final String segment : ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath ) )
-				handle = handle.resolve( segment );
-		}
-		return openMultiscaleImageFromHandle( handle );
-	}
-
-	/**
-	 * Open the OME-Zarr referenced by an http(s) URI. The URI is assumed to point
-	 * at the OME-Zarr root – we cannot walk up the URL hierarchy to discover it
-	 * the way we do on a local filesystem.
-	 */
-	private MultiscaleImage openMultiscaleImageOverHttp( final URI httpUri )
-	{
-		return openMultiscaleImageFromHandle( new HttpStore( httpUri.toString() ).resolve() );
+			store = new FilesystemStore( Paths.get( inputUri ) );
+		else if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
+			store = new HttpStore( inputUri.toString() );
+		else
+			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
+		return openMultiscaleImageFromHandle( store.resolve() );
 	}
 
 	private MultiscaleImage openMultiscaleImageFromHandle( final StoreHandle handle )
