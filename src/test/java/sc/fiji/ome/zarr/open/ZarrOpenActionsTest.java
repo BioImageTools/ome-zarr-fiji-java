@@ -87,7 +87,7 @@ import javax.swing.SwingUtilities;
 import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
 import ij.ImagePlus;
-import sc.fiji.ome.zarr.plugins.UserScriptSettings;
+import sc.fiji.ome.zarr.plugins.settings.UserScriptSettings;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;

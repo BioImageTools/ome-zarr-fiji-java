@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.plugins;
+package sc.fiji.ome.zarr.plugins.settings;
 
 import org.scijava.command.Command;
 import org.scijava.log.LogService;

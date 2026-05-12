@@ -43,7 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
 
-import sc.fiji.ome.zarr.plugins.UserScriptSettings;
+import sc.fiji.ome.zarr.plugins.settings.UserScriptSettings;
 
 public class ScriptUtils
 {
