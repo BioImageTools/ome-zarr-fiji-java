@@ -44,9 +44,9 @@ public class ZarrOverHttpUtils
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private static final int CONNECT_TIMEOUT_MS = 5_000;
+	private static final int CONNECT_TIMEOUT_MILLIS = 5_000;
 
-	private static final int READ_TIMEOUT_MS = 5_000;
+	private static final int READ_TIMEOUT_MILLIS = 5_000;
 
 	/**
 	 * Files that, if any of them exists at the URL, identify it as a Zarr
@@ -103,8 +103,8 @@ public class ZarrOverHttpUtils
 		{
 			conn = ( HttpURLConnection ) uri.toURL().openConnection();
 			conn.setRequestMethod( "HEAD" );
-			conn.setConnectTimeout( CONNECT_TIMEOUT_MS );
-			conn.setReadTimeout( READ_TIMEOUT_MS );
+			conn.setConnectTimeout( CONNECT_TIMEOUT_MILLIS );
+			conn.setReadTimeout( READ_TIMEOUT_MILLIS );
 			conn.setInstanceFollowRedirects( true );
 			final int code = conn.getResponseCode();
 			if ( code < 200 || code >= 300 )
