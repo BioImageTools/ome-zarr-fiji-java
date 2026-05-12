@@ -47,10 +47,10 @@ import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
 
 /**
- * Unit tests for the {@link DragAndDropBehaviorSettings#run()} method.
+ * Unit tests for the {@link OpeningBehaviorSettings#run()} method.
  * This method is responsible for saving user preferences for Zarr dataset opening behavior.
  */
-class DragAndDropBehaviorSettingsTest
+class OpeningBehaviorSettingsTest
 {
 
 	@Test
@@ -59,24 +59,24 @@ class DragAndDropBehaviorSettingsTest
 	{
 		try (Context context = new Context())
 		{
-			DragAndDropBehaviorSettings ui = new DragAndDropBehaviorSettings();
+			OpeningBehaviorSettings ui = new OpeningBehaviorSettings();
 			PrefService prefService = context.getService( PrefService.class );
 			prefService.clearAll();
 			final int customWidth = 500;
 
-			Field prefServiceField = DragAndDropBehaviorSettings.class.getDeclaredField( "prefService" );
+			Field prefServiceField = OpeningBehaviorSettings.class.getDeclaredField( "prefService" );
 			prefServiceField.setAccessible( true );
 			prefServiceField.set( ui, prefService );
 
-			Method initMethod = DragAndDropBehaviorSettings.class.getDeclaredMethod( "init" );
+			Method initMethod = OpeningBehaviorSettings.class.getDeclaredMethod( "init" );
 			initMethod.setAccessible( true ); // bypasses private visibility
 			initMethod.invoke( ui );
 
-			Field defaultZarrOpenBehaviorField = DragAndDropBehaviorSettings.class.getDeclaredField( "defaultZarrOpenBehavior" );
+			Field defaultZarrOpenBehaviorField = OpeningBehaviorSettings.class.getDeclaredField( "defaultZarrOpenBehavior" );
 			defaultZarrOpenBehaviorField.setAccessible( true );
 			defaultZarrOpenBehaviorField.set( ui, ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION.getDescription() );
 
-			Field preferredWidthField = DragAndDropBehaviorSettings.class.getDeclaredField( "preferredWidth" );
+			Field preferredWidthField = OpeningBehaviorSettings.class.getDeclaredField( "preferredWidth" );
 			preferredWidthField.setAccessible( true );
 			preferredWidthField.set( ui, customWidth );
 
@@ -95,7 +95,7 @@ class DragAndDropBehaviorSettingsTest
 	{
 		final List< String > expected =
 				Arrays.stream( ZarrOpenBehavior.values() ).map( ZarrOpenBehavior::getDescription ).collect( Collectors.toList() );
-		final List< String > actual = DragAndDropBehaviorSettings.enumNamesAsList( ZarrOpenBehavior.values() );
+		final List< String > actual = OpeningBehaviorSettings.enumNamesAsList( ZarrOpenBehavior.values() );
 		assertEquals( expected, actual );
 		// Sanity-check a couple of entries explicitly so the test catches a
 		// mistaken switch from getDescription() to name() or to toString().
@@ -106,7 +106,7 @@ class DragAndDropBehaviorSettingsTest
 	@Test
 	void testEnumNamesAsListIsEmptyForEmptyInput()
 	{
-		assertEquals( Collections.emptyList(), DragAndDropBehaviorSettings.enumNamesAsList( new ZarrOpenBehavior[ 0 ] ) );
+		assertEquals( Collections.emptyList(), OpeningBehaviorSettings.enumNamesAsList( new ZarrOpenBehavior[ 0 ] ) );
 	}
 
 	@Test
@@ -114,7 +114,7 @@ class DragAndDropBehaviorSettingsTest
 	{
 		final List< String > expected =
 				Arrays.stream( ZarrReaderBackend.values() ).map( ZarrReaderBackend::getDescription ).collect( Collectors.toList() );
-		final List< String > actual = DragAndDropBehaviorSettings.readerBackendDescriptions( ZarrReaderBackend.values() );
+		final List< String > actual = OpeningBehaviorSettings.readerBackendDescriptions( ZarrReaderBackend.values() );
 		assertEquals( expected, actual );
 		// Anchored explicit values: these are the strings the settings dialog
 		// presents to the user, so a stealth rename should fail this test.
@@ -124,6 +124,6 @@ class DragAndDropBehaviorSettingsTest
 	@Test
 	void testReaderBackendDescriptionsIsEmptyForEmptyInput()
 	{
-		assertEquals( Collections.emptyList(), DragAndDropBehaviorSettings.readerBackendDescriptions( new ZarrReaderBackend[ 0 ] ) );
+		assertEquals( Collections.emptyList(), OpeningBehaviorSettings.readerBackendDescriptions( new ZarrReaderBackend[ 0 ] ) );
 	}
 }

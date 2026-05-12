@@ -50,7 +50,7 @@ import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
  * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.
  */
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Settings > Opening Behavior Settings", initializer = "init" )
-public class DragAndDropBehaviorSettings extends DynamicCommand
+public class OpeningBehaviorSettings extends DynamicCommand
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
