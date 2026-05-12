@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 import org.scijava.Context;
 
 import sc.fiji.ome.zarr.util.ClipboardUtils;
-import sc.fiji.ome.zarr.util.ZarrUriUtils;
+import sc.fiji.ome.zarr.util.ZarrUtils;
 
 public class ClipboardActions
 {
@@ -30,7 +30,7 @@ public class ClipboardActions
 		final URI uri = ClipboardUtils.parseClipboardUri( errorHandler );
 		if ( uri == null )
 			return false;
-		if ( !ZarrUriUtils.isZarr( uri ) )
+		if ( !ZarrUtils.isZarr( uri ) )
 		{
 			if ( errorHandler != null )
 				errorHandler.accept( "The pasted location does not appear to be an OME-Zarr dataset:\n" + uri + "." );

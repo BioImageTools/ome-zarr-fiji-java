@@ -32,17 +32,19 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Scheme-agnostic utility for asking "does this URI point at a Zarr dataset?".
- * Handles {@code file:} URIs via filesystem checks and {@code http(s):} URIs
- * via HEAD requests.
+ * Utility methods for detecting Zarr datasets.
+ * Handles {@link Path} checks and scheme-agnostic {@link URI} probing
+ * ({@code file:} and {@code http(s):}).
  */
-public class ZarrUriUtils
+public class ZarrUtils
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -50,9 +52,39 @@ public class ZarrUriUtils
 
 	private static final int READ_TIMEOUT_MILLIS = 5_000;
 
-	private ZarrUriUtils()
+	/**
+	 * Well-known Zarr metadata file names. The presence of any one of these at a
+	 * location is sufficient to identify it as a Zarr dataset root.
+	 * Ordered v3-first so newer datasets are recognised on the first probe.
+	 */
+	static final String[] METADATA_FILES = { "zarr.json", ".zgroup", ".zarray", ".zattrs" };
+
+	private ZarrUtils()
 	{
 		// prevent instantiation
+	}
+
+	/**
+	 * Determines whether the given path appears to be the root of a Zarr dataset.
+	 * <p>
+	 * The method checks for the presence of well-known Zarr (and consequently OME-Zarr) metadata files:
+	 * <ul>
+	 *   <li>{@code .zgroup}, {@code .zattrs} or {@code .zarray} for Zarr v2</li>
+	 *   <li>{@code zarr.json} for Zarr v3</li>
+	 * </ul>
+	 * The existence of any one of these files is considered sufficient to
+	 * identify the folder as a Zarr dataset folder.
+	 *
+	 * @param folder the path to the directory to check
+	 * @return {@code true} if the folder contains Zarr metadata files indicating
+	 *         a Zarr v2 or v3 dataset, {@code false} otherwise
+	 */
+	static boolean isZarrFolder( final Path folder )
+	{
+		for ( final String name : METADATA_FILES )
+			if ( Files.exists( folder.resolve( name ) ) )
+				return true;
+		return false;
 	}
 
 	/**
@@ -70,7 +102,7 @@ public class ZarrUriUtils
 		{
 			try
 			{
-				return ZarrOnFileSystemUtils.isZarrFolder( Paths.get( uri ) );
+				return isZarrFolder( Paths.get( uri ) );
 			}
 			catch ( RuntimeException e )
 			{
@@ -85,7 +117,7 @@ public class ZarrUriUtils
 	private static boolean isZarrUrl( final URI baseUri )
 	{
 		final URI base = ensureTrailingSlash( baseUri );
-		for ( final String name : ZarrOnFileSystemUtils.METADATA_FILES )
+		for ( final String name : METADATA_FILES )
 		{
 			if ( isAccessible( base.resolve( name ) ) )
 				return true;

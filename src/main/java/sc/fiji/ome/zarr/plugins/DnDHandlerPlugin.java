@@ -45,12 +45,11 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.util.BdvHandleService;
-import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
+import sc.fiji.ome.zarr.util.ZarrUtils;
 
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
 public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
@@ -78,7 +77,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		if ( !( source instanceof FileLocation ) )
 			return false;
 
-		return ZarrOnFileSystemUtils.isZarrFolder( Paths.get( source.getURI() ) );
+		return ZarrUtils.isZarr( source.getURI() );
 	}
 
 	@Override

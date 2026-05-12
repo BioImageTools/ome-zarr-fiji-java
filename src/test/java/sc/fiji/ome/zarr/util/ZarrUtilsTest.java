@@ -50,34 +50,69 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import com.sun.net.httpserver.HttpServer;
 
-class ZarrUriUtilsTest
+class ZarrUtilsTest
 {
-	// --- file: URI tests ---
+	// --- isZarrFolder(Path) tests ---
+
+	@Test
+	void testIsZarrFolder_validZarrFolders() throws URISyntaxException
+	{
+		String[] examples = {
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr",
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/0",
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v5.ome.zarr",
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v5.ome.zarr/0"
+		};
+
+		for ( String example : examples )
+		{
+			Path path = ZarrTestUtils.resourcePath( example );
+			assertTrue( ZarrUtils.isZarrFolder( path ) );
+		}
+	}
+
+	@Test
+	void testIsZarrFolder_invalidZarrFolders() throws URISyntaxException
+	{
+		String[] examples = {
+				"sc/fiji/ome/zarr/util",
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/0/0",
+				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/0/0/0"
+		};
+
+		for ( String example : examples )
+		{
+			Path path = ZarrTestUtils.resourcePath( example );
+			assertFalse( ZarrUtils.isZarrFolder( path ) );
+		}
+	}
+
+	// --- isZarr(URI) — file: URI tests ---
 
 	@Test
 	void detectsLocalZarrFolderViaFileUri() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr" );
-		assertTrue( ZarrUriUtils.isZarr( path.toUri() ) );
+		assertTrue( ZarrUtils.isZarr( path.toUri() ) );
 	}
 
 	@Test
 	void rejectsNonZarrLocalFolder() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing" );
-		assertFalse( ZarrUriUtils.isZarr( path.toUri() ) );
+		assertFalse( ZarrUtils.isZarr( path.toUri() ) );
 	}
 
 	@Test
 	void rejectsNullUri()
 	{
-		assertFalse( ZarrUriUtils.isZarr( null ) );
+		assertFalse( ZarrUtils.isZarr( null ) );
 	}
 
 	@Test
 	void rejectsUnsupportedScheme()
 	{
-		assertFalse( ZarrUriUtils.isZarr( URI.create( "ftp://example.com/foo" ) ) );
+		assertFalse( ZarrUtils.isZarr( URI.create( "ftp://example.com/foo" ) ) );
 	}
 
 	@Test
@@ -85,10 +120,10 @@ class ZarrUriUtilsTest
 	{
 		// jar: URIs throw FileSystemNotFoundException from Paths.get(URI); the
 		// dispatcher should catch that rather than propagate.
-		assertFalse( ZarrUriUtils.isZarr( URI.create( "jar:file:/tmp/foo.jar!/bar" ) ) );
+		assertFalse( ZarrUtils.isZarr( URI.create( "jar:file:/tmp/foo.jar!/bar" ) ) );
 	}
 
-	// --- http: URI tests ---
+	// --- isZarr(URI) — http: URI tests ---
 
 	private HttpServer server;
 
@@ -152,14 +187,14 @@ class ZarrUriUtilsTest
 	void detectsZarrRoot( final String path )
 	{
 		exists( path );
-		assertTrue( ZarrUriUtils.isZarr( base() ) );
+		assertTrue( ZarrUtils.isZarr( base() ) );
 	}
 
 	@Test
 	void rejectsLocationWithoutMetadataFiles()
 	{
 		// no exists() call: server returns 404 for everything
-		assertFalse( ZarrUriUtils.isZarr( base() ) );
+		assertFalse( ZarrUtils.isZarr( base() ) );
 	}
 
 	@Test
@@ -169,7 +204,7 @@ class ZarrUriUtilsTest
 		// (e.g. a single-page application routing all requests to index.html)
 		// must not be identified as a Zarr dataset.
 		existsAsHtml( "/dataset/zarr.json", "/dataset/.zgroup", "/dataset/.zarray" );
-		assertFalse( ZarrUriUtils.isZarr( base() ) );
+		assertFalse( ZarrUtils.isZarr( base() ) );
 	}
 
 	@Test
@@ -177,6 +212,6 @@ class ZarrUriUtilsTest
 	{
 		exists( "/dataset/zarr.json" );
 		final URI withSlash = URI.create( base() + "/" );
-		assertTrue( ZarrUriUtils.isZarr( withSlash ) );
+		assertTrue( ZarrUtils.isZarr( withSlash ) );
 	}
 }
