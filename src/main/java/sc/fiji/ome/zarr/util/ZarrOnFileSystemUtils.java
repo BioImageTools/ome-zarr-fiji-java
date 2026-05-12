@@ -28,10 +28,6 @@
  */
 package sc.fiji.ome.zarr.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -41,7 +37,12 @@ import java.util.List;
 public class ZarrOnFileSystemUtils
 {
 
-	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+	/**
+	 * Well-known Zarr metadata file names. The presence of any one of these at a
+	 * location is sufficient to identify it as a Zarr dataset root.
+	 * Ordered v3-first so newer datasets are recognised on the first probe.
+	 */
+	static final String[] METADATA_FILES = { "zarr.json", ".zgroup", ".zarray", ".zattrs" };
 
 	private ZarrOnFileSystemUtils()
 	{
@@ -65,10 +66,10 @@ public class ZarrOnFileSystemUtils
 	 */
 	public static boolean isZarrFolder( final Path folder )
 	{
-		return ( Files.exists( folder.resolve( ".zgroup" ) ) || //Zarr v2
-				Files.exists( folder.resolve( ".zattrs" ) ) || //Zarr v2. // NB: .zattrs should not normally appear without .zgroup
-				Files.exists( folder.resolve( ".zarray" ) ) || //Zarr v2
-				Files.exists( folder.resolve( "zarr.json" ) ) ); //Zarr v3
+		for ( final String name : METADATA_FILES )
+			if ( Files.exists( folder.resolve( name ) ) )
+				return true;
+		return false;
 	}
 
 	/**
