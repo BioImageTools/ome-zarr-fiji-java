@@ -28,18 +28,29 @@
  */
 package sc.fiji.ome.zarr.util;
 
+import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.file.Paths;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * Scheme-agnostic entry point for asking "does this URI point at a Zarr
- * dataset?". Dispatches to {@link ZarrOnFileSystemUtils#isZarrFolder} for
- * {@code file:} URIs and {@link ZarrOverHttpUtils#isZarrUrl} for {@code http(s):}
- * URIs.
+ * Scheme-agnostic utility for asking "does this URI point at a Zarr dataset?".
+ * Handles {@code file:} URIs via filesystem checks and {@code http(s):} URIs
+ * via HEAD requests.
  */
-public class ZarrLocations
+public class ZarrUriUtils
 {
-	private ZarrLocations()
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	private static final int CONNECT_TIMEOUT_MILLIS = 5_000;
+
+	private static final int READ_TIMEOUT_MILLIS = 5_000;
+
+	private ZarrUriUtils()
 	{
 		// prevent instantiation
 	}
@@ -67,7 +78,52 @@ public class ZarrLocations
 			}
 		}
 		if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
-			return ZarrOverHttpUtils.isZarrUrl( uri );
+			return isZarrUrl( uri );
 		return false;
+	}
+
+	private static boolean isZarrUrl( final URI baseUri )
+	{
+		final URI base = ensureTrailingSlash( baseUri );
+		for ( final String name : ZarrOnFileSystemUtils.METADATA_FILES )
+		{
+			if ( isAccessible( base.resolve( name ) ) )
+				return true;
+		}
+		return false;
+	}
+
+	private static URI ensureTrailingSlash( final URI uri )
+	{
+		final String s = uri.toString();
+		return s.endsWith( "/" ) ? uri : URI.create( s + "/" );
+	}
+
+	private static boolean isAccessible( final URI uri )
+	{
+		HttpURLConnection conn = null;
+		try
+		{
+			conn = ( HttpURLConnection ) uri.toURL().openConnection();
+			conn.setRequestMethod( "HEAD" );
+			conn.setConnectTimeout( CONNECT_TIMEOUT_MILLIS );
+			conn.setReadTimeout( READ_TIMEOUT_MILLIS );
+			conn.setInstanceFollowRedirects( true );
+			final int code = conn.getResponseCode();
+			if ( code < 200 || code >= 300 )
+				return false;
+			final String contentType = conn.getHeaderField( "Content-Type" );
+			return contentType == null || !contentType.toLowerCase().startsWith( "text/html" );
+		}
+		catch ( IOException e )
+		{
+			logger.debug( "HEAD request failed for {}: {}", uri, e.getMessage() );
+			return false;
+		}
+		finally
+		{
+			if ( conn != null )
+				conn.disconnect();
+		}
 	}
 }

@@ -34,6 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -48,8 +50,46 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import com.sun.net.httpserver.HttpServer;
 
-class ZarrOverHttpUtilsTest
+class ZarrUriUtilsTest
 {
+	// --- file: URI tests ---
+
+	@Test
+	void detectsLocalZarrFolderViaFileUri() throws URISyntaxException
+	{
+		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr" );
+		assertTrue( ZarrUriUtils.isZarr( path.toUri() ) );
+	}
+
+	@Test
+	void rejectsNonZarrLocalFolder() throws URISyntaxException
+	{
+		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing" );
+		assertFalse( ZarrUriUtils.isZarr( path.toUri() ) );
+	}
+
+	@Test
+	void rejectsNullUri()
+	{
+		assertFalse( ZarrUriUtils.isZarr( null ) );
+	}
+
+	@Test
+	void rejectsUnsupportedScheme()
+	{
+		assertFalse( ZarrUriUtils.isZarr( URI.create( "ftp://example.com/foo" ) ) );
+	}
+
+	@Test
+	void rejectsMalformedFileUri()
+	{
+		// jar: URIs throw FileSystemNotFoundException from Paths.get(URI); the
+		// dispatcher should catch that rather than propagate.
+		assertFalse( ZarrUriUtils.isZarr( URI.create( "jar:file:/tmp/foo.jar!/bar" ) ) );
+	}
+
+	// --- http: URI tests ---
+
 	private HttpServer server;
 
 	private final Set< String > existingPaths = Collections.synchronizedSet( new HashSet<>() );
@@ -111,15 +151,15 @@ class ZarrOverHttpUtilsTest
 	@MethodSource( "omeZarrPaths" )
 	void detectsZarrRoot( final String path )
 	{
-		exists( path ); // check that the path exists
-		assertTrue( ZarrOverHttpUtils.isZarrUrl( base() ) );
+		exists( path );
+		assertTrue( ZarrUriUtils.isZarr( base() ) );
 	}
 
 	@Test
 	void rejectsLocationWithoutMetadataFiles()
 	{
 		// no exists() call: server returns 404 for everything
-		assertFalse( ZarrOverHttpUtils.isZarrUrl( base() ) );
+		assertFalse( ZarrUriUtils.isZarr( base() ) );
 	}
 
 	@Test
@@ -129,7 +169,7 @@ class ZarrOverHttpUtilsTest
 		// (e.g. a single-page application routing all requests to index.html)
 		// must not be identified as a Zarr dataset.
 		existsAsHtml( "/dataset/zarr.json", "/dataset/.zgroup", "/dataset/.zarray" );
-		assertFalse( ZarrOverHttpUtils.isZarrUrl( base() ) );
+		assertFalse( ZarrUriUtils.isZarr( base() ) );
 	}
 
 	@Test
@@ -137,19 +177,6 @@ class ZarrOverHttpUtilsTest
 	{
 		exists( "/dataset/zarr.json" );
 		final URI withSlash = URI.create( base() + "/" );
-		assertTrue( ZarrOverHttpUtils.isZarrUrl( withSlash ) );
-	}
-
-	@Test
-	void rejectsNullUri()
-	{
-		assertFalse( ZarrOverHttpUtils.isZarrUrl( null ) );
-	}
-
-	@Test
-	void rejectsNonHttpScheme()
-	{
-		assertFalse( ZarrOverHttpUtils.isZarrUrl( URI.create( "file:///tmp/foo" ) ) );
-		assertFalse( ZarrOverHttpUtils.isZarrUrl( URI.create( "ftp://example.com/foo" ) ) );
+		assertTrue( ZarrUriUtils.isZarr( withSlash ) );
 	}
 }
