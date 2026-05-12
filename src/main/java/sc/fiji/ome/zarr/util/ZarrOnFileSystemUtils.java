@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,15 +31,12 @@ package sc.fiji.ome.zarr.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandles;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class ZarrOnFileSystemUtils
 {
@@ -94,69 +91,6 @@ public class ZarrOnFileSystemUtils
 		}
 
 		return lastValidFolder;
-	}
-
-	/**
-	 * Attempts to locate the root image folder for a given starting path within a OME-Zarr dataset.
-	 * <p>
-	 * The method works as follows:
-	 * <ol>
-	 *     <li>Starts at the given {@code startingFolder} and traverses upward through parent folders
-	 *     as long as each folder qualifies as a OME-Zarr folder according to {@link #isZarrFolder(Path)}.</li>
-	 *     <li>The top-most OME-Zarr folder found is considered the "top-level OME-Zarr folder".</li>
-	 *     <li>If a folder below the top-level OME-Zarr folder was visited during traversal, it is returned
-	 *     as the image folder.</li>
-	 *     <li>If no such folder exists, the method inspects the top-level OME-Zarr folder. If it contains
-	 *     <b>exactly one</b> subfolder (excluding any folder named "OME"), that subfolder is returned as
-	 *     the image folder.</li>
-	 *     <li>If no suitable candidate folder is found or an I/O error occurs while listing subfolders,
-	 *     the method returns {@code null}.</li>
-	 * </ol>
-	 *
-	 * @param startingFolder the folder path somewhere within a OME-Zarr dataset to start the search from; must not be {@code null}
-	 * @return the path to the candidate image folder below the top-level OME-Zarr folder, or {@code null} if no suitable folder is found
-	 */
-	public static Path findImageRootFolder( final Path startingFolder )
-	{
-		Path currentFolder = startingFolder;
-		Path topLevelZarrFolder = null;
-		Path imageFolder = null;
-
-		// Traverse up the folder tree as long as we're inside a OME-Zarr folder
-		while ( isZarrFolder( currentFolder ) )
-		{
-			imageFolder = topLevelZarrFolder; // last visited folder just below potential top-level OME-Zarr
-			topLevelZarrFolder = currentFolder;
-			currentFolder = currentFolder.getParent();
-		}
-
-		// If no OME-Zarr folder was ever found
-		if ( topLevelZarrFolder == null )
-			return null;
-
-		// If there was a folder below top-level OME-Zarr while traversing up, return it
-		if ( imageFolder != null )
-			return imageFolder;
-
-		// Otherwise, check if top-level OME-Zarr has only one suitable subfolder
-		try (Stream< Path > stream = Files.list( topLevelZarrFolder ))
-		{
-			Path[] subFolders = stream
-					.filter( Files::isDirectory )
-					.filter( path -> !path.getFileName().toString().equals( "OME" ) )
-					.limit( 2 )
-					.toArray( Path[]::new );
-
-			if ( subFolders.length == 1 )
-				imageFolder = subFolders[ 0 ];
-		}
-		catch ( IOException e )
-		{
-			// If anything went wrong, give up
-			return null;
-		}
-
-		return imageFolder;
 	}
 
 	/**
@@ -217,34 +151,5 @@ public class ZarrOnFileSystemUtils
 		// Reverse to get the path from shorterPath to longerPath
 		Collections.reverse( pathElements );
 		return Collections.unmodifiableList( pathElements ); // immutable result
-	}
-
-	/**
-	 * Checks if the current OS is Windows.
-	 *
-	 * @return True if the OS is Windows, false otherwise.
-	 */
-	public static boolean isWindows()
-	{
-		final String myOS = System.getProperty( "os.name" ).toLowerCase();
-		return !( myOS.contains( "mac" ) || myOS.contains( "nux" ) || myOS.contains( "nix" ) );
-	}
-
-	/**
-	 * The method ensures compatibility with different operating systems by formatting the path accordingly.
-	 * If the provided path is null, the method returns null.
-	 *
-	 * @param path the file system path pointing anywhere
-	 * @return the absolute path formatted as a string,
-	 *         or null if the provided path is null
-	 */
-	public static URI getUriFromPath( final Path path )
-	{
-		if ( path == null )
-			return null;
-
-		final URI pathAsStr = path.toUri();
-		logger.info( "URI: {}", pathAsStr );
-		return pathAsStr;
 	}
 }

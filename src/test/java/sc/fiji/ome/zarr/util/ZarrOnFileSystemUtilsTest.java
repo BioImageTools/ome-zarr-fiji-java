@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,7 +30,6 @@ package sc.fiji.ome.zarr.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,53 +42,6 @@ import java.util.List;
 
 class ZarrOnFileSystemUtilsTest
 {
-
-	@Test
-	void testFindImageRootFolder_startOnRootFolder() throws URISyntaxException
-	{
-		String[] examples = {
-				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr",
-				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr"
-		};
-
-		for ( String example : examples )
-		{
-			Path path = ZarrTestUtils.resourcePath( example );
-			Path result = ZarrOnFileSystemUtils.findImageRootFolder( path );
-			assertNull( result, "Expected null for root folder: " + example );
-		}
-	}
-
-	@Test
-	void testFindImageRootFolder_startOnLevelOneFolder() throws URISyntaxException
-	{
-		String[] examples = {
-				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/0",
-				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v5.ome.zarr/0"
-		};
-
-		for ( String example : examples )
-		{
-			Path path = ZarrTestUtils.resourcePath( example );
-			Path result = ZarrOnFileSystemUtils.findImageRootFolder( path );
-			assertEquals( path, result, "Expected image root folder for: " + example );
-		}
-	}
-
-	@Test
-	void testFindImageRootFolder_startOnLeaveFolder() throws URISyntaxException
-	{
-		String[] examples = {
-				"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/0/0"
-		};
-
-		for ( String example : examples )
-		{
-			Path path = ZarrTestUtils.resourcePath( example );
-			Path result = ZarrOnFileSystemUtils.findImageRootFolder( path );
-			assertNull( result, "Expected null for root folder: " + example );
-		}
-	}
 
 	@Test
 	void testIsZarrFolder_validZarrFolders() throws URISyntaxException
