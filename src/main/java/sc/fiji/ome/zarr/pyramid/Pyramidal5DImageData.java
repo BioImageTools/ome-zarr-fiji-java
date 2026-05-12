@@ -44,8 +44,8 @@ import org.scijava.prefs.PrefService;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
-import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
-import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
+import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
+import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 
 /**
  * 5D multi-resolution array data

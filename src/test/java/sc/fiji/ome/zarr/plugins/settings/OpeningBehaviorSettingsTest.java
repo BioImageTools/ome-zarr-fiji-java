@@ -42,9 +42,9 @@ import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
-import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
-import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
-import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
+import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
+import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 
 /**
  * Unit tests for the {@link OpeningBehaviorSettings#run()} method.

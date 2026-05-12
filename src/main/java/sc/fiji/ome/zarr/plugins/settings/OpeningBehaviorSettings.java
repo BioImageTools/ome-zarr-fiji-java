@@ -42,9 +42,9 @@ import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sc.fiji.ome.zarr.settings.ZarrOpeningSettings;
-import sc.fiji.ome.zarr.settings.ZarrOpenBehavior;
-import sc.fiji.ome.zarr.settings.ZarrReaderBackend;
+import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
+import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
+import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 
 /**
  * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.

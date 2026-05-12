@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.settings;
+package sc.fiji.ome.zarr.open.options;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
