@@ -23,7 +23,6 @@ import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metad
 
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
-import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -152,26 +151,17 @@ public class BackendBenchmark
 
 	private static MultiscaleImage openMultiscaleImage( final Path inputPath ) throws IOException, ZarrException
 	{
-		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
-		final Path zarrRoot = rootPath != null ? rootPath : inputPath;
-		final FilesystemStore store = new FilesystemStore( zarrRoot );
+		final FilesystemStore store = new FilesystemStore( inputPath );
 		StoreHandle handle = store.resolve();
-		if ( rootPath != null && !rootPath.equals( inputPath ) )
-		{
-			for ( final String segment : ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath ) )
-				handle = handle.resolve( segment );
-		}
 		return MultiscaleImage.open( handle );
 	}
 
 	private static N5OpenContext openN5Context( final Path inputPath ) throws IOException
 	{
-		final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
-		if ( rootPath == null )
+		if ( inputPath == null )
 			throw new IOException( "No zarr root for " + inputPath );
-		final String relativePath = String.join( "/", ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath ) );
-		final N5Reader reader = new N5Factory().openReader( rootPath.toUri().toString() );
-		final N5TreeNode node = new N5TreeNode( relativePath );
+		final N5Reader reader = new N5Factory().openReader( inputPath.toUri().toString() );
+		final N5TreeNode node = new N5TreeNode( "" );
 		final List< N5MetadataParser< ? > > parsers = Arrays.asList(
 				new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser(),
 				new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser(),

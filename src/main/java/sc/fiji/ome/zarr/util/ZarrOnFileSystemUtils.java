@@ -30,9 +30,6 @@ package sc.fiji.ome.zarr.util;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class ZarrOnFileSystemUtils
 {
@@ -70,87 +67,5 @@ public class ZarrOnFileSystemUtils
 			if ( Files.exists( folder.resolve( name ) ) )
 				return true;
 		return false;
-	}
-
-	/**
-	 * Traverses up the folder tree as long as {@link #isZarrFolder(Path)}
-	 * says we are inside an OME-Zarr dataset. The last such folder is returned, which is
-	 * supposed to be the top-level/root folder of the pointed at dataset.
-	 *
-	 * @param somewhereInZarrFolder Pointer (folder) to somewhere inside an OME-Zarr.
-	 * @return Root of that OME-Zarr, or NULL if the provided path is NOT within an OME-Zarr.
-	 */
-	public static Path findRootFolder( final Path somewhereInZarrFolder )
-	{
-		Path parentFolder = somewhereInZarrFolder;
-		Path lastValidFolder = null;
-
-		while ( isZarrFolder( parentFolder ) )
-		{
-			lastValidFolder = parentFolder;
-			parentFolder = parentFolder.getParent();
-		}
-
-		return lastValidFolder;
-	}
-
-	/**
-	 * Returns the relative path from the {@code ancestorPath} to the {@code descendantPath},
-	 * as a list of folder names in the order needed to traverse from {@code ancestorPath}
-	 * to reach {@code descendantPath}.
-	 * <p>
-	 * For example, if {@code ancestorPath} is "/a/b" and {@code descendantPath} is "/a/b/c",
-	 * this method returns ["c"].
-	 * <p>
-	 * This method assumes that {@code ancestorPath} is a parent (or ancestor) of {@code descendantPath}.
-	 * If not, an {@link IllegalArgumentException} is thrown.
-	 *
-	 * @param ancestorPath the shorter path (must be an ancestor of {@code descendantPath})
-	 * @param descendantPath the longer path (must be a descendant of {@code ancestorPath})
-	 * @return an ordered list of folder names from {@code ancestorPath} to {@code descendantPath},
-	 *         or an empty list if the paths are equal
-	 * @throws IllegalArgumentException if {@code ancestorPath} is not an ancestor of {@code descendantPath}
-	 *         or if either path is null
-	 */
-	public static List< String > relativePathElements( final Path ancestorPath, final Path descendantPath )
-	{
-		// Null checks
-		if ( descendantPath == null )
-			throw new IllegalArgumentException( "ancestorPath must not be null" );
-		if ( ancestorPath == null )
-			throw new IllegalArgumentException( "descendantPath must not be null" );
-
-		// If paths are equal, no difference
-		if ( descendantPath.equals( ancestorPath ) )
-			return Collections.emptyList(); // immutable empty list (Java 8)
-
-		// Build the path from longerPath up to shorterPath
-		List< String > pathElements = new ArrayList<>();
-		Path current = descendantPath;
-
-		while ( current != null && !current.equals( ancestorPath ) )
-		{
-			Path fileName = current.getFileName();
-			if ( fileName == null )
-			{
-				throw new IllegalArgumentException(
-						"Cannot determine path difference: " + descendantPath + " is not a descendant of " + ancestorPath
-				);
-			}
-			pathElements.add( fileName.toString() );
-			current = current.getParent();
-		}
-
-		// If we reached null without matching shorterPath, it's not a descendant
-		if ( current == null )
-		{
-			throw new IllegalArgumentException(
-					"Path " + descendantPath + " is not a descendant of " + ancestorPath
-			);
-		}
-
-		// Reverse to get the path from shorterPath to longerPath
-		Collections.reverse( pathElements );
-		return Collections.unmodifiableList( pathElements ); // immutable result
 	}
 }
