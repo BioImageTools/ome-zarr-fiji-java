@@ -53,7 +53,7 @@ public class ZarrOverHttpUtils
 	 * group or array root. Ordered to put the v3 marker first because newer
 	 * datasets are increasingly v3.
 	 */
-	private static final String[] METADATA_FILES = { "zarr.json", ".zgroup", ".zarray" };
+	private static final String[] METADATA_FILES = { "zarr.json", ".zgroup", ".zarray", ".zattrs" };
 
 	private ZarrOverHttpUtils()
 	{
