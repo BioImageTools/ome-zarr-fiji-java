@@ -28,11 +28,8 @@
  */
 package sc.fiji.ome.zarr.pyramid.backend.n5;
 
-import java.io.File;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -82,7 +79,6 @@ import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 import sc.fiji.ome.zarr.util.Affine3DUtils;
-import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the N5 universe
@@ -130,11 +126,10 @@ public class N5PyramidBackend<
 	@Override
 	public PyramidContents< T, V > load()
 	{
-		final ReaderTarget target = resolveReaderTarget();
-		final N5Reader reader = new N5Factory().openReader( target.readerUri );
-		final N5Metadata metadata = readMetadata( reader, target.relativePath );
-
-		final MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( metadata, reader, new N5TreeNode( target.relativePath ) );
+		final N5Reader reader = new N5Factory().openReader( inputUri.toString() );
+		final N5TreeNode treeNode = new N5TreeNode( "" );
+		final N5Metadata metadata = readMetadata( reader, treeNode );
+		final MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( reader, treeNode );
 		final int multiscaleIndex = 0;
 		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
 		final Omero omero = adapter.initOmeroMetadata();
@@ -191,60 +186,8 @@ public class N5PyramidBackend<
 				.build();
 	}
 
-	// ---------------------------------------------------------------------
-	// Path / reader helpers
-	// ---------------------------------------------------------------------
-
-	/**
-	 * Where the underlying N5 reader should be opened, and where – relative to
-	 * that reader root – the OME-Zarr metadata lives. For local paths we walk
-	 * up the filesystem to the OME-Zarr root and remember the descent. For
-	 * remote URLs we trust that the caller passed the OME-Zarr root.
-	 */
-	private ReaderTarget resolveReaderTarget()
+	private N5Metadata readMetadata( final N5Reader reader, final N5TreeNode node )
 	{
-		final String scheme = inputUri.getScheme();
-		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
-		{
-			final Path inputPath = Paths.get( inputUri );
-			final Path rootPath = resolveRootPath( inputPath );
-			final List< String > elements = ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath );
-			return new ReaderTarget( rootPath.toUri().toString(), String.join( File.separator, elements ) );
-		}
-		if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
-			return new ReaderTarget( inputUri.toString(), "" );
-		throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
-	}
-
-	private Path resolveRootPath( final Path inputPath )
-	{
-		if ( inputPath == null )
-			throw new IllegalArgumentException( "Input path is null" );
-		final Path path = ZarrOnFileSystemUtils.findRootFolder( inputPath );
-		if ( path == null )
-			throw new IllegalArgumentException( "Could not find root folder for non-OME-Zarr path: " + inputPath );
-		return path;
-	}
-
-	private static final class ReaderTarget
-	{
-		private final String readerUri;
-
-		private final String relativePath;
-
-		private ReaderTarget( final String readerUri, final String relativePath )
-		{
-			this.readerUri = readerUri;
-			this.relativePath = relativePath;
-		}
-	}
-
-	private N5Metadata readMetadata( final N5Reader reader, final String relativePath )
-	{
-		if ( relativePath == null )
-			throw new NotAMultiscaleImageException( "Invalid OME-Zarr URI: " + inputUri );
-
-		final N5TreeNode node = new N5TreeNode( relativePath );
 		final List< N5MetadataParser< ? > > parsers =
 				Arrays.asList( new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser(),
 						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser(),
@@ -253,23 +196,23 @@ public class N5PyramidBackend<
 		final N5Metadata n5Metadata = node.getMetadata();
 		if ( n5Metadata == null )
 		{
-			if ( isBioformats2rawLayout( reader, relativePath ) )
+			if ( isBioformats2rawLayout( reader ) )
 				throw new MultiImageDatasetException( inputUri.toString() );
 			throw new NotAMultiscaleImageException( inputUri.toString() );
 		}
 		return n5Metadata;
 	}
 
-	private static boolean isBioformats2rawLayout( final N5Reader reader, final String relativePath )
+	private static boolean isBioformats2rawLayout( final N5Reader reader )
 	{
 		try
 		{
-			final JsonElement ome = reader.getAttribute( relativePath, "ome", JsonElement.class );
+			final JsonElement ome = reader.getAttribute( "", "ome", JsonElement.class );
 			return ome != null && ome.isJsonObject() && ome.getAsJsonObject().has( "bioformats2raw.layout" );
 		}
 		catch ( final RuntimeException e )
 		{
-			logger.debug( "Could not read 'ome' attribute from '{}': {}", relativePath, e.getMessage() );
+			logger.debug( "Could not read 'ome' attribute: {}", e.getMessage() );
 			return false;
 		}
 	}
@@ -461,15 +404,18 @@ public class N5PyramidBackend<
 
 	private static class MetadataAdapterFactory
 	{
-		static MetadataAdapter getAdapter( final N5Metadata metadata, final N5Reader reader, final N5TreeNode node )
+		static MetadataAdapter getAdapter( final N5Reader reader, final N5TreeNode node )
 		{
+			final N5Metadata metadata = node.getMetadata();
+			if ( metadata == null )
+				throw new NotAMultiscaleImageException( reader.getURI().toString() );
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata )
 				return new V05MetadataAdapter( reader, node );
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata )
 				return new V04MetadataAdapter( reader, node );
 			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
 				return new V03MetadataAdapter( reader, node );
-			throw new NotAMultiscaleImageException( "Unsupported multiscale metadata type: " + metadata.getClass() );
+			throw new NotAMultiscaleImageException( reader.getURI().toString() );
 		}
 	}
 
