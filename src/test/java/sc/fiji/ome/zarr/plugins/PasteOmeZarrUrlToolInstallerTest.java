@@ -194,7 +194,7 @@ class PasteOmeZarrUrlToolInstallerTest
 		try (MockedStatic< ClipboardUtils > mockUtils = mockStatic( ClipboardUtils.class );
 				MockedStatic< ClipboardActions > mockActions = mockStatic( ClipboardActions.class ))
 		{
-			mockUtils.when( () -> ClipboardUtils.parseClipboardUri( any( Consumer.class ) ) ).thenReturn( null );
+			mockUtils.when( () -> ClipboardUtils.readClipboardAsUri( any( Consumer.class ) ) ).thenReturn( null );
 
 			assertFalse( dispatcher.dispatchKeyEvent( e ) );
 			mockActions.verifyNoInteractions();
@@ -212,7 +212,7 @@ class PasteOmeZarrUrlToolInstallerTest
 		try (MockedStatic< ClipboardUtils > mockUtils = mockStatic( ClipboardUtils.class );
 				MockedStatic< ClipboardActions > mockActions = mockStatic( ClipboardActions.class ))
 		{
-			mockUtils.when( () -> ClipboardUtils.parseClipboardUri( any( Consumer.class ) ) ).thenReturn( uri );
+			mockUtils.when( () -> ClipboardUtils.readClipboardAsUri( any( Consumer.class ) ) ).thenReturn( uri );
 			mockActions.when( () -> ClipboardActions.pasteFromClipboard( any(), isNull() ) ).thenReturn( true );
 
 			assertTrue( dispatcher.dispatchKeyEvent( e ) );

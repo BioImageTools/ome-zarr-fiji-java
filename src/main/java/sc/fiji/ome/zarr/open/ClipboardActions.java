@@ -27,7 +27,7 @@ public class ClipboardActions
 	 */
 	public static boolean pasteFromClipboard( final Context context, final Consumer< String > errorHandler )
 	{
-		final URI uri = ClipboardUtils.parseClipboardUri( errorHandler );
+		final URI uri = ClipboardUtils.readClipboardAsUri( errorHandler );
 		if ( uri == null )
 			return false;
 		if ( !ZarrUtils.isZarr( uri ) )

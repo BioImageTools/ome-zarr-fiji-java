@@ -178,7 +178,7 @@ public class PasteOmeZarrUrlToolInstaller extends AbstractService implements Sci
 				return false;
 			if ( e.getSource() instanceof JTextComponent )
 				return false;
-			final URI uri = ClipboardUtils.parseClipboardUri( logger::debug );
+			final URI uri = ClipboardUtils.readClipboardAsUri( logger::debug );
 			if ( uri == null )
 				return false;
 			return ClipboardActions.pasteFromClipboard( getContext(), null );

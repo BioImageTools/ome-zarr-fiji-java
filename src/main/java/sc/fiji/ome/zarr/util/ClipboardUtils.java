@@ -92,9 +92,9 @@ public final class ClipboardUtils
 	 * is empty, the text is not a recognizable URI/path, or the location does
 	 * not appear to be an OME-Zarr dataset.
 	 */
-	public static URI parseClipboardUri( final Consumer< String > errorHandler )
+	public static URI readClipboardAsUri( final Consumer< String > errorHandler )
 	{
-		return parseClipboardUri( readClipboard(), errorHandler );
+		return readClipboardAsUri( readClipboard(), errorHandler );
 	}
 
 	/**
@@ -110,7 +110,7 @@ public final class ClipboardUtils
 	 * is empty, the text is not a recognizable URI/path, or the location does
 	 * not appear to be an OME-Zarr dataset.
 	 */
-	static URI parseClipboardUri( final String clipboard, final Consumer< String > errorHandler )
+	static URI readClipboardAsUri( final String clipboard, final Consumer< String > errorHandler )
 	{
 		if ( clipboard == null || clipboard.trim().isEmpty() )
 		{
