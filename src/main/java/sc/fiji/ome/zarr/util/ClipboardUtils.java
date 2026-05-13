@@ -110,14 +110,14 @@ public final class ClipboardUtils
 	 * is empty, the text is not a recognizable URI/path, or the location does
 	 * not appear to be an OME-Zarr dataset.
 	 */
-	static URI readClipboardAsUri( final String clipboard, final Consumer< String > errorHandler )
+	static URI readClipboardAsUri( final String clipboardContent, final Consumer< String > errorHandler )
 	{
-		if ( clipboard == null || clipboard.trim().isEmpty() )
+		if ( clipboardContent == null || clipboardContent.trim().isEmpty() )
 		{
 			errorHandler.accept( "The clipboard does not contain any text." );
 			return null;
 		}
-		final String text = clipboard.trim();
+		final String text = clipboardContent.trim();
 
 		return toUri( text, errorHandler );
 	}
