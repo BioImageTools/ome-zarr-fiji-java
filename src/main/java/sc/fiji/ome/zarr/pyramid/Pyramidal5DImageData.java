@@ -65,11 +65,18 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	PyramidalDataset< T > asPyramidalDataset();
 
 	/**
-	 * @return a IJ2 {@code net.imagej.Dataset} wrapping the full resolution
-	 *   5D (XYZCT) image; this will indirectly also serve the ImagePlus.
-	 *
+	 * @return an IJ2 {@code net.imagej.Dataset} wrapping the full-resolution
+	 *   5D (XYZCT) image; this will indirectly also serve the
+	 *   {@link net.imagej.ImgPlus}
 	 */
 	Dataset asDataset();
+
+	/**
+	 * @return an IJ1 {@link ij.ImagePlus} wrapping the full-resolution 5D (XYZCT)
+	 *   image, obtained by converting {@link #asDataset()} via SciJava's
+	 *   {@link org.scijava.convert.ConvertService}
+	 */
+	ImagePlus asImagePlus();
 
 	/**
 	 * @return a list of BigDataViewer sources, representing a 5D (XYZCT) multi-resolution image, one source for each channel of the dataset.
@@ -77,6 +84,13 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	 * 	 multi-resolution, reflecting the resolution pyramid of the OME-Zarr.
 	 */
 	List< SourceAndConverter< T > > asSources();
+
+	/**
+	 * @return the physical voxel size and unit of measurement at the
+	 *   full-resolution level, as derived from the OME-Zarr axis and
+	 *   coordinate-transformation metadata
+	 */
+	VoxelDimensions voxelDimensions();
 
 	int numChannels();
 
@@ -86,16 +100,12 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 
 	T getType();
 
-	VoxelDimensions voxelDimensions();
-
 	String getName();
 
 	default Omero getOmeroProperties()
 	{
 		return null;
 	}
-
-	ImagePlus asImagePlus();
 
 	/**
 	 * Opens an OME-Zarr image using the backend configured in the context's
