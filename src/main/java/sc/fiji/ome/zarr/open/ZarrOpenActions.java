@@ -55,16 +55,14 @@ import net.imglib2.util.Cast;
 
 import bdv.util.BdvFunctions;
 import ij.IJ;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
-import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
-import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ScriptUtils;
@@ -265,35 +263,10 @@ public class ZarrOpenActions
 	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
 			throws NotAMultiscaleImageException, NoMatchingResolutionException
 	{
-		final Integer preferredWidth;
-		if ( settings == null || settings.getOpenBehavior().equals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION ) )
-			preferredWidth = null;
-		else
-			preferredWidth = settings.getPreferredMaxWidth();
-
-		final ZarrReaderBackend backend = settings == null
-				? ZarrOpeningSettings.DEFAULT_READER_BACKEND
-				: settings.getReaderBackend();
-
-		final Pyramidal5DImageDataImpl< ?, ? > data;
-		switch ( backend )
-		{
-		case ZARR_JAVA:
-		{
-			@SuppressWarnings( { "rawtypes", "unchecked" } )
-			final Pyramidal5DImageDataImpl< ?, ? > zarrJavaData =
-					new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( inputUri, preferredWidth ) );
-			data = zarrJavaData;
-			break;
-		}
-		case N5:
-		default:
-			data = new Pyramidal5DImageDataImpl<>( context, inputUri, preferredWidth );
-			break;
-		}
-
+		final ZarrOpeningSettings effectiveSettings = settings != null ? settings : ZarrOpeningSettings.defaultSettings();
+		final Pyramidal5DImageData< ? > data = Pyramidal5DImageData.open( context, inputUri, effectiveSettings );
 		final Object result = multiScaleImageOpener.apply( data.asPyramidalDataset() );
-		logger.info( "Opened multiscale image with {} backend: {}", backend, inputUri );
+		logger.info( "Opened multiscale image with {} backend: {}", effectiveSettings.getReaderBackend(), inputUri );
 		return result;
 	}
 
