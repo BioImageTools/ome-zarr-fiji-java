@@ -25,19 +25,20 @@ export JAVA_TOOL_OPTIONS=-Djava.library.path=$(brew --prefix c-blosc)/lib
 
 ## Architecture
 
-**Entry point:** `DnDHandlerPlugin` – a SciJava `IOPlugin` that intercepts drag-and-drop of filesystem paths, checks whether the path is a Zarr folder via `ZarrOnFileSystemUtils`, then delegates to `ZarrOpenActions`.
+**Entry point:** `DnDHandlerPlugin` – a SciJava `IOPlugin` that intercepts drag-and-drop of filesystem paths, checks whether the path is a Zarr folder via `ZarrUtils.isZarr(URI)`, then delegates to `ZarrOpenActions`.
 
-**Core data model:** `DefaultPyramidal5DImageData` (implements `Pyramidal5DImageData`) wraps an N5 reader and exposes the multi-resolution pyramid, channel/timepoint metadata, affine transforms, and conversion to BigDataViewer sources or ImageJ datasets.
+**Core data model:** `Pyramidal5DImageDataImpl` (implements `Pyramidal5DImageData`) wraps an N5 reader and exposes the multi-resolution pyramid, channel/timepoint metadata, affine transforms, and conversion to BigDataViewer sources or ImageJ datasets.
 
-**Opening modes** (enum `ZarrOpenBehavior`):
+**Opening modes** (enum `ZarrOpenBehavior` in `sc.fiji.ome.zarr.open.options`):
 - `IMAGEJ_HIGHEST_RESOLUTION` / `IMAGEJ_CUSTOM_RESOLUTION` → `ZarrOpenActions.openIJWithImage()`
 - `BDV_MULTI_RESOLUTION` → `ZarrOpenActions.openBDVWithImage()`
 - `SHOW_SELECTION_DIALOG` → `DnDActionChooser` Swing dialog with icon buttons
 
-**Settings** are persisted across Fiji sessions via SciJava `PrefService` in `ZarrDragAndDropOpenSettings`.
+**Settings** are persisted across Fiji sessions via SciJava `PrefService` in `OpeningBehaviorSettings` and `UserScriptSettings`.
 
 **Key utility classes:**
-- `ZarrOnFileSystemUtils` – detects valid Zarr roots by looking for `.zarray` / `.zarr.json`
+- `ZarrUtils` – consolidated Zarr-detection utility; `isZarr(URI)` handles both local filesystem (looks for `.zarray` / `zarr.json`) and HTTP (HEAD-requests known metadata files); `isHttpAccessible` is package-private
+- `ClipboardUtils` – reads the system clipboard (`readClipboard()`) and converts strings to URIs (`stringToUri(String, Consumer<String>)`); `readClipboardAsUri(Consumer<String>)` combines both
 - `BdvHandleService` – SciJava service managing the BigDataViewer window lifecycle
 - `BdvUtils` / `Affine3DUtils` – BigDataViewer and affine-transform helpers
 - `ScriptUtils` – opens Fiji script editor with a pre-populated scriptlet
