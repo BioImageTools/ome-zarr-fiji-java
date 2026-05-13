@@ -36,6 +36,7 @@ import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
+@SuppressWarnings( "all" )
 public class Pyramidal5DImageDataDemo
 {
 	public static void main( String[] args )

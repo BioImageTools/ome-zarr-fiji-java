@@ -37,6 +37,7 @@ import sc.fiji.ome.zarr.pyramid.legacy.MultiscaleImage;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
+@SuppressWarnings( "all" )
 public class MultiscaleImageDemo
 {
 	public static void main( String[] args )
