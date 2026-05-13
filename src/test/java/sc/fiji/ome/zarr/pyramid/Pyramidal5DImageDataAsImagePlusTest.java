@@ -59,7 +59,7 @@ class Pyramidal5DImageDataAsImagePlusTest
 
 		try (Context context = new Context())
 		{
-			final Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toUri(), null );
+			final Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toUri() );
 			final ImagePlus imagePlus = pyramidal5DImageData.asImagePlus();
 
 			assertNotNull( imagePlus );
