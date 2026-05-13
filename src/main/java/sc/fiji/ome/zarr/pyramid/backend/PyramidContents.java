@@ -28,7 +28,6 @@
  */
 package sc.fiji.ome.zarr.pyramid.backend;
 
-import net.imagej.ImgPlus;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -37,6 +36,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
@@ -80,7 +80,7 @@ public final class PyramidContents<
 
 	public final RandomAccessibleInterval< V >[] volatileImgs;
 
-	public final ImgPlus< T > imgPlus;
+	public final AxisCalibration[] axes;
 
 	/** imglib2-order index of the channel axis, or -1 if absent. */
 	public final int channelAxisIndex;
@@ -111,7 +111,7 @@ public final class PyramidContents<
 		this.transforms = b.transforms;
 		this.cachedCellImgs = b.cachedCellImgs;
 		this.volatileImgs = b.volatileImgs;
-		this.imgPlus = b.imgPlus;
+		this.axes = b.axes;
 		this.channelAxisIndex = b.channelAxisIndex;
 		this.zAxisPresent = b.zAxisPresent;
 		this.timeAxisPresent = b.timeAxisPresent;
@@ -154,7 +154,7 @@ public final class PyramidContents<
 
 		private RandomAccessibleInterval< V >[] volatileImgs;
 
-		private ImgPlus< T > imgPlus;
+		private AxisCalibration[] axes;
 
 		private int channelAxisIndex = -1;
 
@@ -238,9 +238,9 @@ public final class PyramidContents<
 			return this;
 		}
 
-		public Builder< T, V > imgPlus( final ImgPlus< T > i )
+		public Builder< T, V > axes( final AxisCalibration[] a )
 		{
-			this.imgPlus = i;
+			this.axes = a;
 			return this;
 		}
 

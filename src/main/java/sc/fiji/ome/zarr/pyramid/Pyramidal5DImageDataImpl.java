@@ -30,10 +30,17 @@ package sc.fiji.ome.zarr.pyramid;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.imagej.Dataset;
 import net.imagej.DefaultDataset;
+import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
+import net.imagej.axis.AxisType;
+import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.EuclideanSpace;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
@@ -57,6 +64,7 @@ import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
+import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
@@ -81,6 +89,19 @@ public class Pyramidal5DImageDataImpl<
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
+	private static final Map< String, AxisType > AXIS_TYPE_MAP;
+
+	static
+	{
+		final Map< String, AxisType > map = new HashMap<>();
+		map.put( AxisCalibration.X, Axes.X );
+		map.put( AxisCalibration.Y, Axes.Y );
+		map.put( AxisCalibration.Z, Axes.Z );
+		map.put( AxisCalibration.C, Axes.CHANNEL );
+		map.put( AxisCalibration.T, Axes.TIME );
+		AXIS_TYPE_MAP = Collections.unmodifiableMap( map );
+	}
+
 	private final Context context;
 
 	private final String name;
@@ -152,7 +173,13 @@ public class Pyramidal5DImageDataImpl<
 		this.transforms = contents.transforms;
 		this.omero = contents.omero;
 
-		this.ijDataset = new DefaultDataset( context, contents.imgPlus );
+		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.cachedCellImgs[ contents.selectedResolutionLevelIndex ], name );
+		for ( int i = 0; i < contents.axes.length; i++ )
+		{
+			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( contents.axes[ i ].name, Axes.unknown() );
+			imgPlus.setAxis( new DefaultLinearAxis( axisType, contents.axes[ i ].unit, contents.axes[ i ].scale ), i );
+		}
+		this.ijDataset = new DefaultDataset( context, imgPlus );
 		this.ijDataset.setName( name );
 		this.ijDataset.setRGBMerged( false );
 

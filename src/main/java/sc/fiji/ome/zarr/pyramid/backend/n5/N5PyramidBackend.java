@@ -32,15 +32,8 @@ import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import net.imagej.ImgPlus;
-import net.imagej.axis.Axes;
-import net.imagej.axis.AxisType;
-import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -77,6 +70,7 @@ import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 import sc.fiji.ome.zarr.util.Affine3DUtils;
 
@@ -94,19 +88,6 @@ public class N5PyramidBackend<
 		implements PyramidBackend< T, V >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
-
-	private static final Map< String, AxisType > AXIS_MAPPING;
-
-	static
-	{
-		final Map< String, AxisType > map = new HashMap<>();
-		map.put( "x", Axes.X );
-		map.put( "y", Axes.Y );
-		map.put( "z", Axes.Z );
-		map.put( "c", Axes.CHANNEL );
-		map.put( "t", Axes.TIME );
-		AXIS_MAPPING = Collections.unmodifiableMap( map );
-	}
 
 	private final URI inputUri;
 
@@ -143,8 +124,8 @@ public class N5PyramidBackend<
 		final String name = multiscale.getName();
 		final int numResolutionLevels = multiscale.numResolutionLevels();
 		final int numDimensions = selectedLevel.attributes.getDimensions().length;
-		final int numTimepoints = getAxisSize( selectedLevel, Axes.TIME );
-		final int numChannels = getAxisSize( selectedLevel, Axes.CHANNEL );
+		final int numTimepoints = getAxisSize( selectedLevel, AxisCalibration.T );
+		final int numChannels = getAxisSize( selectedLevel, AxisCalibration.C );
 
 		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
@@ -155,12 +136,11 @@ public class N5PyramidBackend<
 			volatileImgs[ level.index ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level.index ], sharedQueue );
 		}
 
-		final ImgPlus< T > imgPlus = new ImgPlus<>( cachedCellImgs[ selectedLevel.index ], name );
-		configureImgPlusAxes( imgPlus, selectedLevel );
+		final AxisCalibration[] axes = createAxisCalibrations( selectedLevel );
 
-		final int channelAxisIndex = findAxisIndex( selectedLevel, Axes.CHANNEL );
-		final int zAxisIndex = findAxisIndex( selectedLevel, Axes.Z );
-		final int timeAxisIndex = findAxisIndex( selectedLevel, Axes.TIME );
+		final int channelAxisIndex = findAxisIndex( selectedLevel, AxisCalibration.C );
+		final int zAxisIndex = findAxisIndex( selectedLevel, AxisCalibration.Z );
+		final int timeAxisIndex = findAxisIndex( selectedLevel, AxisCalibration.T );
 
 		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
 
@@ -177,7 +157,7 @@ public class N5PyramidBackend<
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
 				.volatileImgs( volatileImgs )
-				.imgPlus( imgPlus )
+				.axes( axes )
 				.channelAxisIndex( channelAxisIndex )
 				.zAxisPresent( zAxisIndex > 0 )
 				.timeAxisPresent( timeAxisIndex > 0 )
@@ -236,7 +216,7 @@ public class N5PyramidBackend<
 		int width = 0;
 		for ( final ResolutionLevel level : multiscale.getLevels() )
 		{
-			width = getAxisSize( level, Axes.X );
+			width = getAxisSize( level, AxisCalibration.X );
 			if ( width <= preferredMaxWidth )
 				return level;
 		}
@@ -247,43 +227,46 @@ public class N5PyramidBackend<
 	// Axis configuration
 	// ---------------------------------------------------------------------
 
-	private void configureImgPlusAxes( final ImgPlus< T > img, final ResolutionLevel level )
+	private AxisCalibration[] createAxisCalibrations( final ResolutionLevel level )
 	{
 		if ( level.axes != null )
 		{
+			final AxisCalibration[] result = new AxisCalibration[ level.axes.length ];
 			for ( int i = 0; i < level.axes.length; i++ )
 			{
 				final Axis axis = level.axes[ i ];
-				img.setAxis( new DefaultLinearAxis( AXIS_MAPPING.get( axis.getName() ), axis.getUnit(), level.scales[ i ] ), i );
+				result[ i ] = new AxisCalibration( axis.getName(), axis.getUnit(), level.scales[ i ] );
 			}
+			return result;
 		}
-		else if ( level.axisNames != null )
+		if ( level.axisNames != null )
 		{
+			final AxisCalibration[] result = new AxisCalibration[ level.axisNames.length ];
 			for ( int i = 0; i < level.axisNames.length; i++ )
-			{
-				img.setAxis( new DefaultLinearAxis( AXIS_MAPPING.get( level.axisNames[ i ] ), level.units[ i ], level.scales[ i ] ), i );
-			}
+				result[ i ] = new AxisCalibration( level.axisNames[ i ], level.units[ i ], level.scales[ i ] );
+			return result;
 		}
+		return new AxisCalibration[ 0 ];
 	}
 
-	private int getAxisSize( final ResolutionLevel level, final AxisType axisType )
+	private int getAxisSize( final ResolutionLevel level, final String axisName )
 	{
-		final int axisIndex = findAxisIndex( level, axisType );
+		final int axisIndex = findAxisIndex( level, axisName );
 		return axisIndex >= 0 ? ( int ) level.attributes.getDimensions()[ axisIndex ] : 1;
 	}
 
-	private int findAxisIndex( final ResolutionLevel level, final AxisType axisType )
+	private int findAxisIndex( final ResolutionLevel level, final String axisName )
 	{
 		if ( level.axes != null )
 		{
 			for ( int i = 0; i < level.axes.length; i++ )
-				if ( axisType.equals( AXIS_MAPPING.get( level.axes[ i ].getName() ) ) )
+				if ( axisName.equals( level.axes[ i ].getName() ) )
 					return i;
 		}
 		else if ( level.axisNames != null )
 		{
 			for ( int i = 0; i < level.axisNames.length; i++ )
-				if ( axisType.equals( AXIS_MAPPING.get( level.axisNames[ i ] ) ) )
+				if ( axisName.equals( level.axisNames[ i ] ) )
 					return i;
 		}
 		return -1;
