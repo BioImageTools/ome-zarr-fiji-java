@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -53,8 +53,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import sc.fiji.ome.zarr.ui.util.CreateIcon;
+import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.util.ScriptUtils;
-import sc.fiji.ome.zarr.util.ZarrOpenActions;
 
 public class DnDActionChooser
 {
@@ -78,6 +78,8 @@ public class DnDActionChooser
 	private final JButton help;
 
 	private boolean extendedVersion;
+
+	JDialog currentDialog;
 
 	public DnDActionChooser( final Context context, final ZarrOpenActions actions )
 	{
@@ -118,6 +120,23 @@ public class DnDActionChooser
 		}
 	}
 
+	public void dispose()
+	{
+		if ( SwingUtilities.isEventDispatchThread() )
+			doDispose();
+		else
+			SwingUtilities.invokeLater( this::doDispose );
+	}
+
+	private void doDispose()
+	{
+		if ( currentDialog != null )
+		{
+			currentDialog.dispose();
+			currentDialog = null;
+		}
+	}
+
 	private void doShow()
 	{
 		final Point mouseLocation = getMouseLocation();
@@ -125,6 +144,7 @@ public class DnDActionChooser
 			return;
 
 		final JDialog dialog = createDialog();
+		currentDialog = dialog;
 		final JPanel panel = initLayout();
 		initBehaviour( dialog );
 
@@ -142,12 +162,12 @@ public class DnDActionChooser
 		JPanel panel;
 		if ( extendedVersion )
 		{
-			panel = new JPanel( new GridLayout( 3, 2, 5, 5 ) );
+			panel = new JPanel( new GridLayout( 2, 3, 5, 5 ) );
 			panel.add( zarrToIJDialog );
-			panel.add( zarrToBDVDialog );
 			panel.add( zarrIJHighestResolution );
-			panel.add( zarrBDVHighestResolution );
 			panel.add( zarrScript );
+			panel.add( zarrToBDVDialog );
+			panel.add( zarrBDVHighestResolution );
 			panel.add( help );
 		}
 		else
@@ -164,48 +184,38 @@ public class DnDActionChooser
 	{
 
 		// OME-Zarr to FIJI importer button
-		zarrToIJDialog.addActionListener( e -> {
-			dialog.dispose();
-			actions.openImporterDialog();
-		} );
+		zarrToIJDialog.addActionListener( e -> disposeAndRun( dialog, actions::openImporterDialog ) );
 		zarrToIJDialog.setToolTipText( "Open OME-Zarr/N5 Importer dialog" );
 
 		// OME-Zarr to BDV viewer button
-		zarrToBDVDialog.addActionListener( e -> {
-			dialog.dispose();
-			actions.openViewerDialog();
-		} );
+		zarrToBDVDialog.addActionListener( e -> disposeAndRun( dialog, actions::openViewerDialog ) );
 		zarrToBDVDialog.setToolTipText( "Open OME-Zarr/N5 BDV Viewer dialog" );
 
 		// FIJI button
-		zarrIJHighestResolution.addActionListener( e -> {
-			dialog.dispose();
-			actions.openIJWithImage();
-		} );
+		zarrIJHighestResolution.addActionListener( e -> disposeAndRun( dialog, actions::openIJWithImage ) );
 		zarrIJHighestResolution.setToolTipText( "Open OME-Zarr in ImageJ at highest resolution level" );
 
 		// BDV button
-		zarrBDVHighestResolution.addActionListener( e -> {
-			dialog.dispose();
-			actions.openBDVWithImage();
-		} );
+		zarrBDVHighestResolution.addActionListener( e -> disposeAndRun( dialog, actions::openBDVWithImage ) );
 		zarrBDVHighestResolution.setToolTipText( "Open OME-Zarr in BDV at highest resolution level" );
 
 		// script button
 		String scriptName = ScriptUtils.getTooltipText( context );
 		zarrScript.setToolTipText( "Open OME-Zarr in user script:\n\n" + scriptName );
-		zarrScript.addActionListener( e -> {
-			dialog.dispose();
-			actions.runScript();
-		} );
+		zarrScript.addActionListener( e -> disposeAndRun( dialog, actions::runScript ) );
 
 		// help button
-		help.addActionListener( e -> dialog.dispose() );
 		help.setToolTipText( "Help about OME-Zarr actions" );
-		help.addActionListener( e -> actions.showHelp() );
+		help.addActionListener( e -> disposeAndRun( dialog, actions::showHelp ) );
 
 		setupCloseOnKeyboard( dialog );
 		setupCloseOnMouseLeave( dialog );
+	}
+
+	private void disposeAndRun( final JDialog dialog, final Runnable action )
+	{
+		dialog.dispose();
+		new Thread( action ).start();
 	}
 
 	private Point getMouseLocation()

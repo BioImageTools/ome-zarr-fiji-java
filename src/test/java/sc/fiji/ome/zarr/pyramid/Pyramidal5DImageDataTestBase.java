@@ -64,7 +64,7 @@ import sc.fiji.ome.zarr.util.ZarrTestUtils;
  * by a concrete class that implements this interface and supplies
  * {@link #load(String, Context, Integer)}.
  */
-interface Pyramidal5DImageDataTestBase
+public interface Pyramidal5DImageDataTestBase
 {
 
 	static Stream< String > omeZarrExamples()

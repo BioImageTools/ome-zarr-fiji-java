@@ -32,14 +32,17 @@ import net.imagej.ImageJ;
 
 import ij.IJ;
 
+import java.net.URI;
+import java.nio.file.Paths;
+
 public class ScriptUtilsDemo {
 	public static void main(String[] args) {
 		ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
-		final String inputPath = "/home/ulman/Documents/talks/CEITEC/2025_11_ZarrSymposium_Zurich/data/MitoEM_fixedRes.zarr/MitoEM_fixedRes";
-		System.out.println("\nLet's run the script... on String param: "+inputPath);
-		ScriptUtils.executePresetScript( ij.context(), inputPath, IJ::error );
+		final URI inputUri = Paths.get( "/home/ulman/Documents/talks/CEITEC/2025_11_ZarrSymposium_Zurich/data/MitoEM_fixedRes.zarr/MitoEM_fixedRes" ).toUri();
+		System.out.println("\nLet's run the script... on URI param: "+inputUri);
+		ScriptUtils.executePresetScript( ij.context(), inputUri, IJ::error );
 		System.out.println("Done.");
 	}
 }

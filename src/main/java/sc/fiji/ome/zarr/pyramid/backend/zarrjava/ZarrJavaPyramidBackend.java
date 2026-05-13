@@ -29,7 +29,8 @@
 package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.lang.invoke.MethodHandles;
+import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +41,8 @@ import java.util.Map;
 
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Array;
+import dev.zarr.zarrjava.core.Attributes;
+import dev.zarr.zarrjava.core.Group;
 import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;
 import dev.zarr.zarrjava.experimental.ome.metadata.Axis;
 import dev.zarr.zarrjava.experimental.ome.metadata.MultiscalesEntry;
@@ -50,6 +53,8 @@ import dev.zarr.zarrjava.experimental.ome.metadata.OmeroWindow;
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.CoordinateTransformation;
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
+import dev.zarr.zarrjava.store.HttpStore;
+import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
 
 import net.imagej.ImgPlus;
@@ -76,18 +81,21 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Cast;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import bdv.cache.SharedQueue;
 import bdv.util.volatiles.VolatileTypeMatcher;
 import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.PyramidLevelAccessException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
-import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the zarr-java library.
@@ -101,6 +109,8 @@ public class ZarrJavaPyramidBackend<
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
 		implements PyramidBackend< T, V >
 {
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
 	private static final Map< String, AxisType > AXIS_MAPPING;
 
 	static
@@ -114,26 +124,27 @@ public class ZarrJavaPyramidBackend<
 		AXIS_MAPPING = Collections.unmodifiableMap( map );
 	}
 
-	private final String inputPathAsString;
+	private final URI inputUri;
 
 	private final Integer preferredMaxWidth;
 
-	public ZarrJavaPyramidBackend( final String inputPathAsString )
+	private StoreHandle activeHandle = null;
+
+	public ZarrJavaPyramidBackend( final URI inputUri )
 	{
-		this( inputPathAsString, null );
+		this( inputUri, null );
 	}
 
-	public ZarrJavaPyramidBackend( final String inputPathAsString, final Integer preferredMaxWidth )
+	public ZarrJavaPyramidBackend( final URI inputUri, final Integer preferredMaxWidth )
 	{
-		this.inputPathAsString = inputPathAsString;
+		this.inputUri = inputUri;
 		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
 	@Override
 	public PyramidContents< T, V > load()
 	{
-		final Path inputPath = Paths.get( inputPathAsString );
-		final MultiscaleImage multiscaleImage = openMultiscaleImage( inputPath );
+		final MultiscaleImage multiscaleImage = openMultiscaleImage();
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
 
 		final int numResolutionLevels = countResolutionLevels( multiscaleImage );
@@ -153,7 +164,7 @@ public class ZarrJavaPyramidBackend<
 		final int numTimepoints = getDimSizeForAxis( entry.axes, zarrShape, "t" );
 		final int numChannels = getDimSizeForAxis( entry.axes, zarrShape, "c" );
 
-		final String name = entry.name != null ? entry.name : inputPath.getFileName().toString();
+		final String name = entry.name != null ? entry.name : defaultName();
 		final double[] level0Scales = getLevel0Scales( entry, numDimensions );
 
 		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
@@ -265,26 +276,69 @@ public class ZarrJavaPyramidBackend<
 	// Store / path helpers
 	// ---------------------------------------------------------------------
 
-	private MultiscaleImage openMultiscaleImage( final Path inputPath )
+	private MultiscaleImage openMultiscaleImage()
+	{
+		final String scheme = inputUri.getScheme();
+		Store store;
+		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
+			store = new FilesystemStore( Paths.get( inputUri ) );
+		else if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
+			store = new HttpStore( inputUri.toString() );
+		else
+			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
+		return openMultiscaleImageFromHandle( store.resolve() );
+	}
+
+	private MultiscaleImage openMultiscaleImageFromHandle( final StoreHandle handle )
 	{
 		try
 		{
-			final Path rootPath = ZarrOnFileSystemUtils.findRootFolder( inputPath );
-			final Path zarrRoot = rootPath != null ? rootPath : inputPath;
-			final FilesystemStore store = new FilesystemStore( zarrRoot );
-
-			StoreHandle handle = store.resolve();
-			if ( rootPath != null && !rootPath.equals( inputPath ) )
-			{
-				for ( final String segment : ZarrOnFileSystemUtils.relativePathElements( rootPath, inputPath ) )
-					handle = handle.resolve( segment );
-			}
+			activeHandle = handle;
 			return MultiscaleImage.open( handle );
 		}
 		catch ( ZarrException | IOException e )
 		{
-			throw new NotAMultiscaleImageException( inputPathAsString, e );
+			checkForBioformats2rawLayout( handle );
+			throw new NotAMultiscaleImageException( inputUri.toString(), e );
 		}
+	}
+
+	/**
+	 * Reads the zarr.json attributes and throws {@link MultiImageDatasetException}
+	 * if the {@code bioformats2raw.layout} marker is present in the {@code ome}
+	 * attribute. Called after {@link MultiscaleImage#open} fails so we never
+	 * make an extra network round-trip for datasets that open normally.
+	 */
+	private void checkForBioformats2rawLayout( final StoreHandle handle )
+	{
+		try
+		{
+			final Attributes attrs = Group.open( handle ).metadata().attributes();
+			final Object ome = attrs.get( "ome" );
+			if ( ome instanceof Map && ( ( Map< ?, ? > ) ome ).containsKey( "bioformats2raw.layout" ) )
+				throw new MultiImageDatasetException( inputUri.toString() );
+		}
+		catch ( MultiImageDatasetException e )
+		{
+			throw e;
+		}
+		catch ( Exception e )
+		{
+			logger.debug( "Could not read group attributes from {}: {}", inputUri, e.getMessage() );
+		}
+	}
+
+	/** Fallback dataset name when the multiscales entry has none. */
+	private String defaultName()
+	{
+		if ( "file".equalsIgnoreCase( inputUri.getScheme() ) )
+			return Paths.get( inputUri ).getFileName().toString();
+		final String path = inputUri.getPath();
+		if ( path == null || path.isEmpty() )
+			return "";
+		final String trimmed = path.endsWith( "/" ) ? path.substring( 0, path.length() - 1 ) : path;
+		final int slash = trimmed.lastIndexOf( '/' );
+		return slash >= 0 ? trimmed.substring( slash + 1 ) : trimmed;
 	}
 
 	private MultiscalesEntry readMultiscalesEntry( final MultiscaleImage multiscaleImage )
@@ -300,7 +354,9 @@ public class ZarrJavaPyramidBackend<
 			// or an IndexOutOfBoundsException when the array is empty
 			// surface those as a missing-metadata error rather than letting them
 			// bubble up unhandled.
-			throw new NotAMultiscaleImageException( "No multiscale metadata at: " + inputPathAsString, e );
+			if ( activeHandle != null )
+				checkForBioformats2rawLayout( activeHandle );
+			throw new NotAMultiscaleImageException( "No multiscale metadata at: " + inputUri, e );
 		}
 	}
 
@@ -350,7 +406,7 @@ public class ZarrJavaPyramidBackend<
 		}
 		catch ( IOException | ZarrException e )
 		{
-			throw new PyramidLevelAccessException( inputPathAsString, levelIndex, e );
+			throw new PyramidLevelAccessException( inputUri.toString(), levelIndex, e );
 		}
 	}
 

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,7 +30,6 @@ package sc.fiji.ome.zarr.plugins;
 
 import net.imglib2.util.Cast;
 
-import org.scijava.Context;
 import org.scijava.io.AbstractIOPlugin;
 import org.scijava.io.IOPlugin;
 import org.scijava.io.location.FileLocation;
@@ -44,15 +43,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.net.URI;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 
-import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.settings.ZarrDragAndDropOpenSettings;
+import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.util.BdvHandleService;
-import sc.fiji.ome.zarr.util.ZarrOnFileSystemUtils;
-import sc.fiji.ome.zarr.util.ZarrOpenActions;
+import sc.fiji.ome.zarr.util.ZarrUtils;
 
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
 public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
@@ -80,7 +77,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		if ( !( source instanceof FileLocation ) )
 			return false;
 
-		return ZarrOnFileSystemUtils.isZarrFolder( Paths.get( source.getURI() ) );
+		return ZarrUtils.isZarr( source.getURI() );
 	}
 
 	@Override
@@ -90,23 +87,9 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 
 		final FileLocation fileLocation = Cast.unchecked( source );
 		final Path droppedInPath = fileLocation.getFile().toPath();
+		final URI inputUri = droppedInPath.toUri();
 
-		ZarrDragAndDropOpenSettings settings = ZarrDragAndDropOpenSettings.loadSettingsFromPreferences( prefService );
-		ZarrOpenActions actions = createZarrOpenActions( droppedInPath, context(), settings );
-		switch ( settings.getOpenBehavior() )
-		{
-		case IMAGEJ_HIGHEST_RESOLUTION:
-		case IMAGEJ_CUSTOM_RESOLUTION:
-			actions.openIJWithImage();
-			break;
-		case BDV_MULTI_RESOLUTION:
-			actions.openBDVWithImage();
-			break;
-		case SHOW_SELECTION_DIALOG:
-		default:
-			createDnDActionChooser( context(), actions ).showDialog();
-			break;
-		}
+		ZarrOpenActions.openWithSettings( inputUri, context() );
 
 		// Returning such an object makes Scijava's DnD subsystem believe that the dropped object
 		// has been already fully loaded, and Scijava (Fiji) will attempt to display it now (and
@@ -114,16 +97,6 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 		// is exactly what is desired now). The processing of this DnD event will then finish finally.
 		// (While our DnDActionChoose window will still be up there...)
 		return FAKE_INPUT;
-	}
-
-	protected ZarrOpenActions createZarrOpenActions( final Path path, final Context context, final ZarrDragAndDropOpenSettings settings )
-	{
-		return new ZarrOpenActions( path, context, settings );
-	}
-
-	protected DnDActionChooser createDnDActionChooser( final Context context, final ZarrOpenActions actions )
-	{
-		return new DnDActionChooser( context, actions );
 	}
 
 	@Override

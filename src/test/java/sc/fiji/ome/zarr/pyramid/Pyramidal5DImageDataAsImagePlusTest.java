@@ -59,7 +59,7 @@ class Pyramidal5DImageDataAsImagePlusTest
 
 		try (Context context = new Context())
 		{
-			final Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toString(), null );
+			final Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toUri(), null );
 			final ImagePlus imagePlus = pyramidal5DImageData.asImagePlus();
 
 			assertNotNull( imagePlus );
@@ -76,7 +76,7 @@ class Pyramidal5DImageDataAsImagePlusTest
 
 		try (Context context = new Context())
 		{
-			final PyramidalDataset< ? > pyramidalDataset = new Pyramidal5DImageDataImpl<>( context, path.toString() ).asPyramidalDataset();
+			final PyramidalDataset< ? > pyramidalDataset = new Pyramidal5DImageDataImpl<>( context, path.toUri() ).asPyramidalDataset();
 			int resolutionLevel = 0;
 			int channel = 0; // NB: 3 channels, channel 0 has the name: lynEGFP
 			int timepoint = 0;

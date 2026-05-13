@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -38,11 +38,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.invoke.MethodHandles;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
 
-import sc.fiji.ome.zarr.plugins.DragAndDropUserScriptSettings;
+import sc.fiji.ome.zarr.plugins.settings.UserScriptSettings;
 
 public class ScriptUtils
 {
@@ -73,21 +74,23 @@ public class ScriptUtils
 		if ( prefService == null )
 			return DEFAULT_SCRIPT_TITLE;
 
-		final String scriptTitle = prefService.get( DragAndDropUserScriptSettings.class, "scriptTitle", DEFAULT_SCRIPT_TITLE );
-		final String scriptPath = prefService.get( DragAndDropUserScriptSettings.class, "scriptPath", "--none--" );
+		final String scriptTitle = prefService.get( UserScriptSettings.class, "scriptTitle", DEFAULT_SCRIPT_TITLE );
+		final String scriptPath = prefService.get( UserScriptSettings.class, "scriptPath", "--none--" );
 
 		return Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) ? scriptTitle : DEFAULT_SCRIPT_TITLE;
 	}
 
 	/**
-	 * Executes either a preset script and passes 'inputPath' arg to it provided
-	 * the preset script is a valid file; otherwise it opens a script editor
-	 * on a default example script provided in {@link ScriptUtils#getTemplate()}.
-	 * <br>
+	 * Executes a preset script and passes the dataset location as the
+	 * {@code "path"} input variable, provided the preset script is a valid file;
+	 * otherwise opens a script editor on the default example script provided by
+	 * {@link ScriptUtils#getTemplate()}.
+	 *
 	 * @param ctx scijava context
-	 * @param inputPath path to the input image
+	 * @param inputUri URI or filesystem path string identifying the OME-Zarr
+	 *   dataset location; passed to the script module as the {@code "path"} input
 	 */
-	public static void executePresetScript( final Context ctx, final String inputPath, final Consumer< String > errorHandler )
+	public static void executePresetScript( final Context ctx, final URI inputUri, final Consumer< String > errorHandler )
 	{
 		ScriptService scriptService = ctx.getService( ScriptService.class );
 		PrefService prefService = ctx.getService( PrefService.class );
@@ -100,7 +103,7 @@ public class ScriptUtils
 		}
 
 		//retrieve the path to the preset script
-		final String scriptPath = prefService.get( DragAndDropUserScriptSettings.class, "scriptPath", "--none--" );
+		final String scriptPath = prefService.get( UserScriptSettings.class, "scriptPath", "--none--" );
 
 		if ( Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) )
 		{
@@ -110,20 +113,20 @@ public class ScriptUtils
 			{
 				ScriptModule module = scriptService.getScript( new File( scriptPath ) ).createModule();
 				module.setContext( ctx );
-				module.setInput( "path", inputPath );
+				module.setInput( "path", inputUri.toString() );
 				logger.info( "Executing script: {}", scriptPath );
-				logger.info( "on String parameter: {}", inputPath );
+				logger.info( "on URI parameter: {}", inputUri );
 				module.run();
 				logger.info( "External script finished now." );
 			}
 			catch ( Exception e )
 			{
 				logger.warn(
-						" Something went wrong executing the script: {} on this dataset: {}. Message: {}", scriptPath, inputPath,
+						" Something went wrong executing the script: {} on this dataset: {}. Message: {}", scriptPath, inputUri,
 						e.getMessage()
 				);
 				errorHandler.accept( "Script could not be processed on OME-Zarr dataset. " + "\n\r\n" + "Script path: " + scriptPath + "\n"
-						+ "Dataset path: " + inputPath + "\n\n" + "Error message: " + e.getMessage() );
+						+ "Dataset path: " + inputUri + "\n\n" + "Error message: " + e.getMessage() );
 
 			}
 		}
@@ -131,7 +134,7 @@ public class ScriptUtils
 		{
 			logger.info( "Script path is not valid: {}. Opening script editor with a script template instead.", scriptPath );
 			errorHandler.accept( "Script path is not valid: " + scriptPath
-					+ ".\n\nPlease provide a valid path via Plugins > OME-Zarr > Drag & Drop User Script Settings.\n\nWill open now script editor with a script template." );
+					+ ".\n\nPlease provide a valid path via Plugins > OME-Zarr > Settings > User Script Settings.\n\nWill open now script editor with a script template." );
 			//this opens an _always new_ window with the template script,
 			//...at least the user is more likely to notice that this "help" came up
 			final TextEditor editor = new TextEditor( ctx );
@@ -140,11 +143,11 @@ public class ScriptUtils
 		}
 	}
 
-	static String getTemplate()
+	public static String getTemplate()
 	{
 		return "# RESAVE THIS SCRIPT AND OPEN IN THE MENU\n" +
-				"# Fiji > Plugins > OME-Zarr > Drag & Drop User Script Settings\n" +
-				"# to have this available among the OME-Zarr drag & drop choices.\n" +
+				"# Fiji > Plugins > OME-Zarr > Settings > User Script Settings\n" +
+				"# to have this available among the OME-Zarr opening choices.\n" +
 				"# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
 				"\n" +
 				"#@ String path\n" +
