@@ -62,7 +62,7 @@ public final class ClipboardUtils
 	 * @return the clipboard text, or {@code null} if the clipboard is empty,
 	 *   contains no text, or cannot be accessed
 	 */
-	private static String readClipboard()
+	public static String readClipboard()
 	{
 		try
 		{
@@ -94,11 +94,11 @@ public final class ClipboardUtils
 	 */
 	public static URI readClipboardAsUri( final Consumer< String > errorHandler )
 	{
-		return readClipboardAsUri( readClipboard(), errorHandler );
+		return stringToUri( readClipboard(), errorHandler );
 	}
 
 	/**
-	 * Resolve clipboard text to a URI suitable for opening an OME-Zarr dataset.
+	 * Converts a string to a {@link URI} suitable for opening an OME-Zarr dataset.
 	 * Handles three input forms:
 	 * <ul>
 	 *   <li>{@code http://} or {@code https://} URLs &ndash; used as-is</li>
@@ -106,25 +106,34 @@ public final class ClipboardUtils
 	 *   <li>plain filesystem paths &ndash; converted with
 	 *       {@link Paths#get(String, String...)}{@code .toUri()}</li>
 	 * </ul>
-	 * Reports a user-facing error and returns {@code null} when the clipboard
-	 * is empty, the text is not a recognizable URI/path, or the location does
-	 * not appear to be an OME-Zarr dataset.
+	 * Reports a user-facing error via {@code errorHandler} and returns
+	 * {@code null} when {@code possibleUri} is blank, uses an unsupported scheme,
+	 * or cannot be interpreted as a path.
+	 *
+	 * @param possibleUri the string to parse; may be {@code null}
+	 * @param errorHandler receives a human-readable message on failure
+	 * @return the resolved {@link URI}, or {@code null} on failure
 	 */
-	static URI readClipboardAsUri( final String clipboardContent, final Consumer< String > errorHandler )
+	public static URI stringToUri( final String possibleUri, final Consumer< String > errorHandler )
 	{
-		if ( clipboardContent == null || clipboardContent.trim().isEmpty() )
+		if ( possibleUri == null || possibleUri.trim().isEmpty() )
 		{
 			errorHandler.accept( "The clipboard does not contain any text." );
 			return null;
 		}
-		final String text = clipboardContent.trim();
+		final String text = possibleUri.trim();
 
-		return toUri( text, errorHandler );
-	}
+		URI parsed = null;
+		try
+		{
+			parsed = new URI( text );
+		}
+		catch ( Exception e )
+		{
+			logger.debug( "Text is not valid URI syntax, will try as a local path: {}", e.getMessage() );
+		}
 
-	private static URI toUri( final String text, final Consumer< String > errorHandler )
-	{
-		final URI parsed = tryParseUri( text );
+		// If parsing succeeded, check whether the scheme is one we support.
 		if ( parsed != null )
 		{
 			final String scheme = parsed.getScheme();
@@ -145,18 +154,6 @@ public final class ClipboardUtils
 		catch ( InvalidPathException e )
 		{
 			errorHandler.accept( "Could not interpret the clipboard contents as a URL or path:\n" + text );
-			return null;
-		}
-	}
-
-	private static URI tryParseUri( final String text )
-	{
-		try
-		{
-			return new URI( text );
-		}
-		catch ( Exception e )
-		{
 			return null;
 		}
 	}
