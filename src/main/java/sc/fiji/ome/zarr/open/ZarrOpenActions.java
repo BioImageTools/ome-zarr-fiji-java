@@ -109,12 +109,12 @@ public class ZarrOpenActions
 		}
 	}
 
-	public ZarrOpenActions( final URI inputUri, final Context context )
+	ZarrOpenActions( final URI inputUri, final Context context )
 	{
 		this( inputUri, context, null, IJ::error );
 	}
 
-	public ZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings )
+	ZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings )
 	{
 		this( inputUri, context, settings, IJ::error );
 	}
