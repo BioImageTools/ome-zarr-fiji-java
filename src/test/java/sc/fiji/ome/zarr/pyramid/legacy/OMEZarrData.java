@@ -38,6 +38,7 @@ import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 
 import javax.annotation.Nullable;
 
+@SuppressWarnings( "all" )
 public class OMEZarrData
 {
 	private final Context context;
@@ -51,7 +52,8 @@ public class OMEZarrData
 	public OMEZarrData(
 			final String omeZarrPath,
 			final Context context, // Scijava context
-			@Nullable final SharedQueue queue )
+			@Nullable final SharedQueue queue
+	)
 	{
 		this.context = context;
 		this.omeZarrPath = omeZarrPath;

@@ -62,6 +62,7 @@ import bdv.util.volatiles.VolatileViews;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
+@SuppressWarnings( "all" )
 public class MultiscaleImage<
 		T extends NativeType< T > & RealType< T >,
 		V extends Volatile< T > & NativeType< V > & RealType< V > >

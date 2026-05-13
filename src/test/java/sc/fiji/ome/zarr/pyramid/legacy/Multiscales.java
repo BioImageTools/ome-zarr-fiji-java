@@ -38,6 +38,7 @@ import com.google.gson.JsonElement;
  * This is basically one pyramid, which is a list of
  * incrementally down-scaled images (referred here as 'scales').
  */
+@SuppressWarnings( "all" )
 public class Multiscales
 {
 	// key in json for multiscales
