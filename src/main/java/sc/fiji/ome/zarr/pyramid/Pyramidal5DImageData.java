@@ -156,7 +156,7 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithN5(
 			final Context context, final URI uri )
 	{
-		return openWithN5( context, uri, ZarrOpeningSettings.defaultSettings() );
+		return new Pyramidal5DImageDataImpl<>( context, uri, ZarrOpeningSettings.defaultSettings().effectivePreferredWidth() );
 	}
 
 	/**
@@ -187,10 +187,12 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	 * @throws NoMatchingResolutionException if the effective preferred width
 	 *   from the default settings is smaller than the coarsest resolution level
 	 */
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithZarrJava(
 			final Context context, final URI uri )
 	{
-		return openWithZarrJava( context, uri, ZarrOpeningSettings.defaultSettings() );
+		return new Pyramidal5DImageDataImpl( context,
+				new ZarrJavaPyramidBackend( uri, ZarrOpeningSettings.defaultSettings().effectivePreferredWidth() ) );
 	}
 
 	/**
