@@ -119,7 +119,7 @@ public class ZarrUtils
 		final URI base = ensureTrailingSlash( baseUri );
 		for ( final String name : METADATA_FILES )
 		{
-			if ( isAccessible( base.resolve( name ) ) )
+			if ( isHttpAccessible( base.resolve( name ) ) )
 				return true;
 		}
 		return false;
@@ -131,7 +131,7 @@ public class ZarrUtils
 		return s.endsWith( "/" ) ? uri : URI.create( s + "/" );
 	}
 
-	private static boolean isAccessible( final URI uri )
+	private static boolean isHttpAccessible( final URI uri )
 	{
 		HttpURLConnection conn = null;
 		try
