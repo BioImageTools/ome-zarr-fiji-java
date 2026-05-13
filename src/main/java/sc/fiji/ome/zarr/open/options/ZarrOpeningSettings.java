@@ -125,6 +125,25 @@ public class ZarrOpeningSettings
 	}
 
 	/**
+	 * Returns a new {@link ZarrOpeningSettings} instance with all fields set to
+	 * their default values.
+	 */
+	public static ZarrOpeningSettings defaultSettings()
+	{
+		return new ZarrOpeningSettings();
+	}
+
+	/**
+	 * Returns the preferred width to pass to the pyramid backend based on
+	 * the configured opening behavior: {@code null} selects the highest
+	 * available resolution; any other behavior uses {@link #getPreferredMaxWidth()}.
+	 */
+	public Integer effectivePreferredWidth()
+	{
+		return ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION.equals( zarrOpenBehavior ) ? null : preferredMaxWidth;
+	}
+
+	/**
 	 * Loads and returns the settings from the provided preference store.
 	 *
 	 * @param prefs If {@code null} is provided, default settings values from this class are used and returned.
