@@ -52,8 +52,6 @@ import com.sun.net.httpserver.HttpServer;
 
 class ZarrUtilsTest
 {
-	// --- isZarrFolder(Path) tests ---
-
 	@Test
 	void testIsZarrFolder_validZarrFolders() throws URISyntaxException
 	{
@@ -67,7 +65,7 @@ class ZarrUtilsTest
 		for ( String example : examples )
 		{
 			Path path = ZarrTestUtils.resourcePath( example );
-			assertTrue( ZarrUtils.isZarrFolder( path ) );
+			assertTrue( ZarrUtils.isZarr( path.toUri() ) );
 		}
 	}
 
@@ -83,11 +81,9 @@ class ZarrUtilsTest
 		for ( String example : examples )
 		{
 			Path path = ZarrTestUtils.resourcePath( example );
-			assertFalse( ZarrUtils.isZarrFolder( path ) );
+			assertFalse( ZarrUtils.isZarr( path.toUri() ) );
 		}
 	}
-
-	// --- isZarr(URI) — file: URI tests ---
 
 	@Test
 	void detectsLocalZarrFolderViaFileUri() throws URISyntaxException

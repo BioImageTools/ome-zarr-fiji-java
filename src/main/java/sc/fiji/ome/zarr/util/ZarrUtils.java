@@ -79,7 +79,7 @@ public class ZarrUtils
 	 * @return {@code true} if the folder contains Zarr metadata files indicating
 	 *         a Zarr v2 or v3 dataset, {@code false} otherwise
 	 */
-	static boolean isZarrFolder( final Path folder )
+	private static boolean isZarrFolder( final Path folder )
 	{
 		for ( final String name : METADATA_FILES )
 			if ( Files.exists( folder.resolve( name ) ) )
