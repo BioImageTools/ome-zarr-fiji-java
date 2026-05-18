@@ -177,7 +177,6 @@ Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` fo
   from [previous URL https://github.com/xulman/ome-zarr-fiji-ui](https://github.com/xulman/ome-zarr-fiji-ui). Code state
   is [here](https://github.com/BioImageTools/ome-zarr-fiji-java/releases/tag/ome-zarr-fiji-java-0.2.0).
 * 2024: Project revamped and based solely on [the suite of libs around the N5](https://github.com/saalfeldlab/n5).
-*
 
 2024: [OME-NGFF Workflows Hackathon 2024](https://biovisioncenter.notion.site/OME-NGFF-Workflows-Hackathon-2024-dde32a032adf49b4a53b4b014586b678)
 in Zurich.
