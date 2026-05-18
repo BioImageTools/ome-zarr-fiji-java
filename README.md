@@ -16,7 +16,8 @@ If the dropped / pasted target is not recognized as a **OME-Zarr v0.4 - v0.5** r
 
 There are several options for what Fiji can do after drag & drop / copy & paste:
 
-Users can select the **default drag & drop behavior** via `Plugins -> OME-Zarr -> Drag & Drop behavior`
+Users can select the **default drag & drop / copy & paste behavior** via
+`Plugins -> OME-Zarr -> Settings -> Opening behavior settings`
 
 The options are:
 
