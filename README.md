@@ -171,6 +171,8 @@ Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` fo
 * [retries-spi-2.30.10](https://repo1.maven.org/maven2/software/amazon/awssdk/retries-spi/2.30.10/retries-spi-2.30.10.jar)
 * [endpoints-spi-2.30.10](https://repo1.maven.org/maven2/software/amazon/awssdk/endpoints-spi/2.30.10/endpoints-spi-2.30.10.jar)
 * [http-auth-spi-2.30.10](https://repo1.maven.org/maven2/software/amazon/awssdk/http-auth-spi/2.30.10/http-auth-spi-2.30.10.jar)
+* [jackson-datatype-jdk8-2.20.0](https://repo1.maven.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.20.0/jackson-datatype-jdk8-2.20.0.jar)
+* [blosc-java-0.1-1.21.4.jar](https://repo1.maven.org/maven2/com/scalableminds/blosc-java/0.1-1.21.4/blosc-java-0.1-1.21.4.jar)
 
 # History
 
