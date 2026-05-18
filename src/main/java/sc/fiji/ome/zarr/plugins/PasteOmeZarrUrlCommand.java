@@ -37,11 +37,11 @@ import ij.IJ;
 import sc.fiji.ome.zarr.open.ClipboardActions;
 
 /**
- * Reads a URL or path from the system clipboard and opens it as an OME-Zarr
+ * Reads a URI from the system clipboard and opens it as an OME-Zarr
  * dataset, using the same backend, resolution, and open-behavior settings as
- * the drag-and-drop pipeline. Mirrors napari's "paste URL to open" UX.
+ * the drag-and-drop pipeline. Mirrors napari's "paste URI to open" UX.
  */
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Paste OME-Zarr URL" )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Paste OME-Zarr URI" )
 public class PasteOmeZarrUrlCommand implements Command
 {
 	@Parameter
