@@ -55,17 +55,17 @@ import org.scijava.Context;
 import sc.fiji.ome.zarr.open.ClipboardActions;
 import sc.fiji.ome.zarr.util.ClipboardUtils;
 
-class PasteOmeZarrUrlToolInstallerTest
+class PasteOmeZarrUriToolInstallerTest
 {
 	private Context context;
 
-	private PasteOmeZarrUrlToolInstaller installer;
+	private PasteOmeZarrUriToolInstaller installer;
 
 	@BeforeEach
 	void setUp()
 	{
 		context = new Context();
-		installer = new PasteOmeZarrUrlToolInstaller();
+		installer = new PasteOmeZarrUriToolInstaller();
 		installer.setContext( context );
 	}
 
@@ -222,16 +222,16 @@ class PasteOmeZarrUrlToolInstallerTest
 
 	// ---- helpers ----
 
-	private void callInstallKeyboardShortcut( final PasteOmeZarrUrlToolInstaller target ) throws Exception
+	private void callInstallKeyboardShortcut( final PasteOmeZarrUriToolInstaller target ) throws Exception
 	{
-		Method m = PasteOmeZarrUrlToolInstaller.class.getDeclaredMethod( "installKeyboardShortcut" );
+		Method m = PasteOmeZarrUriToolInstaller.class.getDeclaredMethod( "installKeyboardShortcut" );
 		m.setAccessible( true );
 		m.invoke( target );
 	}
 
-	private KeyEventDispatcher getDispatcherField( final PasteOmeZarrUrlToolInstaller target ) throws Exception
+	private KeyEventDispatcher getDispatcherField( final PasteOmeZarrUriToolInstaller target ) throws Exception
 	{
-		Field f = PasteOmeZarrUrlToolInstaller.class.getDeclaredField( "keyEventDispatcher" );
+		Field f = PasteOmeZarrUriToolInstaller.class.getDeclaredField( "keyEventDispatcher" );
 		f.setAccessible( true );
 		return ( KeyEventDispatcher ) f.get( target );
 	}
@@ -256,7 +256,7 @@ class PasteOmeZarrUrlToolInstallerTest
 
 	private Class< ? > actionToolClass()
 	{
-		return Arrays.stream( PasteOmeZarrUrlToolInstaller.class.getDeclaredClasses() )
+		return Arrays.stream( PasteOmeZarrUriToolInstaller.class.getDeclaredClasses() )
 				.filter( MacroToolRunner.class::isAssignableFrom )
 				.findFirst()
 				.orElseThrow( () -> new AssertionError( "PasteOmeZarrUrlActionTool inner class not found" ) );

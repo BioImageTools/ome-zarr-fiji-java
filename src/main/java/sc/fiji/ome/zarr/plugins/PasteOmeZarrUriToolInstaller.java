@@ -103,7 +103,7 @@ import sc.fiji.ome.zarr.util.ClipboardUtils;
  * unavailable (e.g. unit tests that don't start IJ1).
  */
 @Plugin( type = Service.class )
-public class PasteOmeZarrUrlToolInstaller extends AbstractService implements SciJavaService
+public class PasteOmeZarrUriToolInstaller extends AbstractService implements SciJavaService
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -129,7 +129,7 @@ public class PasteOmeZarrUrlToolInstaller extends AbstractService implements Sci
 
 			final Class< ? > pluginToolClass = Class.forName( "ij.plugin.tool.PlugInTool" );
 			final Method addPlugInTool = toolbarClass.getMethod( "addPlugInTool", pluginToolClass );
-			addPlugInTool.invoke( null, new PasteOmeZarrUrlActionTool( getContext() ) );
+			addPlugInTool.invoke( null, new PasteOmeZarrUriActionTool( getContext() ) );
 		}
 		catch ( ReflectiveOperationException | RuntimeException e )
 		{
@@ -200,7 +200,7 @@ public class PasteOmeZarrUrlToolInstaller extends AbstractService implements Sci
 	 * extend it (with a {@code null} installer) and override
 	 * {@code runMacroTool} ourselves.
 	 */
-	private static class PasteOmeZarrUrlActionTool extends MacroToolRunner
+	private static class PasteOmeZarrUriActionTool extends MacroToolRunner
 	{
 		// Non-breaking hyphen (‑) instead of an ASCII hyphen: IJ1's Toolbar.addTool
 		// parses the concatenated "name - iconMacro" string by calling indexOf('-'), so an
@@ -208,7 +208,7 @@ public class PasteOmeZarrUrlToolInstaller extends AbstractService implements Sci
 		// would truncate names[slot] to "Paste OME", hide the "Action Tool" marker, and
 		// make the button behave as a sticky (mode-switching) tool rather than a one-shot
 		// button — every subsequent click would show another error dialog.
-		static final String NAME = "Paste OME‑Zarr URL Action Tool";
+		static final String NAME = "Paste OME‑Zarr URI Action Tool";
 
 		/**
 		 * Macro-icon string drawn on the IJ1 toolbar slot. The macro icon
@@ -230,7 +230,7 @@ public class PasteOmeZarrUrlToolInstaller extends AbstractService implements Sci
 
 		private final Context context;
 
-		public PasteOmeZarrUrlActionTool( final Context context )
+		public PasteOmeZarrUriActionTool( final Context context )
 		{
 			super( null );
 			this.context = context;
