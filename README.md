@@ -177,18 +177,16 @@ Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` fo
   from [previous URL https://github.com/xulman/ome-zarr-fiji-ui](https://github.com/xulman/ome-zarr-fiji-ui). Code state
   is [here](https://github.com/BioImageTools/ome-zarr-fiji-java/releases/tag/ome-zarr-fiji-java-0.2.0).
 * 2024: Project revamped and based solely on [the suite of libs around the N5](https://github.com/saalfeldlab/n5).
-
-2024: [OME-NGFF Workflows Hackathon 2024](https://biovisioncenter.notion.site/OME-NGFF-Workflows-Hackathon-2024-dde32a032adf49b4a53b4b014586b678)
-in Zurich.
-
+* 2024:
+  [OME-NGFF Workflows Hackathon 2024](https://biovisioncenter.notion.site/OME-NGFF-Workflows-Hackathon-2024-dde32a032adf49b4a53b4b014586b678)
+  in Zurich.
 * 2024: [CZI grant about "OME-Zarr Support for Java/Fiji"](https://chanzuckerberg.com/eoss/proposals/?cycle=6) landed
   at [CEITEC](https://www.ceitec.eu/).
 * 2023: Changes in the [scijava land](https://github.com/scijava) towards more generic drag & drop handlers.
 * 2022: It started at
   the ["Fiji + NGFF Hackathon" in Prague](https://forum.image.sc/t/fiji-ngff-hackathon-sep-2022-prague-cze/69191). Code
-  state
-  is [here](https://github.com/BioImageTools/ome-zarr-fiji-java/releases/tag/2022-Prague-hackathon) and version with
-  revived code demo
+  state is [here](https://github.com/BioImageTools/ome-zarr-fiji-java/releases/tag/2022-Prague-hackathon) and version
+  with revived code demo
   is [here](https://github.com/BioImageTools/ome-zarr-fiji-java/releases/tag/revived-prague-code-demo).
 
 # Outlook
@@ -197,11 +195,9 @@ This is a brief outline of what [@xulman](https://github.com/xulman/) would
 like to have in Fiji so that the usual Fiji pipelines (meaning the standard
 ImageJ macros, Jython scripts, and even GUI-operated plugins) could work with
 Zarrs and benefit from their chunk-based nature. It is greatly inspired by his
-[previous work on DataStore](https://github.com/fiji-hpc/hpc-datastore/), which
-is
+[previous work on DataStore](https://github.com/fiji-hpc/hpc-datastore/), which is
 essentially [a suite of Fiji plugins](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md#clients)
-to manage
-(create, modify and delete full datasets, read and write images or
+to manage (create, modify and delete full datasets, read and write images or
 even their
 chunks) [a http-servered N5 datasets](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md).
 
