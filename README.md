@@ -6,38 +6,61 @@
 
 # About
 
-This repo is currently primarily only a Fiji Drag & Drop handler for OME-Zarrs.
+This repo is currently primarily a Fiji Drag & Drop / Copy & Paste handler for OME-Zarrs.
 
-If the dropped target is not recognized as a **OME-Zarr v0.4 - v0.5** resource, it does nothing.
+If the dropped / pasted target is not recognized as a **OME-Zarr v0.4 - v0.5** resource, it does nothing.
 
 # Features
 
-## Drag & Drop of OME-Zarrs from local folders into Fiji
+## Drag & Drop of local OME-Zarr folders and Copy & Paste of OME-Zarr URIs (local folder, http, https)
 
-There are several options for what Fiji can do after dragging & dropping an OME-Zarr folder. 
+There are several options for what Fiji can do after drag & drop / copy & paste:
 
 Users can select the **default drag & drop behavior** via `Plugins -> OME-Zarr -> Drag & Drop behavior`
 
 The options are:
-  * Open the highest available single-resolution image in ImageJ.
-  * Open a matching single-resolution image in ImageJ (**initial default**). Users can preset a maximum image width, and Fiji will open the highest available single-resolution image that is not larger than the preset width. This is useful for avoiding the loading and opening of excessively large images. Fiji simply chooses an appropriately sized level from the resolution pyramids (multiscales) of the dropped OME-Zarr.
-  * Open as a multi-resolution source in BigDataViewer. This is useful for large OME-Zarrs. Channel names, colors, contrast limits, and the time point are automatically extracted from the OME-Zarr metadata, if available.
-  * Show a [**dialog**](#dialog-options) with all available opening options.
 
-Note: [BigDataViewer](https://imagej.net/plugins/bdv/) is part of Fiji, so there's no need to install anything extra. It is an image(s) viewer especially designed for chunk-based, multiresolution data, designed around the principle of loading only pixels that are needed for the current display of the image(s). It is thus suitable for OME-Zarr datasets and easily handles even the huge ones.
+* Open the highest available single-resolution image in ImageJ.
+* Open a matching single-resolution image in ImageJ (**initial default**). Users can preset a maximum image width, and
+  Fiji will open the highest available single-resolution image that is not larger than the preset width. This is useful
+  for avoiding the loading and opening of excessively large images. Fiji simply chooses an appropriately sized level
+  from the resolution pyramids (multiscales) of the dropped OME-Zarr.
+* Open as a multi-resolution source in BigDataViewer. This is useful for large OME-Zarrs. Channel names, colors,
+  contrast limits, and the time point are automatically extracted from the OME-Zarr metadata, if available.
+* Show a [**dialog**](#dialog-options) with all available opening options.
 
-## Dialog options
+Note: [BigDataViewer](https://imagej.net/plugins/bdv/) is part of Fiji, so there's no need to install anything extra. It
+is an image(s) viewer especially designed for chunk-based, multiresolution data, designed around the principle of
+loading only pixels that are needed for the current display of the image(s). It is thus suitable for OME-Zarr datasets
+and easily handles even the huge ones.
 
-From top left to bottom right:
+### Copy & Paste:
 
-* Open the N5 import dialog at the position of the dropped OME-Zarr. This lists resolution levels found in the OME-Zarr, allowing users to choose one and possibly even crop it and finally open it in the ImageJ window.
-* Open the N5 viewer dialog at the position of the dropped OME-Zarr. This also lists resolution levels found in the OME-Zarr, allowing users to choose one or the full pyramid and have it opened in the BigDataViewer.
-* Directly open a **single-resolution** image in **ImageJ**, which best matches the preferred width in the user settings.
-* Directly Open **multi-resolution** image in **BigDataViewer**.
-* Run a [pre-defined script](#scriplet-support) (e.g., a macro) while passing to it the path to the dropped OME-Zarr. This way, the user can define her own action.
-* Open a web browser pointing to this [Readme](https://github.com/BioImageTools/ome-zarr-fiji-java) file.
+* Supports local paths and http(s) URLs (s3 is planned)
+* Three entry points:
+    * Paste with `CTRL` / `CMD` / `SHIFT` + `V` (requires FIJI latest)
+    * Paste via menu: Plugins -> OME-Zarr -> Paste OME-Zarr URI
+    * Paste via button in FIJI: ![fiji_paste_button.png](doc/fiji_paste_button.png)
+
+### Dialog options
 
 ![dialog.png](doc/dialog.png)
+
+#### Top row:
+
+* Open the N5 import dialog at the position of the dropped OME-Zarr. This lists resolution levels found in the OME-Zarr,
+  allowing users to choose one and possibly even crop it and finally open it in the ImageJ window.
+* Directly open a **single-resolution** image in **ImageJ**, which best matches the preferred width in the user
+  settings.
+* Run a [pre-defined script](#scriplet-support) (e.g., a macro) while passing to it the path to the dropped OME-Zarr.
+  This way, the user can define her own action.
+
+#### Bottom row:
+
+* Open the N5 viewer dialog at the position of the dropped OME-Zarr. This also lists resolution levels found in the
+  OME-Zarr, allowing users to choose one or the full pyramid and have it opened in the BigDataViewer.
+* Directly Open **multi-resolution** image in **BigDataViewer**.
+* Open a web browser pointing to this [Readme](https://github.com/BioImageTools/ome-zarr-fiji-java) file.
 
 ## Supported OME-Zarr versions
 
@@ -47,46 +70,63 @@ From top left to bottom right:
 
 ## Dual dataset view
 
-* Fiji memorizes the full context of a drag & dropped OME-Zarr. That said, even if the OME-Zarr is opened as a particular resolution in ImageJ via drag & drop, one can still open it in BigDataViewer using all resolution pyramids (via `Plugins -> OME-Zarr ->Plugins > OME-Zarr > Open Current Zarr Image in BigDataViewer`).
-* ~~Or the opposite, even if the dropped OME-Zarr has right away landed in BigDataViewer, it is possible to display a particular resolution of it as Dataset in ImageJ.~~ (not yet supported)
-* To sum it up, once OME-Zarr is in Fiji, users don't have to drop it again to display it differently. This is a great way to save RAM (memory) on your computer.
+* Fiji memorizes the full context of a drag & dropped / copy & pasted OME-Zarr. That said, even if the OME-Zarr is
+  opened as a particular resolution in ImageJ via drag & drop / copy & paste, one can still open it in BigDataViewer
+  using all resolution pyramids (via `Plugins -> OME-Zarr -> Open Current Zarr Image in BigDataViewer`).
+* ~~Or the opposite, even if the dropped / pasted OME-Zarr has right away landed in BigDataViewer, it is possible to
+  display a particular resolution of it as Dataset in ImageJ.~~ (not yet supported)
+* To sum it up, once OME-Zarr is in Fiji, users don't have to drop / paste it again to display it differently. This is a
+  great way to save RAM (memory) on your computer.
 
 ## Multi-resolution vs. single-resolution
 
-* Users can drag & drop a top-level OME-Zarr folder, which contains a multi-resolution dataset. It will be opened as multi-resolution data.
-* Drag & dropping a subfolder of the top-level OME-Zarr folder (i.e. single-resolution data) is currently not supported.
+* Users can drag & drop / copy & paste a top-level OME-Zarr folder, which contains a multi-resolution dataset. It will
+  be opened as multi-resolution data.
+* Drag & dropping / copy & pasting a subfolder of the top-level OME-Zarr folder (i.e. single-resolution data) is
+  currently not supported.
 
 ## Read channel information from OME-Zarr metadata
 
-* The channel names, colors, and contrast limits and their active/inactive state are automatically extracted from the OME-Zarr metadata, if available. The time point is also automatically set to the time point specified in the metadata, if available.
-* Works only when a multi-resolution OME-Zarr is drag & dropped and opened in BigDataViewer.
+* The channel names, colors, and contrast limits and their active/inactive state are automatically extracted from the
+  OME-Zarr metadata, if available. The time point is also automatically set to the time point specified in the metadata,
+  if available.
+* Works only when a multi-resolution OME-Zarr is drag & dropped / copy & pasted and opened in BigDataViewer.
 
 ![bdv_channel_information.png](doc/bdv_channel_information.png)
 
 ## Reader Backend
 
-* The reading of OME-Zarrs is done via the [N5 library](https://github.com/saalfeldlab/n5).
-* We plan to also support reading through [zarr-java](https://github.com/zarr-developers/zarr-java).
+We support two backends for reading OME-Zarrs. Users can choose between the two via the
+`Plugins -> OME-Zarr -> Settings -> Open Behavior settings` menu.
+
+* [N5 library](https://github.com/saalfeldlab/n5) (default)
+* [Zarr-java](https://github.com/zarr-developers/zarr-java) (alternative, may be a bit quicker when opening remote
+  resources).
 
 ## Scriplet support
 
-* Users can run a script on the OME-Zarr. The script resource can be a file and can be set in the `Plugins -> OME-Zarr -> Preset Drag & Drop User Script` menu.
+* Users can run a script on the OME-Zarr. The script resource can be a file and can be set in the
+  `Plugins -> OME-Zarr -> Settings -> User Script Settings` menu.
 * If no script is set, the script editor opens with a default script.
 
 # Known issues
 
 * Reading of OME-Zarrs version <= 0.3 is not supported.
-* With FIJI stable, OME-Zarrs that use Blosc compression cannot be opened on MacOS. Please use FIJI latest, if you encounter this issue. Cf. [FIJI downloads](https://imagej.net/software/fiji/downloads).
+* With FIJI stable, OME-Zarrs that use Blosc compression cannot be opened on MacOS. Please use FIJI latest, if you
+  encounter this issue. Cf. [FIJI downloads](https://imagej.net/software/fiji/downloads).
+* In FIJI stable, Pasting a URI via `CMD` / `SHIFT` / `CTRL` + `V` is not supported. Please use FIJI latest.
 
 # Example data
 
-* There are some OME-Zarr example datasets in the image data repository. You can download them from [here](https://idr.github.io/ome-ngff-samples/) to your local machine to test the drag & drop.
+* There are some OME-Zarr example datasets in the image data repository. You can download them
+  from [here](https://idr.github.io/ome-ngff-samples/) to your local machine to test the drag & drop.
 
 # Availability
 
 ## Fiji Update Site
 
-Enable the the Fiji update site [OME-Zarr-PREVIEW](https://sites.imagej.net/OME-Zarr-PREVIEW/) in the `Help -> Update -> Manage Update Sites`:
+Enable the the Fiji update site [OME-Zarr-PREVIEW](https://sites.imagej.net/OME-Zarr-PREVIEW/) in the
+`Help -> Update -> Manage Update Sites`:
 
 ![update_site.png](doc/update_site.png)
 
@@ -100,7 +140,8 @@ mvn clean package
 
 and place the resulting `.jar` file into your `Fiji.app/jars` folder.
 
-You also need to copy the following `.jar` files to your `Fiji.app/jars` folder (and delete the older versions, if they are present):
+You also need to copy the following `.jar` files to your `Fiji.app/jars` folder (and delete the older versions, if they
+are present):
 
 * [n5-4.0.0-alpha-12](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5/4.0.0-alpha-12/n5-4.0.0-alpha-12.jar)
 * [n5-aws-s3-4.4.0-alpha-9](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-aws-s3/4.4.0-alpha-9/n5-aws-s3-4.4.0-alpha-9.jar)
@@ -114,6 +155,7 @@ You also need to copy the following `.jar` files to your `Fiji.app/jars` folder 
 * [n5-zstandard-2.0.0-alpha-4](https://maven.scijava.org/repository/releases/org/janelia/n5-zstandard/2.0.0-alpha-4/n5-zstandard-2.0.0-alpha-4.jar)
 
 Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` folder:
+
 * [n5-viewer_fiji-6.2.0-alpha-5](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-viewer_fiji/6.2.0-alpha-5/n5-viewer_fiji-6.2.0-alpha-5.jar)
 * [s3-2.30.10](https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.30.10/s3-2.30.10.jar)
 * [auth-2.30.10](https://repo1.maven.org/maven2/software/amazon/awssdk/auth/2.30.10/auth-2.30.10.jar)
@@ -135,8 +177,11 @@ Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` fo
   from [previous URL https://github.com/xulman/ome-zarr-fiji-ui](https://github.com/xulman/ome-zarr-fiji-ui). Code state
   is [here](https://github.com/BioImageTools/ome-zarr-fiji-java/releases/tag/ome-zarr-fiji-java-0.2.0).
 * 2024: Project revamped and based solely on [the suite of libs around the N5](https://github.com/saalfeldlab/n5).
-* 2024: [OME-NGFF Workflows Hackathon 2024](https://biovisioncenter.notion.site/OME-NGFF-Workflows-Hackathon-2024-dde32a032adf49b4a53b4b014586b678)
+*
+
+2024: [OME-NGFF Workflows Hackathon 2024](https://biovisioncenter.notion.site/OME-NGFF-Workflows-Hackathon-2024-dde32a032adf49b4a53b4b014586b678)
 in Zurich.
+
 * 2024: [CZI grant about "OME-Zarr Support for Java/Fiji"](https://chanzuckerberg.com/eoss/proposals/?cycle=6) landed
   at [CEITEC](https://www.ceitec.eu/).
 * 2023: Changes in the [scijava land](https://github.com/scijava) towards more generic drag & drop handlers.
@@ -154,9 +199,12 @@ like to have in Fiji so that the usual Fiji pipelines (meaning the standard
 ImageJ macros, Jython scripts, and even GUI-operated plugins) could work with
 Zarrs and benefit from their chunk-based nature. It is greatly inspired by his
 [previous work on DataStore](https://github.com/fiji-hpc/hpc-datastore/), which
-is essentially [a suite of Fiji plugins](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md#clients) to manage 
+is
+essentially [a suite of Fiji plugins](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md#clients)
+to manage
 (create, modify and delete full datasets, read and write images or
-even their chunks) [a http-servered N5 datasets](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md).
+even their
+chunks) [a http-servered N5 datasets](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md).
 
 So, we basically need a suite of Fiji (in fact scijava) plugins that (are
 “headless” and) all of them would take a URI to some NGFF data plus specific
