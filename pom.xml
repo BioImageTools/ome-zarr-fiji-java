@@ -151,6 +151,7 @@
 		<license.projectName>OME-Zarr extras for Fiji</license.projectName>
 		<license.organizationName>SciJava</license.organizationName>
 		<license.copyrightOwners>SciJava developers</license.copyrightOwners>
+		<license.excludes>**/zarr.json</license.excludes>
 
 		<n5.version>4.0.0-alpha-12</n5.version>
 		<n5-aws-s3.version>4.4.0-alpha-9</n5-aws-s3.version>
