@@ -176,6 +176,25 @@ public class ZarrOpenActions
 		);
 	}
 
+	/**
+	 * Opens the resolution level at {@code resolutionLevel} index as a new ImageJ dataset.
+	 * Index 0 is the highest resolution; each increment is the next coarser level.
+	 * <p>
+	 * Multiple calls — whether at the same or different level indices — each produce a separate
+	 * ImageJ {@code Dataset} (and a separate window), but all of them are backed by the same
+	 * {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData} object. The underlying
+	 * cached cell images and volatile images in
+	 * {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents} are the single source of truth
+	 * and are never loaded more than once per resolution level.
+	 *
+	 * @param resolutionLevel 0-based index into the resolution pyramid
+	 */
+	public Object openIJWithImage( final int resolutionLevel )
+	{
+		throw new UnsupportedOperationException(
+				"Opening at a specific resolution level index is not yet implemented." );
+	}
+
 	public Object openBDVWithImage()
 	{
 		return openImage(
