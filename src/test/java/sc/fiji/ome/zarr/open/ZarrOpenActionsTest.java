@@ -282,7 +282,7 @@ class ZarrOpenActionsTest
 			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
 			Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
 			Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
-			actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter, "" );
+			actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter );
 			assertEquals( 1, multiScaleCounter.get() );
 			assertEquals( 0, singleScaleCounter.get() );
 		}
@@ -305,7 +305,7 @@ class ZarrOpenActionsTest
 				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
 				Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
 				Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
-				actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter, "" );
+				actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter );
 				assertEquals( 0, multiScaleCounter.get() );
 				assertEquals( 0, singleScaleCounter.get() ); // currently not supported
 			}
@@ -327,7 +327,7 @@ class ZarrOpenActionsTest
 				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
 				Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
 				Function< Img< ? >, Object > singleScaleNoOp = img -> null;
-				assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
+				assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp ) );
 			}
 		}
 	}
@@ -348,7 +348,7 @@ class ZarrOpenActionsTest
 			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
 			Function< PyramidalDataset< ? >, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
 			Function< Img< ? >, Object > singleScaleOpener = img -> singleScaleCounter.incrementAndGet();
-			assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener, "" ) );
+			assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener ) );
 			assertEquals( 0, multiScaleCounter.get(), "Multi-image collection must not be opened as a single multiscale image" );
 			assertEquals( 0, singleScaleCounter.get() );
 			assertNotNull( capturedError.get(), "Error handler should have been called for backend " + backend );
@@ -379,7 +379,7 @@ class ZarrOpenActionsTest
 				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
 				Function< PyramidalDataset< ? >, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
 				Function< Img< ? >, Object > singleScaleOpener = img -> singleScaleCounter.incrementAndGet();
-				assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener, "" ),
+				assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener ),
 						"Opening child image " + childPath + " should not throw" );
 				assertEquals( 1, multiScaleCounter.get(),
 						"Child image " + childPath + " should be opened as a multiscale image" );
@@ -400,7 +400,7 @@ class ZarrOpenActionsTest
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, System.out::println );
 			Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
 			Function< Img< ? >, Object > singleScaleNoOp = img -> null;
-			assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp, "" ) );
+			assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp ) );
 		}
 	}
 
