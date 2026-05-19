@@ -95,6 +95,11 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 		return data.getName();
 	}
 
+	public Pyramidal5DImageData< T > getPyramidal5DImageData()
+	{
+		return data;
+	}
+
 	/**
 	 * Converts this {@code PyramidalDataset} into an {@code ImagePlus} object for a given resolution level,
 	 * channel, and timepoint.
