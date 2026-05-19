@@ -235,7 +235,7 @@ class ZarrOpenActionsTest
 
 				DatasetService datasetService = context.getService( DatasetService.class );
 				assertEquals( 1, datasetService.getDatasets().size() );
-				assertEquals( IMAGE_NAME, datasetService.getDatasets().get( 0 ).getName() );
+				assertEquals( IMAGE_NAME + " (R)", datasetService.getDatasets().get( 0 ).getName() );
 				SwingUtilities.invokeAndWait( () -> {} );
 				DisplayService displayService = context.getService( DisplayService.class );
 				assertNotNull( displayService.getActiveDisplay() );
@@ -461,7 +461,7 @@ class ZarrOpenActionsTest
 			{
 				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, dimensions ); // highest resolution
 			}
-			assertEquals( IMAGE_NAME, dataset.getName() );
+			assertEquals( IMAGE_NAME + " (R)", dataset.getName() );
 			DisplayService displayService = context.getService( DisplayService.class );
 			assertNotNull( displayService );
 			SwingUtilities.invokeAndWait( () -> {} ); // wait until all Swing events are processed

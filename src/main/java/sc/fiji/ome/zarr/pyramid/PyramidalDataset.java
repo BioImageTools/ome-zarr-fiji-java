@@ -59,6 +59,8 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 		super( data.asDataset().context(), data.asDataset().getImgPlus() );
 
 		this.data = data;
+		if ( data.numResolutionLevels() > 1 )
+			setName( multiResolutionName( data.getName() ) );
 	}
 
 	public PyramidalDataset( Pyramidal5DImageData< T > data, int resolutionLevel )
@@ -66,6 +68,13 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 		super( data.asDataset().context(), Cast.unchecked( data.asDataset( resolutionLevel ).getImgPlus() ) );
 
 		this.data = data;
+		if ( data.numResolutionLevels() > 1 )
+			setName( multiResolutionName( data.getName() ) );
+	}
+
+	private static String multiResolutionName( final String baseName )
+	{
+		return ( baseName != null && !baseName.isEmpty() ) ? baseName + " (R)" : "(R)";
 	}
 
 	public List< SourceAndConverter< T > > asSources()
