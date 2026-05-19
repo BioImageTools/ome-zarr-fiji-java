@@ -78,7 +78,7 @@ public final class PyramidContents<
 
 	public final RandomAccessibleInterval< V >[] volatileImgs;
 
-	public final AxisCalibration[] axes;
+	public final AxisCalibration[][] axesPerLevel;
 
 	/** imglib2-order index of the channel axis, or -1 if absent. */
 	public final int channelAxisIndex;
@@ -108,7 +108,7 @@ public final class PyramidContents<
 		this.transforms = b.transforms;
 		this.cachedCellImgs = b.cachedCellImgs;
 		this.volatileImgs = b.volatileImgs;
-		this.axes = b.axes;
+		this.axesPerLevel = b.axesPerLevel;
 		this.channelAxisIndex = b.channelAxisIndex;
 		this.zAxisPresent = b.zAxisPresent;
 		this.timeAxisPresent = b.timeAxisPresent;
@@ -149,7 +149,7 @@ public final class PyramidContents<
 
 		private RandomAccessibleInterval< V >[] volatileImgs;
 
-		private AxisCalibration[] axes;
+		private AxisCalibration[][] axesPerLevel;
 
 		private int channelAxisIndex = -1;
 
@@ -227,9 +227,9 @@ public final class PyramidContents<
 			return this;
 		}
 
-		public Builder< T, V > axes( final AxisCalibration[] a )
+		public Builder< T, V > axesPerLevel( final AxisCalibration[][] a )
 		{
-			this.axes = a;
+			this.axesPerLevel = a;
 			return this;
 		}
 
