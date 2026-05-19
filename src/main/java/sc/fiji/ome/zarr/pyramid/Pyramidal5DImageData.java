@@ -72,6 +72,12 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	Dataset asDataset();
 
 	/**
+	 * @param resolutionLevel 0-based index into the resolution pyramid (0 = highest resolution)
+	 * @return a fresh IJ2 {@code net.imagej.Dataset} wrapping the image at the specified resolution level
+	 */
+	Dataset asDataset( int resolutionLevel );
+
+	/**
 	 * @return an IJ1 {@link ij.ImagePlus} wrapping the full-resolution 5D (XYZCT)
 	 *   image, obtained by converting {@link #asDataset()} via SciJava's
 	 *   {@link org.scijava.convert.ConvertService}

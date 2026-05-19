@@ -33,6 +33,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Cast;
 
 import java.util.List;
 
@@ -56,6 +57,13 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 	public PyramidalDataset( Pyramidal5DImageData< T > data )
 	{
 		super( data.asDataset().context(), data.asDataset().getImgPlus() );
+
+		this.data = data;
+	}
+
+	public PyramidalDataset( Pyramidal5DImageData< T > data, int resolutionLevel )
+	{
+		super( data.asDataset().context(), Cast.unchecked( data.asDataset( resolutionLevel ).getImgPlus() ) );
 
 		this.data = data;
 	}

@@ -62,6 +62,7 @@ import bdv.viewer.SourceAndConverter;
 import ij.ImagePlus;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NonExistingResolutionLevelException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
@@ -127,6 +128,10 @@ public class Pyramidal5DImageDataImpl<
 
 	private final Dataset ijDataset;
 
+	private final CachedCellImg< T, ?>[] cachedCellImgs;
+
+	private final AxisCalibration[][] axesPerLevel;
+
 	private final List< SourceAndConverter< T > > sourceAndConverters;
 
 	/**
@@ -189,13 +194,16 @@ public class Pyramidal5DImageDataImpl<
 		this.voxelDimensions = contents.voxelDimensions;
 		this.transforms = contents.transforms;
 		this.omero = contents.omero;
+		this.cachedCellImgs = contents.cachedCellImgs;
+		this.axesPerLevel = contents.axesPerLevel;
 
 		final int resolutionLevel = selectResolutionLevel( contents.cachedCellImgs, preferredMaxWidth );
+		final AxisCalibration[] selectedAxes = contents.axesPerLevel[ resolutionLevel ];
 		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.cachedCellImgs[ resolutionLevel ], name );
-		for ( int i = 0; i < contents.axes.length; i++ )
+		for ( int i = 0; i < selectedAxes.length; i++ )
 		{
-			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( contents.axes[ i ].name, Axes.unknown() );
-			imgPlus.setAxis( new DefaultLinearAxis( axisType, contents.axes[ i ].unit, contents.axes[ i ].scale ), i );
+			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( selectedAxes[ i ].name, Axes.unknown() );
+			imgPlus.setAxis( new DefaultLinearAxis( axisType, selectedAxes[ i ].unit, selectedAxes[ i ].scale ), i );
 		}
 		this.ijDataset = new DefaultDataset( context, imgPlus );
 		this.ijDataset.setName( name );
@@ -318,16 +326,45 @@ public class Pyramidal5DImageDataImpl<
 	// Interface implementations
 	// ---------------------------------------------------------------------
 
+	private void checkResolutionLevel( final int resolutionLevel )
+	{
+		if ( resolutionLevel < 0 || resolutionLevel >= numResolutionLevels )
+			throw new NonExistingResolutionLevelException( resolutionLevel, numResolutionLevels );
+	}
+
 	@Override
 	public PyramidalDataset< T > asPyramidalDataset()
 	{
 		return new PyramidalDataset<>( this );
 	}
 
+	public PyramidalDataset< T > asPyramidalDataset( final int resolutionLevel )
+	{
+		checkResolutionLevel( resolutionLevel );
+		return new PyramidalDataset<>( this, resolutionLevel );
+	}
+
 	@Override
 	public Dataset asDataset()
 	{
 		return ijDataset;
+	}
+
+	@Override
+	public Dataset asDataset( final int resolutionLevel )
+	{
+		checkResolutionLevel( resolutionLevel );
+		final AxisCalibration[] axes = axesPerLevel[ resolutionLevel ];
+		final ImgPlus< T > imgPlus = new ImgPlus<>( cachedCellImgs[ resolutionLevel ], name );
+		for ( int i = 0; i < axes.length; i++ )
+		{
+			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( axes[ i ].name, Axes.unknown() );
+			imgPlus.setAxis( new DefaultLinearAxis( axisType, axes[ i ].unit, axes[ i ].scale ), i );
+		}
+		final DefaultDataset dataset = new DefaultDataset( context, imgPlus );
+		dataset.setName( name );
+		dataset.setRGBMerged( false );
+		return dataset;
 	}
 
 	@Override
