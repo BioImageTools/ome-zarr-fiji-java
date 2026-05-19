@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -809,6 +810,59 @@ class ZarrOpenActionsTest
 						"BDV dataset should reflect level 0 (highest resolution)" );
 				assertArrayEquals( new long[] { 32, 32, 8, 3, 4 }, ijDataset.getImgPlus().dimensionsAsLongArray(),
 						"IJ dataset at level 1 should have half the spatial dimensions of level 0" );
+			}
+			finally
+			{
+				if ( bdvHandle != null )
+					bdvHandle.close();
+				SwingUtilities.invokeAndWait( () -> {} );
+			}
+		}
+	}
+
+	/**
+	 * Verifies that datasets backed by the same resolution level of the same pyramid
+	 * all wrap the exact same {@link net.imglib2.cache.img.CachedCellImg} instance.
+	 * <p>
+	 * {@code CachedCellImg} loads chunks lazily and holds them in a bounded cache.
+	 * Two datasets that wrap the same {@code CachedCellImg} share that cache, so a
+	 * chunk loaded for one view is immediately available to the other at no additional
+	 * memory cost. Two datasets at <em>different</em> levels correctly use distinct
+	 * {@code CachedCellImg} instances.
+	 */
+	@Test
+	void sharedCachedCellImgAcrossDatasetsAtSameResolutionLevel()
+			throws URISyntaxException, InterruptedException, InvocationTargetException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
+		try (Context context = new Context())
+		{
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			BdvHandle bdvHandle = null;
+			try
+			{
+				actions.openIJWithImage( 0 );
+				actions.openIJWithImage( 0 );
+				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
+				actions.openIJWithImage( 1 );
+
+				DatasetService datasetService = context.getService( DatasetService.class );
+				PyramidalDataset< ? > ijLevel0First = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset< ? > ijLevel0Second = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				PyramidalDataset< ? > bdvLevel0 = Cast.unchecked( datasetService.getDatasets().get( 2 ) );
+				PyramidalDataset< ? > ijLevel1 = Cast.unchecked( datasetService.getDatasets().get( 3 ) );
+
+				Img< ? > cellImgIj0First = ijLevel0First.getImgPlus().getImg();
+				Img< ? > cellImgIj0Second = ijLevel0Second.getImgPlus().getImg();
+				Img< ? > cellImgBdv0 = bdvLevel0.getImgPlus().getImg();
+				Img< ? > cellImgIj1 = ijLevel1.getImgPlus().getImg();
+
+				assertSame( cellImgIj0First, cellImgIj0Second,
+						"Two IJ datasets at the same level must wrap the same CachedCellImg" );
+				assertSame( cellImgIj0First, cellImgBdv0,
+						"IJ and BDV datasets at the same level must wrap the same CachedCellImg" );
+				assertNotSame( cellImgIj0First, cellImgIj1,
+						"Datasets at different resolution levels must use different CachedCellImgs" );
 			}
 			finally
 			{
