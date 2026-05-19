@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static sc.fiji.ome.zarr.util.ZarrTestUtils.IMAGE_NAME;
 
@@ -88,6 +89,7 @@ import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
 import ij.ImagePlus;
 import sc.fiji.ome.zarr.plugins.settings.UserScriptSettings;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
@@ -692,6 +694,127 @@ class ZarrOpenActionsTest
 				assertTrue( found, "TextEditor window should be open" );
 				assertTrue( scriptFailed.get(), "Script should fail" );
 				assertEquals( ScriptUtils.getTemplate(), text );
+			}
+		}
+	}
+
+	/**
+	 * Scenario: open each resolution level of a multi-resolution dataset in ImageJ,
+	 * then open the same dataset in BigDataViewer twice.
+	 * <p>
+	 * Expected: 2 IJ opens produce 2 datasets; each BDV open produces one additional dataset.
+	 * All 4 datasets share the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData} instance.
+	 * <p>
+	 * The 5d v4 test dataset has 2 resolution levels:
+	 * level 0 → [x=64, y=64, z=16, c=3, t=4] and level 1 → [x=32, y=32, z=8, c=3, t=4].
+	 */
+	@Test
+	void openEachResolutionLevelInIJThenBDVTwice()
+			throws URISyntaxException, InterruptedException, InvocationTargetException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
+		try (Context context = new Context())
+		{
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+
+			// Open both resolution levels in ImageJ – each produces a separate dataset window,
+			// all backed by the same Pyramidal5DImageData (shared cachedCellImgs / volatileImgs)
+			actions.openIJWithImage( 0 ); // highest resolution
+			actions.openIJWithImage( 1 ); // coarser resolution
+
+			DatasetService datasetService = context.getService( DatasetService.class );
+			assertEquals( 2, datasetService.getDatasets().size() );
+
+			// Each BDV open creates one additional dataset backed by the full pyramid
+			BdvHandle bdvHandle1 = null;
+			BdvHandle bdvHandle2 = null;
+			try
+			{
+				bdvHandle1 = Cast.unchecked( actions.openBDVWithImage() );
+				assertEquals( 3, datasetService.getDatasets().size() );
+
+				bdvHandle2 = Cast.unchecked( actions.openBDVWithImage() );
+				assertEquals( 4, datasetService.getDatasets().size() );
+
+				PyramidalDataset< ? > ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset< ? > ijLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				PyramidalDataset< ? > bdv1 = Cast.unchecked( datasetService.getDatasets().get( 2 ) );
+				PyramidalDataset< ? > bdv2 = Cast.unchecked( datasetService.getDatasets().get( 3 ) );
+
+				// All 4 datasets (2 IJ + 2 BDV) must be backed by the exact same Pyramidal5DImageData object
+				Pyramidal5DImageData< ? > sharedPyramid = ijLevel0.getPyramidal5DImageData();
+				for ( Dataset dataset : datasetService.getDatasets() )
+				{
+					PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
+					assertSame( sharedPyramid, pyramidalDataset.getPyramidal5DImageData(),
+							"Every opened dataset must share the same Pyramidal5DImageData instance" );
+				}
+
+				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, ijLevel0.getImgPlus().dimensionsAsLongArray(),
+						"IJ dataset at level 0 should have the highest resolution dimensions" );
+				assertArrayEquals( new long[] { 32, 32, 8, 3, 4 }, ijLevel1.getImgPlus().dimensionsAsLongArray(),
+						"IJ dataset at level 1 should have half the spatial dimensions of level 0" );
+				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, bdv1.getImgPlus().dimensionsAsLongArray(),
+						"First BDV dataset should reflect level 0 (highest resolution)" );
+				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, bdv2.getImgPlus().dimensionsAsLongArray(),
+						"Second BDV dataset should reflect level 0 (highest resolution)" );
+			}
+			finally
+			{
+				if ( bdvHandle1 != null )
+					bdvHandle1.close();
+				if ( bdvHandle2 != null )
+					bdvHandle2.close();
+				SwingUtilities.invokeAndWait( () -> {} );
+			}
+		}
+	}
+
+	/**
+	 * Scenario: open a multi-resolution dataset in BigDataViewer first, then open
+	 * a specific resolution level in ImageJ.
+	 * <p>
+	 * Expected: the BDV open produces 1 dataset; the subsequent IJ open produces a 2nd dataset
+	 * backed by the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData} object, for a total of 2.
+	 * The 5d v4 test dataset has 2 resolution levels:
+	 * level 0 → [x=64, y=64, z=16, c=3, t=4] and level 1 → [x=32, y=32, z=8, c=3, t=4].
+	 */
+	@Test
+	void openInBDVThenOpenSpecificResolutionInIJ()
+			throws URISyntaxException, InterruptedException, InvocationTargetException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
+		try (Context context = new Context())
+		{
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			BdvHandle bdvHandle = null;
+			try
+			{
+				// BDV open covers all resolution levels and registers one dataset
+				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
+
+				DatasetService datasetService = context.getService( DatasetService.class );
+				assertEquals( 1, datasetService.getDatasets().size() );
+
+				// Opening a specific resolution level in IJ creates a 2nd dataset window,
+				// backed by the same Pyramidal5DImageData as the BDV dataset
+				actions.openIJWithImage( 1 ); // coarser resolution: [x=32, y=32, z=8, c=3, t=4]
+				assertEquals( 2, datasetService.getDatasets().size() );
+
+				PyramidalDataset< ? > bdvDataset = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset< ? > ijDataset = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				assertSame( bdvDataset.getPyramidal5DImageData(), ijDataset.getPyramidal5DImageData(),
+						"BDV and IJ datasets must share the same Pyramidal5DImageData instance" );
+				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, bdvDataset.getImgPlus().dimensionsAsLongArray(),
+						"BDV dataset should reflect level 0 (highest resolution)" );
+				assertArrayEquals( new long[] { 32, 32, 8, 3, 4 }, ijDataset.getImgPlus().dimensionsAsLongArray(),
+						"IJ dataset at level 1 should have half the spatial dimensions of level 0" );
+			}
+			finally
+			{
+				if ( bdvHandle != null )
+					bdvHandle.close();
+				SwingUtilities.invokeAndWait( () -> {} );
 			}
 		}
 	}
