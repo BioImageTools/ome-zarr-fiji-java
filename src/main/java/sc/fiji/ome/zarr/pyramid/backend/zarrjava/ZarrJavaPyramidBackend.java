@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -94,7 +94,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the zarr-java library.
- * Supports OME-NGFF v0.4 (Zarr v2) and v0.5 (Zarr v3).
+ * Supports OME-Zarr v0.4 (Zarr v2) and v0.5 (Zarr v3).
  *
  * @param <T> pixel type
  * @param <V> volatile pixel type
@@ -453,7 +453,7 @@ public class ZarrJavaPyramidBackend<
 	}
 
 	/**
-	 * Returns the unit attached to the last x/y/z axis encountered. OME-NGFF
+	 * Returns the unit attached to the last x/y/z axis encountered. OME-Zarr
 	 * spatial axes share a single unit in well-formed datasets, so this
 	 * collapses to "the spatial unit"; the original loop happened to write
 	 * it last-wins, and this preserves that behavior.
@@ -517,7 +517,7 @@ public class ZarrJavaPyramidBackend<
 	 * array directly (instead of the library type with a nullable
 	 * {@code scale} field) keeps null-tracking local to this method, so
 	 * callers don't have to repeat the {@code scaleCt.scale != null} check.
-	 * OME-NGFF datasets carry at most one scale transformation per level,
+	 * OME-Zarr datasets carry at most one scale transformation per level,
 	 * so "first usable one" is observably equivalent to "first scale ct,
 	 * null-check at the call site".
 	 * <p>

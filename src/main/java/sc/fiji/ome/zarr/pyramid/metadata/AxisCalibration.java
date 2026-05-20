@@ -37,22 +37,22 @@ package sc.fiji.ome.zarr.pyramid.metadata;
  */
 public final class AxisCalibration
 {
-	/** OME-NGFF axis name for the x (horizontal) spatial axis. */
+	/** OME-Zarr axis name for the x (horizontal) spatial axis. */
 	public static final String X = "x";
 
-	/** OME-NGFF axis name for the y (vertical) spatial axis. */
+	/** OME-Zarr axis name for the y (vertical) spatial axis. */
 	public static final String Y = "y";
 
-	/** OME-NGFF axis name for the z (depth) spatial axis. */
+	/** OME-Zarr axis name for the z (depth) spatial axis. */
 	public static final String Z = "z";
 
-	/** OME-NGFF axis name for the channel axis. */
+	/** OME-Zarr axis name for the channel axis. */
 	public static final String C = "c";
 
-	/** OME-NGFF axis name for the time axis. */
+	/** OME-Zarr axis name for the time axis. */
 	public static final String T = "t";
 
-	/** Logical axis name as it appears in OME-NGFF metadata (e.g. "x", "y", "z", "c", "t"). */
+	/** Logical axis name as it appears in OME-Zarr metadata (e.g. "x", "y", "z", "c", "t"). */
 	public final String name;
 
 	/** Physical unit string, or an empty string when absent. */

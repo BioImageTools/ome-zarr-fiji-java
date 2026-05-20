@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -76,7 +76,7 @@ import sc.fiji.ome.zarr.util.Affine3DUtils;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the N5 universe
- * library. Supports OME-NGFF v0.3, v0.4 and v0.5 (N5 reads Zarr v2 and the
+ * library. Supports OME-Zarr v0.3, v0.4 and v0.5 (N5 reads Zarr v2 and the
  * Zarr v3 variant used by v0.5).
  *
  * @param <T> pixel type
@@ -342,7 +342,7 @@ public class N5PyramidBackend<
 	}
 
 	// ---------------------------------------------------------------------
-	// Metadata adapter strategy (per OME-NGFF version)
+	// Metadata adapter strategy (per OME-Zarr version)
 	// ---------------------------------------------------------------------
 
 	private interface MetadataAdapter
