@@ -43,6 +43,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.util.BdvFocusService;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Resolution Level..." )
 public class OpenResolutionLevelCommand extends DynamicCommand
@@ -53,6 +54,9 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	@Parameter
 	private UIService uiService;
 
+	@Parameter( required = false )
+	private BdvFocusService bdvHandleService;
+
 	@Parameter
 	public Dataset dataset;
 
@@ -62,6 +66,8 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	@Override
 	public void initialize()
 	{
+		if ( bdvHandleService != null )
+			dataset = bdvHandleService.resolveDataset( dataset );
 		if ( dataset == null )
 		{
 			cancel( "No image is currently open." );
