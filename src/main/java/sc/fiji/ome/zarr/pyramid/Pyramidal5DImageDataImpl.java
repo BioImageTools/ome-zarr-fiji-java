@@ -153,7 +153,7 @@ public class Pyramidal5DImageDataImpl<
 	 */
 	public Pyramidal5DImageDataImpl( final Context context, final URI inputUri, final Integer preferredMaxWidth )
 	{
-		this( context, new N5PyramidBackend<>( inputUri, preferredMaxWidth ), preferredMaxWidth );
+		this( context, new N5PyramidBackend<>( inputUri ), preferredMaxWidth );
 	}
 
 	/**

@@ -66,7 +66,6 @@ import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
-import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
@@ -91,17 +90,9 @@ public class N5PyramidBackend<
 
 	private final URI inputUri;
 
-	private final Integer preferredMaxWidth;
-
 	public N5PyramidBackend( final URI inputUri )
 	{
-		this( inputUri, null );
-	}
-
-	public N5PyramidBackend( final URI inputUri, final Integer preferredMaxWidth )
-	{
 		this.inputUri = inputUri;
-		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
 	@Override
@@ -114,7 +105,7 @@ public class N5PyramidBackend<
 		final int multiscaleIndex = 0;
 		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
 		final Omero omero = adapter.initOmeroMetadata();
-		final ResolutionLevel selectedLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
+		final ResolutionLevel level0 = multiscale.getLevels().get( 0 );
 
 		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
 		final AffineTransform3D[] transforms = spatialMetadata.spatialTransforms3d();
@@ -123,9 +114,9 @@ public class N5PyramidBackend<
 		final V volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 		final String name = multiscale.getName();
 		final int numResolutionLevels = multiscale.numResolutionLevels();
-		final int numDimensions = selectedLevel.attributes.getDimensions().length;
-		final int numTimepoints = getAxisSize( selectedLevel, AxisCalibration.T );
-		final int numChannels = getAxisSize( selectedLevel, AxisCalibration.C );
+		final int numDimensions = level0.attributes.getDimensions().length;
+		final int numTimepoints = getAxisSize( level0, AxisCalibration.T );
+		final int numChannels = getAxisSize( level0, AxisCalibration.C );
 
 		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
@@ -136,11 +127,11 @@ public class N5PyramidBackend<
 			volatileImgs[ level.index ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level.index ], sharedQueue );
 		}
 
-		final AxisCalibration[] axes = createAxisCalibrations( selectedLevel );
+		final AxisCalibration[] axes = createAxisCalibrations( level0 );
 
-		final int channelAxisIndex = findAxisIndex( selectedLevel, AxisCalibration.C );
-		final int zAxisIndex = findAxisIndex( selectedLevel, AxisCalibration.Z );
-		final int timeAxisIndex = findAxisIndex( selectedLevel, AxisCalibration.T );
+		final int channelAxisIndex = findAxisIndex( level0, AxisCalibration.C );
+		final int zAxisIndex = findAxisIndex( level0, AxisCalibration.Z );
+		final int timeAxisIndex = findAxisIndex( level0, AxisCalibration.T );
 
 		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
 
@@ -205,21 +196,6 @@ public class N5PyramidBackend<
 		final double scaleY = transform.get( 1, 1 );
 		final double scaleZ = transform.get( 2, 2 );
 		return new FinalVoxelDimensions( unit, scaleX, scaleY, scaleZ );
-	}
-
-	private ResolutionLevel selectResolutionLevel( final Integer preferredMaxWidth, final Multiscale multiscale )
-	{
-		ResolutionLevel resolutionLevel = multiscale.getLevels().get( 0 );
-		if ( preferredMaxWidth == null )
-			return resolutionLevel;
-		int width = 0;
-		for ( final ResolutionLevel level : multiscale.getLevels() )
-		{
-			width = getAxisSize( level, AxisCalibration.X );
-			if ( width <= preferredMaxWidth )
-				return level;
-		}
-		throw new NoMatchingResolutionException( preferredMaxWidth, width );
 	}
 
 	// ---------------------------------------------------------------------
