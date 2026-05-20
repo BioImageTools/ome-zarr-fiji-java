@@ -84,7 +84,6 @@ import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
-import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.PyramidLevelAccessException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
@@ -108,19 +107,11 @@ public class ZarrJavaPyramidBackend<
 
 	private final URI inputUri;
 
-	private final Integer preferredMaxWidth;
-
 	private StoreHandle activeHandle = null;
 
 	public ZarrJavaPyramidBackend( final URI inputUri )
 	{
-		this( inputUri, null );
-	}
-
-	public ZarrJavaPyramidBackend( final URI inputUri, final Integer preferredMaxWidth )
-	{
 		this.inputUri = inputUri;
-		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
 	@Override
@@ -130,16 +121,13 @@ public class ZarrJavaPyramidBackend<
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
 
 		final int numResolutionLevels = countResolutionLevels( multiscaleImage );
-		final int selectedResolutionLevelIndex =
-				selectResolutionLevelIndex( multiscaleImage, entry, numResolutionLevels, preferredMaxWidth );
 
 		final Array level0Array = openLevel( multiscaleImage, 0 );
-		final Array selectedArray = openLevel( multiscaleImage, selectedResolutionLevelIndex );
 		final T type = typeForZarrDataType( level0Array.metadata().dataType().getMA2DataType() );
 		final V volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 
 		// zarr shape is C-order [t, c, z, y, x]; imglib2 uses F-order [x, y, z, c, t]
-		final long[] zarrShape = selectedArray.metadata().shape;
+		final long[] zarrShape = level0Array.metadata().shape;
 		final long[] dimensions = reverseToLong( zarrShape );
 		final int numDimensions = dimensions.length;
 
@@ -354,28 +342,6 @@ public class ZarrJavaPyramidBackend<
 		{
 			return 1;
 		}
-	}
-
-	private int selectResolutionLevelIndex( final MultiscaleImage multiscaleImage, final MultiscalesEntry entry,
-			final int numResolutionLevels, final Integer preferredMaxWidth )
-	{
-		if ( preferredMaxWidth == null )
-			return 0;
-
-		final int xAxis = zarrAxisIndex( entry.axes, AxisCalibration.X );
-		if ( xAxis < 0 )
-			return 0;
-
-		int smallestWidth = Integer.MAX_VALUE;
-		for ( int level = 0; level < numResolutionLevels; level++ )
-		{
-			final int width = ( int ) openLevel( multiscaleImage, level ).metadata().shape[ xAxis ];
-			if ( width <= preferredMaxWidth )
-				return level;
-			smallestWidth = Math.min( smallestWidth, width );
-		}
-
-		throw new NoMatchingResolutionException( preferredMaxWidth, smallestWidth );
 	}
 
 	private Array openLevel( final MultiscaleImage multiscaleImage, final int levelIndex )
