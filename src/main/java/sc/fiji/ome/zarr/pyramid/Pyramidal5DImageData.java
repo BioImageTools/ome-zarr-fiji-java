@@ -165,6 +165,6 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithZarrJava(
 			final Context context, final URI uri, final Integer preferredWidth )
 	{
-		return new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( uri, preferredWidth ) );
+		return new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( uri, preferredWidth ), preferredWidth );
 	}
 }

@@ -150,7 +150,6 @@ public class N5PyramidBackend<
 				.numChannels( numChannels )
 				.numTimepoints( numTimepoints )
 				.numDimensions( numDimensions )
-				.selectedResolutionLevelIndex( selectedLevel.index )
 				.type( type )
 				.volatileType( volatileType )
 				.voxelDimensions( voxelDimensions )

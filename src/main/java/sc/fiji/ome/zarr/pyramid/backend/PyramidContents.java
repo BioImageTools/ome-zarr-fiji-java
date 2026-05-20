@@ -66,8 +66,6 @@ public final class PyramidContents<
 
 	public final int numDimensions;
 
-	public final int selectedResolutionLevelIndex;
-
 	public final T type;
 
 	public final V volatileType;
@@ -104,7 +102,6 @@ public final class PyramidContents<
 		this.numChannels = b.numChannels;
 		this.numTimepoints = b.numTimepoints;
 		this.numDimensions = b.numDimensions;
-		this.selectedResolutionLevelIndex = b.selectedResolutionLevelIndex;
 		this.type = b.type;
 		this.volatileType = b.volatileType;
 		this.voxelDimensions = b.voxelDimensions;
@@ -139,8 +136,6 @@ public final class PyramidContents<
 		private int numTimepoints;
 
 		private int numDimensions;
-
-		private int selectedResolutionLevelIndex;
 
 		private T type;
 
@@ -193,12 +188,6 @@ public final class PyramidContents<
 		public Builder< T, V > numDimensions( final int n )
 		{
 			this.numDimensions = n;
-			return this;
-		}
-
-		public Builder< T, V > selectedResolutionLevelIndex( final int i )
-		{
-			this.selectedResolutionLevelIndex = i;
 			return this;
 		}
 

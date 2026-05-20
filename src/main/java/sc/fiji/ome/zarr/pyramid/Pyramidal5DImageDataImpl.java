@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -43,6 +43,7 @@ import net.imagej.axis.AxisType;
 import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.EuclideanSpace;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.Volatile;
 import net.imglib2.converter.Converter;
 import net.imglib2.realtransform.AffineTransform3D;
@@ -152,13 +153,29 @@ public class Pyramidal5DImageDataImpl<
 	 */
 	public Pyramidal5DImageDataImpl( final Context context, final URI inputUri, final Integer preferredMaxWidth )
 	{
-		this( context, new N5PyramidBackend<>( inputUri, preferredMaxWidth ) );
+		this( context, new N5PyramidBackend<>( inputUri, preferredMaxWidth ), preferredMaxWidth );
 	}
 
 	/**
-	 * Open an OME-Zarr image using the supplied {@link PyramidBackend}.
+	 * Open an OME-Zarr image using the supplied {@link PyramidBackend}, using
+	 * the highest available resolution for the ImageJ dataset.
 	 */
 	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T, V > backend )
+	{
+		this( context, backend, null );
+	}
+
+	/**
+	 * Open an OME-Zarr image using the supplied {@link PyramidBackend},
+	 * selecting for the ImageJ dataset the coarsest resolution level whose
+	 * x-width does not exceed {@code preferredMaxWidth}. If
+	 * {@code preferredMaxWidth} is {@code null}, the highest resolution is
+	 * used.
+	 *
+	 * @throws NoMatchingResolutionException if {@code preferredMaxWidth} is
+	 *   smaller than the width of the smallest resolution level
+	 */
+	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T, V > backend, final Integer preferredMaxWidth )
 	{
 		final PyramidContents< T, V > contents = backend.load();
 		this.context = context;
@@ -173,7 +190,8 @@ public class Pyramidal5DImageDataImpl<
 		this.transforms = contents.transforms;
 		this.omero = contents.omero;
 
-		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.cachedCellImgs[ contents.selectedResolutionLevelIndex ], name );
+		final int resolutionLevel = selectResolutionLevel( contents.cachedCellImgs, preferredMaxWidth );
+		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.cachedCellImgs[ resolutionLevel ], name );
 		for ( int i = 0; i < contents.axes.length; i++ )
 		{
 			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( contents.axes[ i ].name, Axes.unknown() );
@@ -184,6 +202,27 @@ public class Pyramidal5DImageDataImpl<
 		this.ijDataset.setRGBMerged( false );
 
 		this.sourceAndConverters = initSourceAndConverters( contents );
+	}
+
+	/**
+	 * Returns the index of the coarsest resolution level whose x-width (index 0
+	 * in imglib2 F-order) is ≤ {@code preferredMaxWidth}, or 0 when
+	 * {@code preferredMaxWidth} is {@code null}.
+	 */
+	private static < T extends NativeType< T > & RealType< T > > int selectResolutionLevel(
+			final CachedCellImg< T, ? >[] cachedCellImgs, final Integer preferredMaxWidth )
+	{
+		if ( preferredMaxWidth == null )
+			return 0;
+		int smallestWidth = Integer.MAX_VALUE;
+		for ( int level = 0; level < cachedCellImgs.length; level++ )
+		{
+			final int width = ( int ) cachedCellImgs[ level ].dimension( 0 );
+			if ( width <= preferredMaxWidth )
+				return level;
+			smallestWidth = Math.min( smallestWidth, width );
+		}
+		throw new NoMatchingResolutionException( preferredMaxWidth, smallestWidth );
 	}
 
 	private List< SourceAndConverter< T > > initSourceAndConverters( final PyramidContents< T, V > contents )

@@ -181,7 +181,6 @@ public class ZarrJavaPyramidBackend<
 				.numChannels( numChannels )
 				.numTimepoints( numTimepoints )
 				.numDimensions( numDimensions )
-				.selectedResolutionLevelIndex( selectedResolutionLevelIndex )
 				.type( type )
 				.volatileType( volatileType )
 				.voxelDimensions( voxelDimensions )
