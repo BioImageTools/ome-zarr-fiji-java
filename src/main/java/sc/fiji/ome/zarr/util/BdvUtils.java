@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -74,17 +74,17 @@ public class BdvUtils
 
 	/**
 	 * Displays the given pyramidal dataset in a BigDataViewer (BDV) window and registers
-	 * it with {@code bdvHandleService} for focus tracking.<br>
+	 * it with {@code bdvFocusService} for focus tracking.<br>
 	 * Increments the dataset's reference count and decrements it when the window closes.
-	 * If {@code bdvHandleService} is non-null, the dataset is immediately marked as active
+	 * If {@code bdvFocusService} is non-null, the dataset is immediately marked as active
 	 * and a {@code WindowFocusListener} keeps it up to date as focus moves between windows.
 	 *
 	 * @param pyramidalDataset the input dataset to be displayed in BDV
-	 * @param bdvHandleService the service to notify of focus changes, or {@code null} to skip tracking
+	 * @param bdvFocusService the service to notify of focus changes, or {@code null} to skip tracking
 	 * @return a {@code BdvHandle} instance representing the BDV window
 	 */
 	public static BdvHandle showBdvAndRegisterDataset( final PyramidalDataset< ? > pyramidalDataset,
-			final BdvFocusService bdvHandleService )
+			final BdvFocusService bdvFocusService )
 	{
 		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
 				BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
@@ -97,33 +97,51 @@ public class BdvUtils
 		if ( topLevelContainer instanceof Window )
 		{
 			final Window window = ( Window ) topLevelContainer;
-			// notify scijava about "usage" (and "no longer usage" later) of this Dataset
-			// only if we're able to listen for when Bdv window closes
-			pyramidalDataset.incrementReferences();
-			window.addWindowListener( new WindowAdapter()
-			{
-				@Override
-				public void windowClosed( final WindowEvent e )
-				{
-					pyramidalDataset.decrementReferences();
-					if ( bdvHandleService != null )
-						bdvHandleService.notifyWindowClosed( pyramidalDataset );
-				}
-			} );
-			if ( bdvHandleService != null )
-			{
-				bdvHandleService.notifyWindowFocused( pyramidalDataset );
-				window.addWindowFocusListener( new WindowAdapter()
-				{
-					@Override
-					public void windowGainedFocus( final WindowEvent e )
-					{
-						bdvHandleService.notifyWindowFocused( pyramidalDataset );
-					}
-				} );
-			}
+			registerDatasetLifecycle( pyramidalDataset, window, bdvFocusService );
+			if ( bdvFocusService != null )
+				registerFocusTracking( pyramidalDataset, window, bdvFocusService );
 		}
 		return bdvHandle;
+	}
+
+	/**
+	 * Notifies SciJava about the start of usage of this dataset and decrements the reference count
+	 * when the BDV window closes. Only called when we're able to listen for the window-close event.
+	 * If {@code bdvFocusService} is non-null, also notifies it when the window closes.
+	 */
+	private static void registerDatasetLifecycle( final PyramidalDataset< ? > pyramidalDataset,
+			final Window window, final BdvFocusService bdvFocusService )
+	{
+		pyramidalDataset.incrementReferences();
+		window.addWindowListener( new WindowAdapter()
+		{
+			@Override
+			public void windowClosed( final WindowEvent e )
+			{
+				pyramidalDataset.decrementReferences();
+				if ( bdvFocusService != null )
+					bdvFocusService.notifyWindowClosed( pyramidalDataset );
+			}
+		} );
+	}
+
+	/**
+	 * Registers the new focused dataset with {@code bdvFocusService} and installs a
+	 * {@code WindowFocusListener} to keep the focus state up to date as the user
+	 * switches between BDV windows.
+	 */
+	private static void registerFocusTracking( final PyramidalDataset< ? > pyramidalDataset,
+			final Window window, final BdvFocusService bdvFocusService )
+	{
+		bdvFocusService.notifyWindowFocused( pyramidalDataset );
+		window.addWindowFocusListener( new WindowAdapter()
+		{
+			@Override
+			public void windowGainedFocus( final WindowEvent e )
+			{
+				bdvFocusService.notifyWindowFocused( pyramidalDataset );
+			}
+		} );
 	}
 
 	private static void setChannelProperties( final PyramidalDataset< ? > pyramidalDataset, final BdvHandle bdvHandle )
