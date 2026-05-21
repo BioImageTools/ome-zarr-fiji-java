@@ -37,10 +37,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imglib2.util.Cast;
+
+import sc.fiji.ome.zarr.open.ZarrOpenActions;
+import sc.fiji.ome.zarr.util.BdvFocusService;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -131,6 +135,65 @@ class OpenResolutionLevelCommandTest
 			assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 0 ) );
 			final PyramidalDataset< ? > levelDataset = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
 			assertSame( pyramid.getPyramidal5DImageData(), levelDataset.getPyramidal5DImageData() );
+			closeDisplays( context );
+		}
+	}
+
+	/**
+	 * Opening in BDV (simulated via {@link BdvFocusService#notifyWindowFocused}) and then
+	 * running the command produces a level dataset sharing the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData}.
+	 */
+	@Test
+	void runAfterBdvOpenSharesSamePyramidData() throws URISyntaxException
+	{
+		try ( Context context = new Context() )
+		{
+			final PyramidalDataset< ? > bdvDataset = openPyramid( context );
+			final BdvFocusService bdvHandleService = context.getService( BdvFocusService.class );
+			bdvHandleService.notifyWindowFocused( bdvDataset );
+
+			final OpenResolutionLevelCommand cmd = createCommand( context );
+			// dataset intentionally not set – simulates invocation from a BDV context
+			cmd.initialize();
+			assertFalse( cmd.isCanceled() );
+			cmd.setInput( "resolutionLevel", "Resolution 1" );
+			cmd.run();
+
+			final DatasetService datasetService = context.getService( DatasetService.class );
+			final List< Dataset > datasets = datasetService.getDatasets();
+			assertEquals( 1, datasets.size() );
+			final PyramidalDataset< ? > levelDataset = Cast.unchecked( datasets.get( 0 ) );
+			assertSame( bdvDataset.getPyramidal5DImageData(), levelDataset.getPyramidal5DImageData() );
+			closeDisplays( context );
+		}
+	}
+
+	/**
+	 * Opening in IJ2 at the highest resolution and then running the command produces
+	 * two datasets sharing the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData}.
+	 */
+	@Test
+	void runAfterIj2OpenSharesSamePyramidData() throws URISyntaxException
+	{
+		try ( Context context = new Context() )
+		{
+			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
+			new ZarrOpenActions( path.toUri(), context ).openIJWithImage();
+
+			final DatasetService datasetService = context.getService( DatasetService.class );
+			assertEquals( 1, datasetService.getDatasets().size() );
+			final PyramidalDataset< ? > ij2Dataset = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+
+			final OpenResolutionLevelCommand cmd = createCommand( context );
+			cmd.dataset = ij2Dataset;
+			cmd.initialize();
+			assertFalse( cmd.isCanceled() );
+			cmd.setInput( "resolutionLevel", "Resolution 1" );
+			cmd.run();
+
+			assertEquals( 2, datasetService.getDatasets().size() );
+			final PyramidalDataset< ? > levelDataset = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+			assertSame( ij2Dataset.getPyramidal5DImageData(), levelDataset.getPyramidal5DImageData() );
 			closeDisplays( context );
 		}
 	}

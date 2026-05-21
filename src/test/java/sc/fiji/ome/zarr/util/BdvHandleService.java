@@ -28,62 +28,52 @@
  */
 package sc.fiji.ome.zarr.util;
 
-import net.imagej.ImageJ;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.RandomAccessibleInterval;
 
-import java.util.Random;
+import bdv.util.BdvFunctions;
+import bdv.util.BdvOptions;
+import bdv.util.BdvStackSource;
+import bdv.viewer.ViewerPanel;
 
-public class BdvHandleServiceDemo
+/**
+ * Manages a single {@link BdvStackSource} handle — remembers the most recently
+ * opened BDV window and can add sources to it. Extracted from the original
+ * {@code BdvHandleService} implementation for use in demos and manual tests.
+ */
+public class BdvHandleService
 {
-	public static void main( String[] args )
+	private BdvStackSource< ? > lastStartedBdv = null;
+
+	public boolean isLastBdvStillAlive()
 	{
-		new ImageJ();
-		BdvHandleService bdvService = new BdvHandleService();
-
-		//fake image
-		final Random rng = new Random();
-		final Img< UnsignedShortType > img = ArrayImgs.unsignedShorts( 100, 100, 30 );
-		img.forEach( p -> p.setReal( rng.nextFloat() ) );
-
-		bdvService.openNewBdv( img, "source 1" );
-
-		int iters = 20;
-		while ( iters > 0 && bdvService.isLastBdvStillAlive() )
+		if ( lastStartedBdv == null )
+			return false;
+		ViewerPanel panel;
+		try
 		{
-			try
-			{
-				System.out.println( "Seconds before adding a another image: " + iters );
-				Thread.sleep( 1000 );
-				iters--;
-			}
-			catch ( InterruptedException e )
-			{
-				throw new RuntimeException( e );
-			}
+			panel = lastStartedBdv.getBdvHandle().getViewerPanel();
 		}
-
-		System.out.println( "adding new image." );
-		final Img< UnsignedShortType > imgB = ArrayImgs.unsignedShorts( 100, 100, 30 );
-		imgB.forEach( p -> p.setReal( rng.nextFloat() ) );
-		bdvService.addToLastOrInNewBdv( imgB, "source 2" );
-
-		iters = 20;
-		while ( iters > 0 && bdvService.isLastBdvStillAlive() )
+		catch ( Exception e )
 		{
-			try
-			{
-				System.out.println( "Seconds before finishing the program: " + iters );
-				Thread.sleep( 1000 );
-				iters--;
-			}
-			catch ( InterruptedException e )
-			{
-				throw new RuntimeException( e );
-			}
+			lastStartedBdv = null;
+			return false;
 		}
+		if ( panel.isValid() )
+			return true;
+		lastStartedBdv = null;
+		return false;
+	}
 
-		System.out.println( "done." );
+	public void openNewBdv( final RandomAccessibleInterval< ? > img, final String name )
+	{
+		lastStartedBdv = BdvFunctions.show( img, name );
+	}
+
+	public void addToLastOrInNewBdv( final RandomAccessibleInterval< ? > img, final String name )
+	{
+		if ( isLastBdvStillAlive() )
+			BdvFunctions.show( img, name, BdvOptions.options().addTo( lastStartedBdv ) );
+		else
+			openNewBdv( img, name );
 	}
 }
