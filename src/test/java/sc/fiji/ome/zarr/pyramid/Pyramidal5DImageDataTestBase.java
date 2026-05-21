@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -320,6 +321,42 @@ public interface Pyramidal5DImageDataTestBase
 			assertEquals( "", voxelDimensions.unit() );
 			assertArrayEquals( new double[] { 1, 1, 1 }, voxelDimensions.dimensionsAsDoubleArray() );
 		}
+	}
+
+	@ParameterizedTest
+	@MethodSource( { "sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase#omeZarrExamples" } )
+	default void testPhysicalSizeConsistentAcrossResolutionLevels( String resource ) throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			Pyramidal5DImageData< ? > data = load( resource, context );
+			ImgPlus< ? > level0Img = data.asDataset( 0 ).getImgPlus();
+			double[] level0Extents = physicalExtents( level0Img );
+
+			for ( int level = 1; level < data.numResolutionLevels(); level++ )
+			{
+				ImgPlus< ? > levelImg = data.asDataset( level ).getImgPlus();
+				assertArrayEquals( level0Extents, physicalExtents( levelImg ), 1e-9,
+						"Physical extents at level " + level + " must match level 0" );
+			}
+
+			final int xDim = level0Img.dimensionIndex( Axes.X );
+			final int yDim = level0Img.dimensionIndex( Axes.Y );
+			final int zDim = level0Img.dimensionIndex( Axes.Z );
+
+			assertEquals( 64.0, level0Extents[ xDim ], 1e-9 );
+			assertEquals( 64.0, level0Extents[ yDim ], 1e-9 );
+			if ( zDim >= 0 )
+				assertEquals( 16.0, level0Extents[ zDim ], 1e-9 );
+		}
+	}
+
+	static double[] physicalExtents( final ImgPlus< ? > img )
+	{
+		final double[] extents = new double[ img.numDimensions() ];
+		for ( int d = 0; d < img.numDimensions(); d++ )
+			extents[ d ] = img.axis( d ).calibratedValue( img.dimension( d ) );
+		return extents;
 	}
 
 	@ParameterizedTest
