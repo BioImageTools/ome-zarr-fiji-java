@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -34,8 +34,6 @@ import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,10 +55,6 @@ import dev.zarr.zarrjava.store.HttpStore;
 import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
 
-import net.imagej.ImgPlus;
-import net.imagej.axis.Axes;
-import net.imagej.axis.AxisType;
-import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -90,16 +84,16 @@ import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
-import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.PyramidLevelAccessException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the zarr-java library.
- * Supports OME-NGFF v0.4 (Zarr v2) and v0.5 (Zarr v3).
+ * Supports OME-Zarr v0.4 (Zarr v2) and v0.5 (Zarr v3).
  *
  * @param <T> pixel type
  * @param <V> volatile pixel type
@@ -111,34 +105,13 @@ public class ZarrJavaPyramidBackend<
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private static final Map< String, AxisType > AXIS_MAPPING;
-
-	static
-	{
-		final Map< String, AxisType > map = new HashMap<>();
-		map.put( "x", Axes.X );
-		map.put( "y", Axes.Y );
-		map.put( "z", Axes.Z );
-		map.put( "c", Axes.CHANNEL );
-		map.put( "t", Axes.TIME );
-		AXIS_MAPPING = Collections.unmodifiableMap( map );
-	}
-
 	private final URI inputUri;
-
-	private final Integer preferredMaxWidth;
 
 	private StoreHandle activeHandle = null;
 
 	public ZarrJavaPyramidBackend( final URI inputUri )
 	{
-		this( inputUri, null );
-	}
-
-	public ZarrJavaPyramidBackend( final URI inputUri, final Integer preferredMaxWidth )
-	{
 		this.inputUri = inputUri;
-		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
 	@Override
@@ -148,21 +121,18 @@ public class ZarrJavaPyramidBackend<
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
 
 		final int numResolutionLevels = countResolutionLevels( multiscaleImage );
-		final int selectedResolutionLevelIndex =
-				selectResolutionLevelIndex( multiscaleImage, entry, numResolutionLevels, preferredMaxWidth );
 
 		final Array level0Array = openLevel( multiscaleImage, 0 );
-		final Array selectedArray = openLevel( multiscaleImage, selectedResolutionLevelIndex );
 		final T type = typeForZarrDataType( level0Array.metadata().dataType().getMA2DataType() );
 		final V volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 
 		// zarr shape is C-order [t, c, z, y, x]; imglib2 uses F-order [x, y, z, c, t]
-		final long[] zarrShape = selectedArray.metadata().shape;
+		final long[] zarrShape = level0Array.metadata().shape;
 		final long[] dimensions = reverseToLong( zarrShape );
 		final int numDimensions = dimensions.length;
 
-		final int numTimepoints = getDimSizeForAxis( entry.axes, zarrShape, "t" );
-		final int numChannels = getDimSizeForAxis( entry.axes, zarrShape, "c" );
+		final int numTimepoints = getDimSizeForAxis( entry.axes, zarrShape, AxisCalibration.T );
+		final int numChannels = getDimSizeForAxis( entry.axes, zarrShape, AxisCalibration.C );
 
 		final String name = entry.name != null ? entry.name : defaultName();
 		final double[] level0Scales = getLevel0Scales( entry, numDimensions );
@@ -181,15 +151,14 @@ public class ZarrJavaPyramidBackend<
 			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level ], sharedQueue );
 		}
 
-		final ImgPlus< T > imgPlus = new ImgPlus<>( cachedCellImgs[ selectedResolutionLevelIndex ], name );
-		configureImgPlusAxes( imgPlus, entry.axes, level0Scales );
+		final AxisCalibration[] axes = createAxisCalibrations( entry.axes, level0Scales );
 
 		final VoxelDimensions voxelDimensions = createVoxelDimensions( level0Scales, entry.axes );
 		final AffineTransform3D[] transforms = createTransforms( entry, numResolutionLevels, level0Scales );
 
-		final int channelAxisIndex = imglibAxisIndex( entry.axes, "c", numDimensions );
-		final int zAxisIndex = imglibAxisIndex( entry.axes, "z", numDimensions );
-		final int timeAxisIndex = imglibAxisIndex( entry.axes, "t", numDimensions );
+		final int channelAxisIndex = imglibAxisIndex( entry.axes, AxisCalibration.C, numDimensions );
+		final int zAxisIndex = imglibAxisIndex( entry.axes, AxisCalibration.Z, numDimensions );
+		final int timeAxisIndex = imglibAxisIndex( entry.axes, AxisCalibration.T, numDimensions );
 
 		final Omero omero = convertOmero( multiscaleImage.getOmeroMetadata() );
 		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
@@ -200,14 +169,13 @@ public class ZarrJavaPyramidBackend<
 				.numChannels( numChannels )
 				.numTimepoints( numTimepoints )
 				.numDimensions( numDimensions )
-				.selectedResolutionLevelIndex( selectedResolutionLevelIndex )
 				.type( type )
 				.volatileType( volatileType )
 				.voxelDimensions( voxelDimensions )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
 				.volatileImgs( volatileImgs )
-				.imgPlus( imgPlus )
+				.axes( axes )
 				.channelAxisIndex( channelAxisIndex )
 				.zAxisPresent( zAxisIndex >= 0 )
 				.timeAxisPresent( timeAxisIndex >= 0 )
@@ -376,28 +344,6 @@ public class ZarrJavaPyramidBackend<
 		}
 	}
 
-	private int selectResolutionLevelIndex( final MultiscaleImage multiscaleImage, final MultiscalesEntry entry,
-			final int numResolutionLevels, final Integer preferredMaxWidth )
-	{
-		if ( preferredMaxWidth == null )
-			return 0;
-
-		final int xAxis = zarrAxisIndex( entry.axes, "x" );
-		if ( xAxis < 0 )
-			return 0;
-
-		int smallestWidth = Integer.MAX_VALUE;
-		for ( int level = 0; level < numResolutionLevels; level++ )
-		{
-			final int width = ( int ) openLevel( multiscaleImage, level ).metadata().shape[ xAxis ];
-			if ( width <= preferredMaxWidth )
-				return level;
-			smallestWidth = Math.min( smallestWidth, width );
-		}
-
-		throw new NoMatchingResolutionException( preferredMaxWidth, smallestWidth );
-	}
-
 	private Array openLevel( final MultiscaleImage multiscaleImage, final int levelIndex )
 	{
 		try
@@ -459,9 +405,9 @@ public class ZarrJavaPyramidBackend<
 	{
 		if ( zarrAxes == null )
 			return new FinalVoxelDimensions( "", 1.0, 1.0, 1.0 );
-		final double xScale = scaleForNamedAxis( zarrAxes, level0Scales, "x" );
-		final double yScale = scaleForNamedAxis( zarrAxes, level0Scales, "y" );
-		final double zScale = scaleForNamedAxis( zarrAxes, level0Scales, "z" );
+		final double xScale = scaleForNamedAxis( zarrAxes, level0Scales, AxisCalibration.X );
+		final double yScale = scaleForNamedAxis( zarrAxes, level0Scales, AxisCalibration.Y );
+		final double zScale = scaleForNamedAxis( zarrAxes, level0Scales, AxisCalibration.Z );
 		return new FinalVoxelDimensions( spatialUnit( zarrAxes ), xScale, yScale, zScale );
 	}
 
@@ -472,7 +418,7 @@ public class ZarrJavaPyramidBackend<
 	}
 
 	/**
-	 * Returns the unit attached to the last x/y/z axis encountered. OME-NGFF
+	 * Returns the unit attached to the last x/y/z axis encountered. OME-Zarr
 	 * spatial axes share a single unit in well-formed datasets, so this
 	 * collapses to "the spatial unit"; the original loop happened to write
 	 * it last-wins, and this preserves that behavior.
@@ -482,7 +428,7 @@ public class ZarrJavaPyramidBackend<
 		String unit = "";
 		for ( final Axis axis : axes )
 		{
-			if ( "x".equals( axis.name ) || "y".equals( axis.name ) || "z".equals( axis.name ) )
+			if ( AxisCalibration.X.equals( axis.name ) || AxisCalibration.Y.equals( axis.name ) || AxisCalibration.Z.equals( axis.name ) )
 				unit = axis.unit == null ? "" : axis.unit;
 		}
 		return unit;
@@ -492,9 +438,9 @@ public class ZarrJavaPyramidBackend<
 			final int numResolutionLevels, final double[] level0Scales )
 	{
 		final int[] spatialZarrIdx = new int[] {
-				zarrAxisIndex( entry.axes, "x" ),
-				zarrAxisIndex( entry.axes, "y" ),
-				zarrAxisIndex( entry.axes, "z" )
+				zarrAxisIndex( entry.axes, AxisCalibration.X ),
+				zarrAxisIndex( entry.axes, AxisCalibration.Y ),
+				zarrAxisIndex( entry.axes, AxisCalibration.Z )
 		};
 		final AffineTransform3D[] tr = new AffineTransform3D[ numResolutionLevels ];
 		for ( int level = 0; level < numResolutionLevels; level++ )
@@ -536,7 +482,7 @@ public class ZarrJavaPyramidBackend<
 	 * array directly (instead of the library type with a nullable
 	 * {@code scale} field) keeps null-tracking local to this method, so
 	 * callers don't have to repeat the {@code scaleCt.scale != null} check.
-	 * OME-NGFF datasets carry at most one scale transformation per level,
+	 * OME-Zarr datasets carry at most one scale transformation per level,
 	 * so "first usable one" is observably equivalent to "first scale ct,
 	 * null-check at the call site".
 	 * <p>
@@ -587,20 +533,20 @@ public class ZarrJavaPyramidBackend<
 		return zarrIndex >= 0 && zarrIndex < level0Scales.length ? level0Scales[ zarrIndex ] : 1.0;
 	}
 
-	private static < T extends NativeType< T > & RealType< T > > void configureImgPlusAxes(
-			final ImgPlus< T > img, final List< Axis > zarrAxes, final double[] level0Scales )
+	private static AxisCalibration[] createAxisCalibrations( final List< Axis > zarrAxes, final double[] level0Scales )
 	{
 		if ( zarrAxes == null )
-			return;
+			return new AxisCalibration[ 0 ];
 		final int n = zarrAxes.size();
+		final AxisCalibration[] result = new AxisCalibration[ n ];
 		for ( int zarrDim = 0; zarrDim < n; zarrDim++ )
 		{
 			final int imgDim = n - 1 - zarrDim;
 			final Axis axis = zarrAxes.get( zarrDim );
-			final AxisType axisType = AXIS_MAPPING.getOrDefault( axis.name, Axes.unknown() );
 			final String unit = axis.unit != null ? axis.unit : "";
-			img.setAxis( new DefaultLinearAxis( axisType, unit, level0Scales[ zarrDim ] ), imgDim );
+			result[ imgDim ] = new AxisCalibration( axis.name, unit, level0Scales[ zarrDim ] );
 		}
+		return result;
 	}
 
 	// ---------------------------------------------------------------------

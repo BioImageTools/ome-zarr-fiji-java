@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -64,7 +64,7 @@ public class BigStitcherStyleOMEZarrWriter
 {
 
 	/**
-	 * Writes a multi-scale OME-Zarr following OME-NGFF v0.4 specification.
+	 * Writes a multi-scale OME-Zarr following OME-Zarr v0.4 specification.
 	 * This is how BigStitcher-Spark creates OME-Zarr fusion output.
 	 */
 	public static class OMEZarrWriter
@@ -100,8 +100,8 @@ public class BigStitcherStyleOMEZarrWriter
 		}
 
 		/**
-		 * Write a multiscale pyramid with proper OME-NGFF metadata. This follows BigStitcher-Spark's approach.<br>
-		 * Writes a multiscale dataset to a Zarr-compatible format with OME-NGFF v0.4 metadata.
+		 * Write a multiscale pyramid with proper OME-Zarr metadata. This follows BigStitcher-Spark's approach.<br>
+		 * Writes a multiscale dataset to a Zarr-compatible format with OME-Zarr v0.4 metadata.
 		 * The method saves multiple resolution levels, each corresponding to a downsampled
 		 * version of the provided input, and writes the corresponding metadata necessary
 		 * for OME-Zarr compliance.
@@ -152,7 +152,7 @@ public class BigStitcherStyleOMEZarrWriter
 						Arrays.toString( scales[ level ].dimensionsAsLongArray() ) );
 			}
 
-			// Write OME-NGFF v0.4 metadata
+			// Write OME-Zarr v0.4 metadata
 			writeOMEMetadata(
 					scales,
 					voxelSizes,
@@ -164,8 +164,8 @@ public class BigStitcherStyleOMEZarrWriter
 		}
 
 		/**
-		 * Writes OME-NGFF v0.4 compliant metadata to root .zattrs. This is the key method for proper OME-Zarr compliance.<br>
-		 * Writes OME-NGFF metadata to the Zarr dataset. This method generates metadata in compliance
+		 * Writes OME-Zarr v0.4 compliant metadata to root .zattrs. This is the key method for proper OME-Zarr compliance.<br>
+		 * Writes OME-Zarr metadata to the Zarr dataset. This method generates metadata in compliance
 		 * with the OME-Zarr specification (version 0.4) and writes it alongside the multiscale datasets.
 		 * The metadata includes information about axes, resolutions, and transformations, and optionally
 		 * adds OMERO metadata or other user-defined attributes.
@@ -200,7 +200,7 @@ public class BigStitcherStyleOMEZarrWriter
 
 			JsonObject rootAttrs = new JsonObject();
 
-			// Create multiscales array (OME-NGFF v0.4)
+			// Create multiscales array (OME-Zarr v0.4)
 			JsonArray multiscales = new JsonArray();
 			JsonObject multiscale = new JsonObject();
 
@@ -421,7 +421,7 @@ public class BigStitcherStyleOMEZarrWriter
 					{ 2.0, 2.0, 1.0, 1.0, 1.0 } // Level 2 (4x in x,y)
 			};
 
-			// Define axes following OME-NGFF convention
+			// Define axes following OME-Zarr convention
 			String[] axisNames = { "t", "c", "z", "y", "x" };
 			String[] axisTypes = { "time", "channel", "space", "space", "space" };
 			String[] axisUnits = { null, null, "micrometer", "micrometer", "micrometer" };

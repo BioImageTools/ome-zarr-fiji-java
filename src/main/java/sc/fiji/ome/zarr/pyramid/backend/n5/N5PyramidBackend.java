@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,15 +32,8 @@ import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import net.imagej.ImgPlus;
-import net.imagej.axis.Axes;
-import net.imagej.axis.AxisType;
-import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -73,16 +66,16 @@ import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
-import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 import sc.fiji.ome.zarr.util.Affine3DUtils;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the N5 universe
- * library. Supports OME-NGFF v0.3, v0.4 and v0.5 (N5 reads Zarr v2 and the
+ * library. Supports OME-Zarr v0.3, v0.4 and v0.5 (N5 reads Zarr v2 and the
  * Zarr v3 variant used by v0.5).
  *
  * @param <T> pixel type
@@ -95,32 +88,11 @@ public class N5PyramidBackend<
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private static final Map< String, AxisType > AXIS_MAPPING;
-
-	static
-	{
-		final Map< String, AxisType > map = new HashMap<>();
-		map.put( "x", Axes.X );
-		map.put( "y", Axes.Y );
-		map.put( "z", Axes.Z );
-		map.put( "c", Axes.CHANNEL );
-		map.put( "t", Axes.TIME );
-		AXIS_MAPPING = Collections.unmodifiableMap( map );
-	}
-
 	private final URI inputUri;
-
-	private final Integer preferredMaxWidth;
 
 	public N5PyramidBackend( final URI inputUri )
 	{
-		this( inputUri, null );
-	}
-
-	public N5PyramidBackend( final URI inputUri, final Integer preferredMaxWidth )
-	{
 		this.inputUri = inputUri;
-		this.preferredMaxWidth = preferredMaxWidth;
 	}
 
 	@Override
@@ -133,7 +105,7 @@ public class N5PyramidBackend<
 		final int multiscaleIndex = 0;
 		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
 		final Omero omero = adapter.initOmeroMetadata();
-		final ResolutionLevel selectedLevel = selectResolutionLevel( preferredMaxWidth, multiscale );
+		final ResolutionLevel level0 = multiscale.getLevels().get( 0 );
 
 		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
 		final AffineTransform3D[] transforms = spatialMetadata.spatialTransforms3d();
@@ -142,9 +114,9 @@ public class N5PyramidBackend<
 		final V volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 		final String name = multiscale.getName();
 		final int numResolutionLevels = multiscale.numResolutionLevels();
-		final int numDimensions = selectedLevel.attributes.getDimensions().length;
-		final int numTimepoints = getAxisSize( selectedLevel, Axes.TIME );
-		final int numChannels = getAxisSize( selectedLevel, Axes.CHANNEL );
+		final int numDimensions = level0.attributes.getDimensions().length;
+		final int numTimepoints = getAxisSize( level0, AxisCalibration.T );
+		final int numChannels = getAxisSize( level0, AxisCalibration.C );
 
 		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
@@ -155,12 +127,11 @@ public class N5PyramidBackend<
 			volatileImgs[ level.index ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level.index ], sharedQueue );
 		}
 
-		final ImgPlus< T > imgPlus = new ImgPlus<>( cachedCellImgs[ selectedLevel.index ], name );
-		configureImgPlusAxes( imgPlus, selectedLevel );
+		final AxisCalibration[] axes = createAxisCalibrations( level0 );
 
-		final int channelAxisIndex = findAxisIndex( selectedLevel, Axes.CHANNEL );
-		final int zAxisIndex = findAxisIndex( selectedLevel, Axes.Z );
-		final int timeAxisIndex = findAxisIndex( selectedLevel, Axes.TIME );
+		final int channelAxisIndex = findAxisIndex( level0, AxisCalibration.C );
+		final int zAxisIndex = findAxisIndex( level0, AxisCalibration.Z );
+		final int timeAxisIndex = findAxisIndex( level0, AxisCalibration.T );
 
 		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
 
@@ -170,14 +141,13 @@ public class N5PyramidBackend<
 				.numChannels( numChannels )
 				.numTimepoints( numTimepoints )
 				.numDimensions( numDimensions )
-				.selectedResolutionLevelIndex( selectedLevel.index )
 				.type( type )
 				.volatileType( volatileType )
 				.voxelDimensions( voxelDimensions )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
 				.volatileImgs( volatileImgs )
-				.imgPlus( imgPlus )
+				.axes( axes )
 				.channelAxisIndex( channelAxisIndex )
 				.zAxisPresent( zAxisIndex > 0 )
 				.timeAxisPresent( timeAxisIndex > 0 )
@@ -228,62 +198,50 @@ public class N5PyramidBackend<
 		return new FinalVoxelDimensions( unit, scaleX, scaleY, scaleZ );
 	}
 
-	private ResolutionLevel selectResolutionLevel( final Integer preferredMaxWidth, final Multiscale multiscale )
-	{
-		ResolutionLevel resolutionLevel = multiscale.getLevels().get( 0 );
-		if ( preferredMaxWidth == null )
-			return resolutionLevel;
-		int width = 0;
-		for ( final ResolutionLevel level : multiscale.getLevels() )
-		{
-			width = getAxisSize( level, Axes.X );
-			if ( width <= preferredMaxWidth )
-				return level;
-		}
-		throw new NoMatchingResolutionException( preferredMaxWidth, width );
-	}
-
 	// ---------------------------------------------------------------------
 	// Axis configuration
 	// ---------------------------------------------------------------------
 
-	private void configureImgPlusAxes( final ImgPlus< T > img, final ResolutionLevel level )
+	private AxisCalibration[] createAxisCalibrations( final ResolutionLevel level )
 	{
 		if ( level.axes != null )
 		{
+			final AxisCalibration[] result = new AxisCalibration[ level.axes.length ];
 			for ( int i = 0; i < level.axes.length; i++ )
 			{
 				final Axis axis = level.axes[ i ];
-				img.setAxis( new DefaultLinearAxis( AXIS_MAPPING.get( axis.getName() ), axis.getUnit(), level.scales[ i ] ), i );
+				result[ i ] = new AxisCalibration( axis.getName(), axis.getUnit(), level.scales[ i ] );
 			}
+			return result;
 		}
-		else if ( level.axisNames != null )
+		if ( level.axisNames != null )
 		{
+			final AxisCalibration[] result = new AxisCalibration[ level.axisNames.length ];
 			for ( int i = 0; i < level.axisNames.length; i++ )
-			{
-				img.setAxis( new DefaultLinearAxis( AXIS_MAPPING.get( level.axisNames[ i ] ), level.units[ i ], level.scales[ i ] ), i );
-			}
+				result[ i ] = new AxisCalibration( level.axisNames[ i ], level.units[ i ], level.scales[ i ] );
+			return result;
 		}
+		return new AxisCalibration[ 0 ];
 	}
 
-	private int getAxisSize( final ResolutionLevel level, final AxisType axisType )
+	private int getAxisSize( final ResolutionLevel level, final String axisName )
 	{
-		final int axisIndex = findAxisIndex( level, axisType );
+		final int axisIndex = findAxisIndex( level, axisName );
 		return axisIndex >= 0 ? ( int ) level.attributes.getDimensions()[ axisIndex ] : 1;
 	}
 
-	private int findAxisIndex( final ResolutionLevel level, final AxisType axisType )
+	private int findAxisIndex( final ResolutionLevel level, final String axisName )
 	{
 		if ( level.axes != null )
 		{
 			for ( int i = 0; i < level.axes.length; i++ )
-				if ( axisType.equals( AXIS_MAPPING.get( level.axes[ i ].getName() ) ) )
+				if ( axisName.equals( level.axes[ i ].getName() ) )
 					return i;
 		}
 		else if ( level.axisNames != null )
 		{
 			for ( int i = 0; i < level.axisNames.length; i++ )
-				if ( axisType.equals( AXIS_MAPPING.get( level.axisNames[ i ] ) ) )
+				if ( axisName.equals( level.axisNames[ i ] ) )
 					return i;
 		}
 		return -1;
@@ -359,7 +317,7 @@ public class N5PyramidBackend<
 	}
 
 	// ---------------------------------------------------------------------
-	// Metadata adapter strategy (per OME-NGFF version)
+	// Metadata adapter strategy (per OME-Zarr version)
 	// ---------------------------------------------------------------------
 
 	private interface MetadataAdapter

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,25 +26,45 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid.backend.n5;
+package sc.fiji.ome.zarr.pyramid.metadata;
 
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-
-import org.scijava.Context;
-
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase;
-import sc.fiji.ome.zarr.util.ZarrTestUtils;
-
-public class N5BackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTestBase
+/**
+ * Lightweight, framework-agnostic axis descriptor produced by a
+ * {@link sc.fiji.ome.zarr.pyramid.backend.PyramidBackend}. Carries just the
+ * information needed to calibrate one image dimension: a logical axis name
+ * (e.g. {@code "x"}, {@code "t"}), a physical unit string, and the pixel
+ * spacing at the selected resolution level.
+ */
+public final class AxisCalibration
 {
-	@Override
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
-			throws URISyntaxException
+	/** OME-Zarr axis name for the x (horizontal) spatial axis. */
+	public static final String X = "x";
+
+	/** OME-Zarr axis name for the y (vertical) spatial axis. */
+	public static final String Y = "y";
+
+	/** OME-Zarr axis name for the z (depth) spatial axis. */
+	public static final String Z = "z";
+
+	/** OME-Zarr axis name for the channel axis. */
+	public static final String C = "c";
+
+	/** OME-Zarr axis name for the time axis. */
+	public static final String T = "t";
+
+	/** Logical axis name as it appears in OME-Zarr metadata (e.g. "x", "y", "z", "c", "t"). */
+	public final String name;
+
+	/** Physical unit string, or an empty string when absent. */
+	public final String unit;
+
+	/** Pixel spacing at the selected resolution level in the given unit. */
+	public final double scale;
+
+	public AxisCalibration( final String name, final String unit, final double scale )
 	{
-		Path path = ZarrTestUtils.resourcePath( resource );
-		return new Pyramidal5DImageDataImpl<>( context, new N5PyramidBackend( path.toUri() ), preferredWidth );
+		this.name = name;
+		this.unit = unit;
+		this.scale = scale;
 	}
 }
