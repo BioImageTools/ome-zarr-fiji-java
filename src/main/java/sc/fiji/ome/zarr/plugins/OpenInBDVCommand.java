@@ -32,7 +32,6 @@ import net.imagej.Dataset;
 import net.imglib2.util.Cast;
 
 import org.scijava.command.Command;
-import org.scijava.log.LogLevel;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -56,18 +55,14 @@ public class OpenInBDVCommand implements Command
 	@Override
 	public void run()
 	{
-		logService.log( LogLevel.DEBUG, "Trying to open: " + dataset.getName() );
-		logService.log( LogLevel.DEBUG, "Class: " + dataset.getClass() );
-		logService.log( LogLevel.DEBUG, "Dataset instanceof PyramidalDataset: " + ( dataset instanceof PyramidalDataset ) );
-		if ( dataset instanceof PyramidalDataset )
+		final Dataset resolved = bdvFocusService != null ? bdvFocusService.resolveDataset( dataset ) : dataset;
+		if ( !( resolved instanceof PyramidalDataset ) )
 		{
-			logService.log( 0, "Opening " + dataset.getClass() + " in BDV..." );
-			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
-			BdvUtils.showBdvAndRegisterDataset( pyramidalDataset, bdvFocusService );
+			logService.error( "Cannot open in BDV: no OME-Zarr dataset is currently active." );
+			return;
 		}
-		else
-		{
-			logService.error( "Cannot display datasets of type " + dataset.getClass() + " in BDV." );
-		}
+		final PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( resolved );
+		final PyramidalDataset< ? > bdvDataset = pyramidalDataset.getPyramidal5DImageData().asPyramidalDataset();
+		BdvUtils.showBdvAndRegisterDataset( bdvDataset, bdvFocusService );
 	}
 }
