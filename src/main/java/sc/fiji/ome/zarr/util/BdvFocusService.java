@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,48 +26,60 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.plugins;
+package sc.fiji.ome.zarr.util;
 
 import net.imagej.Dataset;
-import net.imglib2.util.Cast;
 
-import org.scijava.command.Command;
-import org.scijava.log.LogLevel;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.service.AbstractService;
+import org.scijava.service.SciJavaService;
 
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
-import sc.fiji.ome.zarr.util.BdvFocusService;
-import sc.fiji.ome.zarr.util.BdvUtils;
 
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
-public class OpenInBDVCommand implements Command
+@Plugin( type = SciJavaService.class )
+public class BdvFocusService extends AbstractService implements SciJavaService
 {
 	@Parameter
-	LogService logService;
+	private LogService logService;
 
-	@Parameter( required = false )
-	private BdvFocusService bdvFocusService;
-
-	@Parameter
-	public Dataset dataset;
+	private PyramidalDataset< ? > activePyramidalDataset = null;
 
 	@Override
-	public void run()
+	public void initialize()
 	{
-		logService.log( LogLevel.DEBUG, "Trying to open: " + dataset.getName() );
-		logService.log( LogLevel.DEBUG, "Class: " + dataset.getClass() );
-		logService.log( LogLevel.DEBUG, "Dataset instanceof PyramidalDataset: " + ( dataset instanceof PyramidalDataset ) );
-		if ( dataset instanceof PyramidalDataset )
-		{
-			logService.log( 0, "Opening " + dataset.getClass() + " in BDV..." );
-			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
-			BdvUtils.showBdvAndRegisterDataset( pyramidalDataset, bdvFocusService );
-		}
-		else
-		{
-			logService.error( "Cannot display datasets of type " + dataset.getClass() + " in BDV." );
-		}
+		logService.trace( "BdvFocusService initialized" );
+		activePyramidalDataset = null;
+	}
+
+	/**
+	 * Records {@code dataset} as the currently focused BDV dataset.
+	 * Called by a {@code WindowFocusListener} whenever a BDV window gains focus,
+	 * and immediately after a new BDV window is opened.
+	 */
+	public void notifyWindowFocused( final PyramidalDataset< ? > dataset )
+	{
+		activePyramidalDataset = dataset;
+	}
+
+	/**
+	 * Clears the active dataset when its BDV window is closed.
+	 * Has no effect if {@code dataset} is not the currently active one.
+	 */
+	public void notifyWindowClosed( final PyramidalDataset< ? > dataset )
+	{
+		if ( activePyramidalDataset == dataset )
+			activePyramidalDataset = null;
+	}
+
+	/**
+	 * Returns {@code dataset} if non-null, otherwise falls back to the active BDV dataset.
+	 * Intended for use in command {@code initialize()} methods to resolve a {@code Dataset}
+	 * parameter that was not filled by the standard IJ2 active-display mechanism.
+	 */
+	public Dataset resolveDataset( final Dataset dataset )
+	{
+		return dataset != null ? dataset : activePyramidalDataset;
 	}
 }

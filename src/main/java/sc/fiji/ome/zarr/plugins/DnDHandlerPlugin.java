@@ -48,7 +48,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
-import sc.fiji.ome.zarr.util.BdvHandleService;
+import sc.fiji.ome.zarr.util.BdvFocusService;
 import sc.fiji.ome.zarr.util.ZarrUtils;
 
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
@@ -60,7 +60,7 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 	private static final Object FAKE_INPUT = new ArrayList<>( 0 );
 
 	@Parameter
-	private BdvHandleService bdvHandleService; //TODO, is it really used down-stream?
+	private BdvFocusService bdvHandleService; //TODO, is it really used down-stream?
 
 	@Parameter
 	private PrefService prefService;

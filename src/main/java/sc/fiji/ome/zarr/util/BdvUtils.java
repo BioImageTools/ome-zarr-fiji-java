@@ -69,6 +69,23 @@ public class BdvUtils
 	 */
 	public static BdvHandle showBdvAndRegisterDataset( final PyramidalDataset< ? > pyramidalDataset )
 	{
+		return showBdvAndRegisterDataset( pyramidalDataset, null );
+	}
+
+	/**
+	 * Displays the given pyramidal dataset in a BigDataViewer (BDV) window and registers
+	 * it with {@code bdvHandleService} for focus tracking.<br>
+	 * Increments the dataset's reference count and decrements it when the window closes.
+	 * If {@code bdvHandleService} is non-null, the dataset is immediately marked as active
+	 * and a {@code WindowFocusListener} keeps it up to date as focus moves between windows.
+	 *
+	 * @param pyramidalDataset the input dataset to be displayed in BDV
+	 * @param bdvHandleService the service to notify of focus changes, or {@code null} to skip tracking
+	 * @return a {@code BdvHandle} instance representing the BDV window
+	 */
+	public static BdvHandle showBdvAndRegisterDataset( final PyramidalDataset< ? > pyramidalDataset,
+			final BdvFocusService bdvHandleService )
+	{
 		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
 				BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
 
@@ -79,17 +96,32 @@ public class BdvUtils
 		Container topLevelContainer = bdvHandle.getViewerPanel().getRootPane().getParent();
 		if ( topLevelContainer instanceof Window )
 		{
+			final Window window = ( Window ) topLevelContainer;
 			// notify scijava about "usage" (and "no longer usage" later) of this Dataset
 			// only if we're able to listen for when Bdv window closes
 			pyramidalDataset.incrementReferences();
-			( ( Window ) topLevelContainer ).addWindowListener( new WindowAdapter()
+			window.addWindowListener( new WindowAdapter()
 			{
 				@Override
-				public void windowClosed( WindowEvent e )
+				public void windowClosed( final WindowEvent e )
 				{
 					pyramidalDataset.decrementReferences();
+					if ( bdvHandleService != null )
+						bdvHandleService.notifyWindowClosed( pyramidalDataset );
 				}
 			} );
+			if ( bdvHandleService != null )
+			{
+				bdvHandleService.notifyWindowFocused( pyramidalDataset );
+				window.addWindowFocusListener( new WindowAdapter()
+				{
+					@Override
+					public void windowGainedFocus( final WindowEvent e )
+					{
+						bdvHandleService.notifyWindowFocused( pyramidalDataset );
+					}
+				} );
+			}
 		}
 		return bdvHandle;
 	}
