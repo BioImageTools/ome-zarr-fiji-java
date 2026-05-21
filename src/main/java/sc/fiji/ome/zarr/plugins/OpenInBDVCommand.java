@@ -33,9 +33,10 @@ import net.imagej.display.ImageDisplayService;
 import net.imglib2.util.Cast;
 
 import org.scijava.command.Command;
-import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+
+import ij.IJ;
 
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.util.BdvFocusService;
@@ -44,9 +45,6 @@ import sc.fiji.ome.zarr.util.BdvUtils;
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
 {
-	@Parameter
-	LogService logService;
-
 	@Parameter( required = false )
 	private BdvFocusService bdvFocusService;
 
@@ -62,9 +60,14 @@ public class OpenInBDVCommand implements Command
 		if ( dataset == null && imageDisplayService != null )
 			dataset = imageDisplayService.getActiveDataset();
 		final Dataset resolved = bdvFocusService != null ? bdvFocusService.resolveDataset( dataset ) : dataset;
+		if ( resolved == null )
+		{
+			IJ.error( "Open in BigDataViewer", "No image is currently open." );
+			return;
+		}
 		if ( !( resolved instanceof PyramidalDataset ) )
 		{
-			logService.error( "Cannot open in BDV: no OME-Zarr dataset is currently active." );
+			IJ.error( "Open in BigDataViewer", "The active image is not an OME-Zarr dataset." );
 			return;
 		}
 		final PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( resolved );
