@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,6 +37,8 @@ import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.StoreHandle;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
+
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadataParser;
 import org.scijava.Context;
 import org.slf4j.LoggerFactory;
 import org.janelia.saalfeldlab.n5.N5Reader;
@@ -46,8 +48,7 @@ import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
-import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
 
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
@@ -60,6 +61,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Handler;
@@ -190,10 +192,7 @@ public class BackendBenchmark
 			throw new IOException( "No zarr root for " + inputPath );
 		final N5Reader reader = new N5Factory().openReader( inputPath.toUri().toString() );
 		final N5TreeNode node = new N5TreeNode( "" );
-		final List< N5MetadataParser< ? > > parsers = Arrays.asList(
-				new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser(),
-				new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser(),
-				new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05MetadataParser() );
+		final List< N5MetadataParser< ? > > parsers = Collections.singletonList( new OmeNgffMetadataParser( reader ) );
 		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, parsers );
 		final N5Metadata metadata = node.getMetadata();
 		if ( metadata == null )
@@ -204,24 +203,8 @@ public class BackendBenchmark
 	private static String resolveN5Level0Path( final N5OpenContext ctx ) throws IOException
 	{
 		final N5Metadata metadata = ctx.metadata;
-		if ( metadata instanceof OmeNgffV05Metadata )
-		{
-			final OmeNgffV05Metadata v05 = ( OmeNgffV05Metadata ) metadata;
-			return v05.multiscales[ 0 ].getChildrenMetadata()[ 0 ].getPath();
-		}
-		if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata )
-		{
-			final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata v04 =
-					( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata ) metadata;
-			return v04.multiscales[ 0 ].getChildrenMetadata()[ 0 ].getPath();
-		}
-		if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
-		{
-			final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata v03 =
-					( org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata ) metadata;
-			final N5SingleScaleMetadata[] children = v03.getMultiscales()[ 0 ].getChildrenMetadata();
-			return children[ 0 ].getPath();
-		}
+		if ( metadata instanceof OmeNgffMetadata )
+			return ( ( OmeNgffMetadata ) metadata ).multiscales[ 0 ].getChildrenMetadata()[ 0 ].getPath();
 		throw new IOException( "Unsupported metadata class: " + metadata.getClass().getName() );
 	}
 
