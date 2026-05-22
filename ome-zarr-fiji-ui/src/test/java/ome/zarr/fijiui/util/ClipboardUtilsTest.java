@@ -112,6 +112,15 @@ class ClipboardUtilsTest
 	}
 
 	@Test
+	void s3UriIsAccepted()
+	{
+		final URI result = ClipboardUtils.stringToUri( "s3://my-bucket/path/to/dataset", errorHandler );
+		assertNotNull( result );
+		assertEquals( URI.create( "s3://my-bucket/path/to/dataset" ), result );
+		assertTrue( errors.isEmpty(), "Unexpected errors: " + errors );
+	}
+
+	@Test
 	void unsupportedSchemeReportsError()
 	{
 		assertNull( ClipboardUtils.stringToUri("ftp://example.com/foo.zarr", errorHandler ) );
