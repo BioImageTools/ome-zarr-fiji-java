@@ -115,6 +115,12 @@
 			<groupId>org.janelia.saalfeldlab</groupId>
 			<artifactId>n5-universe</artifactId>
 		</dependency>
+		<!-- S3 backend: N5Factory handles s3:// URIs via n5-aws-s3 -->
+		<dependency>
+			<groupId>org.janelia.saalfeldlab</groupId>
+			<artifactId>n5-aws-s3</artifactId>
+			<version>${n5-aws-s3.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
