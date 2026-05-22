@@ -53,8 +53,11 @@ import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTran
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.TranslationCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.HttpStore;
+import dev.zarr.zarrjava.store.S3Store;
 import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
+
+import software.amazon.awssdk.services.s3.S3Client;
 
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
@@ -233,6 +236,14 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 			store = new FilesystemStore( Paths.get( inputUri ) );
 		else if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
 			store = new HttpStore( inputUri.toString() );
+		else if ( "s3".equalsIgnoreCase( scheme ) )
+		{
+			final S3Client s3 = S3Client.create();
+			final String bucket = inputUri.getHost();
+			final String rawPath = inputUri.getPath();
+			final String keyPrefix = rawPath == null ? "" : rawPath.replaceFirst( "^/", "" );
+			store = new S3Store( s3, bucket, keyPrefix.isEmpty() ? null : keyPrefix );
+		}
 		else
 			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
 		return openMultiscaleImageFromHandle( store.resolve() );
