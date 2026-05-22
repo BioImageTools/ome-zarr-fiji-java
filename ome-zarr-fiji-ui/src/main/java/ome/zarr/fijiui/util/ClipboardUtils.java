@@ -84,6 +84,7 @@ public final class ClipboardUtils
 	 * Handles three input forms:
 	 * <ul>
 	 *   <li>{@code http://} or {@code https://} URLs &ndash; used as-is</li>
+	 *   <li>{@code s3://} URIs &ndash; used as-is</li>
 	 *   <li>{@code file:} URIs &ndash; used as-is</li>
 	 *   <li>plain filesystem paths &ndash; converted with
 	 *       {@link Paths#get(String, String...)}{@code .toUri()}</li>
@@ -99,9 +100,10 @@ public final class ClipboardUtils
 
 	/**
 	 * Converts a string to a {@link URI} suitable for opening an OME-Zarr dataset.
-	 * Handles three input forms:
+	 * Handles four input forms:
 	 * <ul>
 	 *   <li>{@code http://} or {@code https://} URLs &ndash; used as-is</li>
+	 *   <li>{@code s3://} URIs &ndash; used as-is</li>
 	 *   <li>{@code file:} URIs &ndash; used as-is</li>
 	 *   <li>plain filesystem paths &ndash; converted with
 	 *       {@link Paths#get(String, String...)}{@code .toUri()}</li>
@@ -137,12 +139,13 @@ public final class ClipboardUtils
 		if ( parsed != null )
 		{
 			final String scheme = parsed.getScheme();
-			if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) || "file".equalsIgnoreCase( scheme ) )
+			if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme )
+					|| "file".equalsIgnoreCase( scheme ) || "s3".equalsIgnoreCase( scheme ) )
 				return parsed;
 			if ( scheme != null )
 			{
 				errorHandler.accept( "Unsupported URL scheme '" + scheme + "':\n" + text + "\n\n"
-						+ "Supported schemes are http, https, and file." );
+						+ "Supported schemes are http, https, file, and s3." );
 				return null;
 			}
 		}
