@@ -31,7 +31,7 @@ package sc.fiji.ome.zarr.pyramid.backend.n5;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import net.imglib2.RandomAccessibleInterval;
@@ -51,9 +51,12 @@ import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
-import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.SpatialMetadataGroup;
 import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.NgffSingleScaleAxesMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadataParser;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMultiScaleMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,11 +103,9 @@ public class N5PyramidBackend<
 	{
 		final N5Reader reader = new N5Factory().openReader( inputUri.toString() );
 		final N5TreeNode treeNode = new N5TreeNode( "" );
-		final N5Metadata metadata = readMetadata( reader, treeNode );
-		final MetadataAdapter adapter = MetadataAdapterFactory.getAdapter( reader, treeNode );
-		final int multiscaleIndex = 0;
-		final Multiscale multiscale = adapter.initMultiscale( metadata, multiscaleIndex );
-		final Omero omero = adapter.initOmeroMetadata();
+		final OmeNgffMetadata metadata = readMetadata( reader, treeNode );
+		final Multiscale multiscale = buildMultiscale( metadata, 0 );
+		final Omero omero = readOmeroMetadata( reader, treeNode );
 		final ResolutionLevel level0 = multiscale.getLevels().get( 0 );
 
 		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
@@ -156,13 +157,10 @@ public class N5PyramidBackend<
 				.build();
 	}
 
-	private N5Metadata readMetadata( final N5Reader reader, final N5TreeNode node )
+	private OmeNgffMetadata readMetadata( final N5Reader reader, final N5TreeNode node )
 	{
-		final List< N5MetadataParser< ? > > parsers =
-				Arrays.asList( new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadataParser(),
-						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadataParser(),
-						new org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05MetadataParser() );
-		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, new ArrayList<>( parsers ) );
+		final List< N5MetadataParser< ? > > parsers = Collections.singletonList( new OmeNgffMetadataParser( reader ) );
+		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, parsers );
 		final N5Metadata n5Metadata = node.getMetadata();
 		if ( n5Metadata == null )
 		{
@@ -170,7 +168,7 @@ public class N5PyramidBackend<
 				throw new MultiImageDatasetException( inputUri.toString() );
 			throw new NotAMultiscaleImageException( inputUri.toString() );
 		}
-		return n5Metadata;
+		return Cast.unchecked( n5Metadata );
 	}
 
 	private static boolean isBioformats2rawLayout( final N5Reader reader )
@@ -185,6 +183,26 @@ public class N5PyramidBackend<
 			logger.debug( "Could not read 'ome' attribute: {}", e.getMessage() );
 			return false;
 		}
+	}
+
+	private static Multiscale buildMultiscale( final OmeNgffMetadata metadata, final int multiscaleIndex )
+	{
+		final OmeNgffMultiScaleMetadata ms = metadata.multiscales[ multiscaleIndex ];
+		final NgffSingleScaleAxesMetadata[] children = ms.getChildrenMetadata();
+		if ( children == null || children.length == 0 || children[ 0 ] == null )
+			throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
+		final List< ResolutionLevel > levels = new ArrayList<>();
+		for ( int i = 0; i < children.length; i++ )
+			levels.add( new ResolutionLevel( children[ i ].getPath(), i, children[ i ].getAttributes(), children[ i ].getAxes(), children[ i ].getScale() ) );
+		return new Multiscale( ms.name, levels, children[ 0 ].getAttributes().getDataType() );
+	}
+
+	private static Omero readOmeroMetadata( final N5Reader reader, final N5TreeNode node )
+	{
+		final JsonElement base = reader.getAttribute( node.getPath(), "", JsonElement.class );
+		final String omeroKey = ( base != null && base.isJsonObject() && base.getAsJsonObject().has( "ome" ) )
+				? "ome/omero" : "omero";
+		return new Gson().fromJson( reader.getAttribute( node.getPath(), omeroKey, JsonElement.class ), Omero.class );
 	}
 
 	private VoxelDimensions createVoxelDimensions( final AffineTransform3D transform, final String unit )
@@ -202,48 +220,28 @@ public class N5PyramidBackend<
 	// Axis configuration
 	// ---------------------------------------------------------------------
 
-	private AxisCalibration[] createAxisCalibrations( final ResolutionLevel level )
+	private static AxisCalibration[] createAxisCalibrations( final ResolutionLevel level )
 	{
-		if ( level.axes != null )
-		{
-			final AxisCalibration[] result = new AxisCalibration[ level.axes.length ];
-			for ( int i = 0; i < level.axes.length; i++ )
-			{
-				final Axis axis = level.axes[ i ];
-				result[ i ] = new AxisCalibration( axis.getName(), axis.getUnit(), level.scales[ i ] );
-			}
-			return result;
-		}
-		if ( level.axisNames != null )
-		{
-			final AxisCalibration[] result = new AxisCalibration[ level.axisNames.length ];
-			for ( int i = 0; i < level.axisNames.length; i++ )
-				result[ i ] = new AxisCalibration( level.axisNames[ i ], level.units[ i ], level.scales[ i ] );
-			return result;
-		}
-		return new AxisCalibration[ 0 ];
+		if ( level.axes == null )
+			return new AxisCalibration[ 0 ];
+		final AxisCalibration[] result = new AxisCalibration[ level.axes.length ];
+		for ( int i = 0; i < level.axes.length; i++ )
+			result[ i ] = new AxisCalibration( level.axes[ i ].getName(), level.axes[ i ].getUnit(), level.scales[ i ] );
+		return result;
 	}
 
-	private int getAxisSize( final ResolutionLevel level, final String axisName )
+	private static int getAxisSize( final ResolutionLevel level, final String axisName )
 	{
 		final int axisIndex = findAxisIndex( level, axisName );
 		return axisIndex >= 0 ? ( int ) level.attributes.getDimensions()[ axisIndex ] : 1;
 	}
 
-	private int findAxisIndex( final ResolutionLevel level, final String axisName )
+	private static int findAxisIndex( final ResolutionLevel level, final String axisName )
 	{
 		if ( level.axes != null )
-		{
 			for ( int i = 0; i < level.axes.length; i++ )
 				if ( axisName.equals( level.axes[ i ].getName() ) )
 					return i;
-		}
-		else if ( level.axisNames != null )
-		{
-			for ( int i = 0; i < level.axisNames.length; i++ )
-				if ( axisName.equals( level.axisNames[ i ] ) )
-					return i;
-		}
 		return -1;
 	}
 
@@ -295,164 +293,18 @@ public class N5PyramidBackend<
 
 		private final DatasetAttributes attributes;
 
-		private final Axis[] axes; // for v04/v05 metadata
-
-		private final String[] axisNames; // for v03 metadata
-
-		private final String[] units; // for v03 metadata
+		private final Axis[] axes;
 
 		private final double[] scales;
 
 		private ResolutionLevel( final String datasetPath, final int index, final DatasetAttributes attributes,
-				final Axis[] axes, final String[] axisNames, final String[] units, final double[] scales )
+				final Axis[] axes, final double[] scales )
 		{
 			this.datasetPath = datasetPath;
 			this.index = index;
 			this.attributes = attributes;
 			this.axes = axes;
-			this.axisNames = axisNames;
-			this.units = units;
 			this.scales = scales;
-		}
-	}
-
-	// ---------------------------------------------------------------------
-	// Metadata adapter strategy (per OME-Zarr version)
-	// ---------------------------------------------------------------------
-
-	private interface MetadataAdapter
-	{
-		Multiscale initMultiscale( N5Metadata metadata, int multiscaleIndex );
-
-		Omero initOmeroMetadata();
-	}
-
-	private abstract static class AbstractMetadataAdapter implements MetadataAdapter
-	{
-		protected final N5Reader reader;
-
-		protected final N5TreeNode node;
-
-		AbstractMetadataAdapter( final N5Reader reader, final N5TreeNode node )
-		{
-			this.reader = reader;
-			this.node = node;
-		}
-
-		protected Multiscale buildMultiscale( final String name,
-				final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata[] children )
-		{
-			final List< ResolutionLevel > levels = new ArrayList<>();
-			int index = 0;
-			for ( final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.NgffSingleScaleAxesMetadata single : children )
-				levels.add( new ResolutionLevel( single.getPath(), index++, single.getAttributes(), single.getAxes(), null, null,
-						single.getScale() ) );
-			return new Multiscale( name, levels, children[ 0 ].getAttributes().getDataType() );
-		}
-
-		@Override
-		public Omero initOmeroMetadata()
-		{
-			final JsonElement base = reader.getAttribute( node.getPath(), getOmeroKey(), JsonElement.class );
-			return new Gson().fromJson( base, Omero.class );
-		}
-
-		protected abstract String getOmeroKey();
-	}
-
-	private static class MetadataAdapterFactory
-	{
-		static MetadataAdapter getAdapter( final N5Reader reader, final N5TreeNode node )
-		{
-			final N5Metadata metadata = node.getMetadata();
-			if ( metadata == null )
-				throw new NotAMultiscaleImageException( reader.getURI().toString() );
-			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata )
-				return new V05MetadataAdapter( reader, node );
-			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata )
-				return new V04MetadataAdapter( reader, node );
-			if ( metadata instanceof org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata )
-				return new V03MetadataAdapter( reader, node );
-			throw new NotAMultiscaleImageException( reader.getURI().toString() );
-		}
-	}
-
-	private static class V05MetadataAdapter extends AbstractMetadataAdapter
-	{
-		V05MetadataAdapter( final N5Reader reader, final N5TreeNode node )
-		{
-			super( reader, node );
-		}
-
-		@Override
-		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
-		{
-			final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v05.OmeNgffV05Metadata omeNgffMetadata =
-					Cast.unchecked( n5Metadata );
-			final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales =
-					omeNgffMetadata.multiscales[ multiscaleIndex ];
-			return buildMultiscale( multiscales.name, multiscales.getChildrenMetadata() );
-		}
-
-		@Override
-		protected String getOmeroKey()
-		{
-			return "ome/omero";
-		}
-	}
-
-	private static class V04MetadataAdapter extends AbstractMetadataAdapter
-	{
-		V04MetadataAdapter( final N5Reader reader, final N5TreeNode node )
-		{
-			super( reader, node );
-		}
-
-		@Override
-		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
-		{
-			final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
-			final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata multiscales =
-					omeNgffMetadata.multiscales[ multiscaleIndex ];
-			if ( multiscales.getChildrenMetadata().length == 0 || multiscales.getChildrenMetadata()[ 0 ] == null )
-				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
-			return buildMultiscale( multiscales.name, multiscales.getChildrenMetadata() );
-		}
-
-		@Override
-		protected String getOmeroKey()
-		{
-			return "omero";
-		}
-	}
-
-	private static class V03MetadataAdapter extends AbstractMetadataAdapter
-	{
-		V03MetadataAdapter( final N5Reader reader, final N5TreeNode node )
-		{
-			super( reader, node );
-		}
-
-		@Override
-		public Multiscale initMultiscale( final N5Metadata n5Metadata, final int multiscaleIndex )
-		{
-			final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMetadata omeNgffMetadata = Cast.unchecked( n5Metadata );
-			final org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v03.OmeNgffMultiScaleMetadata multiscales =
-					omeNgffMetadata.getMultiscales()[ multiscaleIndex ];
-			if ( multiscales.getChildrenMetadata() == null || multiscales.getChildrenMetadata().length == 0 )
-				throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children metadata." );
-			final List< ResolutionLevel > levels = new ArrayList<>();
-			int index = 0;
-			for ( final N5SingleScaleMetadata single : multiscales.getChildrenMetadata() )
-				levels.add( new ResolutionLevel( single.getPath(), index++, single.getAttributes(), null, multiscales.axes,
-						multiscales.units(), single.getPixelResolution() ) );
-			return new Multiscale( multiscales.name, levels, multiscales.getChildrenMetadata()[ 0 ].getAttributes().getDataType() );
-		}
-
-		@Override
-		protected String getOmeroKey()
-		{
-			return "omero";
 		}
 	}
 }
