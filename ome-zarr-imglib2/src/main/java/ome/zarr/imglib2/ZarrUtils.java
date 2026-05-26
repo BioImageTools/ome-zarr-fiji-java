@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -40,9 +40,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility methods for detecting Zarr datasets.
- * Handles {@link Path} checks and scheme-agnostic {@link URI} probing
- * ({@code file:} and {@code http(s):}).
+ * Utility methods for detecting Zarr datasets on the local filesystem and over
+ * HTTP. See {@link #isZarr(URI)} for the schemes that can be probed and why
+ * others (e.g. {@code s3:}) cannot.
  */
 public class ZarrUtils
 {
@@ -88,10 +88,28 @@ public class ZarrUtils
 	}
 
 	/**
-	 * @param uri location to probe
-	 * @return {@code true} if the URI points at the root of a Zarr dataset.
-	 *   Returns {@code false} for unknown schemes, null, or any error during
-	 *   probing.
+	 * Determines whether the URI points at the root of a Zarr dataset.
+	 * <p>
+	 * Supported schemes:
+	 * <ul>
+	 *   <li>{@code file:} or no scheme – checks for well-known Zarr metadata
+	 *       files on the local filesystem</li>
+	 *   <li>{@code http:} / {@code https:} – sends HTTP HEAD requests for
+	 *       well-known Zarr metadata files</li>
+	 * </ul>
+	 * Other schemes (e.g. {@code s3:}) always return {@code false}.<br>
+	 * They are not probed because doing so cheaply is not possible: it would require
+	 * creating an (authenticated), scheme-specific client (such as an S3 client)
+	 * purely to look for metadata files, only to discard it and
+	 * build another client for the actual open later.<br>
+	 * Callers that accept such schemes should therefore bypass this method and
+	 * attempt to open the dataset directly, letting the open method
+	 * report a clear error if the location turns out not to be OME-Zarr.
+	 *
+	 * @param uri location to probe; may be {@code null}
+	 * @return {@code true} if the URI points at the root of a Zarr dataset,
+	 *         {@code false} for unsupported schemes, {@code null}, or any error
+	 *         during probing
 	 */
 	public static boolean isZarr( final URI uri )
 	{

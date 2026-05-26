@@ -66,7 +66,11 @@ public class PasteToOpenAction
 		final URI uri = ClipboardUtils.readClipboardAsUri( errorHandler );
 		if ( uri == null )
 			return false;
-		if ( !ZarrUtils.isZarr( uri ) )
+		// For s3:// URIs the probe would require its own short-lived S3Client purely
+		// for detection.
+		// It is skipped because the actual open method creates the client it needs anyway
+		// and reports and error if the location turns out not to be OME-Zarr.
+		if ( !"s3".equalsIgnoreCase( uri.getScheme() ) && !ZarrUtils.isZarr( uri ) )
 		{
 			if ( errorHandler != null )
 				errorHandler.accept( "The pasted location does not appear to be an OME-Zarr dataset:\n" + uri + "." );
