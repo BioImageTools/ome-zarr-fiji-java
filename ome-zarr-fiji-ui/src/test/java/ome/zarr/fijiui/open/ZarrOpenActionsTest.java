@@ -659,6 +659,30 @@ class ZarrOpenActionsTest
 		}
 	}
 
+	// --- S3 integration tests (require network access) ---
+
+	static final URI S3_JANELIA_CHOROID_PLEXUS =
+			URI.create( "s3://janelia-cosem-datasets/jrc_mus-choroid-plexus-3/jrc_mus-choroid-plexus-3.zarr/recon-1/em/fibsem-uint8" );
+
+	@ParameterizedTest
+	@MethodSource( "readerBackends" )
+	void openImageFromS3( final ZarrReaderBackend backend )
+	{
+		try (Context context = new Context())
+		{
+			final AtomicReference< String > error = new AtomicReference<>();
+			final ZarrOpeningSettings settings = new ZarrOpeningSettings();
+			settings.setReaderBackend( backend );
+			final ZarrOpenActions actions = new ZarrOpenActions( S3_JANELIA_CHOROID_PLEXUS, context, settings, error::set );
+			final AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
+			final AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
+			actions.openImage( dataset -> multiScaleCounter.incrementAndGet(), img -> singleScaleCounter.incrementAndGet() );
+			assertNull( error.get(), "Error handler called for backend " + backend + ": " + error.get() );
+			assertEquals( 1, multiScaleCounter.get() );
+			assertEquals( 0, singleScaleCounter.get() );
+		}
+	}
+
 	@Test
 	void testRunScriptWithNoScriptSpecified() throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
