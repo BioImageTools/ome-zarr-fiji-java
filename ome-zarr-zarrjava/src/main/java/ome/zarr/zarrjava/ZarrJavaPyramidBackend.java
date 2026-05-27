@@ -60,6 +60,7 @@ import dev.zarr.zarrjava.store.StoreHandle;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import net.imglib2.cache.img.CachedCellImg;
@@ -241,12 +242,9 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 			store = new HttpStore( inputUri.toString() );
 		else if ( "s3".equalsIgnoreCase( scheme ) )
 		{
-			final S3Client s3 = S3Client.builder()
+			final S3Client s3 = S3Client.builder().region( Region.US_EAST_1 )
 					.credentialsProvider( AwsCredentialsProviderChain.builder()
-							.credentialsProviders(
-									DefaultCredentialsProvider.builder().build(),
-									AnonymousCredentialsProvider.create() )
-							.build() )
+							.credentialsProviders( DefaultCredentialsProvider.builder().build(), AnonymousCredentialsProvider.create() ).build() )
 					.build();
 			final String bucket = inputUri.getHost();
 			final String rawPath = inputUri.getPath();

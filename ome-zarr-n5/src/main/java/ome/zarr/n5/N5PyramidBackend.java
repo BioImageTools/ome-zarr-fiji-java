@@ -60,6 +60,8 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
+import software.amazon.awssdk.regions.Region;
+
 import ome.zarr.imglib2.Affine3DUtils;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
@@ -94,7 +96,9 @@ public class N5PyramidBackend implements PyramidBackend
 	@Override
 	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
 	{
-		final N5Reader reader = new N5Factory().openReader( inputUri.toString() );
+		final N5Reader reader = new N5Factory()
+				.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) )
+				.openReader( inputUri.toString() );
 		final N5TreeNode treeNode = new N5TreeNode( "" );
 		final OmeNgffMetadata metadata = readMetadata( reader, treeNode, inputUri );
 		final Multiscale multiscale = buildMultiscale( metadata, 0 );
