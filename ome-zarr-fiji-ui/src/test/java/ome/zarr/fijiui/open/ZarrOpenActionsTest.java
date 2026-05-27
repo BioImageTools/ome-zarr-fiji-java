@@ -43,6 +43,7 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static ome.zarr.ZarrTestUtils.IMAGE_NAME;
 
 import net.imagej.Dataset;
@@ -95,8 +96,10 @@ import javax.swing.SwingUtilities;
 import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
 import ij.ImagePlus;
+import dev.zarr.zarrjava.store.StoreException;
 import ome.zarr.fijiui.settings.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
+import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
@@ -680,6 +683,43 @@ class ZarrOpenActionsTest
 			assertNull( error.get(), "Error handler called for backend " + backend + ": " + error.get() );
 			assertEquals( 1, multiScaleCounter.get() );
 			assertEquals( 0, singleScaleCounter.get() );
+		}
+	}
+
+	@ParameterizedTest
+	@MethodSource( "readerBackends" )
+	@SuppressWarnings( "rawtypes" )
+	void storeAccessErrorIsReportedToErrorHandler( final ZarrReaderBackend backend )
+	{
+		try ( Context context = new Context() )
+		{
+			final URI uri = URI.create( "s3://nonexistent-bucket/some/path" );
+			final AtomicReference< String > capturedError = new AtomicReference<>();
+			final ZarrOpeningSettings settings = new ZarrOpeningSettings();
+			settings.setReaderBackend( backend );
+
+			if ( backend == ZarrReaderBackend.ZARR_JAVA )
+			{
+				try ( MockedConstruction< ZarrJavaPyramidBackend > mock = mockConstruction(
+						ZarrJavaPyramidBackend.class,
+						( mockBackend, ctx ) -> when( mockBackend.load( any() ) )
+								.thenThrow( new StoreException( "Access Denied (403)" ) ) ) )
+				{
+					final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings, capturedError::set );
+					assertDoesNotThrow( () -> actions.openImage( dataset -> null, img -> null ) );
+					assertEquals( 1, mock.constructed().size(), "Expected exactly one ZarrJavaPyramidBackend to be constructed" );
+				}
+			}
+			else
+			{
+				// N5 backend throws N5Exception.N5IOException immediately (local failure, no network needed)
+				final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings, capturedError::set );
+				assertDoesNotThrow( () -> actions.openImage( dataset -> null, img -> null ) );
+			}
+
+			assertNotNull( capturedError.get(), "Error handler should have been called for backend " + backend );
+			assertTrue( capturedError.get().contains( uri.toString() ),
+					"Error message should contain the URI for backend " + backend + ", got: " + capturedError.get() );
 		}
 	}
 
