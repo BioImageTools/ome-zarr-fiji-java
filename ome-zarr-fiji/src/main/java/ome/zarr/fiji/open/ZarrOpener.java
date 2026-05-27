@@ -60,6 +60,8 @@ import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.open.exceptions.NonExistingResolutionLevelException;
 import ome.zarr.fiji.open.exceptions.NotASingleScaleImageException;
 import ome.zarr.fiji.util.BdvUtils;
+import dev.zarr.zarrjava.store.StoreException;
+import org.janelia.saalfeldlab.n5.N5Exception;
 
 /**
  * Backend-reader-agnostic opener for OME-Zarr datasets.
@@ -245,6 +247,10 @@ public class ZarrOpener
 			showSingleScaleNotSupported();
 			// TODO: openSingleScaleImage( singleScaleOpener ) when single-scale support is added
 		}
+		catch ( StoreException | N5Exception e )
+		{
+			showStoreAccessError( e );
+		}
 		catch ( IllegalArgumentException | JsonSyntaxException e )
 		{
 			showNonZarrError( e );
@@ -317,6 +323,12 @@ public class ZarrOpener
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
 				+ "Consider opening one level higher or lower in the hierarchy instead." );
 		logger.warn( "Could not open dataset as single resolution image: {}. Error message: {}", inputUri, e.getMessage() );
+	}
+
+	private void showStoreAccessError( final Exception e )
+	{
+		errorHandler.accept( "Could not access the dataset at: " + inputUri + "\n\n" + e.getMessage() );
+		logger.warn( "Store access failed for {}: {}", inputUri, e.getMessage() );
 	}
 
 	private void showNonZarrError( final Exception e )
