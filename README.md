@@ -8,7 +8,7 @@
 
 This repo is currently primarily a Fiji Drag & Drop / Copy & Paste handler for OME-Zarrs.
 
-If the dropped / pasted target is not recognized as a **OME-Zarr v0.4 - v0.5** resource, it does nothing.
+If the dropped / pasted target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing.
 
 # Features
 
@@ -67,6 +67,7 @@ and easily handles even the huge ones.
 
 * [OME-Zarr v0.5](https://ngff.openmicroscopy.org/0.5/index.html) (Zarr v3)
 * [OME-Zarr v0.4](https://ngff.openmicroscopy.org/0.4/index.html) (Zarr v2)
+* [OME-Zarr v0.3](https://ngff.openmicroscopy.org/0.3/index.html) (Zarr v2)
 * Supports 2D (xy), 3D (xyc, xyt, xyz), 4D (xyct, xyzc, xyzt) and 5D (xyzct) images.
 
 ## Dual dataset view
@@ -101,8 +102,9 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 `Plugins -> OME-Zarr -> Settings -> Open Behavior settings` menu.
 
 * [N5 library](https://github.com/saalfeldlab/n5) (default)
-* [Zarr-java](https://github.com/zarr-developers/zarr-java) (alternative, may be a bit quicker when opening remote
-  resources).
+* [Zarr-java](https://github.com/zarr-developers/zarr-java)
+    * alternative, may be a bit quicker when opening remote resources.
+    * only supports OME-Zarr v0.4 and v0.5, not v0.3.
 
 ## Scriplet support
 
@@ -112,7 +114,8 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 
 # Known issues
 
-* Reading of OME-Zarrs version <= 0.3 is not supported.
+* Reading of OME-Zarrs version <= 0.2 is not supported. With the zarr-java backend, only OME-Zarr v0.4 and v0.5 are
+  supported, not v0.3.
 * With FIJI stable, OME-Zarrs that use Blosc compression cannot be opened on MacOS. Please use FIJI latest, if you
   encounter this issue. Cf. [FIJI downloads](https://imagej.net/software/fiji/downloads).
 * In FIJI stable, Pasting a URI via `CMD` / `SHIFT` / `CTRL` + `V` is not supported. Please use FIJI latest.

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,8 +32,8 @@ import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
 import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMetadata;
-import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.v04.OmeNgffMultiScaleMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMultiScaleMetadata;
 
 @SuppressWarnings( "all" )
 public class N5ReaderDemo
@@ -50,27 +50,15 @@ public class N5ReaderDemo
 
 		if ( m instanceof OmeNgffMetadata )
 		{
-			OmeNgffMetadata mv04 = ( OmeNgffMetadata ) m;
-			System.out.println( "name: " + mv04.getName() );
-			for ( OmeNgffMultiScaleMetadata ms : mv04.multiscales )
+			OmeNgffMetadata metadata = ( OmeNgffMetadata ) m;
+			System.out.println( "name: " + metadata.getName() );
+			for ( OmeNgffMultiScaleMetadata ms : metadata.multiscales )
 			{
 				System.out.println( "----------------" );
 				System.out.println( "name: " + ms.name + "     type: " + ms.type + "     version: " + ms.version );
 				System.out.println( ms.coordinateTransformations );
 			}
 		}
-
-		/*
-		if (m instanceof OmeNgffV05Metadata) {
-			OmeNgffV05Metadata mv05 = (OmeNgffV05Metadata)m;
-			System.out.println("name: "+mv05.getName());
-			for (OmeNgffMultiScaleMetadata ms : mv05.multiscales) {
-				System.out.println("----------------");
-				System.out.println("name: "+ms.name+"     type: "+ms.type+"     version: "+ms.version);
-				System.out.println(ms.coordinateTransformations);
-			}
-		}
-		*/
 
 		//TODO fetch v0.5 NGFF Metadata -> ask John
 		//there was supposed to be some class for it
