@@ -80,9 +80,9 @@ public class BackendBenchmark
 	private static final int MEASURE_ROUNDS = 5;
 
 	private static final List< String > DATASETS = Arrays.asList(
-			"/home/hannes/Documents/projects/scm/data/3.66.9-6.141020_15-41-29.00.ome.zarr/0",
-			"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v4_example",
-			"sc/fiji/ome/zarr/util/2d_testing/ome_zarr_v5_example",
+			"/home/hannes/Documents/projects/scm/data/3.66.9-6.141020_15-41-29.00.ome.zarr/0", // download with aws cli from: https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0026/3.66.9-6.141020_15-41-29.00.ome.zarr
+			"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr",
+			"sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v5.ome.zarr",
 			"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr",
 			"sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr"
 	);
