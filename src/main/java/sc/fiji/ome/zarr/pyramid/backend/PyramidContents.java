@@ -78,6 +78,9 @@ public final class PyramidContents<
 
 	public final RandomAccessibleInterval< V >[] volatileImgs;
 
+	/**
+	 * Axes per resolution level: {@code [resolutionLevel][axisIndex]}.
+	 */
 	public final AxisCalibration[][] axesPerLevel;
 
 	/** imglib2-order index of the channel axis, or -1 if absent. */
