@@ -105,14 +105,16 @@ public class BdvUtils
 	}
 
 	/**
-	 * Notifies SciJava about the start of usage of this dataset and decrements the reference count
-	 * when the BDV window closes. Only called when we're able to listen for the window-close event.
-	 * If {@code bdvFocusService} is non-null, also notifies it when the window closes.
+	 * Increments the reference count for this dataset and, if {@code bdvFocusService} is non-null,
+	 * immediately notifies it that the window is focused. Also installs a listener to decrement the
+	 * reference count (and notify the focus service) when the BDV window closes.
 	 */
 	private static void registerDatasetLifecycle( final PyramidalDataset< ? > pyramidalDataset,
 			final Window window, final BdvFocusService bdvFocusService )
 	{
 		pyramidalDataset.incrementReferences();
+		if ( bdvFocusService != null )
+			bdvFocusService.notifyWindowFocused( pyramidalDataset );
 		window.addWindowListener( new WindowAdapter()
 		{
 			@Override
@@ -126,14 +128,12 @@ public class BdvUtils
 	}
 
 	/**
-	 * Registers the new focused dataset with {@code bdvFocusService} and installs a
-	 * {@code WindowFocusListener} to keep the focus state up to date as the user
+	 * Installs a {@code WindowFocusListener} to keep the focus state up to date as the user
 	 * switches between BDV windows.
 	 */
 	private static void registerFocusTracking( final PyramidalDataset< ? > pyramidalDataset,
 			final Window window, final BdvFocusService bdvFocusService )
 	{
-		bdvFocusService.notifyWindowFocused( pyramidalDataset );
 		window.addWindowFocusListener( new WindowAdapter()
 		{
 			@Override
