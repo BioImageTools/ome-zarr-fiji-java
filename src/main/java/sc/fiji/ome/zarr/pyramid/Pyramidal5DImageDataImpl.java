@@ -128,10 +128,13 @@ public class Pyramidal5DImageDataImpl<
 
 	private final Dataset ijDataset;
 
+	/** One entry per resolution level. */
 	private final CachedCellImg< T, ?>[] cachedCellImgs;
 
+	/** Axes per resolution level: {@code [resolutionLevel][axisIndex]}. */
 	private final AxisCalibration[][] axesPerLevel;
 
+	/** One entry per channel. */
 	private final List< SourceAndConverter< T > > sourceAndConverters;
 
 	/**
