@@ -35,21 +35,9 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.awt.Window;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.swing.SwingUtilities;
-
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imglib2.util.Cast;
-
-import sc.fiji.ome.zarr.open.ZarrOpenActions;
-import sc.fiji.ome.zarr.util.BdvFocusService;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -58,8 +46,18 @@ import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
 import org.scijava.module.MutableModuleItem;
 
+import java.awt.Window;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.swing.SwingUtilities;
+
+import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.util.BdvFocusService;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class OpenResolutionLevelCommandTest
@@ -234,6 +232,54 @@ class OpenResolutionLevelCommandTest
 				// resolution 1 of the BDV (2D) dataset must be opened, not the IJ (5D) one
 				assertEquals( 3, datasetService.getDatasets().size() );
 				assertArrayEquals( new long[] { 32, 32 }, datasetService.getDatasets().get( 2 ).dimensionsAsLongArray() );
+			}
+			finally
+			{
+				closeDisplays( context );
+				closeWindows();
+			}
+		}
+	}
+
+	/**
+	 * Regression for the focus lifecycle: after opening in IJ, then opening in BDV, then switching
+	 * focus back to the IJ window, running the command must operate on the IJ dataset again — the
+	 * earlier BDV focus must not stay "sticky" and shadow the IJ dataset the user returned to.
+	 */
+	@Test
+	@SuppressWarnings( "all" )
+	void testOpenResolutionLevelOfIjDatasetWhenFocusReturnsFromBdv() throws URISyntaxException, InterruptedException
+	{
+		final Path path1 = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" );
+		final Path path2 = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v5.ome.zarr" );
+		try (Context context = new Context())
+		{
+			try
+			{
+				new ZarrOpenActions( path1.toUri(), context ).openIJWithImage();
+				Thread.sleep( 100 ); // give the IJ window time to open and be registered by the BdvFocusService
+				final DatasetService datasetService = context.getService( DatasetService.class );
+				final PyramidalDataset< ? > ijDataset = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+
+				new ZarrOpenActions( path2.toUri(), context ).openBDVWithImage();
+				Thread.sleep( 100 );
+
+				// user clicks the IJ window again: the KeyboardFocusManager listener observes the
+				// ImageWindow gaining focus, which we simulate here
+				context.getService( BdvFocusService.class ).notifyImageJWindowFocused();
+
+				final OpenResolutionLevelCommand cmd = createCommand( context );
+				// SciJava's preprocessor injects the now-active IJ dataset
+				cmd.dataset = ijDataset;
+				cmd.initialize();
+				assertFalse( cmd.isCanceled() );
+				cmd.setInput( "resolutionLevel", "Resolution 1" );
+				cmd.run();
+
+				// resolution 1 of the IJ (5D) dataset must be opened, not the BDV (2D) one
+				assertEquals( 3, datasetService.getDatasets().size() );
+				final PyramidalDataset< ? > levelDataset = Cast.unchecked( datasetService.getDatasets().get( 2 ) );
+				assertSame( ijDataset.getPyramidal5DImageData(), levelDataset.getPyramidal5DImageData() );
 			}
 			finally
 			{
