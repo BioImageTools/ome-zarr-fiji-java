@@ -98,23 +98,24 @@ public class BdvUtils
 		{
 			final Window window = ( Window ) topLevelContainer;
 			registerDatasetLifecycle( pyramidalDataset, window, bdvFocusService );
-			if ( bdvFocusService != null )
-				registerFocusTracking( pyramidalDataset, window, bdvFocusService );
 		}
 		return bdvHandle;
 	}
 
 	/**
 	 * Increments the reference count for this dataset and, if {@code bdvFocusService} is non-null,
-	 * immediately notifies it that the window is focused. Also installs a listener to decrement the
-	 * reference count (and notify the focus service) when the BDV window closes.
+	 * registers the BDV window with it for focus tracking. Also installs a listener to decrement the
+	 * reference count (and unregister the window) when the BDV window closes.
+	 * <p>
+	 * Focus switches themselves are observed centrally by {@link BdvFocusService} via the AWT
+	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
 	 */
 	private static void registerDatasetLifecycle( final PyramidalDataset< ? > pyramidalDataset,
 			final Window window, final BdvFocusService bdvFocusService )
 	{
 		pyramidalDataset.incrementReferences();
 		if ( bdvFocusService != null )
-			bdvFocusService.notifyWindowFocused( pyramidalDataset );
+			bdvFocusService.registerBdvWindow( window, pyramidalDataset );
 		window.addWindowListener( new WindowAdapter()
 		{
 			@Override
@@ -122,24 +123,7 @@ public class BdvUtils
 			{
 				pyramidalDataset.decrementReferences();
 				if ( bdvFocusService != null )
-					bdvFocusService.notifyWindowClosed( pyramidalDataset );
-			}
-		} );
-	}
-
-	/**
-	 * Installs a {@code WindowFocusListener} to keep the focus state up to date as the user
-	 * switches between BDV windows.
-	 */
-	private static void registerFocusTracking( final PyramidalDataset< ? > pyramidalDataset,
-			final Window window, final BdvFocusService bdvFocusService )
-	{
-		window.addWindowFocusListener( new WindowAdapter()
-		{
-			@Override
-			public void windowGainedFocus( final WindowEvent e )
-			{
-				bdvFocusService.notifyWindowFocused( pyramidalDataset );
+					bdvFocusService.unregisterBdvWindow( window );
 			}
 		} );
 	}

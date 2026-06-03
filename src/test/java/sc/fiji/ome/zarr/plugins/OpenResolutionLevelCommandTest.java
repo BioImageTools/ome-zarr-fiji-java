@@ -145,7 +145,7 @@ class OpenResolutionLevelCommandTest
 	}
 
 	/**
-	 * Opening in BDV (simulated via {@link BdvFocusService#notifyWindowFocused}) and then
+	 * Opening in BDV (simulated via {@link BdvFocusService#notifyBdvWindowFocused}) and then
 	 * running the command produces a level dataset sharing the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData}.
 	 */
 	@Test
@@ -155,7 +155,7 @@ class OpenResolutionLevelCommandTest
 		{
 			final PyramidalDataset< ? > bdvDataset = openPyramid( context );
 			final BdvFocusService bdvHandleService = context.getService( BdvFocusService.class );
-			bdvHandleService.notifyWindowFocused( bdvDataset );
+			bdvHandleService.notifyBdvWindowFocused( bdvDataset );
 
 			final OpenResolutionLevelCommand cmd = createCommand( context );
 			// dataset intentionally not set – simulates invocation from a BDV context

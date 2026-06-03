@@ -111,7 +111,7 @@ class OpenInBDVCommandTest
 			firstBdvDataset.incrementReferences();
 
 			final BdvFocusService bdvFocusService = context.getService( BdvFocusService.class );
-			bdvFocusService.notifyWindowFocused( firstBdvDataset );
+			bdvFocusService.notifyBdvWindowFocused( firstBdvDataset );
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
 			assertEquals( 1, datasetService.getDatasets().size() );

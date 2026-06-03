@@ -28,58 +28,142 @@
  */
 package sc.fiji.ome.zarr.util;
 
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
+import java.beans.PropertyChangeListener;
+import java.lang.invoke.MethodHandles;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+
 import net.imagej.Dataset;
 
-import org.scijava.log.LogService;
-import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
 import org.scijava.service.SciJavaService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import ij.gui.ImageWindow;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
+/**
+ * Tracks which image window — a BigDataViewer window or an ImageJ window — was the most
+ * recently focused, so that commands can resolve the dataset the user actually means.
+ * <p>
+ * BDV windows are not ImageJ2 displays, and in a legacy Fiji session the image windows are
+ * IJ1 {@link ImageWindow}s whose focus changes never reach the SciJava {@code EventService} at
+ * all (the active image is resolved on demand from {@code ij.WindowManager}, not via events).
+ * Listening to {@code DisplayActivatedEvent} therefore misses focus switches between already-open
+ * windows. Instead this service listens at the AWT level — a single {@code "activeWindow"}
+ * {@link PropertyChangeListener} on the {@link KeyboardFocusManager} fires for every real window:
+ * <ul>
+ * <li>focus moves to a registered BDV window → BDV gains precedence;</li>
+ * <li>focus moves to an ImageJ {@link ImageWindow} → precedence returns to the IJ dataset;</li>
+ * <li>focus moves to anything else (the main toolbar while navigating menus, dialogs) → ignored,
+ *     so the last image-window state survives menu navigation.</li>
+ * </ul>
+ * Ignoring non-image windows mirrors how IJ1's {@code WindowManager} itself disregards focus on
+ * non-image windows, which is what makes menu-invoked commands resolve the correct dataset.
+ */
 @Plugin( type = SciJavaService.class )
 public class BdvFocusService extends AbstractService implements SciJavaService
 {
-	@Parameter
-	private LogService logService;
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private PyramidalDataset< ? > activePyramidalDataset = null;
+	/** Registered BDV windows and the dataset each one displays. */
+	private final Map< Window, PyramidalDataset< ? > > bdvWindows = new ConcurrentHashMap<>();
+
+	private final AtomicReference< PyramidalDataset< ? > > activePyramidalDataset = new AtomicReference<>();
+
+	/** {@code true} when a BDV window was focused more recently than any ImageJ window. */
+	private volatile boolean bdvWindowFocused = false;
+
+	private PropertyChangeListener focusListener;
 
 	@Override
 	public void initialize()
 	{
-		logService.trace( "BdvFocusService initialized" );
-		activePyramidalDataset = null;
+		activePyramidalDataset.set( null );
+		bdvWindowFocused = false;
+		focusListener = evt -> onActiveWindowChanged( ( Window ) evt.getNewValue() );
+		KeyboardFocusManager.getCurrentKeyboardFocusManager()
+				.addPropertyChangeListener( "activeWindow", focusListener );
 	}
 
-	/**
-	 * Records {@code dataset} as the currently focused BDV dataset.
-	 * Called by a {@code WindowFocusListener} whenever a BDV window gains focus,
-	 * and immediately after a new BDV window is opened.
-	 */
-	public void notifyWindowFocused( final PyramidalDataset< ? > dataset )
+	@Override
+	public void dispose()
 	{
-		activePyramidalDataset = dataset;
+		if ( focusListener != null )
+		{
+			KeyboardFocusManager.getCurrentKeyboardFocusManager()
+					.removePropertyChangeListener( "activeWindow", focusListener );
+			focusListener = null;
+		}
+		bdvWindows.clear();
 	}
 
 	/**
-	 * Clears the active dataset when its BDV window is closed.
-	 * Has no effect if {@code dataset} is not the currently active one.
+	 * Updates focus precedence when the active AWT window changes. A registered BDV window gives
+	 * BDV precedence; an ImageJ {@link ImageWindow} returns precedence to the IJ dataset; any other
+	 * window (toolbar, dialogs) is ignored so the last image-window state persists.
 	 */
-	public void notifyWindowClosed( final PyramidalDataset< ? > dataset )
+	private void onActiveWindowChanged( final Window window )
 	{
-		if ( activePyramidalDataset == dataset )
-			activePyramidalDataset = null;
+		if ( window == null )
+			return;
+		final PyramidalDataset< ? > dataset = bdvWindows.get( window );
+		if ( dataset != null )
+			notifyBdvWindowFocused( dataset );
+		else if ( window instanceof ImageWindow )
+			notifyImageJWindowFocused();
 	}
 
 	/**
-	 * Returns the active BDV dataset if one is focused, otherwise falls back to {@code dataset}.
-	 * This gives BDV focus precedence over the IJ2 active-display injection so that running a
-	 * command after switching to a BDV window operates on the BDV dataset, not the last IJ dataset.
+	 * Registers a newly opened BDV {@code window} and the {@code dataset} it displays, and gives it
+	 * focus precedence. The {@link KeyboardFocusManager} listener uses the registration to recognise
+	 * the window when focus later returns to it.
+	 */
+	public void registerBdvWindow( final Window window, final PyramidalDataset< ? > dataset )
+	{
+		bdvWindows.put( window, dataset );
+		notifyBdvWindowFocused( dataset );
+	}
+
+	/**
+	 * Unregisters a BDV {@code window} when it closes. If its dataset currently holds precedence,
+	 * precedence is cleared so the next focus event (or the IJ2 injection) decides.
+	 */
+	public void unregisterBdvWindow( final Window window )
+	{
+		final PyramidalDataset< ? > removed = bdvWindows.remove( window );
+		if ( removed != null && activePyramidalDataset.compareAndSet( removed, null ) )
+			bdvWindowFocused = false;
+	}
+
+	/** Records {@code dataset} as the focused BDV dataset and gives BDV precedence. */
+	public void notifyBdvWindowFocused( final PyramidalDataset< ? > dataset )
+	{
+		logger.trace( "BDV window focused: {}", dataset );
+		activePyramidalDataset.set( dataset );
+		bdvWindowFocused = true;
+	}
+
+	/** Hands precedence back to the IJ active-display injection when an ImageJ window is focused. */
+	public void notifyImageJWindowFocused()
+	{
+		logger.trace( "ImageJ window focused" );
+		bdvWindowFocused = false;
+	}
+
+	/**
+	 * Returns the active BDV dataset when a BDV window was focused more recently than any ImageJ
+	 * window, otherwise falls back to {@code dataset} (the IJ active-display injection).
+	 * This makes the command operate on whichever window — BDV or IJ — the user last focused.
 	 */
 	public Dataset resolveDataset( final Dataset dataset )
 	{
-		return activePyramidalDataset != null ? activePyramidalDataset : dataset;
+		final PyramidalDataset< ? > active = activePyramidalDataset.get();
+		return bdvWindowFocused && active != null ? active : dataset;
 	}
 }
