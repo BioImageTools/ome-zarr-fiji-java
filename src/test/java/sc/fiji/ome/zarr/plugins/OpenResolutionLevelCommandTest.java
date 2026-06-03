@@ -28,16 +28,21 @@
  */
 package sc.fiji.ome.zarr.plugins;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Window;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.swing.SwingUtilities;
 
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
@@ -146,7 +151,7 @@ class OpenResolutionLevelCommandTest
 	@Test
 	void runAfterBdvOpenSharesSamePyramidData() throws URISyntaxException
 	{
-		try ( Context context = new Context() )
+		try (Context context = new Context())
 		{
 			final PyramidalDataset< ? > bdvDataset = openPyramid( context );
 			final BdvFocusService bdvHandleService = context.getService( BdvFocusService.class );
@@ -175,7 +180,7 @@ class OpenResolutionLevelCommandTest
 	@Test
 	void runAfterIj2OpenSharesSamePyramidData() throws URISyntaxException
 	{
-		try ( Context context = new Context() )
+		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
 			new ZarrOpenActions( path.toUri(), context ).openIJWithImage();
@@ -195,6 +200,46 @@ class OpenResolutionLevelCommandTest
 			final PyramidalDataset< ? > levelDataset = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
 			assertSame( ij2Dataset.getPyramidal5DImageData(), levelDataset.getPyramidal5DImageData() );
 			closeDisplays( context );
+		}
+	}
+
+	/**
+	 * Regression: when an IJ dataset is open and the user switches to BDV, running the command
+	 * must use the BDV dataset (the most recently focused one), not the IJ dataset that
+	 * SciJava's preprocessor injects as the "active" dataset.
+	 */
+	@Test
+	void testOpenResolutionLevelOfBdvDatasetWhenIjDatasetAlsoOpen() throws URISyntaxException
+	{
+		final Path path1 = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" );
+		final Path path2 = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v5.ome.zarr" );
+		try (Context context = new Context())
+		{
+			try
+			{
+				new ZarrOpenActions( path1.toUri(), context ).openIJWithImage();
+				final DatasetService datasetService = context.getService( DatasetService.class );
+				final PyramidalDataset< ? > ijDataset = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+
+				new ZarrOpenActions( path2.toUri(), context ).openBDVWithImage();
+
+				final OpenResolutionLevelCommand cmd = createCommand( context );
+				// simulate SciJava's preprocessor injecting the active IJ dataset
+				cmd.dataset = ijDataset;
+				cmd.initialize();
+				assertFalse( cmd.isCanceled() );
+				cmd.setInput( "resolutionLevel", "Resolution 1" );
+				cmd.run();
+
+				// resolution 1 of the BDV (2D) dataset must be opened, not the IJ (5D) one
+				assertEquals( 3, datasetService.getDatasets().size() );
+				assertArrayEquals( new long[] { 32, 32 }, datasetService.getDatasets().get( 2 ).dimensionsAsLongArray() );
+			}
+			finally
+			{
+				closeDisplays( context );
+				closeWindows();
+			}
 		}
 	}
 
@@ -218,5 +263,13 @@ class OpenResolutionLevelCommandTest
 		final DisplayService displayService = context.getService( DisplayService.class );
 		if ( displayService != null )
 			displayService.getDisplays().forEach( Display::close );
+	}
+
+	private static void closeWindows()
+	{
+		SwingUtilities.invokeLater( () -> {
+			for ( Window window : Window.getWindows() )
+				window.dispose();
+		} );
 	}
 }
