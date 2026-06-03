@@ -32,8 +32,18 @@ public class NonExistingResolutionLevelException extends RuntimeException
 {
 	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels )
 	{
-		super( "Resolution level " + resolutionLevel + " does not exist. "
+		super( message( resolutionLevel, numResolutionLevels ) );
+	}
+
+	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels, final Throwable cause )
+	{
+		super( message( resolutionLevel, numResolutionLevels ), cause );
+	}
+
+	private static String message( final int resolutionLevel, final int numResolutionLevels )
+	{
+		return "Resolution level " + resolutionLevel + " does not exist. "
 				+ "The pyramid has " + numResolutionLevels + " level"
-				+ ( numResolutionLevels == 1 ? "" : "s" ) + " (0–" + ( numResolutionLevels - 1 ) + ")." );
+				+ ( numResolutionLevels == 1 ? "" : "s" ) + " (0–" + ( numResolutionLevels - 1 ) + ").";
 	}
 }
