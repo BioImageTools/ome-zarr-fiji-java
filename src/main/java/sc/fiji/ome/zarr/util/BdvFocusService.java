@@ -74,12 +74,12 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	}
 
 	/**
-	 * Returns {@code dataset} if non-null, otherwise falls back to the active BDV dataset.
-	 * Intended for use in command {@code initialize()} methods to resolve a {@code Dataset}
-	 * parameter that was not filled by the standard IJ2 active-display mechanism.
+	 * Returns the active BDV dataset if one is focused, otherwise falls back to {@code dataset}.
+	 * This gives BDV focus precedence over the IJ2 active-display injection so that running a
+	 * command after switching to a BDV window operates on the BDV dataset, not the last IJ dataset.
 	 */
 	public Dataset resolveDataset( final Dataset dataset )
 	{
-		return dataset != null ? dataset : activePyramidalDataset;
+		return activePyramidalDataset != null ? activePyramidalDataset : dataset;
 	}
 }
