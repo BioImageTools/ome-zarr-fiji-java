@@ -55,7 +55,7 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	private UIService uiService;
 
 	@Parameter( required = false )
-	private BdvFocusService bdvHandleService;
+	private BdvFocusService bdvFocusService;
 
 	@Parameter
 	public Dataset dataset;
@@ -66,8 +66,8 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	@Override
 	public void initialize()
 	{
-		if ( bdvHandleService != null )
-			dataset = bdvHandleService.resolveDataset( dataset );
+		if ( bdvFocusService != null )
+			dataset = bdvFocusService.resolveDataset( dataset );
 		if ( dataset == null )
 		{
 			cancel( "No image is currently open." );
