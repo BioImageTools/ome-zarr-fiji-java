@@ -43,6 +43,7 @@ import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imglib2.img.Img;
 import net.imglib2.util.Cast;
+import net.imglib2.util.Util;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -922,6 +923,40 @@ class ZarrOpenActionsTest
 
 			for ( Window window : Window.getWindows() )
 				window.dispose();
+		}
+	}
+
+	@Test
+	void testOpenDifferentResolutionLevels() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" );
+		try (Context context = new Context())
+		{
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			try
+			{
+				actions.openIJWithImage( 0 );
+				actions.openIJWithImage( 1 );
+
+				DatasetService datasetService = context.getService( DatasetService.class );
+				PyramidalDataset< ? > ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset< ? > ifLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+
+				assertFalse( Util.imagesEqual( Cast.unchecked( ijLevel0.getImgPlus().getImg() ), ifLevel1.getImgPlus().getImg() ) );
+				long[] expectedDims0 = new long[] { 64, 64, 16, 3, 4 };
+				long[] expectedDims1 = new long[] { 32, 32, 8, 3, 4 };
+
+				assertArrayEquals( expectedDims0, ijLevel0.getImgPlus().dimensionsAsLongArray(),
+						"Dimensions of level 0 should be [x=64, y=64, z=16, c=3, t=4]" );
+				assertArrayEquals( expectedDims1, ifLevel1.getImgPlus().dimensionsAsLongArray(),
+						"Dimensions of level 1 should be [x=32, y=32, z=8, c=3, t=4]" );
+				assertSame( ijLevel0.getPyramidal5DImageData(), ifLevel1.getPyramidal5DImageData() );
+			}
+			finally
+			{
+				for ( Window window : Window.getWindows() )
+					window.dispose();
+			}
 		}
 	}
 }
