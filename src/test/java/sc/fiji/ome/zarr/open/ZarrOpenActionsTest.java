@@ -282,7 +282,7 @@ class ZarrOpenActionsTest
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-			Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
+			Function< PyramidalDataset, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
 			Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
 			actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter );
 			assertEquals( 1, multiScaleCounter.get() );
@@ -305,7 +305,7 @@ class ZarrOpenActionsTest
 				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
 				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-				Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
+				Function< PyramidalDataset, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
 				Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
 				actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter );
 				assertEquals( 0, multiScaleCounter.get() );
@@ -327,7 +327,7 @@ class ZarrOpenActionsTest
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
 				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-				Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
+				Function< PyramidalDataset, Object > multiScaleNoOp = pyramidalDataset -> null;
 				Function< Img< ? >, Object > singleScaleNoOp = img -> null;
 				assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp ) );
 			}
@@ -348,7 +348,7 @@ class ZarrOpenActionsTest
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, errorHandler );
 			AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-			Function< PyramidalDataset< ? >, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
+			Function< PyramidalDataset, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
 			Function< Img< ? >, Object > singleScaleOpener = img -> singleScaleCounter.incrementAndGet();
 			assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener ) );
 			assertEquals( 0, multiScaleCounter.get(), "Multi-image collection must not be opened as a single multiscale image" );
@@ -379,7 +379,7 @@ class ZarrOpenActionsTest
 				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, errorHandler );
 				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-				Function< PyramidalDataset< ? >, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
+				Function< PyramidalDataset, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
 				Function< Img< ? >, Object > singleScaleOpener = img -> singleScaleCounter.incrementAndGet();
 				assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener ),
 						"Opening child image " + childPath + " should not throw" );
@@ -400,7 +400,7 @@ class ZarrOpenActionsTest
 			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
 			ZarrOpeningSettings settings = new ZarrOpeningSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, System.out::println );
-			Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
+			Function< PyramidalDataset, Object > multiScaleNoOp = pyramidalDataset -> null;
 			Function< Img< ? >, Object > singleScaleNoOp = img -> null;
 			assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp ) );
 		}
@@ -422,7 +422,7 @@ class ZarrOpenActionsTest
 			assertNotNull( datasets );
 			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
 			Dataset dataset = datasets.get( 0 );
-			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
+			PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
 			long[] dimensions = pyramidalDataset.getImgPlus().dimensionsAsLongArray();
 			if ( resource.contains( "2d_testing" ) )
 			{
@@ -738,16 +738,16 @@ class ZarrOpenActionsTest
 				bdvHandle2 = Cast.unchecked( actions.openBDVWithImage() );
 				assertEquals( 4, datasetService.getDatasets().size() );
 
-				PyramidalDataset< ? > ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset< ? > ijLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
-				PyramidalDataset< ? > bdv1 = Cast.unchecked( datasetService.getDatasets().get( 2 ) );
-				PyramidalDataset< ? > bdv2 = Cast.unchecked( datasetService.getDatasets().get( 3 ) );
+				PyramidalDataset ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset ijLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				PyramidalDataset bdv1 = Cast.unchecked( datasetService.getDatasets().get( 2 ) );
+				PyramidalDataset bdv2 = Cast.unchecked( datasetService.getDatasets().get( 3 ) );
 
 				// All 4 datasets (2 IJ + 2 BDV) must be backed by the exact same Pyramidal5DImageData object
 				Pyramidal5DImageData< ? > sharedPyramid = ijLevel0.getPyramidal5DImageData();
 				for ( Dataset dataset : datasetService.getDatasets() )
 				{
-					PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
+					PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
 					assertSame( sharedPyramid, pyramidalDataset.getPyramidal5DImageData(),
 							"Every opened dataset must share the same Pyramidal5DImageData instance" );
 				}
@@ -803,8 +803,8 @@ class ZarrOpenActionsTest
 				actions.openIJWithImage( 1 ); // coarser resolution: [x=32, y=32, z=8, c=3, t=4]
 				assertEquals( 2, datasetService.getDatasets().size() );
 
-				PyramidalDataset< ? > bdvDataset = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset< ? > ijDataset = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				PyramidalDataset bdvDataset = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset ijDataset = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
 				assertSame( bdvDataset.getPyramidal5DImageData(), ijDataset.getPyramidal5DImageData(),
 						"BDV and IJ datasets must share the same Pyramidal5DImageData instance" );
 				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, bdvDataset.getImgPlus().dimensionsAsLongArray(),
@@ -848,10 +848,10 @@ class ZarrOpenActionsTest
 				actions.openIJWithImage( 1 );
 
 				DatasetService datasetService = context.getService( DatasetService.class );
-				PyramidalDataset< ? > ijLevel0First = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset< ? > ijLevel0Second = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
-				PyramidalDataset< ? > bdvLevel0 = Cast.unchecked( datasetService.getDatasets().get( 2 ) );
-				PyramidalDataset< ? > ijLevel1 = Cast.unchecked( datasetService.getDatasets().get( 3 ) );
+				PyramidalDataset ijLevel0First = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset ijLevel0Second = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				PyramidalDataset bdvLevel0 = Cast.unchecked( datasetService.getDatasets().get( 2 ) );
+				PyramidalDataset ijLevel1 = Cast.unchecked( datasetService.getDatasets().get( 3 ) );
 
 				Img< ? > cellImgIj0First = ijLevel0First.getImgPlus().getImg();
 				Img< ? > cellImgIj0Second = ijLevel0Second.getImgPlus().getImg();
@@ -939,8 +939,8 @@ class ZarrOpenActionsTest
 				actions.openIJWithImage( 1 );
 
 				DatasetService datasetService = context.getService( DatasetService.class );
-				PyramidalDataset< ? > ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset< ? > ifLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				PyramidalDataset ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset ifLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
 
 				assertFalse( Util.imagesEqual( Cast.unchecked( ijLevel0.getImgPlus().getImg() ), ifLevel1.getImgPlus().getImg() ) );
 				long[] expectedDims0 = new long[] { 64, 64, 16, 3, 4 };
