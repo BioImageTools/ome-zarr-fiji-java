@@ -1,0 +1,102 @@
+OME-NGFF version,File Path,SizeX,SizeY,SizeZ,SizeC,SizeT,Axes,Wells,Fields,Keywords,License,Study,DOI,Date added,Representative Image ID,Thumbnail
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/12689244.zarr,4992,4255,401,3,1,XYZCT,,,,CC BY 4.0,idr0106,,2020-11-04,12689244,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/179706.zarr,1344,1024,1,2,329,XYZCT,,,,CC BY 4.0,idr0002,,2020-11-04,179706,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/1884807.zarr,256,256,1,3,1,XYZCT,,,,CC BY 4.0,idr0021,,2020-11-04,1884807,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/1885619.zarr,30,30,571,1,1,XYZCT,,,,CC BY 4.0,idr0023,,2020-11-04,1885619,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/4495402.zarr,921600,380928,1,1,1,XYZCT,,,,CC BY-NC-SA 3.0,idr0053,,2020-11-04,4495402,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001237.zarr,1024,1024,39,4,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001237,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001238.zarr,1024,1024,27,4,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001238,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001239.zarr,1024,1024,36,4,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001239,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001240.zarr,271,275,236,2,1,XYZCT,,,labels (0),CC BY 4.0,idr0062,,2020-11-04,6001240,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001241.zarr,278,263,236,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001241,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001242.zarr,481,275,237,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001242,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001243.zarr,212,218,237,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001243,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001244.zarr,325,281,239,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001244,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001245.zarr,220,226,257,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001245,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001246.zarr,281,284,257,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001246,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001247.zarr,253,210,257,2,1,XYZCT,,,labels (0),CC BY 4.0,idr0062,,2020-11-04,6001247,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001248.zarr,234,269,195,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001248,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001249.zarr,246,241,195,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001249,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001250.zarr,246,241,195,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001250,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001251.zarr,170,163,140,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001251,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001252.zarr,170,163,297,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001252,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001253.zarr,803,1024,297,2,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001253,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001254.zarr,393,354,51,4,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001254,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001255.zarr,551,416,32,4,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001255,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001256.zarr,350,372,61,4,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001256,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001257.zarr,3763,2860,145,4,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001257,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001258.zarr,1282,838,36,3,1,XYZCT,,,,CC BY 4.0,idr0062,,2020-11-04,6001258,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9822151.zarr,79360,167424,1,1,1,XYZCT,,,,CC BY 4.0,idr0083,https://doi.org/10.5281/zenodo.5546093,2020-11-04,9822151,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9822152.zarr,144384,93184,1,1,1,XYZCT,,,,CC BY 4.0,idr0083,,2020-11-04,9822152,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836831.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836831,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836832.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836832,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836833.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836833,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836834.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836834,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836835.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836835,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836836.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836836,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836837.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836837,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836838.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836838,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836839.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836839,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836840.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836840,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836841.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836841,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836842.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836842,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836843.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836843,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836844.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836844,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836845.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836845,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836846.zarr,1920,1920,259,4,1,XYZCT,,,,CC BY 4.0,idr0077,,2020-11-04,9836846,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836950.zarr,1636,816,156,1,1,XYZCT,,,,CC BY 4.0,idr0079,,2020-11-04,9836950,
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/1751.zarr,672,510,10,2,1,XYZCT,69,1,,CC BY-NC-SA 3.0,idr0004,https://doi.org/10.5281/zenodo.5741293,2020-12-01,692166,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/1751.zarr/G/8/0/
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/2551.zarr,1376,1040,16,2,1,XYZCT,96,6,,CC BY 4.0,idr0001,https://zenodo.org/record/5735098,2020-12-01,1230059,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/2551.zarr/E/10/0/
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/422.zarr,1344,1024,1,2,329,XYZCT,96,1,,CC BY 4.0,idr0002,,2020-12-01,179693,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/422.zarr/E/4/0/
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/5966.zarr,1080,1080,1,5,1,XYZCT,384,9,,CC BY 4.0,idr0033,https://zenodo.org/record/5742744,2020-12-01,3231627,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/5966.zarr/P/8/0/
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/7825.zarr,1080,1080,1,1,1,XYZCT,96,9,,CC0 1.0,idr0094,https://zenodo.org/record/5745520,2020-12-01,10568780,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/7825.zarr/D/5/0/
+0.2,https://livingobjects.ebi.ac.uk/idr/zarr/v0.2/6001240.zarr,271,275,236,2,1,XYZCT,,,labels (0),CC BY 4.0,idr0062,,2021-03-09,6001240,
+0.2,https://livingobjects.ebi.ac.uk/idr/zarr/v0.2/6001247.zarr,253,210,257,2,1,XYZCT,,,labels (0),CC BY 4.0,idr0062,,2020-12-01,6001247,
+0.2,https://livingobjects.ebi.ac.uk/idr/zarr/v0.2/idr0070A/9838562.zarr,,,,,,,,,bioformats2raw.layout,CC BY 4.0,idr0070,,2022-10-14,9838562,https://livingobjects.ebi.ac.uk/idr/zarr/v0.2/idr0070A/9838562.zarr/0
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/9836842.zarr,1920,1920,,4,,XYC,,,,CC BY 4.0,idr0077,,2021-12-16,9836842,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0079A/9836998.zarr,1584,788,142,2,,XYZC ,,,labels (0),CC BY 4.0,idr0079,,2021-12-16,9836998,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0052A/5514375.zarr,256,256,31,3,40,XYZCT,,,"labels (cells, chromosomes)",CC BY 4.0,idr0052,,2021-12-16,5514375,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511419.zarr,2048,2048,,3,,XYC,,,labels (0),CC BY 4.0,idr0095,,2021-12-16,11511419,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511420.zarr,2048,2048,,3,,XYC,,,labels (0),CC BY 4.0,idr0095,,2021-12-16,11511420,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511421.zarr,2048,2048,,3,,XYC,,,labels (0),CC BY 4.0,idr0095,,2021-12-16,11511421,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511422.zarr,2048,2048,,3,,XYC,,,labels (0),CC BY 4.0,idr0095,,2021-12-16,11511422,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511423.zarr,2048,2048,,3,,XYC,,,labels (0),CC BY 4.0,idr0095,,2021-12-16,11511423,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511424.zarr,2048,2048,,3,,XYC,,,labels (0),CC BY 4.0,idr0095,,2021-12-16,11511424,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0094A/7751.zarr,1080,1080,,,,XY,96,9,,CC0 1.0,idr0094,,2021-12-16,10503791,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0094A/7751.zarr/C/11/0
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0109A/12922361.zarr,2560,2160,,,721,XYT,,,,CC BY 4.0,idr0109,,2021-12-16,12922361,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0075A/9528933.zarr,512,512,91,,,XYZ,,,,CC BY 4.0,idr0075,,2021-12-16,9528933,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0051A/4007817.zarr,333,333,201,,79,XYZT,,,,CC BY 4.0,idr0051,,2021-12-16,4007817,
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0040A/3491626.zarr,2048,2048,,5,20,XYCT,,,,CC BY 4.0,idr0040,,2021-12-16,3491626,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0073A/9798462.zarr,21115,16433,1,3,1,XYZCT,,,,CC BY 4.0,idr0073,,2022-05-05,9798462,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0072B/9512.zarr,1345,1017,1,2,1,XYC,72,20,,CC BY 4.0,idr0072,,2022-05-10,12867352,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0072B/9512.zarr/L/24/0/
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0083A/9822152.zarr,144384,93184,1,1,1,XYZCT,,,,CC BY 4.0,idr0083,,2022-05-11,9822152,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001247.zarr,253,210,257,2,,XYZC,,,labels (0),CC BY 4.0,idr0062,,2022-05-11,6001247,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0044A/4007801.zarr,2169,2048,988,2,532,XYZCT,,,,CC BY 4.0,idr0044,,2022-05-17,4007801,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0056B/7361.zarr,659,493,1,4,1,XYZCT,384,30,bioformats2raw.layout,CC BY 4.0,idr0056,,2022-06-06,9621401,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0056B/7361.zarr/A/1/0/
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0128E/9701.zarr,2048,2048,1,2,1,XYZCT,384,1,bioformats2raw.layout,CC BY 4.0,idr0128,,2022-06-01,13966432,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0128E/9701.zarr/A/12/0/
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0013A/3451.zarr,1344,1024,,,93,XYT,384,1,,CC0 1.0,idr0013,,2022-06-03,1483351,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0013A/3451.zarr/A/2/0
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0054A/5025551.zarr,2702,2700,1,27,1,XYZCT,,,,CC BY 4.0,idr0054,,2022-06-03,5025551,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0054A/5025552.zarr,2701,2701,1,27,1,XYZCT,,,,CC BY 4.0,idr0054,,2022-06-03,5025552,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0054A/5025553.zarr,2500,2500,1,27,1,XYZCT,,,,CC BY 4.0,idr0054,,2022-06-03,5025553,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0076A/10501752.zarr,464,494,,50,,XYC,,,labels (0),CC BY 4.0,idr0076,,2022-06-21,10501752,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0047A/4496763.zarr,2048,2048,25,4,,XYZC,,,labels (0),CC BY 4.0,idr0047,,2022-06-21,4496763,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001240.zarr,271,275,236,2,,XYZC,,,labels (0),CC BY 4.0,idr0062,,2022-06-21,6001240,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0052A/5514375.zarr,256,256,31,3,40,XYZCT,,,"labels (Cell, Chromosomes)",CC BY 4.0,idr0052,,2022-06-21,5514375,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0001A/2551.zarr,1376,1040,16,2,1,XYZC,96,6,labels (0),CC BY 4.0,idr0001,,2022-07-06,1230059,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0001A/2551.zarr/F/6/0
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457227.zarr,2048,2048,35,4,18,XYZCT,,,,CC BY 4.0,idr0101,,2022-10-13,13457227,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457537.zarr,198,223,12,6,18,XYZCT,,,coordinateTransformation (translation) on dataset,CC BY 4.0,idr0101,,2022-10-13,13457537,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457539.zarr,190,189,11,6,18,XYZCT,,,coordinateTransformation (translation) on multiscales,CC BY 4.0,idr0101,,2022-10-13,13457539,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0048A/9846151.zarr/,2947,5192,1402,3,1,XYZCT,,,bioformats2raw.layout,CC BY 4.0,idr0048,,2023-01-12,9846151,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0048A/9846151.zarr/0/
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0048A/9846152.zarr/,19120,13350,91,3,1,XYZCT,,,,CC BY 4.0,idr0048,,2023-01-12,9846152,
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0138A/TimEmbryos-120919/HybCycle_29/MMStack_Pos9.ome.zarr,2048,2048,6,4,,XYZC,,,,CC BY 4.0,idr0138,,2026-05-12,15158733,
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0010/76-45.ome.zarr,,520,1,2,1,XYZCT,384,1,,CC BY 4.0,idr0010,,2024-11-21,1921421,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0010/76-45.ome.zarr/A/2/0/
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0090/190129.zarr,2048,2044,31,5,,XYZC,49,32,,CC BY 4.0,idr0090,,2024-11-21,12539701,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0090/190129.zarr/B/2/0/
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0066/ExpD_chicken_embryo_MIP.ome.zarr,6510,8978,,,,XY,,,,CC BY 4.0,idr0066,,2024-11-21,8343616,
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0066/ExpA_VIP_ASLM_on.zarr,2048,2048,1937,,,XYZ,,,,CC BY 4.0,idr0066,,2024-11-21,8343602,
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0062A/6001240_labels.zarr,271,275,236,2,,XYZC,,,,CC BY 4.0,idr0062,,2024-11-21,6001240,
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0157/Asterella gracilis SWE/IMG_1033-1112 Asterella gracilis (Mannia gracilis) stature.ome.zarr,8192,5464,80,3,1,XYZCT,,,,CC BY 4.0,idr0157,,2024-11-21,15154182,
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0051/180712_H2B_22ss_Courtney1_20180712-163837_p00_c00_preview.zarr,333,333,201,1,79,XYZCT,,,bioformats2raw.layout,CC BY 4.0,idr0051,,2024-11-21,4007817,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0051/180712_H2B_22ss_Courtney1_20180712-163837_p00_c00_preview.zarr/0/
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0026/3.66.9-6.141020_15-41-29.00.ome.zarr,507,507,21,3,47,XYZCT,,,bioformats2raw.layout,CC BY 4.0,idr0026,,2024-11-21,3261701,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0026/3.66.9-6.141020_15-41-29.00.ome.zarr/0/
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0083/9822152.zarr,144384,93184,1,1,1,XYZCT,,,,CC BY 4.0,idr0083,,2024-11-21,9822152,
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr,2080,1552,,5,,XYC,,,bioformats2raw.layout (9 images),CC BY 4.0,idr0033,,2025-09-22,14002892,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0/
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr,1584,788,142,2,,,,,bioformats2raw.layout labels (0),CC BY 4.0,idr0079,,2025-09-22,9836998,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0/
