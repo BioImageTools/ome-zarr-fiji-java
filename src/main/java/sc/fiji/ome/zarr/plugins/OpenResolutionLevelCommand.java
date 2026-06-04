@@ -28,12 +28,15 @@
  */
 package sc.fiji.ome.zarr.plugins;
 
+import ij.ImagePlus;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.imagej.Dataset;
+import net.imagej.display.ImageDisplay;
 import net.imglib2.util.Cast;
 
+import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.log.LogService;
@@ -42,6 +45,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 
+import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.util.BdvFocusService;
 
@@ -59,6 +63,9 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 
 	@Parameter
 	public Dataset dataset;
+
+	@Parameter
+	public Pyramidal pyramidal;
 
 	@Parameter( label = "Resolution Level" )
 	private String resolutionLevel;

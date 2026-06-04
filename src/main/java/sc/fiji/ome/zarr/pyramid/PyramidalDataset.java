@@ -42,7 +42,7 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
- * A {@code et.imagej.Dataset} that can be viewed
+ * A {@code net.imagej.Dataset} that can be viewed
  * in ImageJ, backed by 5D multi-resolution image data,
  * containing additional methods presenting that
  * multi-resolution image data in convenient ways.

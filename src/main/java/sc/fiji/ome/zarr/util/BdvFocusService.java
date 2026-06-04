@@ -116,7 +116,7 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 		if ( dataset != null )
 			notifyBdvWindowFocused( dataset );
 		else if ( window instanceof ImageWindow )
-			notifyImageJWindowFocused();
+			notifyImageJWindowFocused( ( ImageWindow ) window );
 	}
 
 	/**
@@ -150,7 +150,7 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	}
 
 	/** Hands precedence back to the IJ active-display injection when an ImageJ window is focused. */
-	public void notifyImageJWindowFocused()
+	public void notifyImageJWindowFocused( final ImageWindow window )
 	{
 		logger.trace( "ImageJ window focused" );
 		bdvWindowFocused = false;
@@ -161,9 +161,9 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	 * window, otherwise falls back to {@code dataset} (the IJ active-display injection).
 	 * This makes the command operate on whichever window — BDV or IJ — the user last focused.
 	 */
-	public Dataset resolveDataset( final Dataset dataset )
+	public Dataset resolveDataset()
 	{
 		final PyramidalDataset< ? > active = activePyramidalDataset.get();
-		return bdvWindowFocused && active != null ? active : dataset;
+		return bdvWindowFocused ? active : null;
 	}
 }
