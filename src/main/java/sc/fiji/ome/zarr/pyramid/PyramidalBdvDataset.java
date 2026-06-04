@@ -73,8 +73,9 @@ public class PyramidalBdvDataset extends AbstractContextual implements Pyramidal
 
 	private final Pyramidal5DImageData<?> data;
 
-	PyramidalBdvDataset(final Pyramidal5DImageData<?> data) {
+	public PyramidalBdvDataset(final Pyramidal5DImageData<?> data) {
 		this.data = data;
+		setContext(data.context());
 	}
 
 	@Override

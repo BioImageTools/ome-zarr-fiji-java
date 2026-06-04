@@ -56,6 +56,7 @@ import net.imglib2.util.Cast;
 
 import ij.IJ;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdvDataset;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NonExistingResolutionLevelException;
@@ -174,7 +175,7 @@ public class ZarrOpenActions
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalDataset< ? > dataset = getPyramid().asPyramidalDataset();
+						final PyramidalDataset dataset = getPyramid().asPyramidalDataset();
 						context.getService( UIService.class ).show( dataset );
 						logger.info( "Opened dataset in ImageJ: {}", inputUri );
 						return null;
@@ -207,7 +208,7 @@ public class ZarrOpenActions
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalDataset< ? > dataset = getPyramid().asPyramidalDataset( resolutionLevel );
+						final PyramidalDataset dataset = getPyramid().asPyramidalDataset( resolutionLevel );
 						context.getService( UIService.class ).show( dataset );
 						logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
 						return null;
@@ -227,7 +228,7 @@ public class ZarrOpenActions
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalDataset< ? > dataset = getPyramid().asPyramidalDataset();
+						final PyramidalBdvDataset dataset = new PyramidalBdvDataset(getPyramid());
 						final BdvFocusService bdvFocusService = context.getService( BdvFocusService.class );
 						final Object result = BdvUtils.showBdvAndRegisterDataset( dataset, bdvFocusService );
 						logger.info( "Opened dataset in BigDataViewer: {}", inputUri );
@@ -338,14 +339,14 @@ public class ZarrOpenActions
 		logger.warn( "Could not open resolution level: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
-	Object openImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener,
+	Object openImage( final Function< PyramidalDataset, Object > multiScaleImageOpener,
 			final Function< Img< ? >, Object > singleScaleImageOpener )
 	{
 		try
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalDataset< ? > dataset = getPyramid().asPyramidalDataset();
+						final PyramidalDataset dataset = getPyramid().asPyramidalDataset();
 						final Object result = multiScaleImageOpener.apply( dataset );
 						logger.info( "Opened dataset: {}", inputUri );
 						return result;

@@ -215,6 +215,11 @@ public class Pyramidal5DImageDataImpl<
 		this.sourceAndConverters = initSourceAndConverters( contents );
 	}
 
+	@Override
+	public Context context() {
+		return context;
+	}
+
 	/**
 	 * Returns the index of the coarsest resolution level whose x-width (index 0
 	 * in imglib2 F-order) is ≤ {@code preferredMaxWidth}, or 0 when

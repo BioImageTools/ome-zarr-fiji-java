@@ -57,6 +57,9 @@ import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
  */
 public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T > >
 {
+	// TODO: Revise Context handling. For example Pyramidal5DImageData could extend Contextual ...
+	Context context();
+
 	/**
 	 * @return an IJ2 {@code net.imagej.Dataset}
 	 *   with additional methods for retrieving the

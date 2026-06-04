@@ -28,17 +28,14 @@
  */
 package sc.fiji.ome.zarr.plugins;
 
-import net.imagej.Dataset;
-import net.imagej.display.ImageDisplayService;
-import net.imglib2.util.Cast;
-
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import ij.IJ;
 
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.Pyramidal;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdvDataset;
 import sc.fiji.ome.zarr.util.BdvFocusService;
 import sc.fiji.ome.zarr.util.BdvUtils;
 
@@ -48,30 +45,18 @@ public class OpenInBDVCommand implements Command
 	@Parameter( required = false )
 	private BdvFocusService bdvFocusService;
 
-	@Parameter( required = false )
-	private ImageDisplayService imageDisplayService;
-
-	// Not a @Parameter: set directly in tests; resolved from services in run().
-	Dataset dataset;
+	@Parameter
+	private Pyramidal pyramidal;
 
 	@Override
 	public void run()
 	{
-		if ( dataset == null && imageDisplayService != null )
-			dataset = imageDisplayService.getActiveDataset();
-		final Dataset resolved = bdvFocusService != null ? bdvFocusService.resolveDataset( dataset ) : dataset;
-		if ( resolved == null )
-		{
-			IJ.error( "Open in BigDataViewer", "No image is currently open." );
-			return;
-		}
-		if ( !( resolved instanceof PyramidalDataset ) )
+		if ( pyramidal == null )
 		{
 			IJ.error( "Open in BigDataViewer", "The active image is not an OME-Zarr dataset." );
 			return;
 		}
-		final PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( resolved );
-		final PyramidalDataset< ? > bdvDataset = pyramidalDataset.getPyramidal5DImageData().asPyramidalDataset();
+		final PyramidalBdvDataset bdvDataset = new PyramidalBdvDataset(pyramidal.getPyramidal5DImageData());
 		BdvUtils.showBdvAndRegisterDataset( bdvDataset, bdvFocusService );
 	}
 }
