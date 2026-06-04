@@ -28,18 +28,11 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
+import bdv.viewer.SourceAndConverter;
+import ij.ImagePlus;
 import net.imagej.DefaultDataset;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
-import java.util.List;
-
-import bdv.viewer.SourceAndConverter;
-import ij.ImagePlus;
-import mpicbg.spim.data.sequence.VoxelDimensions;
-import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
  * A {@code net.imagej.Dataset} that can be viewed
@@ -49,11 +42,11 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  *
  * @param <T> the type of the data.
  */
-public class PyramidalDataset< T extends NativeType< T > & RealType< T > > extends DefaultDataset
+public class PyramidalDataset extends DefaultDataset implements Pyramidal
 {
-	private final Pyramidal5DImageData< T > data;
+	private final Pyramidal5DImageData< ? > data;
 
-	public PyramidalDataset( Pyramidal5DImageData< T > data )
+	public PyramidalDataset( Pyramidal5DImageData< ? > data )
 	{
 		super( data.asDataset().context(), data.asDataset().getImgPlus() );
 
@@ -62,7 +55,7 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 			setName( multiResolutionName( data.getName() ) );
 	}
 
-	public PyramidalDataset( Pyramidal5DImageData< T > data, int resolutionLevel )
+	public PyramidalDataset( Pyramidal5DImageData< ? > data, int resolutionLevel )
 	{
 		super( data.asDataset().context(), data.asDataset( resolutionLevel ).getImgPlus() );
 
@@ -76,42 +69,8 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 		return ( baseName != null && !baseName.isEmpty() ) ? baseName + " (R)" : "(R)";
 	}
 
-	public List< SourceAndConverter< T > > asSources()
-	{
-		return data.asSources();
-	}
-
-	public int numChannels()
-	{
-		return data.numChannels();
-	}
-
-	public int numTimepoints()
-	{
-		return data.numTimepoints();
-	}
-
-	public Omero getOmeroProperties()
-	{
-		return data.getOmeroProperties();
-	}
-
-	public int numResolutions()
-	{
-		return data.numResolutionLevels();
-	}
-
-	public VoxelDimensions voxelDimensions()
-	{
-		return data.voxelDimensions();
-	}
-
-	public String getPyramidName()
-	{
-		return data.getName();
-	}
-
-	public Pyramidal5DImageData< T > getPyramidal5DImageData()
+	@Override
+	public Pyramidal5DImageData< ? > getPyramidal5DImageData()
 	{
 		return data;
 	}
@@ -125,10 +84,11 @@ public class PyramidalDataset< T extends NativeType< T > & RealType< T > > exten
 	 * @param timepoint The timepoint index to extract from the dataset.
 	 * @return An {@code ImagePlus} object representing the extracted image data.
 	 */
+	// TODO: remove?
 	public ImagePlus getImagePlus( final int resolutionLevel, final int channel, final int timepoint )
 	{
-		final SourceAndConverter< T > sourceAndConverter = this.asSources().get( channel );
-		final RandomAccessibleInterval< T > randomAccessibleInterval =
+		final SourceAndConverter< ? > sourceAndConverter = data.asSources().get( channel );
+		final RandomAccessibleInterval randomAccessibleInterval =
 				sourceAndConverter.getSpimSource().getSource( timepoint, resolutionLevel );
 		return ImageJFunctions.wrap( randomAccessibleInterval, sourceAndConverter.getSpimSource().getName() );
 	}

@@ -28,6 +28,8 @@
  */
 package sc.fiji.ome.zarr.util;
 
+import ij.ImagePlus;
+import ij.gui.ImageWindow;
 import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.beans.PropertyChangeListener;
@@ -35,17 +37,15 @@ import java.lang.invoke.MethodHandles;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
-
 import net.imagej.Dataset;
-
+import org.scijava.convert.ConvertService;
+import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
 import org.scijava.service.SciJavaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import ij.gui.ImageWindow;
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.Pyramidal;
 
 /**
  * Tracks which image window — a BigDataViewer window or an ImageJ window — was the most
@@ -66,26 +66,26 @@ import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
  * Ignoring non-image windows mirrors how IJ1's {@code WindowManager} itself disregards focus on
  * non-image windows, which is what makes menu-invoked commands resolve the correct dataset.
  */
+// TODO rename to "PyramidalService" or something
 @Plugin( type = SciJavaService.class )
 public class BdvFocusService extends AbstractService implements SciJavaService
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	@Parameter(required = false)
+	private ConvertService convertService;
+
 	/** Registered BDV windows and the dataset each one displays. */
-	private final Map< Window, PyramidalDataset< ? > > bdvWindows = new ConcurrentHashMap<>();
+	private final Map< Window, Pyramidal > bdvWindows = new ConcurrentHashMap<>();
 
-	private final AtomicReference< PyramidalDataset< ? > > activePyramidalDataset = new AtomicReference<>();
-
-	/** {@code true} when a BDV window was focused more recently than any ImageJ window. */
-	private volatile boolean bdvWindowFocused = false;
+	private final AtomicReference< Pyramidal > activePyramidal = new AtomicReference<>();
 
 	private PropertyChangeListener focusListener;
 
 	@Override
 	public void initialize()
 	{
-		activePyramidalDataset.set( null );
-		bdvWindowFocused = false;
+		activePyramidal.set( null );
 		focusListener = evt -> onActiveWindowChanged( ( Window ) evt.getNewValue() );
 		KeyboardFocusManager.getCurrentKeyboardFocusManager()
 				.addPropertyChangeListener( "activeWindow", focusListener );
@@ -112,7 +112,7 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	{
 		if ( window == null )
 			return;
-		final PyramidalDataset< ? > dataset = bdvWindows.get( window );
+		final Pyramidal dataset = bdvWindows.get( window );
 		if ( dataset != null )
 			notifyBdvWindowFocused( dataset );
 		else if ( window instanceof ImageWindow )
@@ -124,7 +124,7 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	 * focus precedence. The {@link KeyboardFocusManager} listener uses the registration to recognise
 	 * the window when focus later returns to it.
 	 */
-	public void registerBdvWindow( final Window window, final PyramidalDataset< ? > dataset )
+	public void registerBdvWindow( final Window window, final Pyramidal dataset )
 	{
 		bdvWindows.put( window, dataset );
 		notifyBdvWindowFocused( dataset );
@@ -136,24 +136,31 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	 */
 	public void unregisterBdvWindow( final Window window )
 	{
-		final PyramidalDataset< ? > removed = bdvWindows.remove( window );
-		if ( removed != null && activePyramidalDataset.compareAndSet( removed, null ) )
-			bdvWindowFocused = false;
+		final Pyramidal removed = bdvWindows.remove(window);
+		if (removed != null)
+			activePyramidal.compareAndSet(removed, null);
 	}
 
 	/** Records {@code dataset} as the focused BDV dataset and gives BDV precedence. */
-	public void notifyBdvWindowFocused( final PyramidalDataset< ? > dataset )
+	// TODO: probably only for tests? make package-private?
+	public void notifyBdvWindowFocused( final Pyramidal dataset )
 	{
 		logger.trace( "BDV window focused: {}", dataset );
-		activePyramidalDataset.set( dataset );
-		bdvWindowFocused = true;
+		activePyramidal.set( dataset );
 	}
 
 	/** Hands precedence back to the IJ active-display injection when an ImageJ window is focused. */
-	public void notifyImageJWindowFocused( final ImageWindow window )
-	{
-		logger.trace( "ImageJ window focused" );
-		bdvWindowFocused = false;
+	public void notifyImageJWindowFocused(final ImageWindow window) {
+		logger.trace("ImageJ window focused");
+		if (convertService == null) {
+			activePyramidal.set(null);
+		} else {
+			final ImagePlus imp = window.getImagePlus();
+			final Dataset dataset = convertService.convert(imp, Dataset.class);
+			if (dataset instanceof Pyramidal) {
+				activePyramidal.set((Pyramidal) dataset);
+			}
+		}
 	}
 
 	/**
@@ -161,9 +168,8 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	 * window, otherwise falls back to {@code dataset} (the IJ active-display injection).
 	 * This makes the command operate on whichever window — BDV or IJ — the user last focused.
 	 */
-	public Dataset resolveDataset()
+	public Pyramidal getActivePyramidal()
 	{
-		final PyramidalDataset< ? > active = activePyramidalDataset.get();
-		return bdvWindowFocused ? active : null;
+		return activePyramidal.get();
 	}
 }

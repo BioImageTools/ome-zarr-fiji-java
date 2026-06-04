@@ -336,15 +336,15 @@ public class Pyramidal5DImageDataImpl<
 	}
 
 	@Override
-	public PyramidalDataset< T > asPyramidalDataset()
+	public PyramidalDataset asPyramidalDataset()
 	{
-		return new PyramidalDataset<>( this );
+		return new PyramidalDataset( this );
 	}
 
-	public PyramidalDataset< T > asPyramidalDataset( final int resolutionLevel )
+	public PyramidalDataset asPyramidalDataset( final int resolutionLevel )
 	{
 		checkResolutionLevel( resolutionLevel );
-		return new PyramidalDataset<>( this, resolutionLevel );
+		return new PyramidalDataset( this, resolutionLevel );
 	}
 
 	@Override

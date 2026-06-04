@@ -62,14 +62,14 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	 *   with additional methods for retrieving the
 	 *   underlying multi-resolution data.
 	 */
-	PyramidalDataset< T > asPyramidalDataset();
+	PyramidalDataset asPyramidalDataset();
 
 	/**
 	 * @param resolutionLevel 0-based index into the resolution pyramid (0 = highest resolution)
 	 * @return a newly created object of {@link PyramidalDataset} wrapping the image at the specified resolution level,
 	 *   backed by the same underlying pyramid data
 	 */
-	PyramidalDataset< T > asPyramidalDataset( int resolutionLevel );
+	PyramidalDataset asPyramidalDataset( int resolutionLevel );
 
 	/**
 	 * @return the IJ2 {@code net.imagej.Dataset} at the default resolution level

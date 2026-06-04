@@ -62,9 +62,6 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	private BdvFocusService bdvFocusService;
 
 	@Parameter
-	public Dataset dataset;
-
-	@Parameter
 	public Pyramidal pyramidal;
 
 	@Parameter( label = "Resolution Level" )
@@ -73,20 +70,12 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	@Override
 	public void initialize()
 	{
-		if ( bdvFocusService != null )
-			dataset = bdvFocusService.resolveDataset( dataset );
-		if ( dataset == null )
-		{
-			cancel( "No image is currently open." );
-			return;
-		}
-		if ( !( dataset instanceof PyramidalDataset ) )
+		if ( pyramidal == null )
 		{
 			cancel( "The active image is not an OME-Zarr multi resolution dataset." );
 			return;
 		}
-		final PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
-		final int numResolutions = pyramidalDataset.numResolutions();
+		final int numResolutions = pyramidal.numResolutions();
 		final List< String > choices = new ArrayList<>();
 		for ( int i = 0; i < numResolutions; i++ )
 			choices.add( "Resolution " + i );
@@ -99,14 +88,13 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	@Override
 	public void run()
 	{
-		if ( !( dataset instanceof PyramidalDataset ) )
+		if ( pyramidal == null )
 		{
 			logService.error( "Cannot open resolution level: the active image is not an OME-Zarr pyramidal dataset." );
 			return;
 		}
-		final PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
 		final int level = Integer.parseInt( resolutionLevel.replace( "Resolution ", "" ) );
-		final PyramidalDataset< ? > levelDataset = pyramidalDataset.getPyramidal5DImageData().asPyramidalDataset( level );
+		final PyramidalDataset levelDataset = pyramidal.getPyramidal5DImageData().asPyramidalDataset( level );
 		uiService.show( levelDataset );
 	}
 }

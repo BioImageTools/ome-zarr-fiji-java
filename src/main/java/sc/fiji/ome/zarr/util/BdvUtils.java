@@ -86,7 +86,9 @@ public class BdvUtils
 	public static BdvHandle showBdvAndRegisterDataset( final PyramidalDataset< ? > pyramidalDataset,
 			final BdvFocusService bdvFocusService )
 	{
-		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
+		BdvHandle bdvHandle = BdvFunctions.show(
+				pyramidalDataset.asSources(),
+				pyramidalDataset.numTimepoints(),
 				BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
 
 		setTimepoint( pyramidalDataset.getOmeroProperties(), bdvHandle );
