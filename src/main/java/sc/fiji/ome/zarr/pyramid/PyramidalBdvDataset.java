@@ -130,11 +130,15 @@ public class PyramidalBdvDataset<T extends NativeType<T> & RealType<T>> extends 
 			sourceStacks[0] = img;
 		}
 
-		// If AxisOrder is a 2D variant (has no Z dimension), augment the sourceStacks by a Z dimension.
+		// If there is no Z dimension, augment the sourceStacks by a Z dimension.
 		if (!zAxisPresent)
 			Arrays.setAll(sourceStacks, c -> Views.addDimension(sourceStacks[ c ], 0, 0));
 
-		// If at this point the dim order is XYTZ, permute to XYZT
+		// If there is no T dimension, augment the sourceStacks by a T dimension.
+		if (!timeAxisPresent)
+			Arrays.setAll(sourceStacks, c -> Views.addDimension(sourceStacks[ c ], 0, 0));
+
+		// If at this point the dim order is XYTZ (because there was only a T axis, and we appended a Z axis after that), permute to XYZT
 		if (!zAxisPresent && timeAxisPresent)
 			Arrays.setAll(sourceStacks, c -> Views.permute(sourceStacks[ c ], 2, 3));
 
@@ -143,9 +147,6 @@ public class PyramidalBdvDataset<T extends NativeType<T> & RealType<T>> extends 
 
 
 	// -- Reference counting, similar to what AbstractData does --
-	// TODO: Revise later. I'm not sure this is even necessary.
-	//  Probably the BdvFocusService is enough to track PyramidalBdvDataset.
-	//  It might be relevant if we ever want to list all the open PyramidalBdvDatasets etc, however.
 
 	@Parameter(required = false)
 	private ObjectService objectService;
@@ -158,6 +159,7 @@ public class PyramidalBdvDataset<T extends NativeType<T> & RealType<T>> extends 
 	}
 
 	public void decrementReferences() {
+		System.out.println( "PyramidalBdvDataset.decrementReferences" );
 		if (refs == 0) {
 			throw new IllegalStateException(
 					"decrementing reference count when it is already 0");
@@ -179,6 +181,6 @@ public class PyramidalBdvDataset<T extends NativeType<T> & RealType<T>> extends 
 	 */
 	private void delete() {
 		if (objectService != null)
-			objectService.addObject(this);
+			objectService.removeObject(this);
 	}
 }

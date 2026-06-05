@@ -91,12 +91,14 @@ import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
 import ij.ImagePlus;
 import sc.fiji.ome.zarr.plugins.settings.UserScriptSettings;
+import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
+import sc.fiji.ome.zarr.util.BdvFocusService;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
@@ -571,11 +573,19 @@ class ZarrOpenActionsTest
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			BdvHandle bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
 
-			DatasetService datasetService = context.getService( DatasetService.class );
-			assertNotNull( datasetService );
-			List< Dataset > datasets = datasetService.getDatasets();
-			assertNotNull( datasets );
-			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
+//			DatasetService datasetService = context.getService( DatasetService.class );
+//			assertNotNull( datasetService );
+//			List< Dataset > datasets = datasetService.getDatasets();
+//			assertNotNull( datasets );
+//			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
+
+			BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			assertNotNull( pyramidalService );
+			List< Pyramidal > pyramidals = pyramidalService.getPyramidals();
+			assertNotNull( pyramidals );
+			assertEquals( 1, pyramidals.size() ); // The dataset service knows the dataset now
+
+
 			if ( resource.contains( "5d_testing" ) )
 			{
 				assertEquals( 1, bdvHandle.getViewerPanel().state().getCurrentTimepoint() );
@@ -583,8 +593,8 @@ class ZarrOpenActionsTest
 			bdvHandle.close();
 			// wait until all Swing events are processed
 			SwingUtilities.invokeAndWait( () -> {} );
-			datasets = datasetService.getDatasets();
-			assertEquals( 0, datasets.size() ); // The dataset service has correctly removed the dataset from the cache
+			pyramidals = pyramidalService.getPyramidals();
+			assertEquals( 0, pyramidals.size() ); // The dataset service has correctly removed the dataset from the cache
 		}
 	}
 

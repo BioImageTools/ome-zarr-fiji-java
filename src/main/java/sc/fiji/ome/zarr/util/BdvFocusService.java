@@ -34,11 +34,13 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.beans.PropertyChangeListener;
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import net.imagej.Dataset;
 import org.scijava.convert.ConvertService;
+import org.scijava.object.ObjectService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
@@ -74,6 +76,9 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 
 	@Parameter(required = false)
 	private ConvertService convertService;
+
+	@Parameter
+	private ObjectService objectService;
 
 	/** Registered BDV windows and the dataset each one displays. */
 	private final Map< Window, Pyramidal > bdvWindows = new ConcurrentHashMap<>();
@@ -184,5 +189,13 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	public Pyramidal getActivePyramidal()
 	{
 		return activePyramidal.get();
+	}
+
+	/**
+	 * Gets a list of all {@link Pyramidal}s. This method is a shortcut that
+	 * delegates to {@link ObjectService}.
+	 */
+	public List<Pyramidal> getPyramidals() {
+		return objectService.getObjects(Pyramidal.class);
 	}
 }
