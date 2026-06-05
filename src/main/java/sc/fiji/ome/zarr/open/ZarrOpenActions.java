@@ -228,7 +228,7 @@ public class ZarrOpenActions
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalBdvDataset dataset = new PyramidalBdvDataset(getPyramid());
+						final PyramidalBdvDataset< ? > dataset = new PyramidalBdvDataset<>(getPyramid());
 						final BdvFocusService bdvFocusService = context.getService( BdvFocusService.class );
 						final Object result = BdvUtils.showBdvAndRegisterDataset( dataset, bdvFocusService );
 						logger.info( "Opened dataset in BigDataViewer: {}", inputUri );

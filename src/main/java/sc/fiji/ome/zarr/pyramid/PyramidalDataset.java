@@ -28,11 +28,7 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
-import bdv.viewer.SourceAndConverter;
-import ij.ImagePlus;
 import net.imagej.DefaultDataset;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 
 /**
  * A {@code net.imagej.Dataset} that can be viewed
@@ -48,7 +44,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 
 	public PyramidalDataset( Pyramidal5DImageData< ? > data )
 	{
-		super( data.asDataset().context(), data.asDataset().getImgPlus() );
+		super( data.context(), data.asDataset().getImgPlus() );
 
 		this.data = data;
 		if ( data.numResolutionLevels() > 1 )
