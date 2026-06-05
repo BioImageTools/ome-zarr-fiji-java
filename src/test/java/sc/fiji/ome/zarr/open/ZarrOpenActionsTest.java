@@ -857,15 +857,15 @@ class ZarrOpenActionsTest
 				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
 				actions.openIJWithImage( 1 );
 
-				DatasetService datasetService = context.getService( DatasetService.class );
-				PyramidalDataset ijLevel0First = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset ijLevel0Second = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
-				PyramidalDataset bdvLevel0 = Cast.unchecked( datasetService.getDatasets().get( 2 ) );
-				PyramidalDataset ijLevel1 = Cast.unchecked( datasetService.getDatasets().get( 3 ) );
+				BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+				PyramidalDataset ijLevel0First = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalDataset ijLevel0Second = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
+				PyramidalBdvDataset< ? > bdvLevel0 = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
+				PyramidalDataset ijLevel1 = Cast.unchecked( pyramidalService.getPyramidals().get( 3 ) );
 
 				Img< ? > cellImgIj0First = ijLevel0First.getImgPlus().getImg();
 				Img< ? > cellImgIj0Second = ijLevel0Second.getImgPlus().getImg();
-				Img< ? > cellImgBdv0 = bdvLevel0.getImgPlus().getImg();
+				Img< ? > cellImgBdv0 = bdvLevel0.getPyramidal5DImageData().getPyramidContents().cachedCellImgs[ 0 ];
 				Img< ? > cellImgIj1 = ijLevel1.getImgPlus().getImg();
 
 				assertSame( cellImgIj0First, cellImgIj0Second,

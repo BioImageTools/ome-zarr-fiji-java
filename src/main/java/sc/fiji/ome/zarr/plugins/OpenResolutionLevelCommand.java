@@ -56,7 +56,7 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	private BdvFocusService pyramidalService;
 
 	@Parameter
-	public Pyramidal pyramidal;
+	private Pyramidal pyramidal;
 
 	@Parameter( label = "Resolution Level" )
 	private String resolutionLevel;

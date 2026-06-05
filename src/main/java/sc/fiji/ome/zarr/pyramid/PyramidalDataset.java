@@ -55,6 +55,8 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 {
 	private final Pyramidal5DImageData< ? > data;
 
+	private final int resolutionLevel;
+
 	/*
 	 * TODO: Should the preferredMaxWidth handling really happen at the
 	 *   Pyramidal5DImageData level? or somewhere else? Maybe just when the
@@ -92,9 +94,15 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 	{
 		super( pyramid.context(), createImgPlus( pyramid, resolutionLevel ) );
 		data = pyramid;
+		this.resolutionLevel = resolutionLevel;
 		setRGBMerged( false ); // TODO: not sure we want this here, but makes tests pass...
 		if ( pyramid.numResolutionLevels() > 1 )
 			setName( multiResolutionName( pyramid.getName() ) );
+	}
+
+	public int resolutionLevel()
+	{
+		return resolutionLevel;
 	}
 
 	private static String multiResolutionName( final String baseName )
@@ -114,7 +122,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 	 */
 	public ImagePlus asImagePlus()
 	{
-		return context().service( ConvertService.class ).convert( this, ImagePlus.class );
+		return getContext().service( ConvertService.class ).convert( this, ImagePlus.class );
 	}
 
 	private static final Map< String, AxisType > AXIS_TYPE_MAP;
