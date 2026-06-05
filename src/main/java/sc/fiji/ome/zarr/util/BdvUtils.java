@@ -135,7 +135,7 @@ public class BdvUtils
 		} );
 	}
 
-	private static void setChannelProperties( final PyramidalBdvDataset pyramidalDataset, final BdvHandle bdvHandle )
+	private static void setChannelProperties( final PyramidalBdvDataset<?> pyramidalDataset, final BdvHandle bdvHandle )
 	{
 		Omero omero = pyramidalDataset.getOmeroProperties();
 		if ( omero == null || omero.channels == null || omero.channels.isEmpty() )

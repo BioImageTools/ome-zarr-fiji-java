@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import net.imagej.event.DataCreatedEvent;
-import net.imagej.event.DataDeletedEvent;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.converter.Converter;
@@ -18,63 +16,20 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 import org.scijava.AbstractContextual;
-import org.scijava.event.EventService;
-import org.scijava.event.SciJavaEvent;
 import org.scijava.object.ObjectService;
 import org.scijava.plugin.Parameter;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
-public class PyramidalBdvDataset extends AbstractContextual implements Pyramidal {
+public class PyramidalBdvDataset<T extends NativeType<T> & RealType<T>> extends AbstractContextual implements Pyramidal {
 
-	@Parameter(required = false)
-	private ObjectService objectService;
+	private final Pyramidal5DImageData<T> data;
 
-	// -- Reference counting, similar to what AbstractData does --
+	private final List<SourceAndConverter<T>> sources;
 
-	private int refs = 0;
-
-	public void incrementReferences() {
-		refs++;
-		if (refs == 1) register();
-	}
-
-	public void decrementReferences() {
-		if (refs == 0) {
-			throw new IllegalStateException(
-					"decrementing reference count when it is already 0");
-		}
-		refs--;
-		if (refs == 0) delete();
-	}
-
-	/**
-	 * Called the first time the reference count is incremented.
-	 */
-	private void register() {
-		if (objectService != null)
-			objectService.addObject(this);
-	}
-
-	/**
-	 * Called when the reference count is decremented to zero.
-	 */
-	private void delete() {
-		if (objectService != null)
-			objectService.addObject(this);
-	}
-
-
-
-
-
-
-
-
-	private final Pyramidal5DImageData<?> data;
-
-	public PyramidalBdvDataset(final Pyramidal5DImageData<?> data) {
+	public PyramidalBdvDataset(final Pyramidal5DImageData<T> data) {
 		this.data = data;
+		sources = initSourceAndConverters(data.getPyramidContents());
 		setContext(data.context());
 	}
 
@@ -88,8 +43,8 @@ public class PyramidalBdvDataset extends AbstractContextual implements Pyramidal
 	 * 	 The sources provide nested volatile versions. The sources are
 	 * 	 multi-resolution, reflecting the resolution pyramid of the OME-Zarr.
 	 */
-	public <T extends NativeType<T> & RealType<T>> List<SourceAndConverter<T>> asSources() {
-		throw new UnsupportedOperationException("TODO: Implement");
+	public List<SourceAndConverter<T>> asSources() {
+		return sources;
 	}
 
 	public int numTimepoints() {
@@ -135,7 +90,7 @@ public class PyramidalBdvDataset extends AbstractContextual implements Pyramidal
 			final RandomAccessibleInterval< T >[] mipmapImgs = new RandomAccessibleInterval[nLevels];
 			Arrays.setAll(mipmapImgs,l -> levelToChannels[l][c]);
 			final RandomAccessibleInterval< V >[] mipmapVolatileImgs = new RandomAccessibleInterval[nLevels];
-			Arrays.setAll(mipmapImgs,l -> levelToVolatileChannels[l][c]);
+			Arrays.setAll(mipmapVolatileImgs,l -> levelToVolatileChannels[l][c]);
 			final RandomAccessibleIntervalMipmapSource4D<V> source4DVolatile = new RandomAccessibleIntervalMipmapSource4D<>(
 					mipmapVolatileImgs, volatileType, mipmapTransforms, voxelDimensions, channelLabel, true);
 			final RandomAccessibleIntervalMipmapSource4D<T> source4D = new RandomAccessibleIntervalMipmapSource4D<>(
@@ -184,5 +139,46 @@ public class PyramidalBdvDataset extends AbstractContextual implements Pyramidal
 			Arrays.setAll(sourceStacks, c -> Views.permute(sourceStacks[ c ], 2, 3));
 
 		return sourceStacks;
+	}
+
+
+	// -- Reference counting, similar to what AbstractData does --
+	// TODO: Revise later. I'm not sure this is even necessary.
+	//  Probably the BdvFocusService is enough to track PyramidalBdvDataset.
+	//  It might be relevant if we ever want to list all the open PyramidalBdvDatasets etc, however.
+
+	@Parameter(required = false)
+	private ObjectService objectService;
+
+	private int refs = 0;
+
+	public void incrementReferences() {
+		refs++;
+		if (refs == 1) register();
+	}
+
+	public void decrementReferences() {
+		if (refs == 0) {
+			throw new IllegalStateException(
+					"decrementing reference count when it is already 0");
+		}
+		refs--;
+		if (refs == 0) delete();
+	}
+
+	/**
+	 * Called the first time the reference count is incremented.
+	 */
+	private void register() {
+		if (objectService != null)
+			objectService.addObject(this);
+	}
+
+	/**
+	 * Called when the reference count is decremented to zero.
+	 */
+	private void delete() {
+		if (objectService != null)
+			objectService.addObject(this);
 	}
 }

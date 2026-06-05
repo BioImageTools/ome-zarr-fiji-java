@@ -41,6 +41,7 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
@@ -57,6 +58,9 @@ import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
  */
 public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T > >
 {
+
+	PyramidContents< T, ? > getPyramidContents();
+
 	// TODO: Revise Context handling. For example Pyramidal5DImageData could extend Contextual ...
 	Context context();
 

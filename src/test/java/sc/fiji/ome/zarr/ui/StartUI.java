@@ -33,6 +33,11 @@ import net.imagej.ImageJ;
 
 public class StartUI
 {
+
+	static {
+		net.imagej.patcher.LegacyInjector.preinit();
+	}
+
 	public static void main( String[] args )
 	{
 		final ImageJ ij = new ImageJ();
@@ -40,8 +45,5 @@ public class StartUI
 
 		IJ.open("/Users/pietzsch/workspace/data/73_float.tif");
 		IJ.open("/Users/pietzsch/workspace/data/boats.tif");
-
-		ij.imageDisplay();
-
 	}
 }

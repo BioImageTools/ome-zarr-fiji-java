@@ -106,6 +106,13 @@ public class Pyramidal5DImageDataImpl<
 
 	private final Context context;
 
+	@Override
+	public PyramidContents<T, V> getPyramidContents() {
+		return contents;
+	}
+
+	private final PyramidContents<T, V> contents;
+
 	private final String name;
 
 	private final int numResolutionLevels;
@@ -185,7 +192,7 @@ public class Pyramidal5DImageDataImpl<
 	 */
 	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T, V > backend, final Integer preferredMaxWidth )
 	{
-		final PyramidContents< T, V > contents = backend.load();
+		contents = backend.load();
 		this.context = context;
 		this.name = contents.name;
 		this.numResolutionLevels = contents.numResolutionLevels;
