@@ -51,8 +51,6 @@ import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
  * in ImageJ, backed by 5D multi-resolution image data,
  * containing additional methods presenting that
  * multi-resolution image data in convenient ways.
- *
- * @param <T> the type of the data.
  */
 public class PyramidalDataset extends DefaultDataset implements Pyramidal
 {
