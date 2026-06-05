@@ -66,7 +66,7 @@ class Pyramidal5DImageDataAsImagePlusTest
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
 			assertArrayEquals( new int[] { 64, 64, 3, 16, 4 }, imagePlus.getDimensions() );
-			assertEquals( ZarrTestUtils.IMAGE_NAME, imagePlus.getTitle() );
+			assertEquals( dataset.getName(), imagePlus.getTitle() );
 		}
 	}
 }

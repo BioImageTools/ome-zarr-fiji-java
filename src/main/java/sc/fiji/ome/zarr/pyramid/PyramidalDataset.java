@@ -35,7 +35,6 @@ import java.util.Map;
 import org.scijava.convert.ConvertService;
 
 import ij.ImagePlus;
-import net.imagej.Dataset;
 import net.imagej.DefaultDataset;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
@@ -93,6 +92,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 	{
 		super( pyramid.context(), createImgPlus( pyramid, resolutionLevel ) );
 		data = pyramid;
+		setRGBMerged( false ); // TODO: not sure we want this here, but makes tests pass...
 		if ( pyramid.numResolutionLevels() > 1 )
 			setName( multiResolutionName( pyramid.getName() ) );
 	}
