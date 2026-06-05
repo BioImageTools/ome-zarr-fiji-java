@@ -41,21 +41,28 @@ def to_dataframe(records: list[dict]) -> "pd.DataFrame":
     rows = []
     for r in records:
         size_x, size_y, size_z = (int(v) for v in r["Size"].strip("[]").split(","))
+        scale_x, scale_y, scale_z = (float(v) for v in r["Spacing"].strip("[]").split(","))
+
         rows.append({
             "OME-NGFF version": 0.5,
-            "File Path":        r["HTTPS URL"],
-            "SizeX":            size_x,
-            "SizeY":            size_y,
-            "SizeZ":            size_z,
-            "Axes":             "XYZ",
-            "License":          "Apache-2.0",
-            "Study":            r["Name"],
+            "File Path":          r["HTTPS URL"],
+            "DataType":           r["Type"],
+            "SizeX":              size_x,
+            "SizeY":              size_y,
+            "SizeZ":              size_z,
+            "ScaleX":             scale_x,
+            "ScaleY":             scale_y,
+            "ScaleZ":             scale_z,
+            "NumberOfResLevels":  int(r["Scales"]),
+            "Axes":               "XYZ",
+            "License":            "Apache-2.0",
+            "Study":              r["Name"],
         })
 
     return pd.DataFrame(rows)
 
 
-def reduce_columns_in_IDR_table(table):
+def adapt_columns_in_IDR_table(table):
     """
     Original IDR columns (as of 2026/06) are:
 
@@ -63,22 +70,31 @@ def reduce_columns_in_IDR_table(table):
     Axes, Wells, Fields, Keywords, License, Study, DOI, Date added,
     Representative Image ID, Thumbnail
 
-    that gets here reduced to (output of this function):
+    That gets here reduced to (output of this function):
 
     OME-NGFF version, File Path, SizeX, SizeY, SizeZ, SizeC, SizeT,
     Axes, Wells, Fields, License, Study
 
-    removing these:
+    Removing these:
     Keywords, DOI, Date added, Representative Image ID, Thumbnail
+
+    Furthermore, the following columns will be added:
+    DataType, ScaleX, ScaleY, ScaleZ, NumberOfResLevels
     """
-    return table[[ "OME-NGFF version", "File Path",
-                   "SizeX", "SizeY", "SizeZ", "SizeC", "SizeT",
-                   "Axes", "Wells", "Fields", "License", "Study" ]]
+    new_t = table[[ "OME-NGFF version", "File Path",
+                    "SizeX", "SizeY", "SizeZ", "SizeC", "SizeT",
+                    "Axes", "Wells", "Fields", "License", "Study" ]]
+    new_t["DataType"] = ""
+    new_t["ScaleX"] = -1
+    new_t["ScaleY"] = -1
+    new_t["ScaleZ"] = -1
+    new_t["NumberOfResLevels"] = -1
+    return new_t
 
 
 
 def this_is_how_to_use():
-    t1 = reduce_columns_in_IDR_table( pd.read_csv('IDR_table.csv') )
+    t1 = adapt_columns_in_IDR_table( pd.read_csv('IDR_table.csv') )
 
     list_of_dict = parse_OpenSciVis_processed_README('OMEZarrOpenSciVisDatasets.txt')
     t2 = to_dataframe(list_of_dict)
