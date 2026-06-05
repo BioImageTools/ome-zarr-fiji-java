@@ -100,13 +100,6 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	ImagePlus asImagePlus();
 
 	/**
-	 * @return a list of BigDataViewer sources, representing a 5D (XYZCT) multi-resolution image, one source for each channel of the dataset.
-	 * 	 The sources provide nested volatile versions. The sources are
-	 * 	 multi-resolution, reflecting the resolution pyramid of the OME-Zarr.
-	 */
-	List< SourceAndConverter< T > > asSources();
-
-	/**
 	 * @return the physical voxel size and unit of measurement at the
 	 *   full-resolution level, as derived from the OME-Zarr axis and
 	 *   coordinate-transformation metadata

@@ -68,31 +68,4 @@ class Pyramidal5DImageDataAsImagePlusTest
 			assertEquals( ZarrTestUtils.IMAGE_NAME, imagePlus.getTitle() );
 		}
 	}
-
-	@Test
-	void testOpenAsImagePlusSourceAndConverter() throws URISyntaxException
-	{
-		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" );
-
-		try (Context context = new Context())
-		{
-			final PyramidalDataset pyramidalDataset = new Pyramidal5DImageDataImpl<>( context, path.toUri() ).asPyramidalDataset();
-			int resolutionLevel = 0;
-			int channel = 0; // NB: 3 channels, channel 0 has the name: lynEGFP
-			int timepoint = 0;
-			ImagePlus imagePlus = pyramidalDataset.getImagePlus( resolutionLevel, channel, timepoint );
-
-			assertNotNull( imagePlus );
-			// order of dimensions for imagePlus: width, height, slices. Channel and timepoint are 1.
-			assertArrayEquals( new int[] { 64, 64, 16, 1, 1 }, imagePlus.getDimensions() );
-			assertEquals( "lynEGFP", imagePlus.getTitle() );
-
-			resolutionLevel = 1;
-			imagePlus = pyramidalDataset.getImagePlus( resolutionLevel, channel, timepoint );
-			assertNotNull( imagePlus );
-			// order of dimensions for imagePlus: width, height, slices. Channel and timepoint are 1.
-			assertArrayEquals( new int[] { 32, 32, 8, 1, 1 }, imagePlus.getDimensions() );
-			assertEquals( "lynEGFP", imagePlus.getTitle() );
-		}
-	}
 }

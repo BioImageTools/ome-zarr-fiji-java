@@ -70,7 +70,7 @@ public class BdvUtils
 	 *                         contains multi-resolution image data along with associated metadata.
 	 * @return a {@code BdvHandle} instance representing the BDV window.
 	 */
-	public static BdvHandle showBdvAndRegisterDataset( final PyramidalBdvDataset pyramidalDataset )
+	public static BdvHandle showBdvAndRegisterDataset( final PyramidalBdvDataset<?> pyramidalDataset )
 	{
 		return showBdvAndRegisterDataset( pyramidalDataset, null );
 	}
@@ -86,7 +86,8 @@ public class BdvUtils
 	 * @param bdvFocusService the service to notify of focus changes, or {@code null} to skip tracking
 	 * @return a {@code BdvHandle} instance representing the BDV window
 	 */
-	public static <T extends NativeType<T> & RealType<T>> BdvHandle showBdvAndRegisterDataset( final PyramidalBdvDataset pyramidalDataset,
+	public static <T extends NativeType<T> & RealType<T>> BdvHandle showBdvAndRegisterDataset(
+			final PyramidalBdvDataset<?> pyramidalDataset,
 			final BdvFocusService bdvFocusService )
 	{
 		BdvHandle bdvHandle = BdvFunctions.show(
@@ -116,7 +117,7 @@ public class BdvUtils
 	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
 	 */
 	private static void registerDatasetLifecycle(
-			final PyramidalBdvDataset pyramidalDataset,
+			final PyramidalBdvDataset<?> pyramidalDataset,
 			final Window window,
 			final BdvFocusService bdvFocusService )
 	{
@@ -135,7 +136,9 @@ public class BdvUtils
 		} );
 	}
 
-	private static void setChannelProperties( final PyramidalBdvDataset<?> pyramidalDataset, final BdvHandle bdvHandle )
+	private static void setChannelProperties(
+			final PyramidalBdvDataset<?> pyramidalDataset,
+			final BdvHandle bdvHandle )
 	{
 		Omero omero = pyramidalDataset.getOmeroProperties();
 		if ( omero == null || omero.channels == null || omero.channels.isEmpty() )

@@ -74,22 +74,4 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 	{
 		return data;
 	}
-
-	/**
-	 * Converts this {@code PyramidalDataset} into an {@code ImagePlus} object for a given resolution level,
-	 * channel, and timepoint.
-	 *
-	 * @param resolutionLevel The resolution level to use for extracting the image data.
-	 * @param channel The channel index to extract from the dataset.
-	 * @param timepoint The timepoint index to extract from the dataset.
-	 * @return An {@code ImagePlus} object representing the extracted image data.
-	 */
-	// TODO: remove?
-	public ImagePlus getImagePlus( final int resolutionLevel, final int channel, final int timepoint )
-	{
-		final SourceAndConverter< ? > sourceAndConverter = data.asSources().get( channel );
-		final RandomAccessibleInterval randomAccessibleInterval =
-				sourceAndConverter.getSpimSource().getSource( timepoint, resolutionLevel );
-		return ImageJFunctions.wrap( randomAccessibleInterval, sourceAndConverter.getSpimSource().getName() );
-	}
 }

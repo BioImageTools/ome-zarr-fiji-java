@@ -28,15 +28,9 @@
  */
 package sc.fiji.ome.zarr.plugins;
 
-import ij.ImagePlus;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.imagej.Dataset;
-import net.imagej.display.ImageDisplay;
-import net.imglib2.util.Cast;
-
-import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.log.LogService;
@@ -58,8 +52,8 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	@Parameter
 	private UIService uiService;
 
-	@Parameter( required = false )
-	private BdvFocusService bdvFocusService;
+	@Parameter
+	private BdvFocusService pyramidalService;
 
 	@Parameter
 	public Pyramidal pyramidal;
@@ -70,12 +64,21 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	@Override
 	public void initialize()
 	{
-		if ( pyramidal == null )
+		// At this point, @Parameter pyramidal has not been populated yet.
+		// We have to manually check: Is it already staged in the module inputs?
+		Pyramidal active = ( Pyramidal ) getInput( "pyramidal" );
+		if ( active == null )
+		{
+			// Nothing yet? Then get it from the service.
+			active = pyramidalService.getActivePyramidal();
+		}
+
+		if ( active == null )
 		{
 			cancel( "The active image is not an OME-Zarr multi resolution dataset." );
 			return;
 		}
-		final int numResolutions = pyramidal.numResolutions();
+		final int numResolutions = active.numResolutions();
 		final List< String > choices = new ArrayList<>();
 		for ( int i = 0; i < numResolutions; i++ )
 			choices.add( "Resolution " + i );

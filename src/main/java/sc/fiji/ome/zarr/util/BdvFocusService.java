@@ -103,6 +103,11 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 		bdvWindows.clear();
 	}
 
+	// TODO: Fix handling of closing image windows:
+	//  When the ImageWindow containing a PyramidalDataset is closed, that
+	//  PyramidalDataset stays active, because we don't pick up on the closing
+	//  event and there is no other ImageWindow taking focus.
+
 	/**
 	 * Updates focus precedence when the active AWT window changes. A registered BDV window gives
 	 * BDV precedence; an ImageJ {@link ImageWindow} returns precedence to the IJ dataset; any other
@@ -136,31 +141,39 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	 */
 	public void unregisterBdvWindow( final Window window )
 	{
+		logger.debug( "BDV window closed: {}", window );
+		logger.debug( "Active pyramidal: {}", activePyramidal.get() );
 		final Pyramidal removed = bdvWindows.remove(window);
+		logger.debug( "removing {}", removed );
 		if (removed != null)
 			activePyramidal.compareAndSet(removed, null);
+		logger.debug( "Active pyramidal: {}", activePyramidal.get() );
 	}
 
 	/** Records {@code dataset} as the focused BDV dataset and gives BDV precedence. */
 	// TODO: probably only for tests? make package-private?
 	public void notifyBdvWindowFocused( final Pyramidal dataset )
 	{
-		logger.trace( "BDV window focused: {}", dataset );
+		logger.debug( "BDV window focused: {}", dataset );
 		activePyramidal.set( dataset );
+		logger.debug( "Active pyramidal: {}", activePyramidal.get() );
 	}
 
 	/** Hands precedence back to the IJ active-display injection when an ImageJ window is focused. */
 	public void notifyImageJWindowFocused(final ImageWindow window) {
-		logger.trace("ImageJ window focused");
-		if (convertService == null) {
-			activePyramidal.set(null);
-		} else {
+		logger.debug( "ImageJ window focused" );
+		Pyramidal active = null;
+		if ( convertService != null )
+		{
 			final ImagePlus imp = window.getImagePlus();
-			final Dataset dataset = convertService.convert(imp, Dataset.class);
-			if (dataset instanceof Pyramidal) {
-				activePyramidal.set((Pyramidal) dataset);
+			final Dataset dataset = convertService.convert( imp, Dataset.class );
+			if ( dataset instanceof Pyramidal )
+			{
+				active = ( Pyramidal ) dataset;
 			}
 		}
+		activePyramidal.set( active );
+		logger.debug( "Active pyramidal: {}", activePyramidal.get() );
 	}
 
 	/**

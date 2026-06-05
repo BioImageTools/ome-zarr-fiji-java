@@ -42,10 +42,11 @@ import sc.fiji.ome.zarr.util.BdvUtils;
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
 {
+
 	@Parameter( required = false )
 	private BdvFocusService bdvFocusService;
 
-	@Parameter
+	@Parameter( required = false )
 	private Pyramidal pyramidal;
 
 	@Override
@@ -53,10 +54,11 @@ public class OpenInBDVCommand implements Command
 	{
 		if ( pyramidal == null )
 		{
+			// TODO: maybe replace with uiService.showDialog(...) ???
 			IJ.error( "Open in BigDataViewer", "The active image is not an OME-Zarr dataset." );
 			return;
 		}
-		final PyramidalBdvDataset bdvDataset = new PyramidalBdvDataset(pyramidal.getPyramidal5DImageData());
+		final PyramidalBdvDataset< ? > bdvDataset = new PyramidalBdvDataset<>( pyramidal.getPyramidal5DImageData() );
 		BdvUtils.showBdvAndRegisterDataset( bdvDataset, bdvFocusService );
 	}
 }
