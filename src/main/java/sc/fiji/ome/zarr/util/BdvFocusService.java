@@ -141,27 +141,27 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	 */
 	public void unregisterBdvWindow( final Window window )
 	{
-		logger.debug( "BDV window closed: {}", window );
-		logger.debug( "Active pyramidal: {}", activePyramidal.get() );
+		logger.trace( "BDV window closed: {}", window );
+		logger.trace( "Active pyramidal: {}", activePyramidal.get() );
 		final Pyramidal removed = bdvWindows.remove(window);
-		logger.debug( "removing {}", removed );
+		logger.trace( "removing {}", removed );
 		if (removed != null)
 			activePyramidal.compareAndSet(removed, null);
-		logger.debug( "Active pyramidal: {}", activePyramidal.get() );
+		logger.trace( "Active pyramidal: {}", activePyramidal.get() );
 	}
 
 	/** Records {@code dataset} as the focused BDV dataset and gives BDV precedence. */
 	// TODO: probably only for tests? make package-private?
 	public void notifyBdvWindowFocused( final Pyramidal dataset )
 	{
-		logger.debug( "BDV window focused: {}", dataset );
+		logger.trace( "BDV window focused: {}", dataset );
 		activePyramidal.set( dataset );
-		logger.debug( "Active pyramidal: {}", activePyramidal.get() );
+		logger.trace( "Active pyramidal: {}", activePyramidal.get() );
 	}
 
 	/** Hands precedence back to the IJ active-display injection when an ImageJ window is focused. */
 	public void notifyImageJWindowFocused(final ImageWindow window) {
-		logger.debug( "ImageJ window focused" );
+		logger.trace( "ImageJ window focused" );
 		Pyramidal active = null;
 		if ( convertService != null )
 		{
@@ -173,7 +173,7 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 			}
 		}
 		activePyramidal.set( active );
-		logger.debug( "Active pyramidal: {}", activePyramidal.get() );
+		logger.trace( "Active pyramidal: {}", activePyramidal.get() );
 	}
 
 	/**

@@ -60,7 +60,8 @@ class Pyramidal5DImageDataAsImagePlusTest
 		try (Context context = new Context())
 		{
 			final Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toUri(), null );
-			final ImagePlus imagePlus = pyramidal5DImageData.asImagePlus();
+			final PyramidalDataset dataset = new PyramidalDataset( pyramidal5DImageData );
+			final ImagePlus imagePlus = dataset.asImagePlus();
 
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames

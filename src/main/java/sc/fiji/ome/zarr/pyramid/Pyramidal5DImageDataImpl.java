@@ -29,22 +29,12 @@
 package sc.fiji.ome.zarr.pyramid;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.scijava.Context;
-import org.scijava.convert.ConvertService;
 
 import bdv.viewer.SourceAndConverter;
-import ij.ImagePlus;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imagej.Dataset;
-import net.imagej.DefaultDataset;
-import net.imagej.ImgPlus;
-import net.imagej.axis.Axes;
-import net.imagej.axis.AxisType;
-import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.EuclideanSpace;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -80,27 +70,33 @@ public class Pyramidal5DImageDataImpl<
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
-	private static final Map< String, AxisType > AXIS_TYPE_MAP;
-
-	static
-	{
-		final Map< String, AxisType > map = new HashMap<>();
-		map.put( AxisCalibration.X, Axes.X );
-		map.put( AxisCalibration.Y, Axes.Y );
-		map.put( AxisCalibration.Z, Axes.Z );
-		map.put( AxisCalibration.C, Axes.CHANNEL );
-		map.put( AxisCalibration.T, Axes.TIME );
-		AXIS_TYPE_MAP = Collections.unmodifiableMap( map );
-	}
-
 	private final Context context;
+
+	private final PyramidContents<T, V> contents;
+
+	private final int preferredResolutionLevel;
+
+	@Override
+	public Context context() {
+		return context;
+	}
 
 	@Override
 	public PyramidContents<T, V> getPyramidContents() {
 		return contents;
 	}
 
-	private final PyramidContents<T, V> contents;
+	@Override
+	public int preferredResolutionLevel()
+	{
+		return preferredResolutionLevel;
+	}
+
+
+
+
+
+
 
 	private final String name;
 
@@ -117,8 +113,6 @@ public class Pyramidal5DImageDataImpl<
 	private final VoxelDimensions voxelDimensions;
 
 	private final Omero omero;
-
-	private final Dataset ijDataset;
 
 	/** One entry per resolution level. */
 	private final CachedCellImg< T, ?>[] cachedCellImgs;
@@ -174,8 +168,10 @@ public class Pyramidal5DImageDataImpl<
 	 */
 	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T, V > backend, final Integer preferredMaxWidth )
 	{
-		contents = backend.load();
 		this.context = context;
+		contents = backend.load();
+		preferredResolutionLevel = selectResolutionLevel( contents.cachedCellImgs, preferredMaxWidth );
+
 		this.name = contents.name;
 		this.numResolutionLevels = contents.numResolutionLevels;
 		this.numChannels = contents.numChannels;
@@ -186,24 +182,8 @@ public class Pyramidal5DImageDataImpl<
 		this.omero = contents.omero;
 		this.cachedCellImgs = contents.cachedCellImgs;
 		this.axesPerLevel = contents.axesPerLevel;
-
-		final int resolutionLevel = selectResolutionLevel( contents.cachedCellImgs, preferredMaxWidth );
-		final AxisCalibration[] selectedAxes = contents.axesPerLevel[ resolutionLevel ];
-		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.cachedCellImgs[ resolutionLevel ], name );
-		for ( int i = 0; i < selectedAxes.length; i++ )
-		{
-			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( selectedAxes[ i ].name, Axes.unknown() );
-			imgPlus.setAxis( new DefaultLinearAxis( axisType, selectedAxes[ i ].unit, selectedAxes[ i ].scale ), i );
-		}
-		this.ijDataset = new DefaultDataset( context, imgPlus );
-		this.ijDataset.setName( name );
-		this.ijDataset.setRGBMerged( false );
 	}
 
-	@Override
-	public Context context() {
-		return context;
-	}
 
 	/**
 	 * Returns the index of the coarsest resolution level whose x-width (index 0
@@ -246,29 +226,6 @@ public class Pyramidal5DImageDataImpl<
 	{
 		checkResolutionLevel( resolutionLevel );
 		return new PyramidalDataset( this, resolutionLevel );
-	}
-
-	@Override
-	public Dataset asDataset()
-	{
-		return ijDataset;
-	}
-
-	@Override
-	public Dataset asDataset( final int resolutionLevel )
-	{
-		checkResolutionLevel( resolutionLevel );
-		final AxisCalibration[] axes = axesPerLevel[ resolutionLevel ];
-		final ImgPlus< T > imgPlus = new ImgPlus<>( cachedCellImgs[ resolutionLevel ], name );
-		for ( int i = 0; i < axes.length; i++ )
-		{
-			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( axes[ i ].name, Axes.unknown() );
-			imgPlus.setAxis( new DefaultLinearAxis( axisType, axes[ i ].unit, axes[ i ].scale ), i );
-		}
-		final DefaultDataset dataset = new DefaultDataset( context, imgPlus );
-		dataset.setName( name );
-		dataset.setRGBMerged( false );
-		return dataset;
 	}
 
 	@Override
@@ -317,11 +274,5 @@ public class Pyramidal5DImageDataImpl<
 	public Omero getOmeroProperties()
 	{
 		return omero;
-	}
-
-	@Override
-	public ImagePlus asImagePlus()
-	{
-		return context.service( ConvertService.class ).convert( asDataset(), ImagePlus.class );
 	}
 }
