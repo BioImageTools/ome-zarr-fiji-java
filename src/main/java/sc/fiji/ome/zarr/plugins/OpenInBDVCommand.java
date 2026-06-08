@@ -28,50 +28,43 @@
  */
 package sc.fiji.ome.zarr.plugins;
 
-import net.imagej.Dataset;
-import net.imagej.display.ImageDisplayService;
-import net.imglib2.util.Cast;
+import java.lang.invoke.MethodHandles;
 
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import ij.IJ;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.Pyramidal;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdvDataset;
 import sc.fiji.ome.zarr.util.BdvFocusService;
 import sc.fiji.ome.zarr.util.BdvUtils;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
 {
-	@Parameter( required = false )
-	private BdvFocusService bdvFocusService;
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	@Parameter( required = false )
-	private ImageDisplayService imageDisplayService;
+	private BdvFocusService pyramidalService;
 
-	// Not a @Parameter: set directly in tests; resolved from services in run().
-	Dataset dataset;
+	@Parameter( required = false )
+	private Pyramidal pyramidal;
 
 	@Override
 	public void run()
 	{
-		if ( dataset == null && imageDisplayService != null )
-			dataset = imageDisplayService.getActiveDataset();
-		final Dataset resolved = bdvFocusService != null ? bdvFocusService.resolveDataset( dataset ) : dataset;
-		if ( resolved == null )
+		logger.trace( "Running OpenInBDVCommand. pyramidal={}", pyramidal );
+		if ( pyramidal == null )
 		{
-			IJ.error( "Open in BigDataViewer", "No image is currently open." );
-			return;
-		}
-		if ( !( resolved instanceof PyramidalDataset ) )
-		{
+			// TODO: maybe replace with uiService.showDialog(...) ???
 			IJ.error( "Open in BigDataViewer", "The active image is not an OME-Zarr dataset." );
 			return;
 		}
-		final PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( resolved );
-		final PyramidalDataset< ? > bdvDataset = pyramidalDataset.getPyramidal5DImageData().asPyramidalDataset();
-		BdvUtils.showBdvAndRegisterDataset( bdvDataset, bdvFocusService );
+		final PyramidalBdvDataset< ? > bdvDataset = new PyramidalBdvDataset<>( pyramidal.getPyramidal5DImageData() );
+		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
 	}
 }

@@ -31,9 +31,6 @@ package sc.fiji.ome.zarr.plugins;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.imagej.Dataset;
-import net.imglib2.util.Cast;
-
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.log.LogService;
@@ -42,6 +39,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 
+import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.util.BdvFocusService;
 
@@ -54,11 +52,11 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	@Parameter
 	private UIService uiService;
 
-	@Parameter( required = false )
-	private BdvFocusService bdvFocusService;
+	@Parameter
+	private BdvFocusService pyramidalService;
 
 	@Parameter
-	public Dataset dataset;
+	private Pyramidal pyramidal;
 
 	@Parameter( label = "Resolution Level" )
 	private String resolutionLevel;
@@ -66,20 +64,21 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	@Override
 	public void initialize()
 	{
-		if ( bdvFocusService != null )
-			dataset = bdvFocusService.resolveDataset( dataset );
-		if ( dataset == null )
+		// At this point, @Parameter pyramidal has not been populated yet.
+		// We have to manually check: Is it already staged in the module inputs?
+		Pyramidal active = ( Pyramidal ) getInput( "pyramidal" );
+		if ( active == null )
 		{
-			cancel( "No image is currently open." );
-			return;
+			// Nothing yet? Then get it from the service.
+			active = pyramidalService.getActivePyramidal();
 		}
-		if ( !( dataset instanceof PyramidalDataset ) )
+
+		if ( active == null )
 		{
 			cancel( "The active image is not an OME-Zarr multi resolution dataset." );
 			return;
 		}
-		final PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
-		final int numResolutions = pyramidalDataset.numResolutions();
+		final int numResolutions = active.numResolutions();
 		final List< String > choices = new ArrayList<>();
 		for ( int i = 0; i < numResolutions; i++ )
 			choices.add( "Resolution " + i );
@@ -92,14 +91,14 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	@Override
 	public void run()
 	{
-		if ( !( dataset instanceof PyramidalDataset ) )
+		if ( pyramidal == null )
 		{
 			logService.error( "Cannot open resolution level: the active image is not an OME-Zarr pyramidal dataset." );
 			return;
 		}
-		final PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
 		final int level = Integer.parseInt( resolutionLevel.replace( "Resolution ", "" ) );
-		final PyramidalDataset< ? > levelDataset = pyramidalDataset.getPyramidal5DImageData().asPyramidalDataset( level );
+		final PyramidalDataset levelDataset = new PyramidalDataset( pyramidal.getPyramidal5DImageData(), level );
+//		final PyramidalDataset levelDataset = new PyramidalDataset( pyramidal.getContext(), pyramidal.getPyramidContent(), level );
 		uiService.show( levelDataset );
 	}
 }
