@@ -91,12 +91,15 @@ import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
 import ij.ImagePlus;
 import sc.fiji.ome.zarr.plugins.settings.UserScriptSettings;
+import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdvDataset;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
+import sc.fiji.ome.zarr.util.BdvFocusService;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
@@ -282,7 +285,7 @@ class ZarrOpenActionsTest
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-			Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
+			Function< PyramidalDataset, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
 			Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
 			actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter );
 			assertEquals( 1, multiScaleCounter.get() );
@@ -305,7 +308,7 @@ class ZarrOpenActionsTest
 				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
 				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-				Function< PyramidalDataset< ? >, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
+				Function< PyramidalDataset, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
 				Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
 				actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter );
 				assertEquals( 0, multiScaleCounter.get() );
@@ -327,7 +330,7 @@ class ZarrOpenActionsTest
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
 				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-				Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
+				Function< PyramidalDataset, Object > multiScaleNoOp = pyramidalDataset -> null;
 				Function< Img< ? >, Object > singleScaleNoOp = img -> null;
 				assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp ) );
 			}
@@ -348,7 +351,7 @@ class ZarrOpenActionsTest
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, errorHandler );
 			AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-			Function< PyramidalDataset< ? >, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
+			Function< PyramidalDataset, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
 			Function< Img< ? >, Object > singleScaleOpener = img -> singleScaleCounter.incrementAndGet();
 			assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener ) );
 			assertEquals( 0, multiScaleCounter.get(), "Multi-image collection must not be opened as a single multiscale image" );
@@ -379,7 +382,7 @@ class ZarrOpenActionsTest
 				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, errorHandler );
 				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
 				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-				Function< PyramidalDataset< ? >, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
+				Function< PyramidalDataset, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
 				Function< Img< ? >, Object > singleScaleOpener = img -> singleScaleCounter.incrementAndGet();
 				assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener ),
 						"Opening child image " + childPath + " should not throw" );
@@ -400,7 +403,7 @@ class ZarrOpenActionsTest
 			Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
 			ZarrOpeningSettings settings = new ZarrOpeningSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, System.out::println );
-			Function< PyramidalDataset< ? >, Object > multiScaleNoOp = pyramidalDataset -> null;
+			Function< PyramidalDataset, Object > multiScaleNoOp = pyramidalDataset -> null;
 			Function< Img< ? >, Object > singleScaleNoOp = img -> null;
 			assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp ) );
 		}
@@ -422,7 +425,7 @@ class ZarrOpenActionsTest
 			assertNotNull( datasets );
 			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
 			Dataset dataset = datasets.get( 0 );
-			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
+			PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
 			long[] dimensions = pyramidalDataset.getImgPlus().dimensionsAsLongArray();
 			if ( resource.contains( "2d_testing" ) )
 			{
@@ -571,20 +574,20 @@ class ZarrOpenActionsTest
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			BdvHandle bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
 
-			DatasetService datasetService = context.getService( DatasetService.class );
-			assertNotNull( datasetService );
-			List< Dataset > datasets = datasetService.getDatasets();
-			assertNotNull( datasets );
-			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
+			BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			assertNotNull( pyramidalService );
+			List< Pyramidal > pyramidals = pyramidalService.getPyramidals();
+			assertNotNull( pyramidals );
+			assertEquals( 1, pyramidals.size() ); // The pyramidal service knows the dataset now
+
 			if ( resource.contains( "5d_testing" ) )
 			{
 				assertEquals( 1, bdvHandle.getViewerPanel().state().getCurrentTimepoint() );
 			}
 			bdvHandle.close();
-			// wait until all Swing events are processed
-			SwingUtilities.invokeAndWait( () -> {} );
-			datasets = datasetService.getDatasets();
-			assertEquals( 0, datasets.size() ); // The dataset service has correctly removed the dataset from the cache
+			SwingUtilities.invokeAndWait( () -> {} ); // wait until all Swing events are processed
+			pyramidals = pyramidalService.getPyramidals();
+			assertEquals( 0, pyramidals.size() ); // The pyramidal service has correctly removed the dataset from the cache
 		}
 	}
 
@@ -727,39 +730,54 @@ class ZarrOpenActionsTest
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertEquals( 2, datasetService.getDatasets().size() );
 
+			BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			assertEquals( 2, pyramidalService.getPyramidals().size() );
+
 			// Each BDV open creates one additional dataset backed by the full pyramid
 			BdvHandle bdvHandle1 = null;
 			BdvHandle bdvHandle2 = null;
 			try
 			{
 				bdvHandle1 = Cast.unchecked( actions.openBDVWithImage() );
-				assertEquals( 3, datasetService.getDatasets().size() );
+				assertEquals( 3, pyramidalService.getPyramidals().size() );
 
 				bdvHandle2 = Cast.unchecked( actions.openBDVWithImage() );
-				assertEquals( 4, datasetService.getDatasets().size() );
+				assertEquals( 4, pyramidalService.getPyramidals().size() );
 
-				PyramidalDataset< ? > ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset< ? > ijLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
-				PyramidalDataset< ? > bdv1 = Cast.unchecked( datasetService.getDatasets().get( 2 ) );
-				PyramidalDataset< ? > bdv2 = Cast.unchecked( datasetService.getDatasets().get( 3 ) );
+				assertSame( datasetService.getDatasets().get( 0 ), pyramidalService.getPyramidals().get( 0 ) );
+				assertSame( datasetService.getDatasets().get( 1 ), pyramidalService.getPyramidals().get( 1 ) );
+
+				PyramidalDataset ijLevel0 = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalDataset ijLevel1 = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
+
+				PyramidalBdvDataset< ? > bdv1 = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
 
 				// All 4 datasets (2 IJ + 2 BDV) must be backed by the exact same Pyramidal5DImageData object
 				Pyramidal5DImageData< ? > sharedPyramid = ijLevel0.getPyramidal5DImageData();
 				for ( Dataset dataset : datasetService.getDatasets() )
 				{
-					PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
+					PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
 					assertSame( sharedPyramid, pyramidalDataset.getPyramidal5DImageData(),
 							"Every opened dataset must share the same Pyramidal5DImageData instance" );
 				}
 
+				// IJ datasets
 				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, ijLevel0.getImgPlus().dimensionsAsLongArray(),
 						"IJ dataset at level 0 should have the highest resolution dimensions" );
 				assertArrayEquals( new long[] { 32, 32, 8, 3, 4 }, ijLevel1.getImgPlus().dimensionsAsLongArray(),
 						"IJ dataset at level 1 should have half the spatial dimensions of level 0" );
-				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, bdv1.getImgPlus().dimensionsAsLongArray(),
-						"First BDV dataset should reflect level 0 (highest resolution)" );
-				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, bdv2.getImgPlus().dimensionsAsLongArray(),
-						"Second BDV dataset should reflect level 0 (highest resolution)" );
+
+				// BDV dataset
+				assertEquals( 3, bdv1.asSources().size() ); // 3 channels
+				assertEquals( 2, bdv1.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() ); // 2 resolution levels
+				assertTrue( bdv1.asSources().get( 1 ).getSpimSource().isPresent( 3 ) ); // 4 timepoints
+				assertArrayEquals( new long[] { 64, 64, 16 },
+						bdv1.asSources().get( 0 ).getSpimSource().getSource( 0, 0 ).dimensionsAsLongArray() );
+				assertEquals( 3, bdv1.asSources().size() ); // 3 channels
+				assertEquals( 2, bdv1.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() ); // 2 resolution levels
+				assertTrue( bdv1.asSources().get( 0 ).getSpimSource().isPresent( 3 ) ); // 4 timepoints
+				assertArrayEquals( new long[] { 32, 32, 8 },
+						bdv1.asSources().get( 0 ).getSpimSource().getSource( 0, 1 ).dimensionsAsLongArray() );
 			}
 			finally
 			{
@@ -776,8 +794,8 @@ class ZarrOpenActionsTest
 	 * Scenario: open a multi-resolution dataset in BigDataViewer first, then open
 	 * a specific resolution level in ImageJ.
 	 * <p>
-	 * Expected: the BDV open produces 1 dataset; the subsequent IJ open produces a 2nd dataset
-	 * backed by the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData} object, for a total of 2.
+	 * Expected: the BDV open produces 1 {@link Pyramidal}; the subsequent IJ open produces a 2nd {@link Pyramidal} (and {@link Dataset})
+	 * backed by the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData} object.
 	 * The 5d v4 test dataset has 2 resolution levels:
 	 * level 0 → [x=64, y=64, z=16, c=3, t=4] and level 1 → [x=32, y=32, z=8, c=3, t=4].
 	 */
@@ -795,20 +813,27 @@ class ZarrOpenActionsTest
 				// BDV open covers all resolution levels and registers one dataset
 				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
 
+				BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
 				DatasetService datasetService = context.getService( DatasetService.class );
-				assertEquals( 1, datasetService.getDatasets().size() );
+				assertEquals( 1, pyramidalService.getPyramidals().size() );
+				assertEquals( 0, datasetService.getDatasets().size() );
 
 				// Opening a specific resolution level in IJ creates a 2nd dataset window,
 				// backed by the same Pyramidal5DImageData as the BDV dataset
 				actions.openIJWithImage( 1 ); // coarser resolution: [x=32, y=32, z=8, c=3, t=4]
-				assertEquals( 2, datasetService.getDatasets().size() );
+				assertEquals( 2, pyramidalService.getPyramidals().size() );
+				assertEquals( 1, datasetService.getDatasets().size() );
 
-				PyramidalDataset< ? > bdvDataset = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset< ? > ijDataset = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				PyramidalBdvDataset< ? > bdvDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalDataset ijDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
 				assertSame( bdvDataset.getPyramidal5DImageData(), ijDataset.getPyramidal5DImageData(),
 						"BDV and IJ datasets must share the same Pyramidal5DImageData instance" );
-				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, bdvDataset.getImgPlus().dimensionsAsLongArray(),
-						"BDV dataset should reflect level 0 (highest resolution)" );
+				// BDV dataset
+				assertEquals( 3, bdvDataset.asSources().size() ); // 3 channels
+				assertEquals( 2, bdvDataset.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() ); // 2 resolution levels
+				assertTrue( bdvDataset.asSources().get( 1 ).getSpimSource().isPresent( 3 ) ); // 4 timepoints
+				assertArrayEquals( new long[] { 64, 64, 16 },
+						bdvDataset.asSources().get( 0 ).getSpimSource().getSource( 0, 0 ).dimensionsAsLongArray() );
 				assertArrayEquals( new long[] { 32, 32, 8, 3, 4 }, ijDataset.getImgPlus().dimensionsAsLongArray(),
 						"IJ dataset at level 1 should have half the spatial dimensions of level 0" );
 			}
@@ -842,20 +867,20 @@ class ZarrOpenActionsTest
 			BdvHandle bdvHandle = null;
 			try
 			{
-				actions.openIJWithImage( 0 );
-				actions.openIJWithImage( 0 );
+				actions.openIJWithImage( 0 ); // first instance of level 0
+				actions.openIJWithImage( 0 ); // second instance of level 0
 				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
 				actions.openIJWithImage( 1 );
 
-				DatasetService datasetService = context.getService( DatasetService.class );
-				PyramidalDataset< ? > ijLevel0First = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset< ? > ijLevel0Second = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
-				PyramidalDataset< ? > bdvLevel0 = Cast.unchecked( datasetService.getDatasets().get( 2 ) );
-				PyramidalDataset< ? > ijLevel1 = Cast.unchecked( datasetService.getDatasets().get( 3 ) );
+				BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+				PyramidalDataset ijLevel0First = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalDataset ijLevel0Second = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
+				PyramidalBdvDataset< ? > bdv = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
+				PyramidalDataset ijLevel1 = Cast.unchecked( pyramidalService.getPyramidals().get( 3 ) );
 
 				Img< ? > cellImgIj0First = ijLevel0First.getImgPlus().getImg();
 				Img< ? > cellImgIj0Second = ijLevel0Second.getImgPlus().getImg();
-				Img< ? > cellImgBdv0 = bdvLevel0.getImgPlus().getImg();
+				Img< ? > cellImgBdv0 = bdv.getPyramidal5DImageData().getPyramidContents().cachedCellImgs[ 0 ];
 				Img< ? > cellImgIj1 = ijLevel1.getImgPlus().getImg();
 
 				assertSame( cellImgIj0First, cellImgIj0Second,
@@ -939,8 +964,8 @@ class ZarrOpenActionsTest
 				actions.openIJWithImage( 1 );
 
 				DatasetService datasetService = context.getService( DatasetService.class );
-				PyramidalDataset< ? > ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset< ? > ifLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				PyramidalDataset ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset ifLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
 
 				assertFalse( Util.imagesEqual( Cast.unchecked( ijLevel0.getImgPlus().getImg() ), ifLevel1.getImgPlus().getImg() ) );
 				long[] expectedDims0 = new long[] { 64, 64, 16, 3, 4 };

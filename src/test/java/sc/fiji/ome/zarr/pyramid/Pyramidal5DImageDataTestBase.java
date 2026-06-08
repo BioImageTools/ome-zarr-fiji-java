@@ -114,7 +114,7 @@ public interface Pyramidal5DImageDataTestBase
 		try (Context context = new Context())
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
-			PyramidalDataset< ? > pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
+			PyramidalDataset pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
 			assertNotNull( pyramidalDataset );
 		}
 	}
@@ -126,7 +126,7 @@ public interface Pyramidal5DImageDataTestBase
 		try (Context context = new Context())
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
-			Dataset ijDataset = pyramidal5DImageData.asDataset();
+			Dataset ijDataset = new PyramidalDataset( pyramidal5DImageData );
 			assertNotNull( ijDataset );
 			ImgPlus< ? > imgPlus = ijDataset.getImgPlus();
 			assertNotNull( imgPlus );
@@ -137,7 +137,7 @@ public interface Pyramidal5DImageDataTestBase
 			assertEquals( 64, imgPlus.dimension( 1 ) );
 			if ( is3D )
 				assertEquals( 16, imgPlus.dimension( 2 ) );
-			assertEquals( ZarrTestUtils.IMAGE_NAME, imgPlus.getName() );
+			assertEquals( ZarrTestUtils.IMAGE_NAME + " (R)", imgPlus.getName() );
 		}
 	}
 
@@ -148,8 +148,9 @@ public interface Pyramidal5DImageDataTestBase
 		try (Context context = new Context())
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
-			assertNotNull( pyramidal5DImageData.asSources() );
-			Source< ? > channel0 = pyramidal5DImageData.asSources().get( 0 ).getSpimSource();
+			PyramidalBdvDataset< ? > pyramidalBdvDataset = new PyramidalBdvDataset<>( pyramidal5DImageData );
+			assertNotNull( pyramidalBdvDataset.asSources() );
+			Source< ? > channel0 = pyramidalBdvDataset.asSources().get( 0 ).getSpimSource();
 			VoxelDimensions voxelDimensions = channel0.getVoxelDimensions();
 			assertEquals( 2, channel0.getNumMipmapLevels() ); // 2 resolution levels
 			assertInstanceOf( UnsignedByteType.class, channel0.getType() );
@@ -162,9 +163,9 @@ public interface Pyramidal5DImageDataTestBase
 				assertNotNull( channel0.getSource( 1, 1 ) ); // timepoint 1, resolution level 1
 				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
 				assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
-				assertEquals( 3, pyramidal5DImageData.asSources().size() ); // 3 channels
-				assertEquals( "lynEGFP", pyramidal5DImageData.asSources().get( 0 ).getSpimSource().getName() );
-				assertEquals( "NLStdTomato", pyramidal5DImageData.asSources().get( 1 ).getSpimSource().getName() );
+				assertEquals( 3, pyramidalBdvDataset.asSources().size() ); // 3 channels
+				assertEquals( "lynEGFP", pyramidalBdvDataset.asSources().get( 0 ).getSpimSource().getName() );
+				assertEquals( "NLStdTomato", pyramidalBdvDataset.asSources().get( 1 ).getSpimSource().getName() );
 				assertEquals( 1, pyramidal5DImageData.getOmeroProperties().rdefs.defaultT );
 			}
 			if ( resource.contains( "4d_testing" ) )
@@ -184,9 +185,9 @@ public interface Pyramidal5DImageDataTestBase
 				if ( resource.contains( "xyzc" ) || resource.contains( "xyzt" ) )
 					assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
 				if ( resource.contains( "xyct" ) || resource.contains( "xyzc" ) )
-					assertEquals( 3, pyramidal5DImageData.asSources().size() ); // 3 channels
+					assertEquals( 3, pyramidalBdvDataset.asSources().size() ); // 3 channels
 				if ( resource.contains( "xyzt" ) )
-					assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
+					assertEquals( 1, pyramidalBdvDataset.asSources().size() ); // 1 channel
 			}
 			if ( resource.contains( "3d_testing" ) )
 			{
@@ -205,18 +206,18 @@ public interface Pyramidal5DImageDataTestBase
 				if ( resource.contains( "xyz" ) )
 					assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
 				if ( resource.contains( "xyc" ) )
-					assertEquals( 3, pyramidal5DImageData.asSources().size() ); // 3 channels
+					assertEquals( 3, pyramidalBdvDataset.asSources().size() ); // 3 channels
 				if ( resource.contains( "xyt" ) || resource.contains( "xyz" ) )
-					assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
+					assertEquals( 1, pyramidalBdvDataset.asSources().size() ); // 1 channel
 			}
 			if ( resource.contains( "2d_testing" ) )
 			{
-				assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
+				assertEquals( 1, pyramidalBdvDataset.asSources().size() ); // 1 channel
 
 				long[] dimensions = channel0.getSource( 0, 0 ).dimensionsAsLongArray();
 				assertArrayEquals( new long[] { 64, 64, 1 }, dimensions );
-				assertEquals( 1, pyramidal5DImageData.asSources().size() ); // 1 channel
-				assertEquals( ZarrTestUtils.IMAGE_NAME, pyramidal5DImageData.asSources().get( 0 ).getSpimSource().getName() );
+				assertEquals( 1, pyramidalBdvDataset.asSources().size() ); // 1 channel
+				assertEquals( ZarrTestUtils.IMAGE_NAME, pyramidalBdvDataset.asSources().get( 0 ).getSpimSource().getName() );
 			}
 		}
 	}
@@ -305,7 +306,8 @@ public interface Pyramidal5DImageDataTestBase
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
 			assertEquals( 2, pyramidal5DImageData.numResolutionLevels() );
-			assertEquals( 2, pyramidal5DImageData.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() );
+			PyramidalBdvDataset< ? > pyramidalBdvDataset = new PyramidalBdvDataset<>( pyramidal5DImageData );
+			assertEquals( 2, pyramidalBdvDataset.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() );
 		}
 	}
 
@@ -330,12 +332,12 @@ public interface Pyramidal5DImageDataTestBase
 		try (Context context = new Context())
 		{
 			Pyramidal5DImageData< ? > data = load( resource, context );
-			ImgPlus< ? > level0Img = data.asDataset( 0 ).getImgPlus();
+			ImgPlus< ? > level0Img = data.asPyramidalDataset( 0 ).getImgPlus();
 			double[] level0Extents = physicalExtents( level0Img );
 
 			for ( int level = 1; level < data.numResolutionLevels(); level++ )
 			{
-				ImgPlus< ? > levelImg = data.asDataset( level ).getImgPlus();
+				ImgPlus< ? > levelImg = data.asPyramidalDataset( level ).getImgPlus();
 				assertArrayEquals( level0Extents, physicalExtents( levelImg ), 1e-9,
 						"Physical extents at level " + level + " must match level 0" );
 			}
@@ -389,7 +391,8 @@ public interface Pyramidal5DImageDataTestBase
 		try (Context context = new Context())
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
-			Source< ? > spimSource = pyramidal5DImageData.asSources().get( 0 ).getSpimSource();
+			PyramidalBdvDataset< ? > pyramidalBdvDataset = new PyramidalBdvDataset<>( pyramidal5DImageData );
+			Source< ? > spimSource = pyramidalBdvDataset.asSources().get( 0 ).getSpimSource();
 
 			RandomAccessibleInterval< ? > resolutionLevel0 = spimSource.getSource( 0, 0 );
 			RandomAccess< ? > randomAccessLevel0 = resolutionLevel0.randomAccess();
@@ -425,32 +428,32 @@ public interface Pyramidal5DImageDataTestBase
 							|| ( resource.contains( "4d_testing" ) && resource.contains( "xyzt" ) ) )
 					|| ( resource.contains( "3d_testing" ) && resource.contains( "xyz" ) );
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context, 100 ); // greater than the highest resolution
-			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			assertEquals( 64, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 1 ) );
 			if ( is3D )
-				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+				assertEquals( 16, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 2 ) );
 			pyramidal5DImageData = load( resource, context, 64 ); // equals the highest resolution
-			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			assertEquals( 64, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 1 ) );
 			if ( is3D )
-				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+				assertEquals( 16, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 2 ) );
 			pyramidal5DImageData = load( resource, context, 50 ); // less than the highest resolution, but greater than the lowest resolution
-			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			assertEquals( 32, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 32, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 1 ) );
 			if ( is3D )
-				assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+				assertEquals( 8, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 2 ) );
 			pyramidal5DImageData = load( resource, context, 32 ); // equals the lowest resolution
-			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-			assertEquals( 32, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			assertEquals( 32, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 32, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 1 ) );
 			if ( is3D )
-				assertEquals( 8, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+				assertEquals( 8, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 2 ) );
 			// less than the lowest resolution
 			assertThrows( NoMatchingResolutionException.class, () -> load( resource, context, 30 ) );
 			pyramidal5DImageData = load( resource, context, null ); // null preferred width results in the highest resolution
-			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 0 ) );
-			assertEquals( 64, pyramidal5DImageData.asDataset().getImgPlus().dimension( 1 ) );
+			assertEquals( 64, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 0 ) );
+			assertEquals( 64, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 1 ) );
 			if ( is3D )
-				assertEquals( 16, pyramidal5DImageData.asDataset().getImgPlus().dimension( 2 ) );
+				assertEquals( 16, pyramidal5DImageData.asPyramidalDataset().getImgPlus().dimension( 2 ) );
 		}
 	}
 
@@ -461,10 +464,10 @@ public interface Pyramidal5DImageDataTestBase
 		try (Context context = new Context())
 		{
 			Pyramidal5DImageData< ? > pyramidal5DImageData = load( resource, context );
-			PyramidalDataset< ? > pyramidalDataset = new PyramidalDataset<>( pyramidal5DImageData );
-			BdvHandle bdvHandle = BdvUtils.showBdvAndRegisterDataset( pyramidalDataset );
+			PyramidalBdvDataset< ? > pyramidalBdvDataset = new PyramidalBdvDataset<>( pyramidal5DImageData );
+			BdvHandle bdvHandle = BdvUtils.showBdvAndRegisterDataset( pyramidalBdvDataset );
 			List< ConverterSetup > converterSetups =
-					bdvHandle.getConverterSetups().getConverterSetups( pyramidal5DImageData.asSources() );
+					bdvHandle.getConverterSetups().getConverterSetups( pyramidalBdvDataset.asSources() );
 			assertNotNull( converterSetups );
 			if ( resource.contains( "2d_testing" ) ) // dataset without omero properties
 			{
