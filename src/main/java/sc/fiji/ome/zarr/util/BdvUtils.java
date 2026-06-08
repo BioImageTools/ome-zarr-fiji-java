@@ -36,8 +36,10 @@ import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 
+import net.imglib2.type.numeric.RealType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +48,7 @@ import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
 import bdv.viewer.SourceAndConverter;
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdvDataset;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 public class BdvUtils
@@ -67,7 +69,7 @@ public class BdvUtils
 	 *                         contains multi-resolution image data along with associated metadata.
 	 * @return a {@code BdvHandle} instance representing the BDV window.
 	 */
-	public static BdvHandle showBdvAndRegisterDataset( final PyramidalDataset< ? > pyramidalDataset )
+	public static BdvHandle showBdvAndRegisterDataset( final PyramidalBdvDataset< ? > pyramidalDataset )
 	{
 		return showBdvAndRegisterDataset( pyramidalDataset, null );
 	}
@@ -83,10 +85,11 @@ public class BdvUtils
 	 * @param bdvFocusService the service to notify of focus changes, or {@code null} to skip tracking
 	 * @return a {@code BdvHandle} instance representing the BDV window
 	 */
-	public static BdvHandle showBdvAndRegisterDataset( final PyramidalDataset< ? > pyramidalDataset,
+	public static < T extends NativeType< T > & RealType< T > > BdvHandle showBdvAndRegisterDataset(
+			final PyramidalBdvDataset< ? > pyramidalDataset,
 			final BdvFocusService bdvFocusService )
 	{
-		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.asSources(), pyramidalDataset.numTimepoints(),
+		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.< T >asSources(), pyramidalDataset.numTimepoints(),
 				BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
 
 		setTimepoint( pyramidalDataset.getOmeroProperties(), bdvHandle );
@@ -110,8 +113,8 @@ public class BdvUtils
 	 * Focus switches themselves are observed centrally by {@link BdvFocusService} via the AWT
 	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
 	 */
-	private static void registerDatasetLifecycle( final PyramidalDataset< ? > pyramidalDataset,
-			final Window window, final BdvFocusService bdvFocusService )
+	private static void registerDatasetLifecycle( final PyramidalBdvDataset< ? > pyramidalDataset, final Window window,
+			final BdvFocusService bdvFocusService )
 	{
 		pyramidalDataset.incrementReferences();
 		if ( bdvFocusService != null )
@@ -121,14 +124,14 @@ public class BdvUtils
 			@Override
 			public void windowClosed( final WindowEvent e )
 			{
-				pyramidalDataset.decrementReferences();
 				if ( bdvFocusService != null )
 					bdvFocusService.unregisterBdvWindow( window );
+				pyramidalDataset.decrementReferences();
 			}
 		} );
 	}
 
-	private static void setChannelProperties( final PyramidalDataset< ? > pyramidalDataset, final BdvHandle bdvHandle )
+	private static void setChannelProperties( final PyramidalBdvDataset< ? > pyramidalDataset, final BdvHandle bdvHandle )
 	{
 		Omero omero = pyramidalDataset.getOmeroProperties();
 		if ( omero == null || omero.channels == null || omero.channels.isEmpty() )
