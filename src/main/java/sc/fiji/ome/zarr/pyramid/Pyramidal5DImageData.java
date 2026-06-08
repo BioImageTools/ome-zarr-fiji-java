@@ -28,24 +28,20 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
-import net.imagej.Dataset;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import java.net.URI;
-import java.util.List;
 
-import bdv.viewer.SourceAndConverter;
-import ij.ImagePlus;
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
-import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
-import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
-import sc.fiji.ome.zarr.pyramid.metadata.Omero;
+import mpicbg.spim.data.sequence.VoxelDimensions;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
+import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
  * 5D multi-resolution array data
@@ -57,47 +53,26 @@ import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
  */
 public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T > >
 {
+	// TODO: Revise Context handling. For example Pyramidal5DImageData could extend Contextual ...
+	Context context();
+
+	PyramidContents< T, ? > getPyramidContents();
+
+	int preferredResolutionLevel();
+
 	/**
 	 * @return an IJ2 {@code net.imagej.Dataset}
 	 *   with additional methods for retrieving the
 	 *   underlying multi-resolution data.
 	 */
-	PyramidalDataset< T > asPyramidalDataset();
+	PyramidalDataset asPyramidalDataset();
 
 	/**
 	 * @param resolutionLevel 0-based index into the resolution pyramid (0 = highest resolution)
 	 * @return a newly created object of {@link PyramidalDataset} wrapping the image at the specified resolution level,
 	 *   backed by the same underlying pyramid data
 	 */
-	PyramidalDataset< T > asPyramidalDataset( int resolutionLevel );
-
-	/**
-	 * @return the IJ2 {@code net.imagej.Dataset} at the default resolution level
-	 *   (resolution level 0 = highest resolution, unless a {@code preferredMaxWidth}
-	 *   was specified at construction time, in which case a coarser level may be used);
-	 *   always returns the same cached object
-	 */
-	Dataset asDataset();
-
-	/**
-	 * @param resolutionLevel 0-based index into the resolution pyramid (0 = highest resolution)
-	 * @return a newly created IJ2 {@code net.imagej.Dataset} wrapping the image at the specified resolution level
-	 */
-	Dataset asDataset( int resolutionLevel );
-
-	/**
-	 * @return an IJ1 {@link ij.ImagePlus} at the default resolution level,
-	 *   obtained by converting {@link #asDataset()} via SciJava's
-	 *   {@link org.scijava.convert.ConvertService}
-	 */
-	ImagePlus asImagePlus();
-
-	/**
-	 * @return a list of BigDataViewer sources, representing a 5D (XYZCT) multi-resolution image, one source for each channel of the dataset.
-	 * 	 The sources provide nested volatile versions. The sources are
-	 * 	 multi-resolution, reflecting the resolution pyramid of the OME-Zarr.
-	 */
-	List< SourceAndConverter< T > > asSources();
+	PyramidalDataset asPyramidalDataset( int resolutionLevel );
 
 	/**
 	 * @return the physical voxel size and unit of measurement at the
