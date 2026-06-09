@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static java.lang.Math.min;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -208,7 +209,7 @@ public class ConformanceTest
 
 			final Optional< String > result = testOpenAndCheckDatasetParamsWrapper( backend, testDataset );
 			rows.add( new String[] {
-					testDataset.getStudy(),
+					testDataset.condensedDesription(),
 					backend.toString(),
 					result.isPresent() ? "FAIL" : "PASS",
 					result.orElse( "" )
@@ -417,6 +418,34 @@ public class ConformanceTest
 					+ "\n  size=(" + sizeX + " x " + sizeY + " x " + sizeZ + " x " + sizeC + " x " + sizeT + ") [XYZCT]"
 					+ "\n  axes='" + axes + "'" + ", multiscales=" + numberOfResLevels + ", pxType=" + dataType
 					+ "\n  wells=" + wells + ", fields=" + fields
+					+ ", resolution=(" + scaleX + " x " + scaleY + " x " + scaleZ + ") [XYZ]";
+		}
+
+		public String shortedURL()
+		{
+			final URI uri = URI.create( zarrURL );
+			String scheme = uri.getScheme() != null ? uri.getScheme() + "://" : "";
+			String host = uri.getHost();
+			if ( host != null )
+			{
+				if ( host.length() > 15 )
+				{
+					host = host.substring( 0, 5 ) + "....." + host.substring( host.length() - 5 );
+				}
+				host += "/";
+			}
+			else
+				host = "";
+			String[] path = uri.getPath().split( "/" );
+			return scheme + host + "...../" + path[ path.length - 1 ];
+		}
+
+		public String condensedDesription()
+		{
+			return shortedURL() + " (" + study + ") v" + omeNgffVersion + ":"
+					+ "\n  size=(" + sizeX + " x " + sizeY + " x " + sizeZ + " x " + sizeC + " x " + sizeT + ") [XYZCT]"
+					+ ", axes='" + axes + "', pxType=" + dataType
+					+ "\n  multiscales=" + numberOfResLevels + ", wells=" + wells + ", fields=" + fields
 					+ ", resolution=(" + scaleX + " x " + scaleY + " x " + scaleZ + ") [XYZ]";
 		}
 	}
