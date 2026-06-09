@@ -156,7 +156,7 @@ public class ConformanceTest
 
 			StringBuilder axes = new StringBuilder();
 			for ( int i = 0; i < pyramidalDataset.getImgPlus().numDimensions(); ++i )
-				axes.append( pyramidalDataset.getImgPlus().axis( i ).type().toString() );
+				axes.append( pyramidalDataset.getImgPlus().axis( i ).type().toString().charAt( 0 ) );
 			assertEquals( testDataset.getAxes(), axes.toString(), "Mismatch in understanding the order of axes." );
 
 			//TODO: wells, fields
