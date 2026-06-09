@@ -33,8 +33,8 @@ import java.lang.invoke.MethodHandles;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 
-import ij.IJ;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +48,9 @@ public class OpenInBDVCommand implements Command
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	@Parameter
+	private UIService uiService;
+
 	@Parameter( required = false )
 	private BdvFocusService pyramidalService;
 
@@ -60,8 +63,7 @@ public class OpenInBDVCommand implements Command
 		logger.trace( "Running OpenInBDVCommand. pyramidal={}", pyramidal );
 		if ( pyramidal == null )
 		{
-			// TODO: maybe replace with uiService.showDialog(...) ???
-			IJ.error( "Open in BigDataViewer", "The active image is not an OME-Zarr dataset." );
+			uiService.showDialog( "The active image is not an OME-Zarr dataset.", "Open in BigDataViewer" );
 			return;
 		}
 		final PyramidalBdvDataset< ? > bdvDataset = new PyramidalBdvDataset<>( pyramidal.getPyramidal5DImageData() );
