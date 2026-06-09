@@ -3,6 +3,17 @@ package sc.fiji.ome.zarr.open;
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.ByteType;
+import net.imglib2.type.numeric.integer.ShortType;
+import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.type.numeric.integer.LongType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.integer.UnsignedIntType;
+import net.imglib2.type.numeric.integer.UnsignedLongType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.type.numeric.real.DoubleType;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -131,11 +142,91 @@ public class ConformanceTest
 			assertEquals( rai.dimension( 2 ), testDataset.getSizeZ() );
 			//TODO: add more!
 
+			final String refType = testDataset.getDataType();
+			if ( refType != null && !refType.isEmpty() )
+				checkPixelTypes( refType, pyramidalDataset );
+
 			//clean up: wait for the IJ window to clam down, get a reference on it, and close it
 			SwingUtilities.invokeAndWait( () -> {} );
 			DisplayService displayService = context.getService( DisplayService.class );
 			assertNotNull( displayService.getActiveDisplay() );
 			displayService.getActiveDisplay().close();
+		}
+	}
+
+	private static void checkPixelTypes( final String refType, final PyramidalDataset< ? > pyramidalDataset )
+	{
+		final RealType< ? > imglibType = pyramidalDataset.getType();
+
+		if ( refType.startsWith( "float" ) )
+		{
+			if ( refType.contains( "32" ) )
+			{
+				assertInstanceOf( FloatType.class, imglibType );
+			}
+			else if ( refType.contains( "64" ) )
+			{
+				assertInstanceOf( DoubleType.class, imglibType );
+			}
+			else
+			{
+				logger.error( "Unrecognized reference float type '{}'. Internal error.", refType );
+			}
+		}
+		else if ( refType.contains( "int" ) )
+		{
+			if ( refType.startsWith( "u" ) )
+			{
+				//unsigned integers
+				if ( refType.endsWith( "8" ) )
+				{
+					assertInstanceOf( UnsignedByteType.class, imglibType );
+				}
+				else if ( refType.endsWith( "16" ) )
+				{
+					assertInstanceOf( UnsignedShortType.class, imglibType );
+				}
+				else if ( refType.endsWith( "32" ) )
+				{
+					assertInstanceOf( UnsignedIntType.class, imglibType );
+				}
+				else if ( refType.endsWith( "64" ) )
+				{
+					assertInstanceOf( UnsignedLongType.class, imglibType );
+				}
+				else
+				{
+					logger.error( "Unrecognized reference integer type '{}'. Internal error.", refType );
+				}
+			}
+			else
+			{
+				//signed integers
+				if ( refType.endsWith( "8" ) )
+				{
+					assertInstanceOf( ByteType.class, imglibType );
+				}
+				else if ( refType.endsWith( "16" ) )
+				{
+					assertInstanceOf( ShortType.class, imglibType );
+				}
+				else if ( refType.endsWith( "32" ) )
+				{
+					assertInstanceOf( IntType.class, imglibType );
+				}
+				else if ( refType.endsWith( "64" ) )
+				{
+					assertInstanceOf( LongType.class, imglibType );
+				}
+				else
+				{
+					logger.error( "Unrecognized reference integer type '{}'. Internal error.", refType );
+				}
+			}
+		}
+		else
+		{
+			logger.error( "Unrecognized reference type '{}'. Internal error.", refType );
 		}
 	}
 
