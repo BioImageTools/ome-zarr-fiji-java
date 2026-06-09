@@ -140,11 +140,29 @@ public class ConformanceTest
 			assertEquals( rai.dimension( 0 ), testDataset.getSizeX() );
 			assertEquals( rai.dimension( 1 ), testDataset.getSizeY() );
 			assertEquals( rai.dimension( 2 ), testDataset.getSizeZ() );
-			//TODO: add more!
+			assertEquals( pyramidalDataset.numChannels(), testDataset.getSizeC() );
+			assertEquals( pyramidalDataset.numTimepoints(), testDataset.getSizeT() );
+
+			StringBuilder axes = new StringBuilder();
+			for ( int i = 0; i < pyramidalDataset.getImgPlus().numDimensions(); ++i )
+				axes.append( pyramidalDataset.getImgPlus().axis( i ).type().toString() );
+			assertEquals( testDataset.getAxes(), axes.toString() );
+
+			//TODO: wells, fields
 
 			final String refType = testDataset.getDataType();
 			if ( refType != null && !refType.isEmpty() )
 				checkPixelTypes( refType, pyramidalDataset );
+
+			if ( testDataset.scaleX != -1 )
+				assertEquals( pyramidalDataset.voxelDimensions().dimension( 0 ), testDataset.scaleX );
+			if ( testDataset.scaleY != -1 )
+				assertEquals( pyramidalDataset.voxelDimensions().dimension( 1 ), testDataset.scaleY );
+			if ( testDataset.scaleZ != -1 )
+				assertEquals( pyramidalDataset.voxelDimensions().dimension( 2 ), testDataset.scaleZ );
+
+			if ( testDataset.numberOfResLevels != -1 )
+				assertEquals( pyramidalDataset.numResolutions(), testDataset.numberOfResLevels );
 
 			//clean up: wait for the IJ window to clam down, get a reference on it, and close it
 			SwingUtilities.invokeAndWait( () -> {} );
