@@ -91,8 +91,16 @@ public class ConformanceTest
 			final URI testDatasetURI = new URI( testDataset.getZarrURL() );
 
 			final ZarrOpeningSettings settings = new ZarrOpeningSettings();
-			settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION );
 			settings.setReaderBackend( backend );
+			//open the lowest available resolution as a standard IJ window
+			//(or open with BDV; just be aware that in order to display anything,
+			//both displays (IJ, BDV) will start fetching/downloading the pixels,
+			//so avoid fetching the finest/largests resolution; while BDV would
+			//probably start with some worse/smaller resolution, it may decide
+			//later to fetch a better one, despite our use case doesn't need it,
+			//thus IJ window has been chosen to use in this test)
+			settings.setPreferredMaxWidth( 600 );
+			settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION );
 
 			final AtomicReference< String > capturedError = new AtomicReference<>();
 			final Consumer< String > errorHandler = capturedError::set;
