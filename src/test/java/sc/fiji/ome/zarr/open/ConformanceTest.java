@@ -8,6 +8,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
 import org.scijava.display.DisplayService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
@@ -17,6 +19,7 @@ import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,6 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ConformanceTest
 {
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
 	static Stream< ZarrReaderBackend > readerBackends()
 	{
 		return Stream.of( ZarrReaderBackend.N5, ZarrReaderBackend.ZARR_JAVA );
@@ -80,8 +85,10 @@ public class ConformanceTest
 	{
 		try (Context context = new Context())
 		{
+			logger.debug( "Conformance testing dataset: study = {}\n  at URL: {}",
+					testDataset.getStudy(), testDataset.getZarrURL() );
+
 			final URI testDatasetURI = new URI( testDataset.getZarrURL() );
-			//TODO: add some logger on the screen
 
 			final ZarrOpeningSettings settings = new ZarrOpeningSettings();
 			settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION );
