@@ -137,11 +137,13 @@ public class ConformanceTest
 			//a variable of a (lazily loaded) Imglib2 img-like, RAI in this case
 
 			//finally, the conformance testing:
-			assertEquals( rai.dimension( 0 ), testDataset.getSizeX() );
-			assertEquals( rai.dimension( 1 ), testDataset.getSizeY() );
-			assertEquals( rai.dimension( 2 ), testDataset.getSizeZ() );
-			assertEquals( pyramidalDataset.numChannels(), testDataset.getSizeC() );
-			assertEquals( pyramidalDataset.numTimepoints(), testDataset.getSizeT() );
+			assertEquals( testDataset.getSizeX(), rai.dimension( 0 ) );
+			assertEquals( testDataset.getSizeY(), rai.dimension( 1 ) );
+			assertEquals( testDataset.getSizeZ(), rai.dimension( 2 ) );
+			if ( testDataset.getSizeC() != -1 )
+				assertEquals( testDataset.getSizeC(), pyramidalDataset.numChannels() );
+			if ( testDataset.getSizeT() != -1 )
+				assertEquals( testDataset.getSizeT(), pyramidalDataset.numTimepoints() );
 
 			StringBuilder axes = new StringBuilder();
 			for ( int i = 0; i < pyramidalDataset.getImgPlus().numDimensions(); ++i )
@@ -154,15 +156,15 @@ public class ConformanceTest
 			if ( refType != null && !refType.isEmpty() )
 				checkPixelTypes( refType, pyramidalDataset );
 
-			if ( testDataset.scaleX != -1 )
-				assertEquals( pyramidalDataset.voxelDimensions().dimension( 0 ), testDataset.scaleX );
-			if ( testDataset.scaleY != -1 )
-				assertEquals( pyramidalDataset.voxelDimensions().dimension( 1 ), testDataset.scaleY );
-			if ( testDataset.scaleZ != -1 )
-				assertEquals( pyramidalDataset.voxelDimensions().dimension( 2 ), testDataset.scaleZ );
+			if ( testDataset.getScaleX() != -1 )
+				assertEquals( testDataset.getScaleX(), pyramidalDataset.voxelDimensions().dimension( 0 ) );
+			if ( testDataset.getScaleY() != -1 )
+				assertEquals( testDataset.getScaleY(), pyramidalDataset.voxelDimensions().dimension( 1 ) );
+			if ( testDataset.getScaleZ() != -1 )
+				assertEquals( testDataset.getScaleZ(), pyramidalDataset.voxelDimensions().dimension( 2 ) );
 
-			if ( testDataset.numberOfResLevels != -1 )
-				assertEquals( pyramidalDataset.numResolutions(), testDataset.numberOfResLevels );
+			if ( testDataset.getNumberOfResLevels() != -1 )
+				assertEquals( testDataset.getNumberOfResLevels(), pyramidalDataset.numResolutions() );
 
 			//clean up: wait for the IJ window to clam down, get a reference on it, and close it
 			SwingUtilities.invokeAndWait( () -> {} );
