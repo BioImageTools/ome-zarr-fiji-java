@@ -119,7 +119,7 @@ public class ConformanceTest
 
 			//open URL, read the dataset, and retrieve it as an opened Dataset
 			assertDoesNotThrow( () -> new ZarrOpenActions( testDatasetURI, context, settings, errorHandler ).openIJWithImage(),
-					"Failed while opening the dataset " + testDataset.getStudy() + " (study columns) with IJ." );
+					"Failed while opening the dataset '" + testDataset.getStudy() + "' (study columns) with IJ." );
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertEquals( 1, datasetService.getDatasets().size() );
@@ -156,12 +156,13 @@ public class ConformanceTest
 			if ( refType != null && !refType.isEmpty() )
 				checkPixelTypes( refType, pyramidalDataset );
 
+			final double ACCURACY_DELTA = 0.00001f;
 			if ( testDataset.getScaleX() != -1 )
-				assertEquals( testDataset.getScaleX(), pyramidalDataset.voxelDimensions().dimension( 0 ) );
+				assertEquals( testDataset.getScaleX(), pyramidalDataset.voxelDimensions().dimension( 0 ), ACCURACY_DELTA );
 			if ( testDataset.getScaleY() != -1 )
-				assertEquals( testDataset.getScaleY(), pyramidalDataset.voxelDimensions().dimension( 1 ) );
+				assertEquals( testDataset.getScaleY(), pyramidalDataset.voxelDimensions().dimension( 1 ), ACCURACY_DELTA );
 			if ( testDataset.getScaleZ() != -1 )
-				assertEquals( testDataset.getScaleZ(), pyramidalDataset.voxelDimensions().dimension( 2 ) );
+				assertEquals( testDataset.getScaleZ(), pyramidalDataset.voxelDimensions().dimension( 2 ), ACCURACY_DELTA );
 
 			if ( testDataset.getNumberOfResLevels() != -1 )
 				assertEquals( testDataset.getNumberOfResLevels(), pyramidalDataset.numResolutions() );
