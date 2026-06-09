@@ -243,6 +243,13 @@
 			<version>5.2.0</version>
 			<scope>test</scope>
 		</dependency>
+		<!-- ASCII table rendering for conformance test report -->
+		<dependency>
+			<groupId>com.github.freva</groupId>
+			<artifactId>ascii-table</artifactId>
+			<version>1.2.0</version>
+			<scope>test</scope>
+		</dependency>
 
 
 		<!-- ====================================== -->

@@ -15,6 +15,7 @@ import net.imglib2.type.numeric.integer.UnsignedLongType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.type.numeric.real.DoubleType;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -35,8 +36,11 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import com.github.freva.asciitable.AsciiTable;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -173,6 +177,53 @@ public class ConformanceTest
 			assertNotNull( displayService.getActiveDisplay() );
 			displayService.getActiveDisplay().close();
 		}
+	}
+
+	Optional< String > testOpenAndCheckDatasetParamsWrapper( ZarrReaderBackend backend, TestDataset testDataset )
+	{
+		try
+		{
+			testOpenAndCheckDatasetParams( backend, testDataset );
+			return Optional.empty();
+		}
+		catch ( Throwable t )
+		{
+			return Optional.of( t.getClass().getSimpleName() + ": " + t.getMessage() );
+		}
+	}
+
+	@Disabled( "Conformance testing is explicitly opted out from the automated testing. Please, run manually." )
+	@Test
+	void reportSuccessRateAndPrintTable()
+	{
+		final List< String[] > rows = new ArrayList<>();
+		//
+		final int[] stats = { 0, 0 };
+		final int passedIdx = 0;
+		final int totalIdx = 1;
+
+		testCasesFeeder().forEach( arguments -> {
+			ZarrReaderBackend backend = ( ZarrReaderBackend ) arguments.get()[ 0 ];
+			TestDataset testDataset = ( TestDataset ) arguments.get()[ 1 ];
+
+			final Optional< String > result = testOpenAndCheckDatasetParamsWrapper( backend, testDataset );
+			rows.add( new String[] {
+					testDataset.getStudy(),
+					backend.toString(),
+					result.isPresent() ? "FAIL" : "PASS",
+					result.orElse( "" )
+			} );
+			if ( !result.isPresent() )
+				stats[ passedIdx ]++;
+			stats[ totalIdx ]++;
+		} );
+
+		int passed = stats[ passedIdx ];
+		int total = stats[ totalIdx ];
+
+		final String[] headers = { "Dataset", "Backend", "Result", "Reason" };
+		System.out.println( AsciiTable.getTable( headers, rows.toArray( new String[ 0 ][] ) ) );
+		System.out.printf( "%nPassed: %d / %d%n", passed, total );
 	}
 
 	private static void checkPixelTypes( final String refType, final PyramidalDataset< ? > pyramidalDataset )
