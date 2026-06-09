@@ -2,6 +2,7 @@ package sc.fiji.ome.zarr.open;
 
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
+import net.imglib2.RandomAccessibleInterval;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -115,12 +116,19 @@ public class ConformanceTest
 			Dataset d = datasetService.getDatasets().get( 0 );
 			assertInstanceOf( PyramidalDataset.class, d );
 
-			PyramidalDataset< ? > pyramidalDataset = ( PyramidalDataset< ? > ) d;
+			final PyramidalDataset< ? > pyramidalDataset = ( PyramidalDataset< ? > ) d;
+			final RandomAccessibleInterval< ? > rai = pyramidalDataset
+					.asSources()
+					.get( 0 ) //channel 0
+					.getSpimSource()
+					.getSource( 0, 0 ); //time point = 0, res. level = 0
+			//note that no pixels are actively loaded while we hold now
+			//a variable of a (lazily loaded) Imglib2 img-like, RAI in this case
 
-			//the conformance testing:
-			assertEquals( pyramidalDataset.getWidth(), testDataset.getSizeX() );
-			assertEquals( pyramidalDataset.getHeight(), testDataset.getSizeY() );
-			assertEquals( pyramidalDataset.getDepth(), testDataset.getSizeZ() );
+			//finally, the conformance testing:
+			assertEquals( rai.dimension( 0 ), testDataset.getSizeX() );
+			assertEquals( rai.dimension( 1 ), testDataset.getSizeY() );
+			assertEquals( rai.dimension( 2 ), testDataset.getSizeZ() );
 			//TODO: add more!
 
 			//clean up: wait for the IJ window to clam down, get a reference on it, and close it
