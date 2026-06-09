@@ -124,13 +124,15 @@ public class ConformanceTest
 
 			//open URL, read the dataset, and retrieve it as an opened Dataset
 			assertDoesNotThrow( () -> new ZarrOpenActions( testDatasetURI, context, settings, errorHandler ).openIJWithImage(),
-					"Failed while opening the dataset '" + testDataset.getStudy() + "' (study columns) with IJ." );
+					"Failed opening dataset '" + testDataset.getStudy() + "' with IJ." );
 
 			DatasetService datasetService = context.getService( DatasetService.class );
-			assertEquals( 1, datasetService.getDatasets().size() );
+			assertEquals( 1, datasetService.getDatasets().size(),
+					"After opening, no Dataset is available in Fiji." );
 
 			Dataset d = datasetService.getDatasets().get( 0 );
-			assertInstanceOf( PyramidalDataset.class, d );
+			assertInstanceOf( PyramidalDataset.class, d,
+					"After opening, incorrect Dataset is available in Fiji." );
 
 			final PyramidalDataset< ? > pyramidalDataset = ( PyramidalDataset< ? > ) d;
 			final RandomAccessibleInterval< ? > rai = pyramidalDataset
@@ -142,18 +144,20 @@ public class ConformanceTest
 			//a variable of a (lazily loaded) Imglib2 img-like, RAI in this case
 
 			//finally, the conformance testing:
-			assertEquals( testDataset.getSizeX(), rai.dimension( 0 ) );
-			assertEquals( testDataset.getSizeY(), rai.dimension( 1 ) );
-			assertEquals( testDataset.getSizeZ(), rai.dimension( 2 ) );
+			assertEquals( testDataset.getSizeX(), rai.dimension( 0 ), "Mismatch in X-axis size." );
+			assertEquals( testDataset.getSizeY(), rai.dimension( 1 ), "Mismatch in Y-axis size." );
+			assertEquals( testDataset.getSizeZ(), rai.dimension( 2 ), "Mismatch in Z-axis size." );
 			if ( testDataset.getSizeC() != -1 )
-				assertEquals( testDataset.getSizeC(), pyramidalDataset.numChannels() );
+				assertEquals( testDataset.getSizeC(), pyramidalDataset.numChannels(),
+						"Mismatch in number of channels." );
 			if ( testDataset.getSizeT() != -1 )
-				assertEquals( testDataset.getSizeT(), pyramidalDataset.numTimepoints() );
+				assertEquals( testDataset.getSizeT(), pyramidalDataset.numTimepoints(),
+						"Mismatch in number of time points." );
 
 			StringBuilder axes = new StringBuilder();
 			for ( int i = 0; i < pyramidalDataset.getImgPlus().numDimensions(); ++i )
 				axes.append( pyramidalDataset.getImgPlus().axis( i ).type().toString() );
-			assertEquals( testDataset.getAxes(), axes.toString() );
+			assertEquals( testDataset.getAxes(), axes.toString(), "Mismatch in understanding the order of axes." );
 
 			//TODO: wells, fields
 
@@ -163,19 +167,23 @@ public class ConformanceTest
 
 			final double ACCURACY_DELTA = 0.00001f;
 			if ( testDataset.getScaleX() != -1 )
-				assertEquals( testDataset.getScaleX(), pyramidalDataset.voxelDimensions().dimension( 0 ), ACCURACY_DELTA );
+				assertEquals( testDataset.getScaleX(), pyramidalDataset.voxelDimensions().dimension( 0 ),
+						ACCURACY_DELTA, "Mismatch in extracted pixel resolution along X-axis." );
 			if ( testDataset.getScaleY() != -1 )
-				assertEquals( testDataset.getScaleY(), pyramidalDataset.voxelDimensions().dimension( 1 ), ACCURACY_DELTA );
+				assertEquals( testDataset.getScaleY(), pyramidalDataset.voxelDimensions().dimension( 1 ),
+						ACCURACY_DELTA, "Mismatch in extracted pixel resolution along Y-axis." );
 			if ( testDataset.getScaleZ() != -1 )
-				assertEquals( testDataset.getScaleZ(), pyramidalDataset.voxelDimensions().dimension( 2 ), ACCURACY_DELTA );
+				assertEquals( testDataset.getScaleZ(), pyramidalDataset.voxelDimensions().dimension( 2 ),
+						ACCURACY_DELTA, "Mismatch in extracted pixel resolution along Z-axis." );
 
 			if ( testDataset.getNumberOfResLevels() != -1 )
-				assertEquals( testDataset.getNumberOfResLevels(), pyramidalDataset.numResolutions() );
+				assertEquals( testDataset.getNumberOfResLevels(), pyramidalDataset.numResolutions(),
+						"Mismatch in extracted number of resolution levels." );
 
 			//clean up: wait for the IJ window to clam down, get a reference on it, and close it
 			SwingUtilities.invokeAndWait( () -> {} );
 			DisplayService displayService = context.getService( DisplayService.class );
-			assertNotNull( displayService.getActiveDisplay() );
+			assertNotNull( displayService.getActiveDisplay(), "Internal error!" );
 			displayService.getActiveDisplay().close();
 		}
 	}
