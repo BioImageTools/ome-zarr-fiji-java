@@ -31,6 +31,7 @@ package sc.fiji.ome.zarr.pyramid;
 import java.net.URI;
 
 import org.scijava.Context;
+import org.scijava.Contextual;
 import org.scijava.prefs.PrefService;
 
 import mpicbg.spim.data.sequence.VoxelDimensions;
@@ -51,10 +52,8 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  *
  * @param <T> pixel type
  */
-public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T > >
+public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T > > extends Contextual
 {
-	// TODO: Revise Context handling. For example Pyramidal5DImageData could extend Contextual ...
-	Context context();
 
 	PyramidContents< T, ? > getPyramidContents();
 

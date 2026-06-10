@@ -30,6 +30,7 @@ package sc.fiji.ome.zarr.pyramid;
 
 import java.net.URI;
 
+import org.scijava.AbstractContextual;
 import org.scijava.Context;
 
 import bdv.viewer.SourceAndConverter;
@@ -68,18 +69,12 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 public class Pyramidal5DImageDataImpl<
 		T extends NativeType< T > & RealType< T >,
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
+		extends AbstractContextual
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
-	private final Context context;
-
 	private final PyramidContents<T, V> contents;
 
 	private final int preferredResolutionLevel;
-
-	@Override
-	public Context context() {
-		return context;
-	}
 
 	@Override
 	public PyramidContents<T, V> getPyramidContents() {
@@ -168,7 +163,7 @@ public class Pyramidal5DImageDataImpl<
 	 */
 	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T, V > backend, final Integer preferredMaxWidth )
 	{
-		this.context = context;
+		setContext( context );
 		contents = backend.load();
 		preferredResolutionLevel = selectResolutionLevel( contents.cachedCellImgs, preferredMaxWidth );
 
