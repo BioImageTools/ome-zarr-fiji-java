@@ -2,6 +2,9 @@ package sc.fiji.ome.zarr.pyramid;
 
 import org.scijava.Contextual;
 
+import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.metadata.Omero;
+
 public interface Pyramidal extends Contextual
 {
 
@@ -12,43 +15,29 @@ public interface Pyramidal extends Contextual
 		return getPyramidal5DImageData().numResolutionLevels();
 	}
 
-	/*
-		public List< SourceAndConverter< T > > asSources()
+	// TODO: the methods below this may be removed
+	default int numChannels()
 	{
-		return data.asSources();
+		return getPyramidal5DImageData().numChannels();
 	}
 
-	public int numChannels()
+	default int numTimepoints()
 	{
-		return data.numChannels();
+		return getPyramidal5DImageData().numTimepoints();
 	}
 
-	public int numTimepoints()
+	default Omero getOmeroProperties()
 	{
-		return data.numTimepoints();
+		return getPyramidal5DImageData().getOmeroProperties();
 	}
 
-	public Omero getOmeroProperties()
+	default VoxelDimensions voxelDimensions()
 	{
-		return data.getOmeroProperties();
+		return getPyramidal5DImageData().voxelDimensions();
 	}
 
-	public int numResolutions()
+	default String getPyramidName()
 	{
-		return data.numResolutionLevels();
+		return getPyramidal5DImageData().getName();
 	}
-
-	public VoxelDimensions voxelDimensions()
-	{
-		return data.voxelDimensions();
-	}
-
-	public String getPyramidName()
-	{
-		return data.getName();
-	}
-
-
-	 */
-
 }
