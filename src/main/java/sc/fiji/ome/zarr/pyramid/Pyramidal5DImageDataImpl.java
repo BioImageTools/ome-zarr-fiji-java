@@ -71,12 +71,13 @@ public class Pyramidal5DImageDataImpl<
 		extends AbstractContextual
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
-	private final PyramidContents<T, V> contents;
+	private final PyramidContents< T, V > contents;
 
 	private final int preferredResolutionLevel;
 
 	@Override
-	public PyramidContents<T, V> getPyramidContents() {
+	public PyramidContents< T, V > getPyramidContents()
+	{
 		return contents;
 	}
 
@@ -85,12 +86,6 @@ public class Pyramidal5DImageDataImpl<
 	{
 		return preferredResolutionLevel;
 	}
-
-
-
-
-
-
 
 	private final String name;
 
