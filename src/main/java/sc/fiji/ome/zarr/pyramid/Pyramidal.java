@@ -1,13 +1,16 @@
 package sc.fiji.ome.zarr.pyramid;
 
-public interface Pyramidal {
+import org.scijava.Contextual;
+
+public interface Pyramidal extends Contextual
+{
 
 	Pyramidal5DImageData< ? > getPyramidal5DImageData();
 
-	default int numResolutions() {
+	default int numResolutions()
+	{
 		return getPyramidal5DImageData().numResolutionLevels();
 	}
-
 
 	/*
 		public List< SourceAndConverter< T > > asSources()
