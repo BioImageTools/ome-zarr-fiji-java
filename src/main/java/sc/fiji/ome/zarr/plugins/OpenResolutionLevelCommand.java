@@ -41,7 +41,7 @@ import org.scijava.ui.UIService;
 
 import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
-import sc.fiji.ome.zarr.util.BdvFocusService;
+import sc.fiji.ome.zarr.util.PyramidalService;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Resolution Level..." )
 public class OpenResolutionLevelCommand extends DynamicCommand
@@ -53,7 +53,7 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	private UIService uiService;
 
 	@Parameter
-	private BdvFocusService pyramidalService;
+	private PyramidalService pyramidalService;
 
 	@Parameter
 	private Pyramidal pyramidal;

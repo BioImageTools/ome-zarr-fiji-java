@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.PyramidalBdvDataset;
-import sc.fiji.ome.zarr.util.BdvFocusService;
+import sc.fiji.ome.zarr.util.PyramidalService;
 import sc.fiji.ome.zarr.util.BdvUtils;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
@@ -52,7 +52,7 @@ public class OpenInBDVCommand implements Command
 	private UIService uiService;
 
 	@Parameter( required = false )
-	private BdvFocusService pyramidalService;
+	private PyramidalService pyramidalService;
 
 	@Parameter( required = false )
 	private Pyramidal pyramidal;

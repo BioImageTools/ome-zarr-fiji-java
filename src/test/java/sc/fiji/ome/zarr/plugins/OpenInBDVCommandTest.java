@@ -48,7 +48,7 @@ import org.scijava.command.CommandService;
 
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.pyramid.Pyramidal;
-import sc.fiji.ome.zarr.util.BdvFocusService;
+import sc.fiji.ome.zarr.util.PyramidalService;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class OpenInBDVCommandTest
@@ -75,7 +75,7 @@ class OpenInBDVCommandTest
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
 			new ZarrOpenActions( path.toUri(), context ).openIJWithImage();
 
-			final BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			final DatasetService datasetService = context.getService( DatasetService.class );
 			assertEquals( 1, datasetService.getDatasets().size() );
 			assertEquals( 1, pyramidalService.getPyramidals().size() );
@@ -96,7 +96,7 @@ class OpenInBDVCommandTest
 	/**
 	 * When a dataset is already open in BDV and the command is invoked again (with no active
 	 * {@link net.imagej.display.ImageDisplay}), it should fall back to the focused BDV dataset via
-	 * {@link BdvFocusService} and produce a second, distinct {@link Pyramidal} sharing
+	 * {@link PyramidalService} and produce a second, distinct {@link Pyramidal} sharing
 	 * the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData}.
 	 */
 	@Test
@@ -109,7 +109,7 @@ class OpenInBDVCommandTest
 			new ZarrOpenActions( path.toUri(), context ).openBDVWithImage();
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
-			final BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertEquals( 0, datasetService.getDatasets().size() );
 			assertEquals( 1, pyramidalService.getPyramidals().size() );
 

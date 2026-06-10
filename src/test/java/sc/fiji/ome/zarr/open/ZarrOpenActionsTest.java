@@ -99,7 +99,7 @@ import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.util.BdvFocusService;
+import sc.fiji.ome.zarr.util.PyramidalService;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
@@ -574,7 +574,7 @@ class ZarrOpenActionsTest
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			BdvHandle bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
 
-			BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertNotNull( pyramidalService );
 			List< Pyramidal > pyramidals = pyramidalService.getPyramidals();
 			assertNotNull( pyramidals );
@@ -730,7 +730,7 @@ class ZarrOpenActionsTest
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertEquals( 2, datasetService.getDatasets().size() );
 
-			BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertEquals( 2, pyramidalService.getPyramidals().size() );
 
 			// Each BDV open creates one additional dataset backed by the full pyramid
@@ -813,7 +813,7 @@ class ZarrOpenActionsTest
 				// BDV open covers all resolution levels and registers one dataset
 				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
 
-				BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+				PyramidalService pyramidalService = context.getService( PyramidalService.class );
 				DatasetService datasetService = context.getService( DatasetService.class );
 				assertEquals( 1, pyramidalService.getPyramidals().size() );
 				assertEquals( 0, datasetService.getDatasets().size() );
@@ -872,7 +872,7 @@ class ZarrOpenActionsTest
 				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
 				actions.openIJWithImage( 1 );
 
-				BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+				PyramidalService pyramidalService = context.getService( PyramidalService.class );
 				PyramidalDataset ijLevel0First = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
 				PyramidalDataset ijLevel0Second = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
 				PyramidalBdvDataset< ? > bdv = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );

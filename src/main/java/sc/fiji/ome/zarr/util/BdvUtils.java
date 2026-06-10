@@ -76,18 +76,19 @@ public class BdvUtils
 
 	/**
 	 * Displays the given pyramidal dataset in a BigDataViewer (BDV) window and registers
-	 * it with {@code bdvFocusService} for focus tracking.<br>
+	 * it with {@code pyramidalService} for focus tracking.<br>
 	 * Increments the dataset's reference count and decrements it when the window closes.
-	 * If {@code bdvFocusService} is non-null, the dataset is immediately marked as active
+	 * If {@code pyramidalService} is non-null, the dataset is immediately marked as active
 	 * and a {@code WindowFocusListener} keeps it up to date as focus moves between windows.
 	 *
 	 * @param pyramidalDataset the input dataset to be displayed in BDV
-	 * @param bdvFocusService the service to notify of focus changes, or {@code null} to skip tracking
+	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking
 	 * @return a {@code BdvHandle} instance representing the BDV window
 	 */
 	public static < T extends NativeType< T > & RealType< T > > BdvHandle showBdvAndRegisterDataset(
 			final PyramidalBdvDataset< ? > pyramidalDataset,
-			final BdvFocusService bdvFocusService )
+			final PyramidalService pyramidalService
+	)
 	{
 		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.< T >asSources(), pyramidalDataset.numTimepoints(),
 				BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
@@ -100,32 +101,33 @@ public class BdvUtils
 		if ( topLevelContainer instanceof Window )
 		{
 			final Window window = ( Window ) topLevelContainer;
-			registerDatasetLifecycle( pyramidalDataset, window, bdvFocusService );
+			registerDatasetLifecycle( pyramidalDataset, window, pyramidalService );
 		}
 		return bdvHandle;
 	}
 
 	/**
-	 * Increments the reference count for this dataset and, if {@code bdvFocusService} is non-null,
+	 * Increments the reference count for this dataset and, if {@code pyramidalService} is non-null,
 	 * registers the BDV window with it for focus tracking. Also installs a listener to decrement the
 	 * reference count (and unregister the window) when the BDV window closes.
 	 * <p>
-	 * Focus switches themselves are observed centrally by {@link BdvFocusService} via the AWT
+	 * Focus switches themselves are observed centrally by {@link PyramidalService} via the AWT
 	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
 	 */
 	private static void registerDatasetLifecycle( final PyramidalBdvDataset< ? > pyramidalDataset, final Window window,
-			final BdvFocusService bdvFocusService )
+			final PyramidalService pyramidalService
+	)
 	{
 		pyramidalDataset.incrementReferences();
-		if ( bdvFocusService != null )
-			bdvFocusService.registerBdvWindow( window, pyramidalDataset );
+		if ( pyramidalService != null )
+			pyramidalService.registerBdvWindow( window, pyramidalDataset );
 		window.addWindowListener( new WindowAdapter()
 		{
 			@Override
 			public void windowClosed( final WindowEvent e )
 			{
-				if ( bdvFocusService != null )
-					bdvFocusService.unregisterBdvWindow( window );
+				if ( pyramidalService != null )
+					pyramidalService.unregisterBdvWindow( window );
 				pyramidalDataset.decrementReferences();
 			}
 		} );

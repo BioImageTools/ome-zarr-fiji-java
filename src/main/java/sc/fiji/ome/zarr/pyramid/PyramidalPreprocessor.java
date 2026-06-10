@@ -5,14 +5,14 @@ import org.scijava.module.process.AbstractSingleInputPreprocessor;
 import org.scijava.module.process.PreprocessorPlugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import sc.fiji.ome.zarr.util.BdvFocusService;
+import sc.fiji.ome.zarr.util.PyramidalService;
 
 @Plugin( type = PreprocessorPlugin.class )
 public class PyramidalPreprocessor extends AbstractSingleInputPreprocessor
 {
 
 	@Parameter
-	private BdvFocusService pyramidalService;
+	private PyramidalService pyramidalService;
 
 	@Override
 	public void process( final Module module )

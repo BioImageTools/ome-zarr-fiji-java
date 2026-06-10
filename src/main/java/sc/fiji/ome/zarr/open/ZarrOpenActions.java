@@ -68,7 +68,7 @@ import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.util.BdvFocusService;
+import sc.fiji.ome.zarr.util.PyramidalService;
 import sc.fiji.ome.zarr.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 
@@ -228,9 +228,9 @@ public class ZarrOpenActions
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalBdvDataset< ? > dataset = new PyramidalBdvDataset<>(getPyramid());
-						final BdvFocusService bdvFocusService = context.getService( BdvFocusService.class );
-						final Object result = BdvUtils.showBdvAndRegisterDataset( dataset, bdvFocusService );
+						final PyramidalBdvDataset< ? > dataset = new PyramidalBdvDataset<>( getPyramid() );
+						final PyramidalService pyramidalService = context.getService( PyramidalService.class );
+						final Object result = BdvUtils.showBdvAndRegisterDataset( dataset, pyramidalService );
 						logger.info( "Opened dataset in BigDataViewer: {}", inputUri );
 						return result;
 					},

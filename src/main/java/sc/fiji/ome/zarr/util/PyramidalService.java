@@ -50,34 +50,24 @@ import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.pyramid.Pyramidal;
 
 /**
- * Tracks which image window — a BigDataViewer window or an ImageJ window — was the most
- * recently focused, so that commands can resolve the dataset the user actually means.
+ * Tracks which BDV or ImageJ window holding a {@link Pyramidal} was most recently focused.
  * <p>
- * BDV windows are not ImageJ2 displays, and in a legacy Fiji session the image windows are
- * IJ1 {@link ImageWindow}s whose focus changes never reach the SciJava {@code EventService} at
- * all (the active image is resolved on demand from {@code ij.WindowManager}, not via events).
- * Listening to {@code DisplayActivatedEvent} therefore misses focus switches between already-open
- * windows. Instead this service listens at the AWT level — a single {@code "activeWindow"}
- * {@link PropertyChangeListener} on the {@link KeyboardFocusManager} fires for every real window:
- * <ul>
- * <li>focus moves to a registered BDV window → that window's dataset becomes the active pyramidal;</li>
- * <li>focus moves to an ImageJ {@link ImageWindow} → the window's image becomes the active pyramidal
- *     if it is a {@link sc.fiji.ome.zarr.pyramid.Pyramidal}, otherwise the active pyramidal is cleared;</li>
- * <li>focus moves to anything else (the main toolbar while navigating menus, dialogs) → ignored,
- *     so the last image-window state survives menu navigation.</li>
- * </ul>
- * Ignoring non-image windows mirrors how IJ1's {@code WindowManager} itself disregards focus on
- * non-image windows, which is what makes menu-invoked commands resolve the correct dataset.
+ * BDV windows are not ImageJ2 displays, and IJ1 {@link ImageWindow} focus changes never reach
+ * the SciJava {@code EventService}. This service therefore listens at the AWT level via a
+ * {@code "activeWindow"} {@link PropertyChangeListener} on the {@link KeyboardFocusManager}:
+ * BDV windows set the active pyramidal directly; ImageJ windows resolve it from the displayed
+ * image; all other windows (toolbar, dialogs) are ignored so menu navigation doesn't clear state.
  */
-// TODO rename to "PyramidalService" or something
 @Plugin( type = SciJavaService.class )
-public class BdvFocusService extends AbstractService implements SciJavaService
+public class PyramidalService extends AbstractService implements SciJavaService
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	@SuppressWarnings( "unused" )
 	@Parameter( required = false )
 	private ConvertService convertService;
 
+	@SuppressWarnings( "unused" )
 	@Parameter
 	private ObjectService objectService;
 
@@ -130,9 +120,7 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	}
 
 	/**
-	 * Registers a newly opened BDV {@code window} and the {@code dataset} it displays, and gives it
-	 * focus precedence. The {@link KeyboardFocusManager} listener uses the registration to recognise
-	 * the window when focus later returns to it.
+	 * Registers a BDV {@code window} and the {@code dataset} it displays, and makes it the active pyramidal.
 	 */
 	public void registerBdvWindow( final Window window, final Pyramidal dataset )
 	{
@@ -141,8 +129,8 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 	}
 
 	/**
-	 * Unregisters a BDV {@code window} when it closes. If its dataset currently holds precedence,
-	 * precedence is cleared so the next focus event (or the IJ2 injection) decides.
+	 * Unregisters a BDV {@code window} when it closes. Clears the active pyramidal if it belonged
+	 * to that window.
 	 */
 	public void unregisterBdvWindow( final Window window )
 	{
@@ -163,7 +151,7 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 		logger.trace( "Active pyramidal set to: {}", activePyramidal.get() );
 	}
 
-	/** Hands precedence back to the IJ active-display injection when an ImageJ window is focused. */
+	/** Sets the active pyramidal from the focused ImageJ window's image, or clears it if the image is not a {@link Pyramidal}. */
 	public void notifyImageJWindowFocused( final ImageWindow window )
 	{
 		logger.trace( "ImageJ window focused" );
@@ -181,18 +169,13 @@ public class BdvFocusService extends AbstractService implements SciJavaService
 		logger.trace( "Active pyramidal resolved from IJ window: {}", activePyramidal.get() );
 	}
 
-	/**
-	 * Returns the most recently focused {@link Pyramidal}, whether it came from a BDV window
-	 * or an ImageJ window, or {@code null} if no pyramidal image has been focused yet.
-	 */
+	/** Returns the most recently focused {@link Pyramidal}, or {@code null} if none has been focused. */
 	public Pyramidal getActivePyramidal()
 	{
 		return activePyramidal.get();
 	}
 
-	/**
-	 * Gets a list of all {@link Pyramidal}s. This method is a shortcut that delegates to {@link ObjectService}.
-	 */
+	/** Returns all registered {@link Pyramidal}s via {@link ObjectService}. */
 	public List< Pyramidal > getPyramidals()
 	{
 		return objectService.getObjects( Pyramidal.class );

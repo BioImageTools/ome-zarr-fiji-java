@@ -60,7 +60,7 @@ import javax.swing.SwingUtilities;
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
-import sc.fiji.ome.zarr.util.BdvFocusService;
+import sc.fiji.ome.zarr.util.PyramidalService;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class OpenResolutionLevelCommandTest
@@ -111,7 +111,7 @@ class OpenResolutionLevelCommandTest
 			runCommand( context, inputs );
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
-			final BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertEquals( 1, datasetService.getDatasets().size() );
 			assertEquals( 2, pyramidalService.getPyramidals().size() );
 			assertEquals( 32, datasetService.getDatasets().get( 0 ).getImgPlus().dimension( 0 ) );
@@ -151,7 +151,7 @@ class OpenResolutionLevelCommandTest
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
 			new ZarrOpenActions( path.toUri(), context ).openBDVWithImage();
-			final BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			final Pyramidal bdvPyramidal = pyramidalService.getPyramidals().get( 0 );
 
 			final Map< String, Object > inputs = new HashMap<>();
@@ -179,7 +179,7 @@ class OpenResolutionLevelCommandTest
 			new ZarrOpenActions( path.toUri(), context ).openIJWithImage();
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
-			final BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertEquals( 1, datasetService.getDatasets().size() );
 			assertEquals( 1, pyramidalService.getPyramidals().size() );
 			final Pyramidal ij2Dataset = pyramidalService.getPyramidals().get( 0 );
@@ -215,7 +215,7 @@ class OpenResolutionLevelCommandTest
 			runCommand( context, inputs );
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
-			final BdvFocusService pyramidalService = context.getService( BdvFocusService.class );
+			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertEquals( 2, datasetService.getDatasets().size() );
 			assertEquals( 3, pyramidalService.getPyramidals().size() );
 			// resolution 1 of the BDV (2D) dataset must be opened, not the IJ (5D) one
