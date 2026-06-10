@@ -46,7 +46,6 @@ import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NonExistingResolutionLevelException;
-import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
@@ -109,12 +108,6 @@ public class Pyramidal5DImageDataImpl<
 
 	private final Omero omero;
 
-	/** One entry per resolution level. */
-	private final CachedCellImg< T, ?>[] cachedCellImgs;
-
-	/** Axes per resolution level: {@code [resolutionLevel][axisIndex]}. */
-	private final AxisCalibration[][] axesPerLevel;
-
 	/**
 	 * Open an OME-Zarr image with the default N5 backend.
 	 *
@@ -175,10 +168,7 @@ public class Pyramidal5DImageDataImpl<
 		this.type = contents.type;
 		this.voxelDimensions = contents.voxelDimensions;
 		this.omero = contents.omero;
-		this.cachedCellImgs = contents.cachedCellImgs;
-		this.axesPerLevel = contents.axesPerLevel;
 	}
-
 
 	/**
 	 * Returns the index of the coarsest resolution level whose x-width (index 0
