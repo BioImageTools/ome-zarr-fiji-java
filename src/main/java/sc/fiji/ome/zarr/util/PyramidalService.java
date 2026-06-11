@@ -88,9 +88,8 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	public void initialize()
 	{
 		activePyramidal.set( null );
-		focusListener = evt -> onActiveWindowChanged( ( Window ) evt.getNewValue() );
-		KeyboardFocusManager.getCurrentKeyboardFocusManager()
-				.addPropertyChangeListener( "activeWindow", focusListener );
+		focusListener = event -> onActiveWindowChanged( ( Window ) event.getNewValue() );
+		KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener( "activeWindow", focusListener );
 		imageCloseListener = new ImageListener()
 		{
 			@Override
@@ -132,13 +131,8 @@ public class PyramidalService extends AbstractService implements SciJavaService
 		ijImages.clear();
 	}
 
-	// TODO: Fix handling of closing image windows:
-	//  When the ImageWindow containing a PyramidalDataset is closed, that
-	//  PyramidalDataset stays active, because we don't pick up on the closing
-	//  event and there is no other ImageWindow taking focus.
-
 	/**
-	 * Updates focus precedence when the active AWT window changes. A registered BDV window gives
+	 * Updates focus precedence when the active window changes. A registered BDV window gives
 	 * BDV precedence; an ImageJ {@link ImageWindow} returns precedence to the IJ dataset; any other
 	 * window (toolbar, dialogs) is ignored so the last image-window state persists.
 	 */
@@ -168,7 +162,7 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	 */
 	public void unregisterBdvWindow( final Window window )
 	{
-		logger.trace( "BDV window closed: {}", window );
+		logger.trace( "BDV window closed" );
 		logger.trace( "Active before unregister: {}", activePyramidal.get() );
 		final Pyramidal removed = bdvWindows.remove( window );
 		logger.trace( "Removing {}", removed );
@@ -192,8 +186,8 @@ public class PyramidalService extends AbstractService implements SciJavaService
 		Pyramidal active = null;
 		if ( convertService != null )
 		{
-			final ImagePlus imp = window.getImagePlus();
-			final Dataset dataset = convertService.convert( imp, Dataset.class );
+			final ImagePlus imagePlus = window.getImagePlus();
+			final Dataset dataset = convertService.convert( imagePlus, Dataset.class );
 			if ( dataset instanceof Pyramidal )
 			{
 				active = ( Pyramidal ) dataset;
