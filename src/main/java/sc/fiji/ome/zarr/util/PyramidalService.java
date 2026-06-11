@@ -28,6 +28,7 @@
  */
 package sc.fiji.ome.zarr.util;
 
+import ij.ImageListener;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import java.awt.KeyboardFocusManager;
@@ -74,9 +75,14 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	/** Registered BDV windows and the dataset each one displays. */
 	private final Map< Window, Pyramidal > bdvWindows = new ConcurrentHashMap<>();
 
+	/** ImagePlus instances known to wrap a {@link Pyramidal}, populated on IJ window focus. */
+	private final Map< ImagePlus, Pyramidal > ijImages = new ConcurrentHashMap<>();
+
 	private final AtomicReference< Pyramidal > activePyramidal = new AtomicReference<>();
 
 	private PropertyChangeListener focusListener;
+
+	private ImageListener imageCloseListener;
 
 	@Override
 	public void initialize()
@@ -85,6 +91,27 @@ public class PyramidalService extends AbstractService implements SciJavaService
 		focusListener = evt -> onActiveWindowChanged( ( Window ) evt.getNewValue() );
 		KeyboardFocusManager.getCurrentKeyboardFocusManager()
 				.addPropertyChangeListener( "activeWindow", focusListener );
+		imageCloseListener = new ImageListener()
+		{
+			@Override
+			public void imageOpened( final ImagePlus imp )
+			{ /* not needed */ }
+
+			@Override
+			public void imageUpdated( final ImagePlus imp )
+			{ /* not needed */ }
+
+			@Override
+			public void imageClosed( final ImagePlus imagePlus )
+			{
+				logger.trace( "Image closed: {}", imagePlus );
+				final Pyramidal pyramidal = ijImages.remove( imagePlus );
+				if ( pyramidal != null )
+					activePyramidal.compareAndSet( pyramidal, null );
+				logger.trace( "Active pyramidal: {}", activePyramidal.get() );
+			}
+		};
+		ImagePlus.addImageListener( imageCloseListener );
 	}
 
 	@Override
@@ -95,7 +122,14 @@ public class PyramidalService extends AbstractService implements SciJavaService
 			KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener( "activeWindow", focusListener );
 			focusListener = null;
 		}
+
+		if ( imageCloseListener != null )
+		{
+			ImagePlus.removeImageListener( imageCloseListener );
+			imageCloseListener = null;
+		}
 		bdvWindows.clear();
+		ijImages.clear();
 	}
 
 	// TODO: Fix handling of closing image windows:
@@ -163,6 +197,11 @@ public class PyramidalService extends AbstractService implements SciJavaService
 			if ( dataset instanceof Pyramidal )
 			{
 				active = ( Pyramidal ) dataset;
+				ijImages.put( imagePlus, active );
+			}
+			else
+			{
+				ijImages.remove( imagePlus );
 			}
 		}
 		activePyramidal.set( active );
