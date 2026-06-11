@@ -21,7 +21,7 @@
     * [ ] The release script pushes to master on github.com
         * This triggers a *github Action* which copies the version to be released to maven.scijava.org.
           cf. https://maven.scijava.org/#browse/search/generic=keyword%3Dome-zarr-fiji
-* [ ] Download created maven.scijava.org file from maven
+* [ ] Download the created artefact from maven.scijava.org file
   central (https://maven.scijava.org/#browse/search/generic=keyword%3Dome-zarr-fiji)
     * [ ] Delete jar-file from last release version from local Fiji installation path (if any)
     * [ ] Copy jar file of the new version to local Fiji installation path
