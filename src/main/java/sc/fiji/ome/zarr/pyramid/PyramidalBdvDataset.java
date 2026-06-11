@@ -58,6 +58,7 @@ public class PyramidalBdvDataset< T extends NativeType< T > & RealType< T > > ex
 		return sources;
 	}
 
+	@Override
 	public int numTimepoints()
 	{
 		return data.numTimepoints();
@@ -68,6 +69,7 @@ public class PyramidalBdvDataset< T extends NativeType< T > & RealType< T > > ex
 		return data.getName();
 	}
 
+	@Override
 	public Omero getOmeroProperties()
 	{
 		return data.getOmeroProperties();
@@ -129,7 +131,7 @@ public class PyramidalBdvDataset< T extends NativeType< T > & RealType< T > > ex
 	}
 
 	/**
-	 * Splits a single multi-channel image stack into one {@link RandomAccessibleInterval} per channel,
+	 * Splits a single multichannel image stack into one {@link RandomAccessibleInterval} per channel,
 	 * and ensures every result has XYZ and T dimensions (adding singleton axes where absent).
 	 */
 	@SuppressWarnings( "unchecked" )
@@ -139,7 +141,7 @@ public class PyramidalBdvDataset< T extends NativeType< T > & RealType< T > > ex
 
 		final RandomAccessibleInterval< T >[] sourceStacks = new RandomAccessibleInterval[ numChannels ];
 
-		// If there is a channels dimension, slice img along that dimension.
+		// If there is a channel dimension, slice img along that dimension.
 		if ( channelAxisIndex != -1 )
 		{
 			Arrays.setAll( sourceStacks, c -> Views.hyperSlice( img, channelAxisIndex, c ) );
@@ -166,6 +168,7 @@ public class PyramidalBdvDataset< T extends NativeType< T > & RealType< T > > ex
 
 	// -- Reference counting, similar to what AbstractData does --
 
+	@SuppressWarnings( "unused" )
 	@Parameter( required = false )
 	private ObjectService objectService;
 
