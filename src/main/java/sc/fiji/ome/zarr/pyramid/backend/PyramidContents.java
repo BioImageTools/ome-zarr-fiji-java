@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -45,7 +45,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  * image data class copies these fields into its own state.
  * <p>
  * Indices in {@code cachedCellImgs}, {@code volatileImgs} and {@code transforms}
- * are in resolution-level order (index 0 is highest resolution).
+ * are in resolution-level order (index 0 is the highest resolution).
  * The imglib2 axis indices follow F-order (x, y, z, c, t), the order produced
  * after the backend has reversed any zarr C-order shapes.
  *
@@ -78,7 +78,10 @@ public final class PyramidContents<
 
 	public final RandomAccessibleInterval< V >[] volatileImgs;
 
-	public final AxisCalibration[] axes;
+	/**
+	 * Axes per resolution level: {@code [resolutionLevel][axisIndex]}.
+	 */
+	public final AxisCalibration[][] axesPerLevel;
 
 	/** imglib2-order index of the channel axis, or -1 if absent. */
 	public final int channelAxisIndex;
@@ -108,7 +111,7 @@ public final class PyramidContents<
 		this.transforms = b.transforms;
 		this.cachedCellImgs = b.cachedCellImgs;
 		this.volatileImgs = b.volatileImgs;
-		this.axes = b.axes;
+		this.axesPerLevel = b.axesPerLevel;
 		this.channelAxisIndex = b.channelAxisIndex;
 		this.zAxisPresent = b.zAxisPresent;
 		this.timeAxisPresent = b.timeAxisPresent;
@@ -149,7 +152,7 @@ public final class PyramidContents<
 
 		private RandomAccessibleInterval< V >[] volatileImgs;
 
-		private AxisCalibration[] axes;
+		private AxisCalibration[][] axesPerLevel;
 
 		private int channelAxisIndex = -1;
 
@@ -227,9 +230,9 @@ public final class PyramidContents<
 			return this;
 		}
 
-		public Builder< T, V > axes( final AxisCalibration[] a )
+		public Builder< T, V > axesPerLevel( final AxisCalibration[][] a )
 		{
-			this.axes = a;
+			this.axesPerLevel = a;
 			return this;
 		}
 

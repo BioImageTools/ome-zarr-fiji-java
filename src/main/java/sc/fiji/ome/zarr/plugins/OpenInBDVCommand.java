@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,42 +28,45 @@
  */
 package sc.fiji.ome.zarr.plugins;
 
-import net.imagej.Dataset;
-import net.imglib2.util.Cast;
+import java.lang.invoke.MethodHandles;
 
 import org.scijava.command.Command;
-import org.scijava.log.LogLevel;
-import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import sc.fiji.ome.zarr.pyramid.Pyramidal;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
+import sc.fiji.ome.zarr.util.PyramidalService;
 import sc.fiji.ome.zarr.util.BdvUtils;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
 {
-	@Parameter
-	LogService logService;
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	@Parameter
-	public Dataset dataset;
+	private UIService uiService;
+
+	@Parameter( required = false )
+	private PyramidalService pyramidalService;
+
+	@Parameter( required = false )
+	private Pyramidal pyramidal;
 
 	@Override
 	public void run()
 	{
-		logService.log( LogLevel.DEBUG, "Trying to open: " + dataset.getName() );
-		logService.log( LogLevel.DEBUG, "Class: " + dataset.getClass() );
-		logService.log( LogLevel.DEBUG, "Dataset instanceof PyramidalDataset: " + ( dataset instanceof PyramidalDataset ) );
-		if ( dataset instanceof PyramidalDataset )
+		logger.trace( "Running OpenInBDVCommand. pyramidal={}", pyramidal );
+		if ( pyramidal == null )
 		{
-			logService.log( 0, "Opening " + dataset.getClass() + " in BDV..." );
-			PyramidalDataset< ? > pyramidalDataset = Cast.unchecked( dataset );
-			BdvUtils.showBdvAndRegisterDataset( pyramidalDataset );
+			uiService.showDialog( "The active image is not an OME-Zarr dataset.", "Open in BigDataViewer" );
+			return;
 		}
-		else
-		{
-			logService.error( "Cannot display datasets of type " + dataset.getClass() + " in BDV." );
-		}
+		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getPyramidal5DImageData() );
+		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
 	}
 }

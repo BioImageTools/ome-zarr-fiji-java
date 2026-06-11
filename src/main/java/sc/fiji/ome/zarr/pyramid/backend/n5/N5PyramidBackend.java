@@ -128,7 +128,11 @@ public class N5PyramidBackend<
 			volatileImgs[ level.index ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level.index ], sharedQueue );
 		}
 
-		final AxisCalibration[] axes = createAxisCalibrations( level0 );
+		final AxisCalibration[][] axesPerLevel = new AxisCalibration[ numResolutionLevels ][];
+		for ( final ResolutionLevel level : multiscale.getLevels() )
+		{
+			axesPerLevel[ level.index ] = createAxisCalibrations( level );
+		}
 
 		final int channelAxisIndex = findAxisIndex( level0, AxisCalibration.C );
 		final int zAxisIndex = findAxisIndex( level0, AxisCalibration.Z );
@@ -148,7 +152,7 @@ public class N5PyramidBackend<
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
 				.volatileImgs( volatileImgs )
-				.axes( axes )
+				.axesPerLevel( axesPerLevel )
 				.channelAxisIndex( channelAxisIndex )
 				.zAxisPresent( zAxisIndex > 0 )
 				.timeAxisPresent( timeAxisIndex > 0 )

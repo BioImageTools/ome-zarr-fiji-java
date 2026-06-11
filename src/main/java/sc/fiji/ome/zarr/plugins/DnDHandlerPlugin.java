@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -48,7 +48,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
-import sc.fiji.ome.zarr.util.BdvHandleService;
 import sc.fiji.ome.zarr.util.ZarrUtils;
 
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
@@ -58,9 +57,6 @@ public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
 
 	//the "innocent" product of the (hypothetical) file reading... which Fiji will not display
 	private static final Object FAKE_INPUT = new ArrayList<>( 0 );
-
-	@Parameter
-	private BdvHandleService bdvHandleService; //TODO, is it really used down-stream?
 
 	@Parameter
 	private PrefService prefService;

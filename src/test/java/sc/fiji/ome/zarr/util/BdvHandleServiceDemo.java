@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,45 +35,55 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 import java.util.Random;
 
-public class BdvHandleServiceDemo {
-	public static void main(String[] args) {
-		ImageJ ij = new ImageJ();
-		BdvHandleService bdvService = ij.context().getService(BdvHandleService.class);
+public class BdvHandleServiceDemo
+{
+	public static void main( String[] args )
+	{
+		new ImageJ();
+		BdvHandleService bdvService = new BdvHandleService();
 
 		//fake image
 		final Random rng = new Random();
-		final Img<UnsignedShortType> img = ArrayImgs.unsignedShorts(100, 100, 30);
-		img.forEach(p -> p.setReal(rng.nextFloat()));
+		final Img< UnsignedShortType > img = ArrayImgs.unsignedShorts( 100, 100, 30 );
+		img.forEach( p -> p.setReal( rng.nextFloat() ) );
 
-		bdvService.openNewBdv(img,"source 1");
+		bdvService.openNewBdv( img, "source 1" );
 
 		int iters = 20;
-		while (iters > 0 && bdvService.isLastBdvStillAlive()) {
-			try {
-				System.out.println("Seconds before adding a another image: "+iters);
-				Thread.sleep(1000);
+		while ( iters > 0 && bdvService.isLastBdvStillAlive() )
+		{
+			try
+			{
+				System.out.println( "Seconds before adding a another image: " + iters );
+				Thread.sleep( 1000 );
 				iters--;
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
+			}
+			catch ( InterruptedException e )
+			{
+				throw new RuntimeException( e );
 			}
 		}
 
-		System.out.println("adding new image.");
-		final Img<UnsignedShortType> imgB = ArrayImgs.unsignedShorts(100, 100, 30);
-		imgB.forEach(p -> p.setReal(rng.nextFloat()));
-		bdvService.addToLastOrInNewBdv(imgB,"source 2");
+		System.out.println( "adding new image." );
+		final Img< UnsignedShortType > imgB = ArrayImgs.unsignedShorts( 100, 100, 30 );
+		imgB.forEach( p -> p.setReal( rng.nextFloat() ) );
+		bdvService.addToLastOrInNewBdv( imgB, "source 2" );
 
 		iters = 20;
-		while (iters > 0 && bdvService.isLastBdvStillAlive()) {
-			try {
-				System.out.println("Seconds before finishing the program: "+iters);
-				Thread.sleep(1000);
+		while ( iters > 0 && bdvService.isLastBdvStillAlive() )
+		{
+			try
+			{
+				System.out.println( "Seconds before finishing the program: " + iters );
+				Thread.sleep( 1000 );
 				iters--;
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
+			}
+			catch ( InterruptedException e )
+			{
+				throw new RuntimeException( e );
 			}
 		}
 
-		System.out.println("done.");
+		System.out.println( "done." );
 	}
 }

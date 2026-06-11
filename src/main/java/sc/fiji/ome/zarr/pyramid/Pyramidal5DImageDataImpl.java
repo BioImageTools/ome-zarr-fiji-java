@@ -29,43 +29,23 @@
 package sc.fiji.ome.zarr.pyramid;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import net.imagej.Dataset;
-import net.imagej.DefaultDataset;
-import net.imagej.ImgPlus;
-import net.imagej.axis.Axes;
-import net.imagej.axis.AxisType;
-import net.imagej.axis.DefaultLinearAxis;
-import net.imglib2.EuclideanSpace;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.cache.img.CachedCellImg;
-import net.imglib2.Volatile;
-import net.imglib2.converter.Converter;
-import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.util.Cast;
-import net.imglib2.view.Views;
-
+import org.scijava.AbstractContextual;
 import org.scijava.Context;
-import org.scijava.convert.ConvertService;
 
-import bdv.BigDataViewer;
-import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.viewer.SourceAndConverter;
-import ij.ImagePlus;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import net.imagej.Dataset;
+import net.imglib2.EuclideanSpace;
+import net.imglib2.Volatile;
+import net.imglib2.cache.img.CachedCellImg;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
-import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
+import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NonExistingResolutionLevelException;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
@@ -88,22 +68,24 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 public class Pyramidal5DImageDataImpl<
 		T extends NativeType< T > & RealType< T >,
 		V extends Volatile< T > & NativeType< V > & RealType< V > >
+		extends AbstractContextual
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
-	private static final Map< String, AxisType > AXIS_TYPE_MAP;
+	private final PyramidContents< T, V > contents;
 
-	static
+	private final int preferredResolutionLevel;
+
+	@Override
+	public PyramidContents< T, V > getPyramidContents()
 	{
-		final Map< String, AxisType > map = new HashMap<>();
-		map.put( AxisCalibration.X, Axes.X );
-		map.put( AxisCalibration.Y, Axes.Y );
-		map.put( AxisCalibration.Z, Axes.Z );
-		map.put( AxisCalibration.C, Axes.CHANNEL );
-		map.put( AxisCalibration.T, Axes.TIME );
-		AXIS_TYPE_MAP = Collections.unmodifiableMap( map );
+		return contents;
 	}
 
-	private final Context context;
+	@Override
+	public int preferredResolutionLevel()
+	{
+		return preferredResolutionLevel;
+	}
 
 	private final String name;
 
@@ -117,17 +99,9 @@ public class Pyramidal5DImageDataImpl<
 
 	private final T type;
 
-	private final V volatileType;
-
 	private final VoxelDimensions voxelDimensions;
 
-	private final AffineTransform3D[] transforms;
-
 	private final Omero omero;
-
-	private final Dataset ijDataset;
-
-	private final List< SourceAndConverter< T > > sourceAndConverters;
 
 	/**
 	 * Open an OME-Zarr image with the default N5 backend.
@@ -177,31 +151,18 @@ public class Pyramidal5DImageDataImpl<
 	 */
 	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T, V > backend, final Integer preferredMaxWidth )
 	{
-		final PyramidContents< T, V > contents = backend.load();
-		this.context = context;
+		setContext( context );
+		contents = backend.load();
+		preferredResolutionLevel = selectResolutionLevel( contents.cachedCellImgs, preferredMaxWidth );
+
 		this.name = contents.name;
 		this.numResolutionLevels = contents.numResolutionLevels;
 		this.numChannels = contents.numChannels;
 		this.numTimepoints = contents.numTimepoints;
 		this.numDimensions = contents.numDimensions;
 		this.type = contents.type;
-		this.volatileType = contents.volatileType;
 		this.voxelDimensions = contents.voxelDimensions;
-		this.transforms = contents.transforms;
 		this.omero = contents.omero;
-
-		final int resolutionLevel = selectResolutionLevel( contents.cachedCellImgs, preferredMaxWidth );
-		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.cachedCellImgs[ resolutionLevel ], name );
-		for ( int i = 0; i < contents.axes.length; i++ )
-		{
-			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( contents.axes[ i ].name, Axes.unknown() );
-			imgPlus.setAxis( new DefaultLinearAxis( axisType, contents.axes[ i ].unit, contents.axes[ i ].scale ), i );
-		}
-		this.ijDataset = new DefaultDataset( context, imgPlus );
-		this.ijDataset.setName( name );
-		this.ijDataset.setRGBMerged( false );
-
-		this.sourceAndConverters = initSourceAndConverters( contents );
 	}
 
 	/**
@@ -225,115 +186,26 @@ public class Pyramidal5DImageDataImpl<
 		throw new NoMatchingResolutionException( preferredMaxWidth, smallestWidth );
 	}
 
-	private List< SourceAndConverter< T > > initSourceAndConverters( final PyramidContents< T, V > contents )
-	{
-		final List< SourceAndConverter< T > > sources = new ArrayList<>();
-		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )
-		{
-			final RandomAccessibleInterval< V >[] channelsVolatile =
-					ensureOrdered4dDimensions(
-							extractChannel( contents.volatileImgs, contents.channelAxisIndex, channelNumber ),
-							contents.zAxisPresent, contents.timeAxisPresent );
-			final RandomAccessibleInterval< T >[] channels =
-					ensureOrdered4dDimensions(
-							extractChannel( contents.cachedCellImgs, contents.channelAxisIndex, channelNumber ),
-							contents.zAxisPresent, contents.timeAxisPresent );
-
-			final String channelLabel = contents.channelLabels[ channelNumber ];
-			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile =
-					new RandomAccessibleIntervalMipmapSource4D<>( channelsVolatile, volatileType, transforms, voxelDimensions, channelLabel,
-							true );
-			final RandomAccessibleIntervalMipmapSource4D< T > source4D =
-					new RandomAccessibleIntervalMipmapSource4D<>( channels, type, transforms, voxelDimensions, channelLabel, true );
-
-			final SourceAndConverter< T > sourceAndConverter = createSourceAndConverter( source4D, source4DVolatile );
-			sources.add( sourceAndConverter );
-			BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
-		}
-		return sources;
-	}
-
-	/**
-	 * If the channel dimension is present, hyper-slice it out at
-	 * {@code channelNumber}; otherwise return the input arrays unchanged.
-	 */
-	private < R > RandomAccessibleInterval< R >[] extractChannel( final RandomAccessibleInterval< R >[] sourceImgs,
-			final int channelAxisIndex, final int channelNumber )
-	{
-		final RandomAccessibleInterval< R >[] resultImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
-		for ( int level = 0; level < numResolutionLevels; level++ )
-		{
-			resultImgs[ level ] = channelAxisIndex < 0
-					? sourceImgs[ level ]
-					: Views.hyperSlice( sourceImgs[ level ], channelAxisIndex, channelNumber );
-		}
-		return resultImgs;
-	}
-
-	/**
-	 * Make sure images are 4D xyzt even if z and/or t are absent in the input
-	 * tensor. A missing z is inserted before t; a missing t is appended.
-	 */
-	private < R > RandomAccessibleInterval< R >[] ensureOrdered4dDimensions( final RandomAccessibleInterval< R >[] sourceImgs,
-			final boolean zAxisPresent, final boolean timeAxisPresent )
-	{
-		for ( int level = 0; level < numResolutionLevels; level++ )
-		{
-			RandomAccessibleInterval< R > img = sourceImgs[ level ];
-			if ( zAxisPresent )
-			{
-				if ( !timeAxisPresent ) // xyz → xyzt
-					img = Views.addDimension( img, 0, 0 );
-				// else xyzt already ordered correctly
-			}
-			else
-			{
-				if ( timeAxisPresent ) // xyt → xyzt: insert z before t
-				{
-					img = Views.addDimension( img, 0, 0 );
-					img = Views.permute( img, 2, 3 );
-				}
-				else // xy → xyzt
-				{
-					img = Views.addDimension( img, 0, 0 );
-					img = Views.addDimension( img, 0, 0 );
-				}
-			}
-			sourceImgs[ level ] = img;
-		}
-		return sourceImgs;
-	}
-
-	private SourceAndConverter< T > createSourceAndConverter( final RandomAccessibleIntervalMipmapSource4D< T > source4D,
-			final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile )
-	{
-		final Converter< V, ARGBType > converterVolatile = BigDataViewer.createConverterToARGB( volatileType );
-		final Converter< T, ARGBType > converter = BigDataViewer.createConverterToARGB( type );
-		final SourceAndConverter< V > sourceAndConverterVolatile =
-				BigDataViewer.wrapWithTransformedSource( new SourceAndConverter<>( source4DVolatile, converterVolatile ) );
-		return new SourceAndConverter<>( source4D, converter, sourceAndConverterVolatile );
-	}
-
 	// ---------------------------------------------------------------------
 	// Interface implementations
 	// ---------------------------------------------------------------------
 
-	@Override
-	public PyramidalDataset< T > asPyramidalDataset()
+	private void checkResolutionLevel( final int resolutionLevel )
 	{
-		return new PyramidalDataset<>( this );
+		if ( resolutionLevel < 0 || resolutionLevel >= numResolutionLevels )
+			throw new NonExistingResolutionLevelException( resolutionLevel, numResolutionLevels );
 	}
 
 	@Override
-	public Dataset asDataset()
+	public PyramidalDataset asPyramidalDataset()
 	{
-		return ijDataset;
+		return new PyramidalDataset( this );
 	}
 
-	@Override
-	public List< SourceAndConverter< T > > asSources()
+	public PyramidalDataset asPyramidalDataset( final int resolutionLevel )
 	{
-		return sourceAndConverters;
+		checkResolutionLevel( resolutionLevel );
+		return new PyramidalDataset( this, resolutionLevel );
 	}
 
 	@Override
@@ -382,11 +254,5 @@ public class Pyramidal5DImageDataImpl<
 	public Omero getOmeroProperties()
 	{
 		return omero;
-	}
-
-	@Override
-	public ImagePlus asImagePlus()
-	{
-		return context.service( ConvertService.class ).convert( asDataset(), ImagePlus.class );
 	}
 }

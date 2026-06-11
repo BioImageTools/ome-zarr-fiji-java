@@ -151,7 +151,13 @@ public class ZarrJavaPyramidBackend<
 			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level ], sharedQueue );
 		}
 
-		final AxisCalibration[] axes = createAxisCalibrations( entry.axes, level0Scales );
+		final AxisCalibration[][] axesPerLevel = new AxisCalibration[ numResolutionLevels ][];
+		for ( int level = 0; level < numResolutionLevels; level++ )
+		{
+			final double[] levelScales = findLevelScale( entry, level );
+			final double[] axisScales = levelScales != null ? levelScales : level0Scales;
+			axesPerLevel[ level ] = createAxisCalibrations( entry.axes, axisScales );
+		}
 
 		final VoxelDimensions voxelDimensions = createVoxelDimensions( level0Scales, entry.axes );
 		final AffineTransform3D[] transforms = createTransforms( entry, numResolutionLevels, level0Scales );
@@ -175,7 +181,7 @@ public class ZarrJavaPyramidBackend<
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
 				.volatileImgs( volatileImgs )
-				.axes( axes )
+				.axesPerLevel( axesPerLevel )
 				.channelAxisIndex( channelAxisIndex )
 				.zAxisPresent( zAxisIndex >= 0 )
 				.timeAxisPresent( timeAxisIndex >= 0 )

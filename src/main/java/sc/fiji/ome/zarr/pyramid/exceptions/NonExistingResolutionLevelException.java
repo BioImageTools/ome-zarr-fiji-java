@@ -26,21 +26,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.ui;
+package sc.fiji.ome.zarr.pyramid.exceptions;
 
-import net.imagej.ImageJ;
-
-public class StartUI
+public class NonExistingResolutionLevelException extends RuntimeException
 {
-
-	static
+	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels )
 	{
-		net.imagej.patcher.LegacyInjector.preinit();
+		super( message( resolutionLevel, numResolutionLevels ) );
 	}
 
-	public static void main( String[] args )
+	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels, final Throwable cause )
 	{
-		final ImageJ ij = new ImageJ();
-		ij.ui().showUI();
+		super( message( resolutionLevel, numResolutionLevels ), cause );
+	}
+
+	private static String message( final int resolutionLevel, final int numResolutionLevels )
+	{
+		return "Resolution level " + resolutionLevel + " does not exist. "
+				+ "The pyramid has " + numResolutionLevels + " level"
+				+ ( numResolutionLevels == 1 ? "" : "s" ) + " (0–" + ( numResolutionLevels - 1 ) + ").";
 	}
 }

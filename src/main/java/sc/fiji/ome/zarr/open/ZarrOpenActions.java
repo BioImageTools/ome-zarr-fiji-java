@@ -46,6 +46,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.gson.JsonSyntaxException;
 
@@ -53,11 +54,12 @@ import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Cast;
 
-import bdv.util.BdvFunctions;
 import ij.IJ;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NonExistingResolutionLevelException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
@@ -66,6 +68,7 @@ import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
+import sc.fiji.ome.zarr.util.PyramidalService;
 import sc.fiji.ome.zarr.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 
@@ -82,6 +85,8 @@ public class ZarrOpenActions
 	private final Consumer< String > errorHandler;
 
 	private final ZarrOpeningSettings settings;
+
+	private Pyramidal5DImageDataImpl< ?, ? > cachedPyramid;
 
 	/**
 	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
@@ -166,23 +171,131 @@ public class ZarrOpenActions
 
 	public Object openIJWithImage()
 	{
-		return openImage(
-				pyramidalDataset -> {
-					context.getService( UIService.class ).show( pyramidalDataset );
-					return null;
-				},
-				singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ),
-				"ImageJ"
-		);
+		try
+		{
+			return openPyramidImage(
+					() -> {
+						final PyramidalDataset dataset = getPyramid().asPyramidalDataset();
+						context.getService( UIService.class ).show( dataset );
+						logger.info( "Opened dataset in ImageJ: {}", inputUri );
+						return null;
+					},
+					singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ) );
+		}
+		catch ( NoMatchingResolutionException e )
+		{
+			showNonMatchingResolutionError( e );
+		}
+		return null;
+	}
+
+	/**
+	 * Opens the resolution level at {@code resolutionLevel} index as a new ImageJ dataset.
+	 * Index 0 is the highest resolution; each increment is the next coarser level.
+	 * <p>
+	 * Multiple calls — whether at the same or different level indices — each produce a separate
+	 * ImageJ {@code Dataset} (and a separate window), but all of them are backed by the same
+	 * {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData} object. The underlying
+	 * cached cell images and volatile images in
+	 * {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents} are the single source of truth
+	 * and are never loaded more than once per resolution level.
+	 *
+	 * @param resolutionLevel 0-based index into the resolution pyramid
+	 */
+	public Object openIJWithImage( final int resolutionLevel )
+	{
+		try
+		{
+			return openPyramidImage(
+					() -> {
+						final PyramidalDataset dataset = getPyramid().asPyramidalDataset( resolutionLevel );
+						context.getService( UIService.class ).show( dataset );
+						logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
+						return null;
+					},
+					singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ) );
+		}
+		catch ( NonExistingResolutionLevelException e )
+		{
+			showNonExistingResolutionLevelError( e );
+		}
+		return null;
 	}
 
 	public Object openBDVWithImage()
 	{
-		return openImage(
-				BdvUtils::showBdvAndRegisterDataset,
-				singleScaleImage -> BdvFunctions.show( singleScaleImage, "Image" ),
-				"BigDataViewer"
-		);
+		try
+		{
+			return openPyramidImage(
+					() -> {
+						final PyramidalBdv< ? > dataset = new PyramidalBdv<>( getPyramid() );
+						final PyramidalService pyramidalService = context.getService( PyramidalService.class );
+						final Object result = BdvUtils.showBdvAndRegisterDataset( dataset, pyramidalService );
+						logger.info( "Opened dataset in BigDataViewer: {}", inputUri );
+						return result;
+					},
+					singleScaleImage -> null );
+		}
+		catch ( NoMatchingResolutionException e )
+		{
+			showNonMatchingResolutionError( e );
+		}
+		return null;
+	}
+
+	private Pyramidal5DImageDataImpl< ?, ? > getPyramid()
+	{
+		if ( cachedPyramid == null )
+		{
+			final Integer preferredWidth;
+			if ( settings == null || settings.getOpenBehavior().equals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION ) )
+				preferredWidth = null;
+			else
+				preferredWidth = settings.getPreferredMaxWidth();
+
+			final ZarrReaderBackend backend = settings == null
+					? ZarrOpeningSettings.DEFAULT_READER_BACKEND
+					: settings.getReaderBackend();
+			switch ( backend )
+			{
+			case ZARR_JAVA:
+			{
+				@SuppressWarnings( { "rawtypes", "unchecked" } )
+				final Pyramidal5DImageDataImpl< ?, ? > zarrJavaData =
+						new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( inputUri ) );
+				cachedPyramid = zarrJavaData;
+				break;
+			}
+			case N5:
+			default:
+				cachedPyramid = new Pyramidal5DImageDataImpl<>( context, inputUri, preferredWidth );
+				break;
+			}
+		}
+		return cachedPyramid;
+	}
+
+	private Object openPyramidImage( final Supplier< Object > multiScaleOpener, final Function< Img< ? >, Object > singleScaleOpener )
+	{
+		try
+		{
+			return multiScaleOpener.get();
+		}
+		catch ( MultiImageDatasetException e )
+		{
+			showMultiImageNotSupported( e );
+		}
+		catch ( NotAMultiscaleImageException e )
+		{
+			logger.warn( "Not a multiscale image: {}", e.getMessage() );
+			showSingleScaleNotSupported();
+			// TODO: openSingleScaleImage( singleScaleOpener ) when single-scale support is added
+		}
+		catch ( IllegalArgumentException | JsonSyntaxException e )
+		{
+			showNonZarrError( e );
+		}
+		return null;
 	}
 
 	private void showMultiImageNotSupported( final MultiImageDatasetException e )
@@ -220,81 +333,31 @@ public class ZarrOpenActions
 		logger.warn( "Not opening dataset: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
-	Object openImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener,
-			final Function< Img< ? >, Object > singleScaleImageOpener,
-			final String message )
+	private void showNonExistingResolutionLevelError( final NonExistingResolutionLevelException e )
+	{
+		errorHandler.accept( "Could not open resolution level from dataset: " + inputUri + "\n\n" + e.getMessage() );
+		logger.warn( "Could not open resolution level: {}. Error message: {}", inputUri, e.getMessage() );
+	}
+
+	Object openImage( final Function< PyramidalDataset, Object > multiScaleImageOpener,
+			final Function< Img< ? >, Object > singleScaleImageOpener )
 	{
 		try
 		{
-			Object result = openMultiScaleImage( multiScaleImageOpener );
-			logger.info( "Opened dataset in {}: {}", message, inputUri );
-			return result;
-		}
-		catch ( MultiImageDatasetException e )
-		{
-			logger.warn( "Tried to open a multi image dataset: {}", e.getMessage() );
-			showMultiImageNotSupported( e );
-		}
-		catch ( NotAMultiscaleImageException e )
-		{
-			logger.warn( "Not a multiscale image: {}", e.getMessage() );
-			logger.info( "Try opening as single-scale image instead." );
-			try
-			{
-				showSingleScaleNotSupported();
-				//Object result = openSingleScaleImage( singleScaleImageOpener ); // currently not supported
-				//logger.info( "Opened single scale image in {}: {}", message, inputUri );
-				return null;
-			}
-			catch ( NotASingleScaleImageException ex )
-			{
-				showSingleScaleError( ex );
-			}
+			return openPyramidImage(
+					() -> {
+						final PyramidalDataset dataset = getPyramid().asPyramidalDataset();
+						final Object result = multiScaleImageOpener.apply( dataset );
+						logger.info( "Opened dataset: {}", inputUri );
+						return result;
+					},
+					singleScaleImageOpener );
 		}
 		catch ( NoMatchingResolutionException e )
 		{
 			showNonMatchingResolutionError( e );
 		}
-		catch ( IllegalArgumentException | JsonSyntaxException e )
-		{
-			showNonZarrError( e );
-		}
 		return null;
-	}
-
-	private Object openMultiScaleImage( final Function< PyramidalDataset< ? >, Object > multiScaleImageOpener )
-			throws NotAMultiscaleImageException, NoMatchingResolutionException
-	{
-		final Integer preferredWidth;
-		if ( settings == null || settings.getOpenBehavior().equals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION ) )
-			preferredWidth = null;
-		else
-			preferredWidth = settings.getPreferredMaxWidth();
-
-		final ZarrReaderBackend backend = settings == null
-				? ZarrOpeningSettings.DEFAULT_READER_BACKEND
-				: settings.getReaderBackend();
-
-		final Pyramidal5DImageDataImpl< ?, ? > data;
-		switch ( backend )
-		{
-		case ZARR_JAVA:
-		{
-			@SuppressWarnings( { "rawtypes", "unchecked" } )
-			final Pyramidal5DImageDataImpl< ?, ? > zarrJavaData =
-					new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( inputUri ) );
-			data = zarrJavaData;
-			break;
-		}
-		case N5:
-		default:
-			data = new Pyramidal5DImageDataImpl<>( context, inputUri, preferredWidth );
-			break;
-		}
-
-		final Object result = multiScaleImageOpener.apply( data.asPyramidalDataset() );
-		logger.info( "Opened multiscale image with {} backend: {}", backend, inputUri );
-		return result;
 	}
 
 	private Object openSingleScaleImage( final Function< Img< ? >, Object > singleScaleImageOpener ) throws NotASingleScaleImageException

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,24 +28,21 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
-import net.imagej.Dataset;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import java.net.URI;
-import java.util.List;
 
-import bdv.viewer.SourceAndConverter;
-import ij.ImagePlus;
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import org.scijava.Context;
+import org.scijava.Contextual;
 import org.scijava.prefs.PrefService;
 
-import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
-import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
-import sc.fiji.ome.zarr.pyramid.metadata.Omero;
+import mpicbg.spim.data.sequence.VoxelDimensions;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
+import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
  * 5D multi-resolution array data
@@ -55,35 +52,26 @@ import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
  *
  * @param <T> pixel type
  */
-public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T > >
+public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T > > extends Contextual
 {
+
+	PyramidContents< T, ? > getPyramidContents();
+
+	int preferredResolutionLevel();
+
 	/**
 	 * @return an IJ2 {@code net.imagej.Dataset}
 	 *   with additional methods for retrieving the
 	 *   underlying multi-resolution data.
 	 */
-	PyramidalDataset< T > asPyramidalDataset();
+	PyramidalDataset asPyramidalDataset();
 
 	/**
-	 * @return an IJ2 {@code net.imagej.Dataset} wrapping the full-resolution
-	 *   5D (XYZCT) image; this will indirectly also serve the
-	 *   {@link net.imagej.ImgPlus}
+	 * @param resolutionLevel 0-based index into the resolution pyramid (0 = highest resolution)
+	 * @return a newly created object of {@link PyramidalDataset} wrapping the image at the specified resolution level,
+	 *   backed by the same underlying pyramid data
 	 */
-	Dataset asDataset();
-
-	/**
-	 * @return an IJ1 {@link ij.ImagePlus} wrapping the full-resolution 5D (XYZCT)
-	 *   image, obtained by converting {@link #asDataset()} via SciJava's
-	 *   {@link org.scijava.convert.ConvertService}
-	 */
-	ImagePlus asImagePlus();
-
-	/**
-	 * @return a list of BigDataViewer sources, representing a 5D (XYZCT) multi-resolution image, one source for each channel of the dataset.
-	 * 	 The sources provide nested volatile versions. The sources are
-	 * 	 multi-resolution, reflecting the resolution pyramid of the OME-Zarr.
-	 */
-	List< SourceAndConverter< T > > asSources();
+	PyramidalDataset asPyramidalDataset( int resolutionLevel );
 
 	/**
 	 * @return the physical voxel size and unit of measurement at the

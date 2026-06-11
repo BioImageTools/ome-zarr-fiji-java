@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -60,12 +60,13 @@ class Pyramidal5DImageDataAsImagePlusTest
 		try (Context context = new Context())
 		{
 			final Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toUri(), null );
-			final ImagePlus imagePlus = pyramidal5DImageData.asImagePlus();
+			final PyramidalDataset dataset = new PyramidalDataset( pyramidal5DImageData );
+			final ImagePlus imagePlus = dataset.asImagePlus();
 
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
-			assertArrayEquals( new int[] { 64, 64, 3, 16, 4 }, imagePlus.getDimensions() );
-			assertEquals( ZarrTestUtils.IMAGE_NAME, imagePlus.getTitle() );
+			assertArrayEquals( new int[] { 64, 64, 1, 16, 4 }, imagePlus.getDimensions() );
+			assertEquals( dataset.getName(), imagePlus.getTitle() );
 		}
 	}
 
@@ -76,23 +77,15 @@ class Pyramidal5DImageDataAsImagePlusTest
 
 		try (Context context = new Context())
 		{
-			final PyramidalDataset< ? > pyramidalDataset = new Pyramidal5DImageDataImpl<>( context, path.toUri() ).asPyramidalDataset();
-			int resolutionLevel = 0;
-			int channel = 0; // NB: 3 channels, channel 0 has the name: lynEGFP
-			int timepoint = 0;
-			ImagePlus imagePlus = pyramidalDataset.getImagePlus( resolutionLevel, channel, timepoint );
+			ImagePlus imagePlus = new Pyramidal5DImageDataImpl<>( context, path.toUri() ).asPyramidalDataset( 0 ).asImagePlus();
 
 			assertNotNull( imagePlus );
-			// order of dimensions for imagePlus: width, height, slices. Channel and timepoint are 1.
-			assertArrayEquals( new int[] { 64, 64, 16, 1, 1 }, imagePlus.getDimensions() );
-			assertEquals( "lynEGFP", imagePlus.getTitle() );
-
-			resolutionLevel = 1;
-			imagePlus = pyramidalDataset.getImagePlus( resolutionLevel, channel, timepoint );
+			// order of dimensions for imagePlus: width, height, channels, slices, frames
+			assertArrayEquals( new int[] { 64, 64, 1, 16, 4 }, imagePlus.getDimensions() );
+			imagePlus = new Pyramidal5DImageDataImpl<>( context, path.toUri() ).asPyramidalDataset( 1 ).asImagePlus();
 			assertNotNull( imagePlus );
-			// order of dimensions for imagePlus: width, height, slices. Channel and timepoint are 1.
-			assertArrayEquals( new int[] { 32, 32, 8, 1, 1 }, imagePlus.getDimensions() );
-			assertEquals( "lynEGFP", imagePlus.getTitle() );
+			// order of dimensions for imagePlus: width, height, channels, slices, frames
+			assertArrayEquals( new int[] { 32, 32, 1, 8, 4 }, imagePlus.getDimensions() );
 		}
 	}
 }
