@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,37 +26,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid.demo;
-
-import java.nio.file.Paths;
+package sc.fiji.ome.zarr.examples.demo;
 
 import net.imagej.ImageJ;
 
-import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
-import sc.fiji.ome.zarr.pyramid.legacy.MultiscaleImage;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import ij.IJ;
+import sc.fiji.ome.zarr.util.ScriptUtils;
 
-@SuppressWarnings( "all" )
-public class MultiscaleImageDemo
+import java.net.URI;
+import java.nio.file.Paths;
+
+public class ScriptUtilsDemo
 {
 	public static void main( String[] args )
 	{
-		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
-		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
-		// final String multiscalePath = "/Users/hahmann/Data/13457537.zarr"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457537.zarr/0
+		ImageJ ij = new ImageJ();
+		ij.ui().showUI();
 
-		final MultiscaleImage< ?, ? > multiscaleImage = new MultiscaleImage<>( multiscalePath );
-
-		// Show as imagePlus
-		final ImageJ imageJ = new ImageJ();
-		imageJ.ui().showUI();
-		final Pyramidal5DImageDataImpl< ?, ? > pyramidal5DImageData =
-				new Pyramidal5DImageDataImpl<>( imageJ.context(), Paths.get( "image" ).toUri() /*, multiscaleImage */ );
-		PyramidalDataset pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
-		imageJ.ui().show( pyramidalDataset );
-
-		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true );
+		final URI inputUri = Paths
+				.get( "/home/ulman/Documents/talks/CEITEC/2025_11_ZarrSymposium_Zurich/data/MitoEM_fixedRes.zarr/MitoEM_fixedRes" ).toUri();
+		System.out.println( "\nLet's run the script... on URI param: " + inputUri );
+		ScriptUtils.executePresetScript( ij.context(), inputUri, IJ::error );
+		System.out.println( "Done." );
 	}
 }

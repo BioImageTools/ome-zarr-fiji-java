@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid.demo;
+package sc.fiji.ome.zarr.examples.demo;
 
 import java.net.URI;
 
@@ -40,7 +40,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  * {@link Pyramidal5DImageData} factory methods and printing the OMERO metadata.
  * Dataset: IDR idr0033A BR00109990_C2
  * URI: <a href="https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0</a>
- * Run with: mvn exec:java -Dexec.mainClass=sc.fiji.ome.zarr.pyramid.demo.OmeroMetadataDemo
+ * Run with: mvn exec:java -Dexec.mainClass=sc.fiji.ome.zarr.examples.demo.OmeroMetadataDemo
  */
 public class OmeroMetadataDemo
 {
