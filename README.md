@@ -75,8 +75,8 @@ and easily handles even the huge ones.
 * Fiji memorizes the full context of a drag & dropped / copy & pasted OME-Zarr. That said, even if the OME-Zarr is
   opened as a particular resolution in ImageJ via drag & drop / copy & paste, one can still open it in BigDataViewer
   using all resolution pyramids (via `Plugins -> OME-Zarr -> Open Current Zarr Image in BigDataViewer`).
-* ~~Or the opposite, even if the dropped / pasted OME-Zarr has right away landed in BigDataViewer, it is possible to
-  display a particular resolution of it as Dataset in ImageJ.~~ (not yet supported)
+* Or the opposite, even if the dropped / pasted OME-Zarr has right away landed in BigDataViewer, it is possible to
+  display a particular resolution of it as Dataset in ImageJ (via `Plugins > OME-Zarr > Open Resolution Level...`).
 * To sum it up, once OME-Zarr is in Fiji, users don't have to drop / paste it again to display it differently. This is a
   great way to save RAM (memory) on your computer.
 
