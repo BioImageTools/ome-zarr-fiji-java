@@ -93,7 +93,7 @@ import ij.ImagePlus;
 import sc.fiji.ome.zarr.plugins.settings.UserScriptSettings;
 import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
-import sc.fiji.ome.zarr.pyramid.PyramidalBdvDataset;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
@@ -750,7 +750,7 @@ class ZarrOpenActionsTest
 				PyramidalDataset ijLevel0 = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
 				PyramidalDataset ijLevel1 = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
 
-				PyramidalBdvDataset< ? > bdv1 = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
+				PyramidalBdv< ? > bdv1 = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
 
 				// All 4 datasets (2 IJ + 2 BDV) must be backed by the exact same Pyramidal5DImageData object
 				Pyramidal5DImageData< ? > sharedPyramid = ijLevel0.getPyramidal5DImageData();
@@ -824,7 +824,7 @@ class ZarrOpenActionsTest
 				assertEquals( 2, pyramidalService.getPyramidals().size() );
 				assertEquals( 1, datasetService.getDatasets().size() );
 
-				PyramidalBdvDataset< ? > bdvDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalBdv< ? > bdvDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
 				PyramidalDataset ijDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
 				assertSame( bdvDataset.getPyramidal5DImageData(), ijDataset.getPyramidal5DImageData(),
 						"BDV and IJ datasets must share the same Pyramidal5DImageData instance" );
@@ -875,7 +875,7 @@ class ZarrOpenActionsTest
 				PyramidalService pyramidalService = context.getService( PyramidalService.class );
 				PyramidalDataset ijLevel0First = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
 				PyramidalDataset ijLevel0Second = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
-				PyramidalBdvDataset< ? > bdv = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
+				PyramidalBdv< ? > bdv = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
 				PyramidalDataset ijLevel1 = Cast.unchecked( pyramidalService.getPyramidals().get( 3 ) );
 
 				Img< ? > cellImgIj0First = ijLevel0First.getImgPlus().getImg();

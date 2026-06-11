@@ -56,7 +56,7 @@ import net.imglib2.util.Cast;
 
 import ij.IJ;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
-import sc.fiji.ome.zarr.pyramid.PyramidalBdvDataset;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NonExistingResolutionLevelException;
@@ -228,7 +228,7 @@ public class ZarrOpenActions
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalBdvDataset< ? > dataset = new PyramidalBdvDataset<>( getPyramid() );
+						final PyramidalBdv< ? > dataset = new PyramidalBdv<>( getPyramid() );
 						final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 						final Object result = BdvUtils.showBdvAndRegisterDataset( dataset, pyramidalService );
 						logger.info( "Opened dataset in BigDataViewer: {}", inputUri );

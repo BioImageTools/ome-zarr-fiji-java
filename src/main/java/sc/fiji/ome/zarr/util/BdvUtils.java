@@ -48,7 +48,7 @@ import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
 import bdv.viewer.SourceAndConverter;
-import sc.fiji.ome.zarr.pyramid.PyramidalBdvDataset;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 public class BdvUtils
@@ -69,7 +69,7 @@ public class BdvUtils
 	 *                         contains multi-resolution image data along with associated metadata.
 	 * @return a {@code BdvHandle} instance representing the BDV window.
 	 */
-	public static BdvHandle showBdvAndRegisterDataset( final PyramidalBdvDataset< ? > pyramidalDataset )
+	public static BdvHandle showBdvAndRegisterDataset( final PyramidalBdv< ? > pyramidalDataset )
 	{
 		return showBdvAndRegisterDataset( pyramidalDataset, null );
 	}
@@ -86,7 +86,7 @@ public class BdvUtils
 	 * @return a {@code BdvHandle} instance representing the BDV window
 	 */
 	public static < T extends NativeType< T > & RealType< T > > BdvHandle showBdvAndRegisterDataset(
-			final PyramidalBdvDataset< ? > pyramidalDataset,
+			final PyramidalBdv< ? > pyramidalDataset,
 			final PyramidalService pyramidalService
 	)
 	{
@@ -114,7 +114,7 @@ public class BdvUtils
 	 * Focus switches themselves are observed centrally by {@link PyramidalService} via the AWT
 	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
 	 */
-	private static void registerDatasetLifecycle( final PyramidalBdvDataset< ? > pyramidalDataset, final Window window,
+	private static void registerDatasetLifecycle( final PyramidalBdv< ? > pyramidalDataset, final Window window,
 			final PyramidalService pyramidalService
 	)
 	{
@@ -133,7 +133,7 @@ public class BdvUtils
 		} );
 	}
 
-	private static void setChannelProperties( final PyramidalBdvDataset< ? > pyramidalDataset, final BdvHandle bdvHandle )
+	private static void setChannelProperties( final PyramidalBdv< ? > pyramidalDataset, final BdvHandle bdvHandle )
 	{
 		Omero omero = pyramidalDataset.getOmeroProperties();
 		if ( omero == null || omero.channels == null || omero.channels.isEmpty() )

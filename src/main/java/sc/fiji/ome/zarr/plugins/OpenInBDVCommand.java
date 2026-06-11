@@ -39,7 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import sc.fiji.ome.zarr.pyramid.Pyramidal;
-import sc.fiji.ome.zarr.pyramid.PyramidalBdvDataset;
+import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
 import sc.fiji.ome.zarr.util.PyramidalService;
 import sc.fiji.ome.zarr.util.BdvUtils;
 
@@ -66,7 +66,7 @@ public class OpenInBDVCommand implements Command
 			uiService.showDialog( "The active image is not an OME-Zarr dataset.", "Open in BigDataViewer" );
 			return;
 		}
-		final PyramidalBdvDataset< ? > bdvDataset = new PyramidalBdvDataset<>( pyramidal.getPyramidal5DImageData() );
+		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getPyramidal5DImageData() );
 		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
 	}
 }

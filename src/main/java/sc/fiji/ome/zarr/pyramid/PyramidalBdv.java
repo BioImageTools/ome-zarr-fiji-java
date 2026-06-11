@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
-public class PyramidalBdvDataset< T extends NativeType< T > & RealType< T > > extends AbstractContextual implements Pyramidal
+public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends AbstractContextual implements Pyramidal
 {
 
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
@@ -35,7 +35,7 @@ public class PyramidalBdvDataset< T extends NativeType< T > & RealType< T > > ex
 
 	private final List< SourceAndConverter< T > > sources;
 
-	public PyramidalBdvDataset( final Pyramidal5DImageData< T > data )
+	public PyramidalBdv( final Pyramidal5DImageData< T > data )
 	{
 		this.data = data;
 		sources = initSourceAndConverters( data.getPyramidContents() );
