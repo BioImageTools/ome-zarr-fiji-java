@@ -103,11 +103,7 @@ public class PyramidalService extends AbstractService implements SciJavaService
 			@Override
 			public void imageClosed( final ImagePlus imagePlus )
 			{
-				logger.trace( "Image closed: {}", imagePlus );
-				final Pyramidal pyramidal = ijImages.remove( imagePlus );
-				if ( pyramidal != null )
-					activePyramidal.compareAndSet( pyramidal, null );
-				logger.trace( "Active pyramidal: {}", activePyramidal.get() );
+				notifyImageClosed( imagePlus );
 			}
 		};
 		ImagePlus.addImageListener( imageCloseListener );
@@ -200,6 +196,16 @@ public class PyramidalService extends AbstractService implements SciJavaService
 		}
 		activePyramidal.set( active );
 		logger.trace( "Active pyramidal resolved from IJ window: {}", activePyramidal.get() );
+	}
+
+	/** Removes {@code imagePlus} from tracked IJ images and clears the active pyramidal if it belonged to that image. */
+	void notifyImageClosed( final ImagePlus imagePlus )
+	{
+		logger.trace( "Image closed: {}", imagePlus );
+		final Pyramidal pyramidal = ijImages.remove( imagePlus );
+		if ( pyramidal != null )
+			activePyramidal.compareAndSet( pyramidal, null );
+		logger.trace( "Active pyramidal: {}", activePyramidal.get() );
 	}
 
 	/** Returns the most recently focused {@link Pyramidal}, or {@code null} if none has been focused. */
