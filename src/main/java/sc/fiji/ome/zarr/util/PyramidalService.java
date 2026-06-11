@@ -176,7 +176,7 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	}
 
 	/** Sets the active pyramidal from the focused ImageJ window's image, or clears it if the image is not a {@link Pyramidal}. */
-	public void notifyImageJWindowFocused( final ImageWindow window )
+	void notifyImageJWindowFocused( final ImageWindow window )
 	{
 		logger.trace( "ImageJ window focused" );
 		Pyramidal active = null;
