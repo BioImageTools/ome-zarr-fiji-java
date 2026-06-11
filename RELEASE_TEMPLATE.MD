@@ -36,5 +36,5 @@
           `Manage Update Sites > OME-Zarr-PREVIEW`
     * [ ] Upload ome-zarr-fiji-*.*.*.jar
     * [ ] Check Upload success: https://sites.imagej.net/OME-Zarr-PREVIEW/jars/
-* [ ] Add Release documentation: https://github.com/mastodon-sc/OME-Zarr-PREVIEW/releases
+* [ ] Add Release documentation: https://github.com/BioImageTools/ome-zarr-fiji-java/releases
 * [ ] Make an announcement on image.sc: https://forum.image.sc/t/ngff-weekly-dev-update-thread/110810/
