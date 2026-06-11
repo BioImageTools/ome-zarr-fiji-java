@@ -147,20 +147,20 @@ and place the resulting `.jar` file into your `Fiji.app/jars` folder.
 You also need to copy the following `.jar` files to your `Fiji.app/jars` folder (and delete the older versions, if they
 are present):
 
-* [n5-4.0.0-alpha-12](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5/4.0.0-alpha-12/n5-4.0.0-alpha-12.jar)
-* [n5-aws-s3-4.4.0-alpha-9](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-aws-s3/4.4.0-alpha-9/n5-aws-s3-4.4.0-alpha-9.jar)
-* [n5-blosc-2.0.0-alpha-4](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-blosc/2.0.0-alpha-4/n5-blosc-2.0.0-alpha-4.jar)
-* [n5-google-cloud-5.2.0-alpha-7](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-google-cloud/5.2.0-alpha-7/n5-google-cloud-5.2.0-alpha-7.jar)
-* [n5-hdf5-2.3.0-alpha-7](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-hdf5/2.3.0-alpha-7/n5-hdf5-2.3.0-alpha-7.jar)
-* [n5-ij-4.5.0-alpha-7](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-ij/4.5.0-alpha-7/n5-ij-4.5.0-alpha-7.jar)
-* [n5-imglib2-7.1.0-alpha-8](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-imglib2/7.1.0-alpha-8/n5-imglib2-7.1.0-alpha-8.jar)
-* [n5-universe-2.4.0-alpha-9](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-universe/2.4.0-alpha-9/n5-universe-2.4.0-alpha-9.jar)
-* [n5-zarr-2.0.0-alpha-8](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-zarr/2.0.0-alpha-8/n5-zarr-2.0.0-alpha-8.jar)
-* [n5-zstandard-2.0.0-alpha-4](https://maven.scijava.org/repository/releases/org/janelia/n5-zstandard/2.0.0-alpha-4/n5-zstandard-2.0.0-alpha-4.jar)
+* [n5-4.0.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5/4.0.0/n5-4.0.0.jar)
+* [n5-aws-s3-5.0.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-aws-s3/5.0.0/n5-aws-s3-5.0.0.jar)
+* [n5-blosc-2.0.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-blosc/2.0.0/n5-blosc-2.0.0.jar)
+* [n5-google-cloud-6.0.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-google-cloud/6.0.0/n5-google-cloud-6.0.0.jar)
+* [n5-hdf5-3.0.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-hdf5/3.0.0/n5-hdf5-3.0.0.jar)
+* [n5-ij-5.0.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-ij/5.0.0/n5-ij-5.0.0.jar)
+* [n5-imglib2-8.0.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-imglib2/8.0.0/n5-imglib2-8.0.0.jar)
+* [n5-universe-3.0.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-universe/3.0.0/n5-universe-3.0.0.jar)
+* [n5-zarr-2.0.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-zarr/2.0.0/n5-zarr-2.0.0.jar)
+* [n5-zstandard-2.0.0](https://maven.scijava.org/repository/releases/org/janelia/n5-zstandard/2.0.0/n5-zstandard-2.0.0.jar)
 
 Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` folder:
 
-* [n5-viewer_fiji-6.2.0-alpha-5](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-viewer_fiji/6.2.0-alpha-5/n5-viewer_fiji-6.2.0-alpha-5.jar)
+* [n5-viewer_fiji-6.2.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-viewer_fiji/6.2.0/n5-viewer_fiji-6.2.0.jar)
 * [s3-2.30.10](https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.30.10/s3-2.30.10.jar)
 * [auth-2.30.10](https://repo1.maven.org/maven2/software/amazon/awssdk/auth/2.30.10/auth-2.30.10.jar)
 * [annotations-2.30.10](https://repo1.maven.org/maven2/software/amazon/awssdk/annotations/2.30.10/annotations-2.30.10.jar)
