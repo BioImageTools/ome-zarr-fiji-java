@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class ConformanceTest
+class ConformanceTest
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -194,7 +194,7 @@ public class ConformanceTest
 				assertEquals( testDataset.getNumberOfResLevels(), contents.numResolutionLevels(),
 						"Mismatch in extracted number of resolution levels." );
 
-			//clean up: wait for the IJ window to clam down, get a reference on it, and close it
+			//clean up: wait for the IJ window to calm down, get a reference on it, and close it
 			SwingUtilities.invokeAndWait( () -> {} );
 			DisplayService displayService = context.getService( DisplayService.class );
 			assertNotNull( displayService.getActiveDisplay(), "Internal error!" );
