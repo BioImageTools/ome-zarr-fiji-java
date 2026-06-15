@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -29,7 +29,9 @@
 package sc.fiji.ome.zarr.pyramid;
 
 import bdv.BigDataViewer;
+import bdv.cache.SharedQueue;
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
+import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.SourceAndConverter;
 
 import java.lang.invoke.MethodHandles;
@@ -39,6 +41,7 @@ import java.util.List;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
+import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.converter.Converter;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -117,6 +120,8 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final AffineTransform3D[] mipmapTransforms = contents.transforms;
 		final VoxelDimensions voxelDimensions = contents.voxelDimensions;
 
+		final RandomAccessibleInterval< V >[] volatileImgs = createVolatileImgs( contents );
+
 		final RandomAccessibleInterval< T >[][] levelToChannels = new RandomAccessibleInterval[ nLevels ][];
 		Arrays.setAll( levelToChannels,
 				level -> splitInputStackIntoSourceStacks( numChannels, channelAxisIndex, zAxisPresent, timeAxisPresent,
@@ -125,7 +130,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final RandomAccessibleInterval< V >[][] levelToVolatileChannels = new RandomAccessibleInterval[ nLevels ][];
 		Arrays.setAll( levelToVolatileChannels,
 				level -> splitInputStackIntoSourceStacks( numChannels, channelAxisIndex, zAxisPresent, timeAxisPresent,
-						contents.volatileImgs[ level ] ) );
+						volatileImgs[ level ] ) );
 
 		final List< SourceAndConverter< T > > sources = new ArrayList<>( numChannels );
 		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )
@@ -145,6 +150,20 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 			BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
 		}
 		return sources;
+	}
+
+	/**
+	 * Wraps each resolution level's {@link CachedCellImg} as a volatile view.
+	 */
+	@SuppressWarnings( "unchecked" )
+	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
+			RandomAccessibleInterval< V >[] createVolatileImgs( final PyramidContents< T, V > contents )
+	{
+		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
+		final RandomAccessibleInterval< V >[] volatileImgs = new RandomAccessibleInterval[ contents.numResolutionLevels ];
+		for ( int level = 0; level < contents.numResolutionLevels; level++ )
+			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( contents.cachedCellImgs[ level ], sharedQueue );
+		return volatileImgs;
 	}
 
 	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >

@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.realtransform.AffineTransform3D;
@@ -63,9 +62,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
-import bdv.cache.SharedQueue;
 import bdv.util.volatiles.VolatileTypeMatcher;
-import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
@@ -119,13 +116,10 @@ public class N5PyramidBackend<
 		final int numTimepoints = getAxisSize( level0, AxisCalibration.T );
 		final int numChannels = getAxisSize( level0, AxisCalibration.C );
 
-		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
-		final RandomAccessibleInterval< V >[] volatileImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
 		for ( final ResolutionLevel level : multiscale.getLevels() )
 		{
 			cachedCellImgs[ level.index ] = N5Utils.openVolatile( reader, level.datasetPath );
-			volatileImgs[ level.index ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level.index ], sharedQueue );
 		}
 
 		final AxisCalibration[][] axesPerLevel = new AxisCalibration[ numResolutionLevels ][];
@@ -151,7 +145,6 @@ public class N5PyramidBackend<
 				.voxelDimensions( voxelDimensions )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
-				.volatileImgs( volatileImgs )
 				.axesPerLevel( axesPerLevel )
 				.channelAxisIndex( channelAxisIndex )
 				.zAxisPresent( zAxisIndex > 0 )

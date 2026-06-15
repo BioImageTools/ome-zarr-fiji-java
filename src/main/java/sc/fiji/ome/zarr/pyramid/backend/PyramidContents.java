@@ -28,7 +28,6 @@
  */
 package sc.fiji.ome.zarr.pyramid.backend;
 
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.realtransform.AffineTransform3D;
@@ -44,7 +43,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  * opening an OME-Zarr multi-resolution image. The backend-agnostic pyramidal
  * image data class copies these fields into its own state.
  * <p>
- * Indices in {@code cachedCellImgs}, {@code volatileImgs} and {@code transforms}
+ * Indices in {@code cachedCellImgs} and {@code transforms}
  * are in resolution-level order (index 0 is the highest resolution).
  * The imglib2 axis indices follow F-order (x, y, z, c, t), the order produced
  * after the backend has reversed any zarr C-order shapes.
@@ -75,8 +74,6 @@ public final class PyramidContents<
 	public final AffineTransform3D[] transforms;
 
 	public final CachedCellImg< T, ? >[] cachedCellImgs;
-
-	public final RandomAccessibleInterval< V >[] volatileImgs;
 
 	/**
 	 * Axes per resolution level: {@code [resolutionLevel][axisIndex]}.
@@ -110,7 +107,6 @@ public final class PyramidContents<
 		this.voxelDimensions = b.voxelDimensions;
 		this.transforms = b.transforms;
 		this.cachedCellImgs = b.cachedCellImgs;
-		this.volatileImgs = b.volatileImgs;
 		this.axesPerLevel = b.axesPerLevel;
 		this.channelAxisIndex = b.channelAxisIndex;
 		this.zAxisPresent = b.zAxisPresent;
@@ -149,8 +145,6 @@ public final class PyramidContents<
 		private AffineTransform3D[] transforms;
 
 		private CachedCellImg< T, ? >[] cachedCellImgs;
-
-		private RandomAccessibleInterval< V >[] volatileImgs;
 
 		private AxisCalibration[][] axesPerLevel;
 
@@ -221,12 +215,6 @@ public final class PyramidContents<
 		public Builder< T, V > cachedCellImgs( final CachedCellImg< T, ? >[] i )
 		{
 			this.cachedCellImgs = i;
-			return this;
-		}
-
-		public Builder< T, V > volatileImgs( final RandomAccessibleInterval< V >[] i )
-		{
-			this.volatileImgs = i;
 			return this;
 		}
 

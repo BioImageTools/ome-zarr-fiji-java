@@ -55,7 +55,6 @@ import dev.zarr.zarrjava.store.HttpStore;
 import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
 
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
@@ -78,9 +77,7 @@ import net.imglib2.util.Cast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import bdv.cache.SharedQueue;
 import bdv.util.volatiles.VolatileTypeMatcher;
-import bdv.util.volatiles.VolatileViews;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
@@ -137,9 +134,7 @@ public class ZarrJavaPyramidBackend<
 		final String name = entry.name != null ? entry.name : defaultName();
 		final double[] level0Scales = getLevel0Scales( entry, numDimensions );
 
-		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
-		final RandomAccessibleInterval< V >[] volatileImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
 		for ( int level = 0; level < numResolutionLevels; level++ )
 		{
 			final Array arr = openLevel( multiscaleImage, level );
@@ -148,7 +143,6 @@ public class ZarrJavaPyramidBackend<
 			final ReadOnlyCachedCellImgOptions opts = ReadOnlyCachedCellImgOptions.options().cellDimensions( imgChunk );
 			cachedCellImgs[ level ] = new ReadOnlyCachedCellImgFactory()
 					.create( imgShape, type, new ZarrJavaCellLoader<>( arr ), opts );
-			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level ], sharedQueue );
 		}
 
 		final AxisCalibration[][] axesPerLevel = new AxisCalibration[ numResolutionLevels ][];
@@ -180,7 +174,6 @@ public class ZarrJavaPyramidBackend<
 				.voxelDimensions( voxelDimensions )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
-				.volatileImgs( volatileImgs )
 				.axesPerLevel( axesPerLevel )
 				.channelAxisIndex( channelAxisIndex )
 				.zAxisPresent( zAxisIndex >= 0 )
