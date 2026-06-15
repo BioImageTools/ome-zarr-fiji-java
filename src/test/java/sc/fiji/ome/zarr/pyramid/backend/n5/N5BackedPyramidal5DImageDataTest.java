@@ -41,7 +41,7 @@ public class N5BackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTes
 {
 	@Override
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
+	public Pyramidal5DImageDataImpl< ? > load( final String resource, final Context context, final Integer preferredWidth )
 			throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );

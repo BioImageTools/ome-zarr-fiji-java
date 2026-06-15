@@ -141,7 +141,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 	private static < T extends NativeType< T > & RealType< T > > ImgPlus< T > createImgPlus( final Pyramidal5DImageData< T > data,
 			final int resolutionLevel )
 	{
-		final PyramidContents< T, ? > contents = data.getPyramidContents();
+		final PyramidContents< T > contents = data.getPyramidContents();
 
 		if ( resolutionLevel < 0 || resolutionLevel >= data.numResolutionLevels() )
 		{

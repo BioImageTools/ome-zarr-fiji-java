@@ -37,7 +37,6 @@ import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imagej.Dataset;
 import net.imglib2.EuclideanSpace;
-import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -63,20 +62,18 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  * {@link Pyramidal5DImageData}.
  *
  * @param <T> pixel type
- * @param <V> volatile pixel type
  */
 public class Pyramidal5DImageDataImpl<
-		T extends NativeType< T > & RealType< T >,
-		V extends Volatile< T > & NativeType< V > & RealType< V > >
+		T extends NativeType< T > & RealType< T > >
 		extends AbstractContextual
 		implements EuclideanSpace, Pyramidal5DImageData< T >
 {
-	private final PyramidContents< T, V > contents;
+	private final PyramidContents< T > contents;
 
 	private final int preferredResolutionLevel;
 
 	@Override
-	public PyramidContents< T, V > getPyramidContents()
+	public PyramidContents< T > getPyramidContents()
 	{
 		return contents;
 	}
@@ -134,7 +131,7 @@ public class Pyramidal5DImageDataImpl<
 	 * Open an OME-Zarr image using the supplied {@link PyramidBackend}, using
 	 * the highest available resolution for the ImageJ dataset.
 	 */
-	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T, V > backend )
+	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T > backend )
 	{
 		this( context, backend, null );
 	}
@@ -149,7 +146,7 @@ public class Pyramidal5DImageDataImpl<
 	 * @throws NoMatchingResolutionException if {@code preferredMaxWidth} is
 	 *   smaller than the width of the smallest resolution level
 	 */
-	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T, V > backend, final Integer preferredMaxWidth )
+	public Pyramidal5DImageDataImpl( final Context context, final PyramidBackend< T > backend, final Integer preferredMaxWidth )
 	{
 		setContext( context );
 		contents = backend.load();

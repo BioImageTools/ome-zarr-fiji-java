@@ -86,7 +86,7 @@ public class ZarrOpenActions
 
 	private final ZarrOpeningSettings settings;
 
-	private Pyramidal5DImageDataImpl< ?, ? > cachedPyramid;
+	private Pyramidal5DImageDataImpl< ? > cachedPyramid;
 
 	/**
 	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
@@ -243,7 +243,7 @@ public class ZarrOpenActions
 		return null;
 	}
 
-	private Pyramidal5DImageDataImpl< ?, ? > getPyramid()
+	private Pyramidal5DImageDataImpl< ? > getPyramid()
 	{
 		if ( cachedPyramid == null )
 		{
@@ -261,7 +261,7 @@ public class ZarrOpenActions
 			case ZARR_JAVA:
 			{
 				@SuppressWarnings( { "rawtypes", "unchecked" } )
-				final Pyramidal5DImageDataImpl< ?, ? > zarrJavaData =
+				final Pyramidal5DImageDataImpl< ? > zarrJavaData =
 						new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( inputUri ) );
 				cachedPyramid = zarrJavaData;
 				break;

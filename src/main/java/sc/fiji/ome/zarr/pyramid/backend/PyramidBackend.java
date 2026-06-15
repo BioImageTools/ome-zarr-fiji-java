@@ -28,7 +28,6 @@
  */
 package sc.fiji.ome.zarr.pyramid.backend;
 
-import net.imglib2.Volatile;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -45,15 +44,13 @@ import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
  * {@link PyramidContents}.
  *
  * @param <T> pixel type
- * @param <V> volatile pixel type
  */
 public interface PyramidBackend<
-		T extends NativeType< T > & RealType< T >,
-		V extends Volatile< T > & NativeType< V > & RealType< V > >
+		T extends NativeType< T > & RealType< T > >
 {
 	/**
 	 * Open the multi-resolution image and return all state needed by the
 	 * concrete pyramidal image data class. Called exactly once per image.
 	 */
-	PyramidContents< T, V > load();
+	PyramidContents< T > load();
 }

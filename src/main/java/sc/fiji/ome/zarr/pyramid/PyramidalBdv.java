@@ -47,6 +47,7 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import org.scijava.AbstractContextual;
 import org.scijava.object.ObjectService;
@@ -108,7 +109,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 
 	@SuppressWarnings( "unchecked" )
 	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
-			List< SourceAndConverter< T > > initSourceAndConverters( final PyramidContents< T, V > contents )
+			List< SourceAndConverter< T > > initSourceAndConverters( final PyramidContents< T > contents )
 	{
 		final int nLevels = contents.numResolutionLevels;
 		final int numChannels = contents.numChannels;
@@ -116,11 +117,11 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final boolean zAxisPresent = contents.zAxisPresent;
 		final boolean timeAxisPresent = contents.timeAxisPresent;
 		final T type = contents.type;
-		final V volatileType = contents.volatileType;
 		final AffineTransform3D[] mipmapTransforms = contents.transforms;
 		final VoxelDimensions voxelDimensions = contents.voxelDimensions;
 
 		final RandomAccessibleInterval< V >[] volatileImgs = createVolatileImgs( contents );
+		final V volatileType = Util.getTypeFromInterval( volatileImgs[ 0 ] );
 
 		final RandomAccessibleInterval< T >[][] levelToChannels = new RandomAccessibleInterval[ nLevels ][];
 		Arrays.setAll( levelToChannels,
@@ -157,7 +158,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	 */
 	@SuppressWarnings( "unchecked" )
 	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
-			RandomAccessibleInterval< V >[] createVolatileImgs( final PyramidContents< T, V > contents )
+			RandomAccessibleInterval< V >[] createVolatileImgs( final PyramidContents< T > contents )
 	{
 		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final RandomAccessibleInterval< V >[] volatileImgs = new RandomAccessibleInterval[ contents.numResolutionLevels ];

@@ -55,7 +55,6 @@ import dev.zarr.zarrjava.store.HttpStore;
 import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
 
-import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
@@ -77,7 +76,6 @@ import net.imglib2.util.Cast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import bdv.util.volatiles.VolatileTypeMatcher;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
@@ -93,12 +91,10 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  * Supports OME-Zarr v0.4 (Zarr v2) and v0.5 (Zarr v3).
  *
  * @param <T> pixel type
- * @param <V> volatile pixel type
  */
 public class ZarrJavaPyramidBackend<
-		T extends NativeType< T > & RealType< T >,
-		V extends Volatile< T > & NativeType< V > & RealType< V > >
-		implements PyramidBackend< T, V >
+		T extends NativeType< T > & RealType< T > >
+		implements PyramidBackend< T >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -112,7 +108,7 @@ public class ZarrJavaPyramidBackend<
 	}
 
 	@Override
-	public PyramidContents< T, V > load()
+	public PyramidContents< T > load()
 	{
 		final MultiscaleImage multiscaleImage = openMultiscaleImage();
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
@@ -121,7 +117,6 @@ public class ZarrJavaPyramidBackend<
 
 		final Array level0Array = openLevel( multiscaleImage, 0 );
 		final T type = typeForZarrDataType( level0Array.metadata().dataType().getMA2DataType() );
-		final V volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 
 		// zarr shape is C-order [t, c, z, y, x]; imglib2 uses F-order [x, y, z, c, t]
 		final long[] zarrShape = level0Array.metadata().shape;
@@ -163,14 +158,13 @@ public class ZarrJavaPyramidBackend<
 		final Omero omero = convertOmero( multiscaleImage.getOmeroMetadata() );
 		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
 
-		return PyramidContents.< T, V >builder()
+		return PyramidContents.< T >builder()
 				.name( name )
 				.numResolutionLevels( numResolutionLevels )
 				.numChannels( numChannels )
 				.numTimepoints( numTimepoints )
 				.numDimensions( numDimensions )
 				.type( type )
-				.volatileType( volatileType )
 				.voxelDimensions( voxelDimensions )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )

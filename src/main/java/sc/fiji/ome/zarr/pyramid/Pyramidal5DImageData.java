@@ -55,7 +55,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T > > extends Contextual
 {
 
-	PyramidContents< T, ? > getPyramidContents();
+	PyramidContents< T > getPyramidContents();
 
 	int preferredResolutionLevel();
 

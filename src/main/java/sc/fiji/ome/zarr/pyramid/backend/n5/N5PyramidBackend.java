@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -62,7 +61,6 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
-import bdv.util.volatiles.VolatileTypeMatcher;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
@@ -79,12 +77,10 @@ import sc.fiji.ome.zarr.util.Affine3DUtils;
  * Zarr v3 variant used by v0.5).
  *
  * @param <T> pixel type
- * @param <V> volatile pixel type
  */
 public class N5PyramidBackend<
-		T extends NativeType< T > & RealType< T >,
-		V extends Volatile< T > & NativeType< V > & RealType< V > >
-		implements PyramidBackend< T, V >
+		T extends NativeType< T > & RealType< T > >
+		implements PyramidBackend< T >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -96,7 +92,7 @@ public class N5PyramidBackend<
 	}
 
 	@Override
-	public PyramidContents< T, V > load()
+	public PyramidContents< T > load()
 	{
 		final N5Reader reader = new N5Factory().openReader( inputUri.toString() );
 		final N5TreeNode treeNode = new N5TreeNode( "" );
@@ -109,7 +105,6 @@ public class N5PyramidBackend<
 		final AffineTransform3D[] transforms = spatialMetadata.spatialTransforms3d();
 		final VoxelDimensions voxelDimensions = createVoxelDimensions( transforms[ 0 ], spatialMetadata.unit() );
 		final T type = N5Utils.type( multiscale.getDataType() );
-		final V volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 		final String name = multiscale.getName();
 		final int numResolutionLevels = multiscale.numResolutionLevels();
 		final int numDimensions = level0.attributes.getDimensions().length;
@@ -134,14 +129,13 @@ public class N5PyramidBackend<
 
 		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
 
-		return PyramidContents.< T, V >builder()
+		return PyramidContents.< T >builder()
 				.name( name )
 				.numResolutionLevels( numResolutionLevels )
 				.numChannels( numChannels )
 				.numTimepoints( numTimepoints )
 				.numDimensions( numDimensions )
 				.type( type )
-				.volatileType( volatileType )
 				.voxelDimensions( voxelDimensions )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )

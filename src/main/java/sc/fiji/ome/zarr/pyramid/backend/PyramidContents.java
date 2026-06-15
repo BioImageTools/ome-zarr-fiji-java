@@ -28,7 +28,6 @@
  */
 package sc.fiji.ome.zarr.pyramid.backend;
 
-import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -49,11 +48,9 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  * after the backend has reversed any zarr C-order shapes.
  *
  * @param <T> pixel type
- * @param <V> volatile pixel type
  */
 public final class PyramidContents<
-		T extends NativeType< T > & RealType< T >,
-		V extends Volatile< T > & NativeType< V > & RealType< V > >
+		T extends NativeType< T > & RealType< T > >
 {
 	public final String name;
 
@@ -66,8 +63,6 @@ public final class PyramidContents<
 	public final int numDimensions;
 
 	public final T type;
-
-	public final V volatileType;
 
 	public final VoxelDimensions voxelDimensions;
 
@@ -95,7 +90,7 @@ public final class PyramidContents<
 	/** OMERO rendering metadata, or {@code null} if unavailable. */
 	public final Omero omero;
 
-	private PyramidContents( final Builder< T, V > b )
+	private PyramidContents( final Builder< T > b )
 	{
 		this.name = b.name;
 		this.numResolutionLevels = b.numResolutionLevels;
@@ -103,7 +98,6 @@ public final class PyramidContents<
 		this.numTimepoints = b.numTimepoints;
 		this.numDimensions = b.numDimensions;
 		this.type = b.type;
-		this.volatileType = b.volatileType;
 		this.voxelDimensions = b.voxelDimensions;
 		this.transforms = b.transforms;
 		this.cachedCellImgs = b.cachedCellImgs;
@@ -116,15 +110,13 @@ public final class PyramidContents<
 	}
 
 	public static <
-			T extends NativeType< T > & RealType< T >,
-			V extends Volatile< T > & NativeType< V > & RealType< V > > Builder< T, V > builder()
+			T extends NativeType< T > & RealType< T > > Builder< T > builder()
 	{
 		return new Builder<>();
 	}
 
 	public static final class Builder<
-			T extends NativeType< T > & RealType< T >,
-			V extends Volatile< T > & NativeType< V > & RealType< V > >
+			T extends NativeType< T > & RealType< T > >
 	{
 		private String name;
 
@@ -137,8 +129,6 @@ public final class PyramidContents<
 		private int numDimensions;
 
 		private T type;
-
-		private V volatileType;
 
 		private VoxelDimensions voxelDimensions;
 
@@ -158,103 +148,97 @@ public final class PyramidContents<
 
 		private Omero omero;
 
-		public Builder< T, V > name( final String name )
+		public Builder< T > name( final String name )
 		{
 			this.name = name;
 			return this;
 		}
 
-		public Builder< T, V > numResolutionLevels( final int n )
+		public Builder< T > numResolutionLevels( final int n )
 		{
 			this.numResolutionLevels = n;
 			return this;
 		}
 
-		public Builder< T, V > numChannels( final int n )
+		public Builder< T > numChannels( final int n )
 		{
 			this.numChannels = n;
 			return this;
 		}
 
-		public Builder< T, V > numTimepoints( final int n )
+		public Builder< T > numTimepoints( final int n )
 		{
 			this.numTimepoints = n;
 			return this;
 		}
 
-		public Builder< T, V > numDimensions( final int n )
+		public Builder< T > numDimensions( final int n )
 		{
 			this.numDimensions = n;
 			return this;
 		}
 
-		public Builder< T, V > type( final T t )
+		public Builder< T > type( final T t )
 		{
 			this.type = t;
 			return this;
 		}
 
-		public Builder< T, V > volatileType( final V v )
-		{
-			this.volatileType = v;
-			return this;
-		}
-
-		public Builder< T, V > voxelDimensions( final VoxelDimensions v )
+		public Builder< T > voxelDimensions( final VoxelDimensions v )
 		{
 			this.voxelDimensions = v;
 			return this;
 		}
 
-		public Builder< T, V > transforms( final AffineTransform3D[] t )
+		public Builder< T > transforms( final AffineTransform3D[] t )
 		{
 			this.transforms = t;
 			return this;
 		}
 
-		public Builder< T, V > cachedCellImgs( final CachedCellImg< T, ? >[] i )
+		public Builder< T > cachedCellImgs( final CachedCellImg< T, ? >[] i )
 		{
 			this.cachedCellImgs = i;
 			return this;
 		}
 
-		public Builder< T, V > axesPerLevel( final AxisCalibration[][] a )
+		public Builder< T > axesPerLevel( final AxisCalibration[][] a )
 		{
 			this.axesPerLevel = a;
 			return this;
 		}
 
-		public Builder< T, V > channelAxisIndex( final int i )
+		public Builder< T > channelAxisIndex( final int i )
 		{
 			this.channelAxisIndex = i;
 			return this;
 		}
 
-		public Builder< T, V > zAxisPresent( final boolean b )
+		public Builder< T > zAxisPresent( final boolean b )
 		{
 			this.zAxisPresent = b;
 			return this;
 		}
 
-		public Builder< T, V > timeAxisPresent( final boolean b )
+		public Builder< T > timeAxisPresent( final boolean b )
 		{
 			this.timeAxisPresent = b;
 			return this;
 		}
 
-		public Builder< T, V > channelLabels( final String[] l )
+		public Builder< T > channelLabels( final String[] l )
 		{
 			this.channelLabels = l;
 			return this;
 		}
 
-		public Builder< T, V > omero( final Omero o )
+		public Builder< T > omero( final Omero o )
 		{
 			this.omero = o;
 			return this;
 		}
 
-		public PyramidContents< T, V > build()
+		public PyramidContents< T > build()
 		{
 			return new PyramidContents<>( this );
 		}
