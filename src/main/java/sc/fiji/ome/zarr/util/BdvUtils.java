@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,10 +36,8 @@ import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 
-import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 
-import net.imglib2.type.numeric.RealType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,27 +79,23 @@ public class BdvUtils
 	 * If {@code pyramidalService} is non-null, the dataset is immediately marked as active
 	 * and a {@code WindowFocusListener} keeps it up to date as focus moves between windows.
 	 *
-	 * @param pyramidalDataset the input dataset to be displayed in BDV
+	 * @param pyramidalBdv the input {@link PyramidalBdv} to be displayed in BDV
 	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking
 	 * @return a {@code BdvHandle} instance representing the BDV window
 	 */
-	public static < T extends NativeType< T > & RealType< T > > BdvHandle showBdvAndRegisterDataset(
-			final PyramidalBdv< ? > pyramidalDataset,
-			final PyramidalService pyramidalService
-	)
+	public static BdvHandle showBdvAndRegisterDataset( final PyramidalBdv< ? > pyramidalBdv, final PyramidalService pyramidalService )
 	{
-		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.< T >asSources(), pyramidalDataset.getPyramidContents().numTimepoints,
-				BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
+		BdvHandle bdvHandle = BdvFunctions.show( pyramidalBdv.asSources(), pyramidalBdv.getPyramidContents().numTimepoints,
+				BdvOptions.options().frameTitle( pyramidalBdv.getName() ) ).getBdvHandle();
 
-		setTimepoint( pyramidalDataset.getPyramidContents().omero, bdvHandle );
-
-		setChannelProperties( pyramidalDataset, bdvHandle );
+		setTimepoint( pyramidalBdv.getPyramidContents().omero, bdvHandle );
+		setChannelProperties( pyramidalBdv, bdvHandle );
 
 		Container topLevelContainer = bdvHandle.getViewerPanel().getRootPane().getParent();
 		if ( topLevelContainer instanceof Window )
 		{
 			final Window window = ( Window ) topLevelContainer;
-			registerDatasetLifecycle( pyramidalDataset, window, pyramidalService );
+			registerDatasetLifecycle( pyramidalBdv, window, pyramidalService );
 		}
 		return bdvHandle;
 	}
