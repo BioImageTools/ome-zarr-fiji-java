@@ -40,11 +40,10 @@ import sc.fiji.ome.zarr.util.ZarrTestUtils;
 public class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
 {
 	@Override
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	public PyramidContents< ? > load( final String resource, final Context context )
 			throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new ZarrJavaPyramidBackend( path.toUri() ).load();
+		return new ZarrJavaPyramidBackend().load( path.toUri() );
 	}
 }

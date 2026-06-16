@@ -75,28 +75,17 @@ import sc.fiji.ome.zarr.util.Affine3DUtils;
  * {@link PyramidBackend} that reads OME-Zarr images with the N5 universe
  * library. Supports OME-Zarr v0.3, v0.4 and v0.5 (N5 reads Zarr v2 and the
  * Zarr v3 variant used by v0.5).
- *
- * @param <T> pixel type
  */
-public class N5PyramidBackend<
-		T extends NativeType< T > & RealType< T > >
-		implements PyramidBackend< T >
+public class N5PyramidBackend implements PyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private final URI inputUri;
-
-	public N5PyramidBackend( final URI inputUri )
-	{
-		this.inputUri = inputUri;
-	}
-
 	@Override
-	public PyramidContents< T > load()
+	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
 	{
 		final N5Reader reader = new N5Factory().openReader( inputUri.toString() );
 		final N5TreeNode treeNode = new N5TreeNode( "" );
-		final OmeNgffMetadata metadata = readMetadata( reader, treeNode );
+		final OmeNgffMetadata metadata = readMetadata( reader, treeNode, inputUri );
 		final Multiscale multiscale = buildMultiscale( metadata, 0 );
 		final Omero omero = readOmeroMetadata( reader, treeNode );
 		final ResolutionLevel level0 = multiscale.getLevels().get( 0 );
@@ -148,7 +137,7 @@ public class N5PyramidBackend<
 				.build();
 	}
 
-	private OmeNgffMetadata readMetadata( final N5Reader reader, final N5TreeNode node )
+	private OmeNgffMetadata readMetadata( final N5Reader reader, final N5TreeNode node, final URI inputUri )
 	{
 		final List< N5MetadataParser< ? > > parsers = Collections.singletonList( new OmeNgffMetadataParser( reader ) );
 		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, parsers );

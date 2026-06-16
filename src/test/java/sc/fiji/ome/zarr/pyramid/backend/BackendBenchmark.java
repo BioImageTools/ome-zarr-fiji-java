@@ -154,13 +154,13 @@ public class BackendBenchmark
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	private static void benchN5Open( final String dataset )
 	{
-		new N5PyramidBackend( Paths.get( dataset ).toUri() ).load();
+		new N5PyramidBackend().load( Paths.get( dataset ).toUri() );
 	}
 
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	private static void benchZarrJavaOpen( final String dataset )
 	{
-		new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ).load();
+		new ZarrJavaPyramidBackend().load( Paths.get( dataset ).toUri() );
 	}
 
 	private static void benchPureZarrJavaOpen( final String dataset ) throws IOException, ZarrException
@@ -208,14 +208,14 @@ public class BackendBenchmark
 	{
 		final Context n5Context = new Context();
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
-		final PyramidContents< ? > n5Wrapped = new N5PyramidBackend( Paths.get( dataset ).toUri() ).load();
+		final PyramidContents< ? > n5Wrapped = new N5PyramidBackend().load( Paths.get( dataset ).toUri() );
 		final RandomAccessibleInterval< ? > n5WrappedLevel0 =
 				new PyramidalBdv<>( n5Context, n5Wrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final Context zjContext = new Context();
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
 		final PyramidContents< ? > zjWrapped =
-				new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ).load();
+				new ZarrJavaPyramidBackend().load( Paths.get( dataset ).toUri() );
 		final RandomAccessibleInterval< ? > zjWrappedLevel0 =
 				new PyramidalBdv<>( zjContext, zjWrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 

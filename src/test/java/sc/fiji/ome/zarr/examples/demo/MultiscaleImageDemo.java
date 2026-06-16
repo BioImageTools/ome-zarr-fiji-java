@@ -53,7 +53,7 @@ public class MultiscaleImageDemo
 		final ImageJ imageJ = new ImageJ();
 		imageJ.ui().showUI();
 		final PyramidContents< ? > contents =
-				new N5PyramidBackend( Paths.get( "image" ).toUri() ).load() /*, multiscaleImage */;
+				new N5PyramidBackend().load( Paths.get( "image" ).toUri() ) /*, multiscaleImage */;
 		PyramidalDataset pyramidalDataset = new PyramidalDataset( imageJ.context(), contents, 0 );
 		imageJ.ui().show( pyramidalDataset );
 

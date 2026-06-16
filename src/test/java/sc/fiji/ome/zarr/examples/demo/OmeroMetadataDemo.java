@@ -46,7 +46,6 @@ public class OmeroMetadataDemo
 {
 	private static final String ZARR_URI = "https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0";
 
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	public static void main( final String[] args ) throws Exception
 	{
 		final URI uri = new URI( ZARR_URI );
@@ -56,11 +55,11 @@ public class OmeroMetadataDemo
 
 		// --- open with N5 backend ---
 		System.out.println( "=== N5 backend ===" );
-		printInfo( new N5PyramidBackend( uri ).load() );
+		printInfo( new N5PyramidBackend().load( uri ) );
 
 		// --- open with zarr-java backend ---
 		System.out.println( "=== zarr-java backend ===" );
-		printInfo( new ZarrJavaPyramidBackend( uri ).load() );
+		printInfo( new ZarrJavaPyramidBackend().load( uri ) );
 	}
 
 	private static void printInfo( final PyramidContents< ? > contents )

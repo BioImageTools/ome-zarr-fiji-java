@@ -250,7 +250,6 @@ public class ZarrOpenActions
 		return null;
 	}
 
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	private PyramidContents< ? > getContents()
 	{
 		if ( cachedContents == null )
@@ -265,10 +264,10 @@ public class ZarrOpenActions
 					? ZarrOpeningSettings.DEFAULT_READER_BACKEND
 					: settings.getReaderBackend();
 			final PyramidBackend pyramidBackend = ( backend == ZarrReaderBackend.ZARR_JAVA )
-					? new ZarrJavaPyramidBackend( inputUri )
-					: new N5PyramidBackend( inputUri );
+					? new ZarrJavaPyramidBackend()
+					: new N5PyramidBackend();
 
-			final PyramidContents< ? > contents = pyramidBackend.load();
+			final PyramidContents< ? > contents = pyramidBackend.load( inputUri );
 			preferredResolutionLevel = contents.selectResolutionLevel( preferredWidth );
 			cachedContents = contents;
 		}

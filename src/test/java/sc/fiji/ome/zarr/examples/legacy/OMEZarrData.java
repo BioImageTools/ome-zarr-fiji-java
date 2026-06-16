@@ -84,10 +84,10 @@ public class OMEZarrData
 		// can understand.
 		// Note: a {@code Dataset} is the
 		// "primary image data structure in ImageJ".
-		return new N5PyramidBackend(
+		return new N5PyramidBackend().load(
 				Paths.get( multiscalePaths[ 0 ] ).toUri()
 		/*, multiscaleImage*/
-		).load();
+		);
 	}
 
 	// TODO one could use this to create a GUI

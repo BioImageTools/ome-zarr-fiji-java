@@ -89,27 +89,20 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the zarr-java library.
  * Supports OME-Zarr v0.4 (Zarr v2) and v0.5 (Zarr v3).
- *
- * @param <T> pixel type
  */
-public class ZarrJavaPyramidBackend<
-		T extends NativeType< T > & RealType< T > >
-		implements PyramidBackend< T >
+public class ZarrJavaPyramidBackend implements PyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private final URI inputUri;
+	/** Location of the image being read; set for the duration of a {@link #load(URI)} call. */
+	private URI inputUri;
 
 	private StoreHandle activeHandle = null;
 
-	public ZarrJavaPyramidBackend( final URI inputUri )
+	@Override
+	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
 	{
 		this.inputUri = inputUri;
-	}
-
-	@Override
-	public PyramidContents< T > load()
-	{
 		final MultiscaleImage multiscaleImage = openMultiscaleImage();
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
 

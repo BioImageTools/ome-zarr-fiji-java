@@ -49,7 +49,7 @@ public class PyramidalDatasetDemo
 		final ImageJ imageJ = new ImageJ();
 		imageJ.ui().showUI();
 		final PyramidContents< ? > contents =
-				new N5PyramidBackend( Paths.get( multiscalePath ).toUri() ).load();
+				new N5PyramidBackend().load( Paths.get( multiscalePath ).toUri() );
 		PyramidalDataset pyramidalDataset = new PyramidalDataset( imageJ.context(), contents, 0 );
 		imageJ.ui().show( pyramidalDataset );
 

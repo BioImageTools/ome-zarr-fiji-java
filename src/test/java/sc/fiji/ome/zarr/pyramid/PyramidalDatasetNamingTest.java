@@ -54,26 +54,24 @@ class PyramidalDatasetNamingTest
 			"sc/fiji/ome/zarr/util/single_resolution_testing/single_resolution_dataset_v5.ome.zarr";
 
 	@Test
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	void multiResolutionImageNameEndsWithR() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( MULTI_LEVEL_RESOURCE );
 		try (Context context = new Context())
 		{
-			final PyramidContents< ? > contents = new N5PyramidBackend( path.toUri() ).load();
+			final PyramidContents< ? > contents = new N5PyramidBackend().load( path.toUri() );
 			assertTrue( new PyramidalDataset( context, contents, 0 ).getName().endsWith( " (R)" ) );
 			assertTrue( new PyramidalDataset( context, contents, 1 ).getName().endsWith( " (R)" ) );
 		}
 	}
 
 	@Test
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	void singleResolutionImageNameHasNoR() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( SINGLE_LEVEL_RESOURCE );
 		try (Context context = new Context())
 		{
-			final PyramidContents< ? > contents = new N5PyramidBackend( path.toUri() ).load();
+			final PyramidContents< ? > contents = new N5PyramidBackend().load( path.toUri() );
 			final String name = new PyramidalDataset( context, contents, 0 ).getName();
 			assertFalse( name.contains( "(R)" ), "expected no '(R)' in name but was: " + name );
 		}

@@ -40,11 +40,10 @@ import sc.fiji.ome.zarr.util.ZarrTestUtils;
 public class N5PyramidBackendTest implements PyramidBackendTestBase
 {
 	@Override
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	public PyramidContents< ? > load( final String resource, final Context context )
 			throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new N5PyramidBackend( path.toUri() ).load();
+		return new N5PyramidBackend().load( path.toUri() );
 	}
 }
