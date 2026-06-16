@@ -41,6 +41,8 @@ import org.scijava.convert.ConvertService;
 
 import ij.ImagePlus;
 import net.imagej.Dataset;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 /**
@@ -50,17 +52,18 @@ import sc.fiji.ome.zarr.util.ZarrTestUtils;
  * the converter itself is provided by {@code imagej-legacy} dependency on the
  * classpath.
  */
-class Pyramidal5DImageDataAsImagePlusTest
+class PyramidalDatasetAsImagePlusTest
 {
 	@Test
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	void testOpenAsImagePlusConvertService() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" );
 
 		try (Context context = new Context())
 		{
-			final Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toUri(), null );
-			final PyramidalDataset dataset = new PyramidalDataset( pyramidal5DImageData );
+			final PyramidContents< ? > contents = new N5PyramidBackend( path.toUri() ).load();
+			final PyramidalDataset dataset = new PyramidalDataset( context, contents, 0 );
 			final ImagePlus imagePlus = dataset.asImagePlus();
 
 			assertNotNull( imagePlus );
@@ -71,18 +74,20 @@ class Pyramidal5DImageDataAsImagePlusTest
 	}
 
 	@Test
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	void testOpenAsImagePlusSourceAndConverter() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v5.ome.zarr" );
 
 		try (Context context = new Context())
 		{
-			ImagePlus imagePlus = new Pyramidal5DImageData<>( context, path.toUri() ).asPyramidalDataset( 0 ).asImagePlus();
+			final PyramidContents< ? > contents = new N5PyramidBackend( path.toUri() ).load();
+			ImagePlus imagePlus = new PyramidalDataset( context, contents, 0 ).asImagePlus();
 
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
 			assertArrayEquals( new int[] { 64, 64, 1, 16, 4 }, imagePlus.getDimensions() );
-			imagePlus = new Pyramidal5DImageData<>( context, path.toUri() ).asPyramidalDataset( 1 ).asImagePlus();
+			imagePlus = new PyramidalDataset( context, contents, 1 ).asImagePlus();
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
 			assertArrayEquals( new int[] { 32, 32, 1, 8, 4 }, imagePlus.getDimensions() );

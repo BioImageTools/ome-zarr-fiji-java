@@ -59,48 +59,9 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 
 	private final int resolutionLevel;
 
-	/*
-	 * TODO: Should the preferredMaxWidth handling really happen at the
-	 *   Pyramidal5DImageData level? or somewhere else? Maybe just when the
-	 *   pyramid is initially opened as a Dataset via the Command?
-	 *
-	 * (from previous javadoc in Pyramidal5DImageData)
-	 * @return the IJ2 {@code net.imagej.Dataset} at the default resolution level
-	 *   (resolution level 0 = highest resolution, unless a {@code preferredMaxWidth}
-	 *   was specified at construction time, in which case a coarser level may be used);
-	 *   always returns the same cached object
-	 */
-
 	/**
 	 * Create a new IJ2 {@code net.imagej.Dataset} wrapping the image at the
-	 * preferred resolution level of the {@code pyramid}.
-	 *
-	 * @param pyramid
-	 * 		multi-resolution pyramid images and metadata
-	 */
-	public PyramidalDataset( final Pyramidal5DImageData< ? > pyramid )
-	{
-		this( pyramid, pyramid.preferredResolutionLevel() );
-	}
-
-	/**
-	 * Create a new IJ2 {@code net.imagej.Dataset} wrapping the image at the
-	 * specified resolution level of the {@code pyramid}.
-	 *
-	 * @param pyramid
-	 * 		multi-resolution pyramid images and metadata
-	 * @param resolutionLevel
-	 * 		0-based index into the resolution pyramid (0 = highest resolution)
-	 */
-	public < T extends NativeType< T > & RealType< T > > PyramidalDataset( final Pyramidal5DImageData< T > pyramid, final int resolutionLevel )
-	{
-		this( pyramid.context(), pyramid.getPyramidContents(), resolutionLevel );
-	}
-
-	/**
-	 * Create a new IJ2 {@code net.imagej.Dataset} wrapping the image at the
-	 * specified resolution level of the {@code contents}, without requiring a
-	 * {@link Pyramidal5DImageData}.
+	 * specified resolution level of the {@code contents}.
 	 *
 	 * @param context
 	 * 		the SciJava context to associate with this dataset

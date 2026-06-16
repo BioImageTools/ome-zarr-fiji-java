@@ -50,8 +50,8 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
 
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
@@ -151,21 +151,16 @@ public class BackendBenchmark
 		return ( totalNanos / ( double ) MEASURE_ROUNDS ) / 1_000_000.0;
 	}
 
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	private static void benchN5Open( final String dataset )
 	{
-		try (Context context = new Context())
-		{
-			new Pyramidal5DImageData<>( context, Paths.get( dataset ).toUri() );
-		}
+		new N5PyramidBackend( Paths.get( dataset ).toUri() ).load();
 	}
 
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	private static void benchZarrJavaOpen( final String dataset )
 	{
-		try (Context context = new Context())
-		{
-			new Pyramidal5DImageData( context, new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ) );
-		}
+		new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ).load();
 	}
 
 	private static void benchPureZarrJavaOpen( final String dataset ) throws IOException, ZarrException
@@ -212,16 +207,17 @@ public class BackendBenchmark
 	private static OpenedReadContexts openReadContexts( final String dataset ) throws Exception
 	{
 		final Context n5Context = new Context();
-		final Pyramidal5DImageData< ? > n5Wrapped = new Pyramidal5DImageData<>( n5Context, Paths.get( dataset ).toUri() );
+		@SuppressWarnings( { "rawtypes", "unchecked" } )
+		final PyramidContents< ? > n5Wrapped = new N5PyramidBackend( Paths.get( dataset ).toUri() ).load();
 		final RandomAccessibleInterval< ? > n5WrappedLevel0 =
-				new PyramidalBdv<>( n5Wrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
+				new PyramidalBdv<>( n5Context, n5Wrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final Context zjContext = new Context();
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
-		final Pyramidal5DImageData< ? > zjWrapped =
-				new Pyramidal5DImageData( zjContext, new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ) );
+		final PyramidContents< ? > zjWrapped =
+				new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ).load();
 		final RandomAccessibleInterval< ? > zjWrappedLevel0 =
-				new PyramidalBdv<>( zjWrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
+				new PyramidalBdv<>( zjContext, zjWrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final N5OpenContext n5Pure = openN5Context( Paths.get( dataset ) );
 		final String level0Path = resolveN5Level0Path( n5Pure );

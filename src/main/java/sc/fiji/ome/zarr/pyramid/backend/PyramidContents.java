@@ -34,6 +34,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
@@ -107,6 +108,29 @@ public final class PyramidContents<
 		this.timeAxisPresent = b.timeAxisPresent;
 		this.channelLabels = b.channelLabels;
 		this.omero = b.omero;
+	}
+
+	/**
+	 * Returns the index of the coarsest resolution level whose x-width (index 0
+	 * in imglib2 F-order) is &le; {@code preferredMaxWidth}, or 0 when
+	 * {@code preferredMaxWidth} is {@code null}.
+	 *
+	 * @throws NoMatchingResolutionException if {@code preferredMaxWidth} is
+	 *   smaller than the width of every resolution level
+	 */
+	public int selectResolutionLevel( final Integer preferredMaxWidth )
+	{
+		if ( preferredMaxWidth == null )
+			return 0;
+		int smallestWidth = Integer.MAX_VALUE;
+		for ( int level = 0; level < cachedCellImgs.length; level++ )
+		{
+			final int width = ( int ) cachedCellImgs[ level ].dimension( 0 );
+			if ( width <= preferredMaxWidth )
+				return level;
+			smallestWidth = Math.min( smallestWidth, width );
+		}
+		throw new NoMatchingResolutionException( preferredMaxWidth, smallestWidth );
 	}
 
 	public static <

@@ -30,14 +30,14 @@ package sc.fiji.ome.zarr.examples.demo;
 
 import java.net.URI;
 
-import org.scijava.Context;
-
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
+import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
- * Demonstrates loading a remote OME-Zarr dataset via the static
- * {@link Pyramidal5DImageData} factory methods and printing the OMERO metadata.
+ * Demonstrates loading a remote OME-Zarr dataset via the {@link N5PyramidBackend}
+ * and {@link ZarrJavaPyramidBackend} backends and printing the OMERO metadata.
  * Dataset: IDR idr0033A BR00109990_C2
  * URI: <a href="https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0</a>
  * Run with: mvn exec:java -Dexec.mainClass=sc.fiji.ome.zarr.examples.demo.OmeroMetadataDemo
@@ -46,6 +46,7 @@ public class OmeroMetadataDemo
 {
 	private static final String ZARR_URI = "https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0";
 
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	public static void main( final String[] args ) throws Exception
 	{
 		final URI uri = new URI( ZARR_URI );
@@ -53,21 +54,18 @@ public class OmeroMetadataDemo
 		System.out.println( "Opening OME-Zarr: " + uri );
 		System.out.println();
 
-		try (Context context = new Context())
-		{
-			// --- open with N5 backend (default) ---
-			System.out.println( "=== openWithN5 ===" );
-			printInfo( Pyramidal5DImageData.open( context, uri, null ) );
+		// --- open with N5 backend ---
+		System.out.println( "=== N5 backend ===" );
+		printInfo( new N5PyramidBackend( uri ).load() );
 
-			// --- open with zarr-java backend ---
-			System.out.println( "=== openWithZarrJava ===" );
-			printInfo( Pyramidal5DImageData.openWithZarrJava( context, uri, null ) );
-		}
+		// --- open with zarr-java backend ---
+		System.out.println( "=== zarr-java backend ===" );
+		printInfo( new ZarrJavaPyramidBackend( uri ).load() );
 	}
 
-	private static void printInfo( final Pyramidal5DImageData< ? > data )
+	private static void printInfo( final PyramidContents< ? > contents )
 	{
-		final Omero omero = data.getOmeroProperties();
+		final Omero omero = contents.omero;
 		if ( omero == null )
 		{
 			System.out.println( "OMERO metadata    : not available" );

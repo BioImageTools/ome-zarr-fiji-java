@@ -33,18 +33,18 @@ import java.nio.file.Path;
 
 import org.scijava.Context;
 
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase;
+import sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
-public class N5BackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTestBase
+public class N5PyramidBackendTest implements PyramidBackendTestBase
 {
 	@Override
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public Pyramidal5DImageData< ? > load( final String resource, final Context context, final Integer preferredWidth )
+	public PyramidContents< ? > load( final String resource, final Context context )
 			throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new Pyramidal5DImageData<>( context, new N5PyramidBackend( path.toUri() ), preferredWidth );
+		return new N5PyramidBackend( path.toUri() ).load();
 	}
 }

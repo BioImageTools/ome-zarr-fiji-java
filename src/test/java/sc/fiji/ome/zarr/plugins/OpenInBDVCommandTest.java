@@ -65,7 +65,7 @@ class OpenInBDVCommandTest
 
 	/**
 	 * Opening an IJ2 dataset in BDV via the {@link OpenInBDVCommand} should produce a second, distinct
-	 * {@link sc.fiji.ome.zarr.pyramid.Pyramidal} that shares the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData}.
+	 * {@link sc.fiji.ome.zarr.pyramid.Pyramidal} that shares the same {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents}.
 	 */
 	@Test
 	void runAfterIj2OpenCreatesSecondBdvDataset() throws URISyntaxException, ExecutionException, InterruptedException

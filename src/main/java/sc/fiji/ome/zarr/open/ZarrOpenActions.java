@@ -55,7 +55,6 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Cast;
 
 import ij.IJ;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
@@ -63,6 +62,9 @@ import sc.fiji.ome.zarr.pyramid.exceptions.NonExistingResolutionLevelException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
@@ -86,7 +88,9 @@ public class ZarrOpenActions
 
 	private final ZarrOpeningSettings settings;
 
-	private Pyramidal5DImageData< ? > cachedPyramid;
+	private PyramidContents< ? > cachedContents;
+
+	private int preferredResolutionLevel;
 
 	/**
 	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
@@ -175,7 +179,8 @@ public class ZarrOpenActions
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalDataset dataset = getPyramid().asPyramidalDataset();
+						final PyramidContents< ? > contents = getContents();
+						final PyramidalDataset dataset = new PyramidalDataset( context, contents, preferredResolutionLevel );
 						context.getService( UIService.class ).show( dataset );
 						logger.info( "Opened dataset in ImageJ: {}", inputUri );
 						return null;
@@ -195,10 +200,9 @@ public class ZarrOpenActions
 	 * <p>
 	 * Multiple calls — whether at the same or different level indices — each produce a separate
 	 * ImageJ {@code Dataset} (and a separate window), but all of them are backed by the same
-	 * {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData} object. The underlying
-	 * cached cell images and volatile images in
-	 * {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents} are the single source of truth
-	 * and are never loaded more than once per resolution level.
+	 * {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents} object: the cached cell images
+	 * and volatile images are the single source of truth and are never loaded more than once
+	 * per resolution level.
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
 	 */
@@ -208,7 +212,10 @@ public class ZarrOpenActions
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalDataset dataset = getPyramid().asPyramidalDataset( resolutionLevel );
+						final PyramidContents< ? > contents = getContents();
+						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels )
+							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels );
+						final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
 						context.getService( UIService.class ).show( dataset );
 						logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
 						return null;
@@ -228,7 +235,7 @@ public class ZarrOpenActions
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalBdv< ? > dataset = new PyramidalBdv<>( getPyramid() );
+						final PyramidalBdv< ? > dataset = new PyramidalBdv<>( context, getContents() );
 						final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 						final Object result = BdvUtils.showBdvAndRegisterDataset( dataset, pyramidalService );
 						logger.info( "Opened dataset in BigDataViewer: {}", inputUri );
@@ -243,9 +250,10 @@ public class ZarrOpenActions
 		return null;
 	}
 
-	private Pyramidal5DImageData< ? > getPyramid()
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	private PyramidContents< ? > getContents()
 	{
-		if ( cachedPyramid == null )
+		if ( cachedContents == null )
 		{
 			final Integer preferredWidth;
 			if ( settings == null || settings.getOpenBehavior().equals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION ) )
@@ -256,23 +264,15 @@ public class ZarrOpenActions
 			final ZarrReaderBackend backend = settings == null
 					? ZarrOpeningSettings.DEFAULT_READER_BACKEND
 					: settings.getReaderBackend();
-			switch ( backend )
-			{
-			case ZARR_JAVA:
-			{
-				@SuppressWarnings( { "rawtypes", "unchecked" } )
-				final Pyramidal5DImageData< ? > zarrJavaData =
-						new Pyramidal5DImageData( context, new ZarrJavaPyramidBackend( inputUri ) );
-				cachedPyramid = zarrJavaData;
-				break;
-			}
-			case N5:
-			default:
-				cachedPyramid = new Pyramidal5DImageData<>( context, inputUri, preferredWidth );
-				break;
-			}
+			final PyramidBackend pyramidBackend = ( backend == ZarrReaderBackend.ZARR_JAVA )
+					? new ZarrJavaPyramidBackend( inputUri )
+					: new N5PyramidBackend( inputUri );
+
+			final PyramidContents< ? > contents = pyramidBackend.load();
+			preferredResolutionLevel = contents.selectResolutionLevel( preferredWidth );
+			cachedContents = contents;
 		}
-		return cachedPyramid;
+		return cachedContents;
 	}
 
 	private Object openPyramidImage( final Supplier< Object > multiScaleOpener, final Function< Img< ? >, Object > singleScaleOpener )
@@ -346,7 +346,8 @@ public class ZarrOpenActions
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalDataset dataset = getPyramid().asPyramidalDataset();
+						final PyramidContents< ? > contents = getContents();
+						final PyramidalDataset dataset = new PyramidalDataset( context, contents, preferredResolutionLevel );
 						final Object result = multiScaleImageOpener.apply( dataset );
 						logger.info( "Opened dataset: {}", inputUri );
 						return result;

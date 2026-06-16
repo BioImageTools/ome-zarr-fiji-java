@@ -67,11 +67,6 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 
 	private final List< SourceAndConverter< T > > sources;
 
-	public PyramidalBdv( final Pyramidal5DImageData< T > data )
-	{
-		this( data.context(), data.getPyramidContents() );
-	}
-
 	public PyramidalBdv( final Context context, final PyramidContents< T > contents )
 	{
 		this.contents = contents;

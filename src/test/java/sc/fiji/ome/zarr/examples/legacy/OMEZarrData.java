@@ -33,7 +33,8 @@ import java.nio.file.Paths;
 import org.scijava.Context;
 
 import bdv.util.volatiles.SharedQueue;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 
 import javax.annotation.Nullable;
 
@@ -71,9 +72,9 @@ public class OMEZarrData
 	 * from the potentially complex {@code OMEZarrData},
 	 * that we can display in ImageJ
 	 * <br>
-	 * @return Pyramidal5DImageData
+	 * @return PyramidContents
 	 */
-	public Pyramidal5DImageData createDefaultImage()
+	public PyramidContents< ? > createDefaultImage()
 	{
 		// Create a Java object from the first
 		// multiscale metadata in the container.
@@ -83,11 +84,10 @@ public class OMEZarrData
 		// can understand.
 		// Note: a {@code Dataset} is the
 		// "primary image data structure in ImageJ".
-		return new Pyramidal5DImageData<>(
-				context,
+		return new N5PyramidBackend(
 				Paths.get( multiscalePaths[ 0 ] ).toUri()
 		/*, multiscaleImage*/
-		);
+		).load();
 	}
 
 	// TODO one could use this to create a GUI

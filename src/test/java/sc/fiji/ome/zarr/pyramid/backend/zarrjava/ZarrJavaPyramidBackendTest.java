@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,33 +26,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.examples.demo;
+package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
 
-import java.nio.file.Paths;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 
-import net.imagej.ImageJ;
+import org.scijava.Context;
 
-import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
-@SuppressWarnings( "all" )
-public class Pyramidal5DImageDataDemo
+public class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
 {
-	public static void main( String[] args )
+	@Override
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	public PyramidContents< ? > load( final String resource, final Context context )
+			throws URISyntaxException
 	{
-		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
-		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
-
-		// Show as imagePlus
-		final ImageJ imageJ = new ImageJ();
-		imageJ.ui().showUI();
-		final Pyramidal5DImageData< ? > pyramidal5DImageData =
-				new Pyramidal5DImageData<>( imageJ.context(), Paths.get( multiscalePath ).toUri() );
-		PyramidalDataset pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
-		imageJ.ui().show( pyramidalDataset );
-
-		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true );
+		Path path = ZarrTestUtils.resourcePath( resource );
+		return new ZarrJavaPyramidBackend( path.toUri() ).load();
 	}
 }

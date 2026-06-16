@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,25 +26,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
+package sc.fiji.ome.zarr.examples.demo;
 
-import java.net.URISyntaxException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import org.scijava.Context;
+import net.imagej.ImageJ;
 
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase;
-import sc.fiji.ome.zarr.util.ZarrTestUtils;
+import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
+import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 
-public class ZarrJavaBackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTestBase
+@SuppressWarnings( "all" )
+public class PyramidalDatasetDemo
 {
-	@Override
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public Pyramidal5DImageData< ? > load( final String resource, final Context context, final Integer preferredWidth )
-			throws URISyntaxException
+	public static void main( String[] args )
 	{
-		Path path = ZarrTestUtils.resourcePath( resource );
-		return new Pyramidal5DImageData( context, new ZarrJavaPyramidBackend( path.toUri() ), preferredWidth );
+		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
+		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
+
+		// Show as imagePlus
+		final ImageJ imageJ = new ImageJ();
+		imageJ.ui().showUI();
+		final PyramidContents< ? > contents =
+				new N5PyramidBackend( Paths.get( multiscalePath ).toUri() ).load();
+		PyramidalDataset pyramidalDataset = new PyramidalDataset( imageJ.context(), contents, 0 );
+		imageJ.ui().show( pyramidalDataset );
+
+		// Also show the displayed image in BDV
+		imageJ.command().run( OpenInBDVCommand.class, true );
 	}
 }
