@@ -90,10 +90,10 @@ public class BdvUtils
 			final PyramidalService pyramidalService
 	)
 	{
-		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.< T >asSources(), pyramidalDataset.numTimepoints(),
+		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.< T >asSources(), pyramidalDataset.getPyramidContents().numTimepoints,
 				BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
 
-		setTimepoint( pyramidalDataset.getOmeroProperties(), bdvHandle );
+		setTimepoint( pyramidalDataset.getPyramidContents().omero, bdvHandle );
 
 		setChannelProperties( pyramidalDataset, bdvHandle );
 
@@ -135,7 +135,7 @@ public class BdvUtils
 
 	private static void setChannelProperties( final PyramidalBdv< ? > pyramidalDataset, final BdvHandle bdvHandle )
 	{
-		Omero omero = pyramidalDataset.getOmeroProperties();
+		Omero omero = pyramidalDataset.getPyramidContents().omero;
 		if ( omero == null || omero.channels == null || omero.channels.isEmpty() )
 			return;
 		List< Omero.Channel > omeroChannels = omero.channels;

@@ -30,43 +30,10 @@ package sc.fiji.ome.zarr.pyramid;
 
 import org.scijava.Contextual;
 
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
-import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 public interface Pyramidal extends Contextual
 {
 
 	PyramidContents< ? > getPyramidContents();
-
-	default int numResolutions()
-	{
-		return getPyramidContents().numResolutionLevels;
-	}
-
-	// TODO: the methods below this may be removed
-	default int numChannels()
-	{
-		return getPyramidContents().numChannels;
-	}
-
-	default int numTimepoints()
-	{
-		return getPyramidContents().numTimepoints;
-	}
-
-	default Omero getOmeroProperties()
-	{
-		return getPyramidContents().omero;
-	}
-
-	default VoxelDimensions voxelDimensions()
-	{
-		return getPyramidContents().voxelDimensions;
-	}
-
-	default String getPyramidName()
-	{
-		return getPyramidContents().name;
-	}
 }
