@@ -34,7 +34,6 @@ import org.scijava.Context;
 
 import bdv.util.volatiles.SharedQueue;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 
 import javax.annotation.Nullable;
 
@@ -84,7 +83,7 @@ public class OMEZarrData
 		// can understand.
 		// Note: a {@code Dataset} is the
 		// "primary image data structure in ImageJ".
-		return new Pyramidal5DImageDataImpl<>(
+		return new Pyramidal5DImageData<>(
 				context,
 				Paths.get( multiscalePaths[ 0 ] ).toUri()
 		/*, multiscaleImage*/

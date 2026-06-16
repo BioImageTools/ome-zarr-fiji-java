@@ -118,7 +118,7 @@ class OpenResolutionLevelCommandTest
 		}
 	}
 
-	/** The newly opened dataset shares the same {@link PyramidalDataset#getPyramidal5DImageData()} instance as the source. */
+	/** The newly opened dataset shares the same {@link PyramidalDataset#getPyramidContents()} instance as the source. */
 	@Test
 	void runReusesSamePyramidDataAcrossResolutionLevels() throws URISyntaxException, ExecutionException, InterruptedException
 	{
@@ -137,12 +137,12 @@ class OpenResolutionLevelCommandTest
 			assertEquals( 2, datasetService.getDatasets().size() );
 			assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 0 ) );
 			assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 1 ) );
-			assertSame( sourceDataset.getPyramidal5DImageData(), levelDataset.getPyramidal5DImageData() );
+			assertSame( sourceDataset.getPyramidContents(), levelDataset.getPyramidContents() );
 		}
 	}
 
 	/**
-	 * Opening in BDV and then running the command produces a level dataset sharing the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData}.
+	 * Opening in BDV and then running the command produces a level dataset sharing the same {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents}.
 	 */
 	@Test
 	void runAfterBdvOpenSharesSamePyramidData() throws URISyntaxException, ExecutionException, InterruptedException
@@ -162,13 +162,13 @@ class OpenResolutionLevelCommandTest
 			final Pyramidal level1 = pyramidalService.getPyramidals().get( 1 );
 			assertEquals( 1, context.getService( DatasetService.class ).getDatasets().size() );
 			assertEquals( 2, pyramidalService.getPyramidals().size() );
-			assertSame( bdvPyramidal.getPyramidal5DImageData(), level1.getPyramidal5DImageData() );
+			assertSame( bdvPyramidal.getPyramidContents(), level1.getPyramidContents() );
 		}
 	}
 
 	/**
 	 * Opening in IJ2 at the highest resolution and then running the command produces
-	 * two datasets sharing the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData}.
+	 * two datasets sharing the same {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents}.
 	 */
 	@Test
 	void runAfterIj2OpenSharesSamePyramidData() throws URISyntaxException, ExecutionException, InterruptedException
@@ -191,7 +191,7 @@ class OpenResolutionLevelCommandTest
 			assertEquals( 2, datasetService.getDatasets().size() );
 			assertEquals( 2, pyramidalService.getPyramidals().size() );
 			final Pyramidal levelDataset = pyramidalService.getPyramidals().get( 1 );
-			assertSame( ij2Dataset.getPyramidal5DImageData(), levelDataset.getPyramidal5DImageData() );
+			assertSame( ij2Dataset.getPyramidContents(), levelDataset.getPyramidContents() );
 		}
 	}
 

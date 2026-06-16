@@ -50,34 +50,39 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import org.scijava.AbstractContextual;
+import org.scijava.Context;
 import org.scijava.object.ObjectService;
 import org.scijava.plugin.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
-import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends AbstractContextual implements Pyramidal
 {
 
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private final Pyramidal5DImageData< T > data;
+	private final PyramidContents< T > contents;
 
 	private final List< SourceAndConverter< T > > sources;
 
 	public PyramidalBdv( final Pyramidal5DImageData< T > data )
 	{
-		this.data = data;
-		sources = initSourceAndConverters( data.getPyramidContents() );
-		setContext( data.context() );
+		this( data.context(), data.getPyramidContents() );
+	}
+
+	public PyramidalBdv( final Context context, final PyramidContents< T > contents )
+	{
+		this.contents = contents;
+		sources = initSourceAndConverters( contents );
+		setContext( context );
 	}
 
 	@Override
-	public Pyramidal5DImageData< ? > getPyramidal5DImageData()
+	public PyramidContents< T > getPyramidContents()
 	{
-		return data;
+		return contents;
 	}
 
 	/**
@@ -90,21 +95,9 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		return sources;
 	}
 
-	@Override
-	public int numTimepoints()
-	{
-		return data.numTimepoints();
-	}
-
 	public String getName()
 	{
-		return data.getName();
-	}
-
-	@Override
-	public Omero getOmeroProperties()
-	{
-		return data.getOmeroProperties();
+		return contents.name;
 	}
 
 	@SuppressWarnings( "unchecked" )

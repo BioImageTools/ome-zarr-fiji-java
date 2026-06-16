@@ -33,7 +33,7 @@ import java.nio.file.Path;
 
 import org.scijava.Context;
 
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
@@ -41,10 +41,10 @@ public class N5BackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTes
 {
 	@Override
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public Pyramidal5DImageDataImpl< ? > load( final String resource, final Context context, final Integer preferredWidth )
+	public Pyramidal5DImageData< ? > load( final String resource, final Context context, final Integer preferredWidth )
 			throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new Pyramidal5DImageDataImpl<>( context, new N5PyramidBackend( path.toUri() ), preferredWidth );
+		return new Pyramidal5DImageData<>( context, new N5PyramidBackend( path.toUri() ), preferredWidth );
 	}
 }

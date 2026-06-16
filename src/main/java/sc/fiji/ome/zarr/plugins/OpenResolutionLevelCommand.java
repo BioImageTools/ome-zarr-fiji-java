@@ -97,9 +97,7 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 			return;
 		}
 		final int level = Integer.parseInt( resolutionLevel.replace( "Resolution ", "" ) );
-		final PyramidalDataset levelDataset = new PyramidalDataset( pyramidal.getPyramidal5DImageData(), level );
-		// TODO: PyramidalDataset could also be initialized with context and pyramid content, but without Pyramidal5DImageData:
-		// final PyramidalDataset levelDataset = new PyramidalDataset( pyramidal.getContext(), pyramidal.getPyramidContent(), level );
+		final PyramidalDataset levelDataset = new PyramidalDataset( pyramidal.getContext(), pyramidal.getPyramidContents(), level );
 		uiService.show( levelDataset );
 	}
 }

@@ -30,70 +30,227 @@ package sc.fiji.ome.zarr.pyramid;
 
 import java.net.URI;
 
+import org.scijava.AbstractContextual;
 import org.scijava.Context;
-import org.scijava.Contextual;
 import org.scijava.prefs.PrefService;
 
+import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import net.imagej.Dataset;
+import net.imglib2.EuclideanSpace;
+import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NonExistingResolutionLevelException;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
- * 5D multi-resolution array data
- * represented as various 5D images objects
- * that can be visualized in different ImageJ
- * viewers.
+ * A backend-agnostic, OME-Zarr backed pyramidal 5D image that can be visualized
+ * in ImageJ in various ways.
+ * <p>
+ * 5D refers to: x, y, z, t, channels (or simply the dimension in which all
+ * images are stacked). The {@link EuclideanSpace} interface adds only
+ * {@link #numDimensions()}.
+ * <p>
+ * The image data is produced by a {@link PyramidBackend} (e.g.
+ * {@link N5PyramidBackend}); this class copies the backend's output into its
+ * own state and exposes the multi-resolution pyramid, channel/timepoint
+ * metadata, and pixel type. Fiji-specific views (the ImageJ {@link Dataset} and
+ * the BigDataViewer {@link SourceAndConverter} list) are produced by
+ * {@link PyramidalDataset} and {@link PyramidalBdv}.
  *
  * @param <T> pixel type
  */
-public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T > > extends Contextual
+public class Pyramidal5DImageData<
+		T extends NativeType< T > & RealType< T > >
+		extends AbstractContextual
+		implements EuclideanSpace
 {
+	private final PyramidContents< T > contents;
 
-	PyramidContents< T > getPyramidContents();
+	private final int preferredResolutionLevel;
 
-	int preferredResolutionLevel();
-
-	/**
-	 * @return an IJ2 {@code net.imagej.Dataset}
-	 *   with additional methods for retrieving the
-	 *   underlying multi-resolution data.
-	 */
-	PyramidalDataset asPyramidalDataset();
-
-	/**
-	 * @param resolutionLevel 0-based index into the resolution pyramid (0 = highest resolution)
-	 * @return a newly created object of {@link PyramidalDataset} wrapping the image at the specified resolution level,
-	 *   backed by the same underlying pyramid data
-	 */
-	PyramidalDataset asPyramidalDataset( int resolutionLevel );
-
-	/**
-	 * @return the physical voxel size and unit of measurement at the
-	 *   full-resolution level, as derived from the OME-Zarr axis and
-	 *   coordinate-transformation metadata
-	 */
-	VoxelDimensions voxelDimensions();
-
-	int numChannels();
-
-	int numTimepoints();
-
-	int numResolutionLevels();
-
-	T getType();
-
-	String getName();
-
-	default Omero getOmeroProperties()
+	public PyramidContents< T > getPyramidContents()
 	{
-		return null;
+		return contents;
 	}
+
+	public int preferredResolutionLevel()
+	{
+		return preferredResolutionLevel;
+	}
+
+	private final String name;
+
+	private final int numResolutionLevels;
+
+	private final int numTimepoints;
+
+	private final int numChannels;
+
+	private final int numDimensions;
+
+	private final T type;
+
+	private final VoxelDimensions voxelDimensions;
+
+	private final Omero omero;
+
+	/**
+	 * Open an OME-Zarr image with the default N5 backend.
+	 *
+	 * @param inputUri location of the OME-Zarr root; either a {@code file:} URI
+	 *   for local datasets or an {@code http(s):} URI for remote datasets
+	 */
+	public Pyramidal5DImageData( final Context context, final URI inputUri )
+	{
+		this( context, inputUri, null );
+	}
+
+	/**
+	 * Open an OME-Zarr image with the default N5 backend, downsampling to at
+	 * most {@code preferredMaxWidth} pixels along x.
+	 *
+	 * @param inputUri location of the OME-Zarr root; either a {@code file:} URI
+	 *   for local datasets or an {@code http(s):} URI for remote datasets
+	 * @param preferredMaxWidth maximum width for the ImageJ dataset; if
+	 *   {@code null}, the highest resolution is used
+	 * @throws NoMatchingResolutionException if {@code preferredMaxWidth} is
+	 *   smaller than the width of the smallest resolution level
+	 */
+	public Pyramidal5DImageData( final Context context, final URI inputUri, final Integer preferredMaxWidth )
+	{
+		this( context, new N5PyramidBackend<>( inputUri ), preferredMaxWidth );
+	}
+
+	/**
+	 * Open an OME-Zarr image using the supplied {@link PyramidBackend}, using
+	 * the highest available resolution for the ImageJ dataset.
+	 */
+	public Pyramidal5DImageData( final Context context, final PyramidBackend< T > backend )
+	{
+		this( context, backend, null );
+	}
+
+	/**
+	 * Open an OME-Zarr image using the supplied {@link PyramidBackend},
+	 * selecting for the ImageJ dataset the coarsest resolution level whose
+	 * x-width does not exceed {@code preferredMaxWidth}. If
+	 * {@code preferredMaxWidth} is {@code null}, the highest resolution is
+	 * used.
+	 *
+	 * @throws NoMatchingResolutionException if {@code preferredMaxWidth} is
+	 *   smaller than the width of the smallest resolution level
+	 */
+	public Pyramidal5DImageData( final Context context, final PyramidBackend< T > backend, final Integer preferredMaxWidth )
+	{
+		setContext( context );
+		contents = backend.load();
+		preferredResolutionLevel = selectResolutionLevel( contents.cachedCellImgs, preferredMaxWidth );
+
+		this.name = contents.name;
+		this.numResolutionLevels = contents.numResolutionLevels;
+		this.numChannels = contents.numChannels;
+		this.numTimepoints = contents.numTimepoints;
+		this.numDimensions = contents.numDimensions;
+		this.type = contents.type;
+		this.voxelDimensions = contents.voxelDimensions;
+		this.omero = contents.omero;
+	}
+
+	/**
+	 * Returns the index of the coarsest resolution level whose x-width (index 0
+	 * in imglib2 F-order) is ≤ {@code preferredMaxWidth}, or 0 when
+	 * {@code preferredMaxWidth} is {@code null}.
+	 */
+	private static < T extends NativeType< T > & RealType< T > > int selectResolutionLevel(
+			final CachedCellImg< T, ? >[] cachedCellImgs, final Integer preferredMaxWidth )
+	{
+		if ( preferredMaxWidth == null )
+			return 0;
+		int smallestWidth = Integer.MAX_VALUE;
+		for ( int level = 0; level < cachedCellImgs.length; level++ )
+		{
+			final int width = ( int ) cachedCellImgs[ level ].dimension( 0 );
+			if ( width <= preferredMaxWidth )
+				return level;
+			smallestWidth = Math.min( smallestWidth, width );
+		}
+		throw new NoMatchingResolutionException( preferredMaxWidth, smallestWidth );
+	}
+
+	// ---------------------------------------------------------------------
+	// Interface implementations
+	// ---------------------------------------------------------------------
+
+	private void checkResolutionLevel( final int resolutionLevel )
+	{
+		if ( resolutionLevel < 0 || resolutionLevel >= numResolutionLevels )
+			throw new NonExistingResolutionLevelException( resolutionLevel, numResolutionLevels );
+	}
+
+	public PyramidalDataset asPyramidalDataset()
+	{
+		return new PyramidalDataset( this );
+	}
+
+	public PyramidalDataset asPyramidalDataset( final int resolutionLevel )
+	{
+		checkResolutionLevel( resolutionLevel );
+		return new PyramidalDataset( this, resolutionLevel );
+	}
+
+	public int numChannels()
+	{
+		return numChannels;
+	}
+
+	public VoxelDimensions voxelDimensions()
+	{
+		return voxelDimensions;
+	}
+
+	@Override
+	public int numDimensions()
+	{
+		return numDimensions;
+	}
+
+	public int numResolutionLevels()
+	{
+		return numResolutionLevels;
+	}
+
+	public int numTimepoints()
+	{
+		return numTimepoints;
+	}
+
+	public T getType()
+	{
+		return type;
+	}
+
+	public String getName()
+	{
+		return name;
+	}
+
+	public Omero getOmeroProperties()
+	{
+		return omero;
+	}
+
+	// ---------------------------------------------------------------------
+	// Static opener factory methods
+	// ---------------------------------------------------------------------
 
 	/**
 	 * Opens an OME-Zarr image using the backend configured in the context's
@@ -107,7 +264,7 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	 * @throws NoMatchingResolutionException if {@code preferredWidth} is smaller
 	 *   than the width of the coarsest resolution level
 	 */
-	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > open(
+	public static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > open(
 			final Context context, final URI uri, final Integer preferredWidth )
 	{
 		final ZarrReaderBackend backend = ZarrOpeningSettings
@@ -133,10 +290,10 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	 * @throws NoMatchingResolutionException if {@code preferredWidth} is smaller
 	 *   than the width of the coarsest resolution level
 	 */
-	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithN5(
+	public static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithN5(
 			final Context context, final URI uri, final Integer preferredWidth )
 	{
-		return new Pyramidal5DImageDataImpl<>( context, uri, preferredWidth );
+		return new Pyramidal5DImageData<>( context, uri, preferredWidth );
 	}
 
 	/**
@@ -150,9 +307,9 @@ public interface Pyramidal5DImageData< T extends NativeType< T > & RealType< T >
 	 *   than the width of the coarsest resolution level
 	 */
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithZarrJava(
+	public static < T extends NativeType< T > & RealType< T > > Pyramidal5DImageData< T > openWithZarrJava(
 			final Context context, final URI uri, final Integer preferredWidth )
 	{
-		return new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( uri ), preferredWidth );
+		return new Pyramidal5DImageData( context, new ZarrJavaPyramidBackend( uri ), preferredWidth );
 	}
 }

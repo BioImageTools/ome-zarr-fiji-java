@@ -89,7 +89,7 @@ class OpenInBDVCommandTest
 			assertEquals( 2, pyramidals.size() );
 			final Pyramidal bdvDataset = pyramidals.get( 1 );
 			assertNotSame( ij2Dataset, bdvDataset );
-			assertSame( ij2Dataset.getPyramidal5DImageData(), bdvDataset.getPyramidal5DImageData() );
+			assertSame( ij2Dataset.getPyramidContents(), bdvDataset.getPyramidContents() );
 		}
 	}
 
@@ -97,7 +97,7 @@ class OpenInBDVCommandTest
 	 * When a dataset is already open in BDV and the command is invoked again (with no active
 	 * {@link net.imagej.display.ImageDisplay}), it should fall back to the focused BDV dataset via
 	 * {@link PyramidalService} and produce a second, distinct {@link Pyramidal} sharing
-	 * the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData}.
+	 * the same {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents}.
 	 */
 	@Test
 	void runAfterBdvOpenCreatesSecondBdvDataset() throws URISyntaxException, ExecutionException, InterruptedException
@@ -122,7 +122,7 @@ class OpenInBDVCommandTest
 			final Pyramidal firstBdvPyramidal = pyramidals.get( 0 );
 			final Pyramidal secondBdvPyramidal = pyramidals.get( 1 );
 			assertNotSame( firstBdvPyramidal, secondBdvPyramidal );
-			assertSame( firstBdvPyramidal.getPyramidal5DImageData(), secondBdvPyramidal.getPyramidal5DImageData() );
+			assertSame( firstBdvPyramidal.getPyramidContents(), secondBdvPyramidal.getPyramidContents() );
 		}
 	}
 }

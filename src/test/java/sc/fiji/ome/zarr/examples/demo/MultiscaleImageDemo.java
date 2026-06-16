@@ -34,7 +34,7 @@ import net.imagej.ImageJ;
 
 import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
 import sc.fiji.ome.zarr.examples.legacy.MultiscaleImage;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
 
 @SuppressWarnings( "all" )
@@ -51,8 +51,8 @@ public class MultiscaleImageDemo
 		// Show as imagePlus
 		final ImageJ imageJ = new ImageJ();
 		imageJ.ui().showUI();
-		final Pyramidal5DImageDataImpl< ? > pyramidal5DImageData =
-				new Pyramidal5DImageDataImpl<>( imageJ.context(), Paths.get( "image" ).toUri() /*, multiscaleImage */ );
+		final Pyramidal5DImageData< ? > pyramidal5DImageData =
+				new Pyramidal5DImageData<>( imageJ.context(), Paths.get( "image" ).toUri() /*, multiscaleImage */ );
 		PyramidalDataset pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
 		imageJ.ui().show( pyramidalDataset );
 

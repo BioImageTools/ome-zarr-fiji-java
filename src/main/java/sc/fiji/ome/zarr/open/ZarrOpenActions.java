@@ -55,7 +55,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Cast;
 
 import ij.IJ;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
@@ -86,7 +86,7 @@ public class ZarrOpenActions
 
 	private final ZarrOpeningSettings settings;
 
-	private Pyramidal5DImageDataImpl< ? > cachedPyramid;
+	private Pyramidal5DImageData< ? > cachedPyramid;
 
 	/**
 	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
@@ -243,7 +243,7 @@ public class ZarrOpenActions
 		return null;
 	}
 
-	private Pyramidal5DImageDataImpl< ? > getPyramid()
+	private Pyramidal5DImageData< ? > getPyramid()
 	{
 		if ( cachedPyramid == null )
 		{
@@ -261,14 +261,14 @@ public class ZarrOpenActions
 			case ZARR_JAVA:
 			{
 				@SuppressWarnings( { "rawtypes", "unchecked" } )
-				final Pyramidal5DImageDataImpl< ? > zarrJavaData =
-						new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( inputUri ) );
+				final Pyramidal5DImageData< ? > zarrJavaData =
+						new Pyramidal5DImageData( context, new ZarrJavaPyramidBackend( inputUri ) );
 				cachedPyramid = zarrJavaData;
 				break;
 			}
 			case N5:
 			default:
-				cachedPyramid = new Pyramidal5DImageDataImpl<>( context, inputUri, preferredWidth );
+				cachedPyramid = new Pyramidal5DImageData<>( context, inputUri, preferredWidth );
 				break;
 			}
 		}

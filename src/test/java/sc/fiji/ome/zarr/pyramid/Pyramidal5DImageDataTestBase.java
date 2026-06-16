@@ -60,7 +60,7 @@ import sc.fiji.ome.zarr.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 /**
- * Shared parameterized tests for {@link Pyramidal5DImageDataImpl}, run against
+ * Shared parameterized tests for {@link Pyramidal5DImageData}, run against
  * each {@link sc.fiji.ome.zarr.pyramid.backend.PyramidBackend} implementation
  * by a concrete class that implements this interface and supplies
  * {@link #load(String, Context, Integer)}.
@@ -98,10 +98,10 @@ public interface Pyramidal5DImageDataTestBase
 		);
 	}
 
-	Pyramidal5DImageDataImpl< ? > load( String resource, Context context, Integer preferredWidth )
+	Pyramidal5DImageData< ? > load( String resource, Context context, Integer preferredWidth )
 			throws URISyntaxException;
 
-	default Pyramidal5DImageDataImpl< ? > load( final String resource, final Context context )
+	default Pyramidal5DImageData< ? > load( final String resource, final Context context )
 			throws URISyntaxException
 	{
 		return load( resource, context, null );
@@ -228,7 +228,7 @@ public interface Pyramidal5DImageDataTestBase
 	{
 		try (Context context = new Context())
 		{
-			Pyramidal5DImageDataImpl< ? > dataset = load( resource, context );
+			Pyramidal5DImageData< ? > dataset = load( resource, context );
 			assertNotNull( dataset );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 5, dataset.numDimensions() ); // NB: xyzct

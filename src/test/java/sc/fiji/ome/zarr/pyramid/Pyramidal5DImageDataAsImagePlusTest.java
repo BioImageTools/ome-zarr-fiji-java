@@ -77,12 +77,12 @@ class Pyramidal5DImageDataAsImagePlusTest
 
 		try (Context context = new Context())
 		{
-			ImagePlus imagePlus = new Pyramidal5DImageDataImpl<>( context, path.toUri() ).asPyramidalDataset( 0 ).asImagePlus();
+			ImagePlus imagePlus = new Pyramidal5DImageData<>( context, path.toUri() ).asPyramidalDataset( 0 ).asImagePlus();
 
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
 			assertArrayEquals( new int[] { 64, 64, 1, 16, 4 }, imagePlus.getDimensions() );
-			imagePlus = new Pyramidal5DImageDataImpl<>( context, path.toUri() ).asPyramidalDataset( 1 ).asImagePlus();
+			imagePlus = new Pyramidal5DImageData<>( context, path.toUri() ).asPyramidalDataset( 1 ).asImagePlus();
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
 			assertArrayEquals( new int[] { 32, 32, 1, 8, 4 }, imagePlus.getDimensions() );

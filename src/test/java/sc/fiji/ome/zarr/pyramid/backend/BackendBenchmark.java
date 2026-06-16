@@ -50,7 +50,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
 
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
+import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
 import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
@@ -155,7 +155,7 @@ public class BackendBenchmark
 	{
 		try (Context context = new Context())
 		{
-			new Pyramidal5DImageDataImpl<>( context, Paths.get( dataset ).toUri() );
+			new Pyramidal5DImageData<>( context, Paths.get( dataset ).toUri() );
 		}
 	}
 
@@ -164,7 +164,7 @@ public class BackendBenchmark
 	{
 		try (Context context = new Context())
 		{
-			new Pyramidal5DImageDataImpl( context, new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ) );
+			new Pyramidal5DImageData( context, new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ) );
 		}
 	}
 
@@ -212,14 +212,14 @@ public class BackendBenchmark
 	private static OpenedReadContexts openReadContexts( final String dataset ) throws Exception
 	{
 		final Context n5Context = new Context();
-		final Pyramidal5DImageDataImpl< ? > n5Wrapped = new Pyramidal5DImageDataImpl<>( n5Context, Paths.get( dataset ).toUri() );
+		final Pyramidal5DImageData< ? > n5Wrapped = new Pyramidal5DImageData<>( n5Context, Paths.get( dataset ).toUri() );
 		final RandomAccessibleInterval< ? > n5WrappedLevel0 =
 				new PyramidalBdv<>( n5Wrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final Context zjContext = new Context();
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
-		final Pyramidal5DImageDataImpl< ? > zjWrapped =
-				new Pyramidal5DImageDataImpl( zjContext, new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ) );
+		final Pyramidal5DImageData< ? > zjWrapped =
+				new Pyramidal5DImageData( zjContext, new ZarrJavaPyramidBackend( Paths.get( dataset ).toUri() ) );
 		final RandomAccessibleInterval< ? > zjWrappedLevel0 =
 				new PyramidalBdv<>( zjWrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 

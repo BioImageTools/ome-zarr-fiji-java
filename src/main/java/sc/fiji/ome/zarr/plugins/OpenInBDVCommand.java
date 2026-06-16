@@ -66,7 +66,7 @@ public class OpenInBDVCommand implements Command
 			uiService.showDialog( "The active image is not an OME-Zarr dataset.", "Open in BigDataViewer" );
 			return;
 		}
-		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getPyramidal5DImageData() );
+		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getContext(), pyramidal.getPyramidContents() );
 		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
 	}
 }
