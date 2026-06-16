@@ -1,0 +1,153 @@
+OME-NGFF version,File Path,SizeX,SizeY,SizeZ,SizeC,SizeT,Axes,Wells,Fields,License,Study,DataType,ScaleX,ScaleY,ScaleZ,NumberOfResLevels
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/12689244.zarr,4992.0,4255.0,401.0,3.0,1.0,XYZCT,,,CC BY 4.0,idr0106,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/179706.zarr,1344.0,1024.0,1.0,2.0,329.0,XYZCT,,,CC BY 4.0,idr0002,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/1884807.zarr,256.0,256.0,1.0,3.0,1.0,XYZCT,,,CC BY 4.0,idr0021,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/1885619.zarr,30.0,30.0,571.0,1.0,1.0,XYZCT,,,CC BY 4.0,idr0023,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/4495402.zarr,921600.0,380928.0,1.0,1.0,1.0,XYZCT,,,CC BY-NC-SA 3.0,idr0053,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001237.zarr,1024.0,1024.0,39.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001238.zarr,1024.0,1024.0,27.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001239.zarr,1024.0,1024.0,36.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001240.zarr,271.0,275.0,236.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001241.zarr,278.0,263.0,236.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001242.zarr,481.0,275.0,237.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001243.zarr,212.0,218.0,237.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001244.zarr,325.0,281.0,239.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001245.zarr,220.0,226.0,257.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001246.zarr,281.0,284.0,257.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001247.zarr,253.0,210.0,257.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001248.zarr,234.0,269.0,195.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001249.zarr,246.0,241.0,195.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001250.zarr,246.0,241.0,195.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001251.zarr,170.0,163.0,140.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001252.zarr,170.0,163.0,297.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001253.zarr,803.0,1024.0,297.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001254.zarr,393.0,354.0,51.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001255.zarr,551.0,416.0,32.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001256.zarr,350.0,372.0,61.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001257.zarr,3763.0,2860.0,145.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/6001258.zarr,1282.0,838.0,36.0,3.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9822151.zarr,79360.0,167424.0,1.0,1.0,1.0,XYZCT,,,CC BY 4.0,idr0083,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9822152.zarr,144384.0,93184.0,1.0,1.0,1.0,XYZCT,,,CC BY 4.0,idr0083,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836831.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836832.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836833.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836834.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836835.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836836.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836837.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836838.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836839.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836840.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836841.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836842.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836843.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836844.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836845.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836846.zarr,1920.0,1920.0,259.0,4.0,1.0,XYZCT,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/9836950.zarr,1636.0,816.0,156.0,1.0,1.0,XYZCT,,,CC BY 4.0,idr0079,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/1751.zarr,672.0,510.0,10.0,2.0,1.0,XYZCT,69.0,1.0,CC BY-NC-SA 3.0,idr0004,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/2551.zarr,1376.0,1040.0,16.0,2.0,1.0,XYZCT,96.0,6.0,CC BY 4.0,idr0001,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/422.zarr,1344.0,1024.0,1.0,2.0,329.0,XYZCT,96.0,1.0,CC BY 4.0,idr0002,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/5966.zarr,1080.0,1080.0,1.0,5.0,1.0,XYZCT,384.0,9.0,CC BY 4.0,idr0033,,-1.0,-1.0,-1.0,-1
+0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/plates/7825.zarr,1080.0,1080.0,1.0,1.0,1.0,XYZCT,96.0,9.0,CC0 1.0,idr0094,,-1.0,-1.0,-1.0,-1
+0.2,https://livingobjects.ebi.ac.uk/idr/zarr/v0.2/6001240.zarr,271.0,275.0,236.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.2,https://livingobjects.ebi.ac.uk/idr/zarr/v0.2/6001247.zarr,253.0,210.0,257.0,2.0,1.0,XYZCT,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.2,https://livingobjects.ebi.ac.uk/idr/zarr/v0.2/idr0070A/9838562.zarr,,,,,,,,,CC BY 4.0,idr0070,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/9836842.zarr,1920.0,1920.0,,4.0,,XYC,,,CC BY 4.0,idr0077,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0079A/9836998.zarr,1584.0,788.0,142.0,2.0,,XYZC ,,,CC BY 4.0,idr0079,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0052A/5514375.zarr,256.0,256.0,31.0,3.0,40.0,XYZCT,,,CC BY 4.0,idr0052,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511419.zarr,2048.0,2048.0,,3.0,,XYC,,,CC BY 4.0,idr0095,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511420.zarr,2048.0,2048.0,,3.0,,XYC,,,CC BY 4.0,idr0095,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511421.zarr,2048.0,2048.0,,3.0,,XYC,,,CC BY 4.0,idr0095,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511422.zarr,2048.0,2048.0,,3.0,,XYC,,,CC BY 4.0,idr0095,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511423.zarr,2048.0,2048.0,,3.0,,XYC,,,CC BY 4.0,idr0095,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0095B/11511424.zarr,2048.0,2048.0,,3.0,,XYC,,,CC BY 4.0,idr0095,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0094A/7751.zarr,1080.0,1080.0,,,,XY,96.0,9.0,CC0 1.0,idr0094,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0109A/12922361.zarr,2560.0,2160.0,,,721.0,XYT,,,CC BY 4.0,idr0109,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0075A/9528933.zarr,512.0,512.0,91.0,,,XYZ,,,CC BY 4.0,idr0075,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0051A/4007817.zarr,333.0,333.0,201.0,,79.0,XYZT,,,CC BY 4.0,idr0051,,-1.0,-1.0,-1.0,-1
+0.3,https://livingobjects.ebi.ac.uk/idr/zarr/v0.3/idr0040A/3491626.zarr,2048.0,2048.0,,5.0,20.0,XYCT,,,CC BY 4.0,idr0040,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0073A/9798462.zarr,21115.0,16433.0,1.0,3.0,1.0,XYZCT,,,CC BY 4.0,idr0073,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0072B/9512.zarr,1345.0,1017.0,1.0,2.0,1.0,XYC,72.0,20.0,CC BY 4.0,idr0072,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0083A/9822152.zarr,144384.0,93184.0,1.0,1.0,1.0,XYZCT,,,CC BY 4.0,idr0083,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001247.zarr,253.0,210.0,257.0,2.0,,XYZC,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0044A/4007801.zarr,2169.0,2048.0,988.0,2.0,532.0,XYZCT,,,CC BY 4.0,idr0044,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0056B/7361.zarr,659.0,493.0,1.0,4.0,1.0,XYZCT,384.0,30.0,CC BY 4.0,idr0056,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0128E/9701.zarr,2048.0,2048.0,1.0,2.0,1.0,XYZCT,384.0,1.0,CC BY 4.0,idr0128,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0013A/3451.zarr,1344.0,1024.0,,,93.0,XYT,384.0,1.0,CC0 1.0,idr0013,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0054A/5025551.zarr,2702.0,2700.0,1.0,27.0,1.0,XYZCT,,,CC BY 4.0,idr0054,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0054A/5025552.zarr,2701.0,2701.0,1.0,27.0,1.0,XYZCT,,,CC BY 4.0,idr0054,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0054A/5025553.zarr,2500.0,2500.0,1.0,27.0,1.0,XYZCT,,,CC BY 4.0,idr0054,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0076A/10501752.zarr,464.0,494.0,,50.0,,XYC,,,CC BY 4.0,idr0076,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0047A/4496763.zarr,2048.0,2048.0,25.0,4.0,,XYZC,,,CC BY 4.0,idr0047,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001240.zarr,271.0,275.0,236.0,2.0,,XYZC,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0052A/5514375.zarr,256.0,256.0,31.0,3.0,40.0,XYZCT,,,CC BY 4.0,idr0052,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0001A/2551.zarr,1376.0,1040.0,16.0,2.0,1.0,XYZC,96.0,6.0,CC BY 4.0,idr0001,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457227.zarr,2048.0,2048.0,35.0,4.0,18.0,XYZCT,,,CC BY 4.0,idr0101,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457537.zarr,198.0,223.0,12.0,6.0,18.0,XYZCT,,,CC BY 4.0,idr0101,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457539.zarr,190.0,189.0,11.0,6.0,18.0,XYZCT,,,CC BY 4.0,idr0101,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0048A/9846151.zarr/,2947.0,5192.0,1402.0,3.0,1.0,XYZCT,,,CC BY 4.0,idr0048,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0048A/9846152.zarr/,19120.0,13350.0,91.0,3.0,1.0,XYZCT,,,CC BY 4.0,idr0048,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0138A/TimEmbryos-120919/HybCycle_29/MMStack_Pos9.ome.zarr,2048.0,2048.0,6.0,4.0,,XYZC,,,CC BY 4.0,idr0138,,-1.0,-1.0,-1.0,-1
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0010/76-45.ome.zarr,,520.0,1.0,2.0,1.0,XYZCT,384.0,1.0,CC BY 4.0,idr0010,,-1.0,-1.0,-1.0,-1
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0090/190129.zarr,2048.0,2044.0,31.0,5.0,,XYZC,49.0,32.0,CC BY 4.0,idr0090,,-1.0,-1.0,-1.0,-1
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0066/ExpD_chicken_embryo_MIP.ome.zarr,6510.0,8978.0,,,,XY,,,CC BY 4.0,idr0066,,-1.0,-1.0,-1.0,-1
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0066/ExpA_VIP_ASLM_on.zarr,2048.0,2048.0,1937.0,,,XYZ,,,CC BY 4.0,idr0066,,-1.0,-1.0,-1.0,-1
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0062A/6001240_labels.zarr,271.0,275.0,236.0,2.0,,XYZC,,,CC BY 4.0,idr0062,,-1.0,-1.0,-1.0,-1
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0157/Asterella gracilis SWE/IMG_1033-1112 Asterella gracilis (Mannia gracilis) stature.ome.zarr,8192.0,5464.0,80.0,3.0,1.0,XYZCT,,,CC BY 4.0,idr0157,,-1.0,-1.0,-1.0,-1
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0051/180712_H2B_22ss_Courtney1_20180712-163837_p00_c00_preview.zarr,333.0,333.0,201.0,1.0,79.0,XYZCT,,,CC BY 4.0,idr0051,,-1.0,-1.0,-1.0,-1
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0026/3.66.9-6.141020_15-41-29.00.ome.zarr,507.0,507.0,21.0,3.0,47.0,XYZCT,,,CC BY 4.0,idr0026,,-1.0,-1.0,-1.0,-1
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0083/9822152.zarr,144384.0,93184.0,1.0,1.0,1.0,XYZCT,,,CC BY 4.0,idr0083,,-1.0,-1.0,-1.0,-1
+0.5,https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr,2080.0,1552.0,,5.0,,XYC,,,CC BY 4.0,idr0033,,-1.0,-1.0,-1.0,-1
+0.4,https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr,1584.0,788.0,142.0,2.0,,,,,CC BY 4.0,idr0079,,-1.0,-1.0,-1.0,-1
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/aneurism.ome.zarr,256.0,256.0,256.0,,,XYZ,,,Apache-2.0,aneurism,uint8,1.0,1.0,1.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/backpack.ome.zarr,512.0,512.0,373.0,,,XYZ,,,Apache-2.0,backpack,uint16,0.9766,0.9766,1.25,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/beechnut.ome.zarr,1024.0,1024.0,1546.0,,,XYZ,,,Apache-2.0,beechnut,uint16,2e-05,2e-05,2e-05,5
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/blunt_fin.ome.zarr,256.0,128.0,64.0,,,XYZ,,,Apache-2.0,blunt_fin,uint8,1.0,0.75,1.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/bonsai.ome.zarr,256.0,256.0,256.0,,,XYZ,,,Apache-2.0,bonsai,uint8,1.0,1.0,1.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/boston_teapot.ome.zarr,256.0,256.0,178.0,,,XYZ,,,Apache-2.0,boston_teapot,uint8,1.0,1.0,1.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/bunny.ome.zarr,512.0,512.0,361.0,,,XYZ,,,Apache-2.0,bunny,uint16,0.337891,0.337891,0.5,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/carp.ome.zarr,256.0,256.0,512.0,,,XYZ,,,Apache-2.0,carp,uint16,0.78125,0.390625,1.0,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/chameleon.ome.zarr,1024.0,1024.0,1080.0,,,XYZ,,,Apache-2.0,chameleon,uint16,0.09228515625,0.09228515625,0.105,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/christmas_tree.ome.zarr,512.0,499.0,512.0,,,XYZ,,,Apache-2.0,christmas_tree,uint16,1.0,1.0,1.0,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/csafe_heptane.ome.zarr,302.0,302.0,302.0,,,XYZ,,,Apache-2.0,csafe_heptane,uint8,1.0,1.0,1.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/duct.ome.zarr,193.0,194.0,1000.0,,,XYZ,,,Apache-2.0,duct,float32,1.0,1.0,1.0,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/engine.ome.zarr,256.0,256.0,128.0,,,XYZ,,,Apache-2.0,engine,uint8,1.0,1.0,1.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/foot.ome.zarr,256.0,256.0,256.0,,,XYZ,,,Apache-2.0,foot,uint8,1.0,1.0,1.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/frog.ome.zarr,256.0,256.0,44.0,,,XYZ,,,Apache-2.0,frog,uint8,0.5,0.5,1.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/fuel.ome.zarr,64.0,64.0,64.0,,,XYZ,,,Apache-2.0,fuel,uint8,1.0,1.0,1.0,1
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/hcci_oh.ome.zarr,560.0,560.0,560.0,,,XYZ,,,Apache-2.0,hcci_oh,float32,1.0,1.0,1.0,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/hydrogen_atom.ome.zarr,128.0,128.0,128.0,,,XYZ,,,Apache-2.0,hydrogen_atom,uint8,1.0,1.0,1.0,1
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/jicf_q.ome.zarr,1408.0,1080.0,1100.0,,,XYZ,,,Apache-2.0,jicf_q,float32,1.0,1.0,1.0,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/kingsnake.ome.zarr,1024.0,1024.0,795.0,,,XYZ,,,Apache-2.0,kingsnake,uint8,0.03174,0.03174,0.0688,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/lobster.ome.zarr,301.0,324.0,56.0,,,XYZ,,,Apache-2.0,lobster,uint8,1.0,1.0,1.4,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/magnetic_reconnection.ome.zarr,512.0,512.0,512.0,,,XYZ,,,Apache-2.0,magnetic_reconnection,float32,1.0,1.0,1.0,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/marmoset_neurons.ome.zarr,1024.0,1024.0,314.0,,,XYZ,,,Apache-2.0,marmoset_neurons,uint8,0.497,0.497,1.5,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/marschner_lobb.ome.zarr,41.0,41.0,41.0,,,XYZ,,,Apache-2.0,marschner_lobb,uint8,1.0,1.0,1.0,1
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/miranda.ome.zarr,1024.0,1024.0,1024.0,,,XYZ,,,Apache-2.0,miranda,float32,1.0,1.0,1.0,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/mri_ventricles.ome.zarr,256.0,256.0,124.0,,,XYZ,,,Apache-2.0,mri_ventricles,uint8,0.9,0.9,0.9,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/mri_woman.ome.zarr,256.0,256.0,109.0,,,XYZ,,,Apache-2.0,mri_woman,uint16,1.0,1.0,1.5,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/mrt_angio.ome.zarr,416.0,512.0,112.0,,,XYZ,,,Apache-2.0,mrt_angio,uint16,0.412,0.412,0.412,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/neghip.ome.zarr,64.0,64.0,64.0,,,XYZ,,,Apache-2.0,neghip,uint8,1.0,1.0,1.0,1
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/neocortical_layer_1_axons.ome.zarr,1464.0,1033.0,76.0,,,XYZ,,,Apache-2.0,neocortical_layer_1_axons,uint8,1.0,1.0,3.4,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/nucleon.ome.zarr,41.0,41.0,41.0,,,XYZ,,,Apache-2.0,nucleon,uint8,1.0,1.0,1.0,1
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/pancreas.ome.zarr,240.0,512.0,512.0,,,XYZ,,,Apache-2.0,pancreas,int16,1.16,1.0,1.0,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/pawpawsaurus.ome.zarr,958.0,646.0,1088.0,,,XYZ,,,Apache-2.0,pawpawsaurus,uint16,0.2275,0.2275,0.2275,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/pig_heart.ome.zarr,2048.0,2048.0,2612.0,,,XYZ,,,Apache-2.0,pig_heart,int16,0.03557,0.03557,0.03557,5
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/present.ome.zarr,492.0,492.0,442.0,,,XYZ,,,Apache-2.0,present,uint16,1.0,1.0,1.0,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/prone.ome.zarr,512.0,512.0,463.0,,,XYZ,,,Apache-2.0,prone,uint16,0.625,0.625,1.0,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/richtmyer_meshkov.ome.zarr,2048.0,2048.0,1920.0,,,XYZ,,,Apache-2.0,richtmyer_meshkov,uint8,1.0,1.0,1.0,5
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/shockwave.ome.zarr,64.0,64.0,512.0,,,XYZ,,,Apache-2.0,shockwave,uint8,1.0,1.0,1.0,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/silicium.ome.zarr,98.0,34.0,34.0,,,XYZ,,,Apache-2.0,silicium,uint8,1.0,1.0,1.0,1
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/skull.ome.zarr,256.0,256.0,256.0,,,XYZ,,,Apache-2.0,skull,uint8,1.0,1.0,1.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/spathorhynchus.ome.zarr,1024.0,1024.0,750.0,,,XYZ,,,Apache-2.0,spathorhynchus,uint16,0.0215,0.0215,0.047,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/stag_beetle.ome.zarr,832.0,832.0,494.0,,,XYZ,,,Apache-2.0,stag_beetle,uint16,1.0,1.0,1.0,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/statue_leg.ome.zarr,341.0,341.0,93.0,,,XYZ,,,Apache-2.0,statue_leg,uint8,1.0,1.0,4.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/stent.ome.zarr,512.0,512.0,174.0,,,XYZ,,,Apache-2.0,stent,uint16,0.8398,0.8398,3.2,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/synthetic_truss_with_five_defects.ome.zarr,1200.0,1200.0,1200.0,,,XYZ,,,Apache-2.0,synthetic_truss_with_five_defects,float32,1.0,1.0,1.0,4
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/tacc_turbulence.ome.zarr,256.0,256.0,256.0,,,XYZ,,,Apache-2.0,tacc_turbulence,float32,1.0,1.0,1.0,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/tooth.ome.zarr,103.0,94.0,161.0,,,XYZ,,,Apache-2.0,tooth,uint8,1.0,1.0,1.0,1
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/vertebra.ome.zarr,512.0,512.0,512.0,,,XYZ,,,Apache-2.0,vertebra,uint16,0.1953,0.1953,0.1953,3
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/vis_male.ome.zarr,128.0,256.0,256.0,,,XYZ,,,Apache-2.0,vis_male,uint8,1.57774,0.995861,1.00797,2
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/woodbranch.ome.zarr,2048.0,2048.0,2048.0,,,XYZ,,,Apache-2.0,woodbranch,uint16,1.8e-05,1.8e-05,1.8e-05,5
+0.5,https://ome-zarr-scivis.s3.us-east-1.amazonaws.com/v0.5/96x2/zeiss.ome.zarr,680.0,680.0,680.0,,,XYZ,,,Apache-2.0,zeiss,uint8,1.0,1.0,1.0,3
