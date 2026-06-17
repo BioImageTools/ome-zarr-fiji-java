@@ -73,6 +73,18 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	public final T type;
 
+	/**
+	 * Per-resolution-level transform from that level's image coordinates to the
+	 * shared physical world coordinate system, in resolution-level order (index 0
+	 * is the highest resolution; aligned with {@link #cachedCellImgs}).
+	 * <p>
+	 * <b>Source</b> coordinates are the discrete pixel/voxel coordinates of
+	 * resolution level i, in imglib2 F-order (x, y, z). <b>Target</b> coordinates
+	 * are a single physical world space — in the spatial axes' unit (see
+	 * {@link #axesPerLevel}) — shared by all levels, so that every level overlays
+	 * correctly when displayed together. The transform combines the level's voxel
+	 * spacing (scale) with its origin offset (translation) in that world space.
+	 */
 	public final AffineTransform3D[] transforms;
 
 	public final CachedCellImg< T, ? >[] cachedCellImgs;
