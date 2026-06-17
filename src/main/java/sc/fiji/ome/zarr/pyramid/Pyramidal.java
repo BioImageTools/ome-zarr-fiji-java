@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,5 +35,12 @@ import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 public interface Pyramidal extends Contextual
 {
 
+	// java:S1452: the wildcard is intentional. Pyramidal is a pixel-type-agnostic
+	// handle held heterogeneously (e.g., PyramidalService keeps a List<Pyramidal>
+	// of mixed pixel types), and callers use only type-independent members of the
+	// returned PyramidContents. Making Pyramidal generic would merely push the
+	// wildcard onto every use site and force the deliberately non-generic
+	// PyramidalDataset to carry a type parameter it has no value for.
+	@SuppressWarnings( "java:S1452" )
 	PyramidContents< ? > getPyramidContents();
 }
