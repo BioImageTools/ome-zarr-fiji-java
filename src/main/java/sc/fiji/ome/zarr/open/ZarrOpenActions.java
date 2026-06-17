@@ -213,8 +213,8 @@ public class ZarrOpenActions
 			return openPyramidImage(
 					() -> {
 						final PyramidContents< ? > contents = getContents();
-						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels )
-							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels );
+						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
+							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels() );
 						final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
 						context.getService( UIService.class ).show( dataset );
 						logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );

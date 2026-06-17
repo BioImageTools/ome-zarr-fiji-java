@@ -114,7 +114,6 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		final long[] dimensions = reverseToLong( zarrShape );
 		final int numDimensions = dimensions.length;
 
-		final int numTimepoints = getDimSizeForAxis( entry.axes, zarrShape, AxisCalibration.T );
 		final int numChannels = getDimSizeForAxis( entry.axes, zarrShape, AxisCalibration.C );
 
 		final String name = entry.name != null ? entry.name : defaultName();
@@ -150,10 +149,6 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 
 		return PyramidContents.< T >builder()
 				.name( name )
-				.numResolutionLevels( numResolutionLevels )
-				.numChannels( numChannels )
-				.numTimepoints( numTimepoints )
-				.numDimensions( numDimensions )
 				.type( type )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )

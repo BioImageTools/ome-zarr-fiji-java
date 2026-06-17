@@ -95,8 +95,6 @@ public class N5PyramidBackend implements PyramidBackend
 		final T type = N5Utils.type( multiscale.getDataType() );
 		final String name = multiscale.getName();
 		final int numResolutionLevels = multiscale.numResolutionLevels();
-		final int numDimensions = level0.attributes.getDimensions().length;
-		final int numTimepoints = getAxisSize( level0, AxisCalibration.T );
 		final int numChannels = getAxisSize( level0, AxisCalibration.C );
 
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
@@ -119,10 +117,6 @@ public class N5PyramidBackend implements PyramidBackend
 
 		return PyramidContents.< T >builder()
 				.name( name )
-				.numResolutionLevels( numResolutionLevels )
-				.numChannels( numChannels )
-				.numTimepoints( numTimepoints )
-				.numDimensions( numDimensions )
 				.type( type )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )

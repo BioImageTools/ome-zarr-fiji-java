@@ -78,7 +78,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 		super( context, createImgPlus( contents, resolutionLevel ) );
 		this.contents = contents;
 		this.resolutionLevel = resolutionLevel;
-		if ( contents.numResolutionLevels > 1 )
+		if ( contents.numResolutionLevels() > 1 )
 			setName( multiResolutionName( contents.name ) );
 	}
 
@@ -123,10 +123,10 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 	private static < T extends NativeType< T > & RealType< T > > ImgPlus< T > createImgPlus( final PyramidContents< T > contents,
 			final int resolutionLevel )
 	{
-		if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels )
+		if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
 		{
 			throw new IndexOutOfBoundsException( "Invalid resolution level: " + resolutionLevel +
-					" (numResolutionLevels = " + contents.numResolutionLevels + ")" );
+					" (numResolutionLevels = " + contents.numResolutionLevels() + ")" );
 		}
 
 		final AxisCalibration[] selectedAxes = contents.axesPerLevel[ resolutionLevel ];

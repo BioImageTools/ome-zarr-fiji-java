@@ -86,7 +86,7 @@ public class BdvUtils
 	 */
 	public static BdvHandle showBdvAndRegisterDataset( final PyramidalBdv< ? > pyramidalBdv, final PyramidalService pyramidalService )
 	{
-		BdvHandle bdvHandle = BdvFunctions.show( pyramidalBdv.asSources(), pyramidalBdv.getPyramidContents().numTimepoints,
+		BdvHandle bdvHandle = BdvFunctions.show( pyramidalBdv.asSources(), pyramidalBdv.getPyramidContents().numTimepoints(),
 				BdvOptions.options().frameTitle( pyramidalBdv.getName() ) ).getBdvHandle();
 
 		setTimepoint( pyramidalBdv.getPyramidContents().omero, bdvHandle );

@@ -228,13 +228,13 @@ public interface PyramidBackendTestBase
 			PyramidContents< ? > contents = load( resource, context );
 			assertNotNull( contents );
 			if ( resource.contains( "5d_testing" ) )
-				assertEquals( 5, contents.numDimensions ); // NB: xyzct
+				assertEquals( 5, contents.numDimensions() ); // NB: xyzct
 			if ( resource.contains( "4d_testing" ) )
-				assertEquals( 4, contents.numDimensions ); // NB: xyct, xyzc, xyzt
+				assertEquals( 4, contents.numDimensions() ); // NB: xyct, xyzc, xyzt
 			if ( resource.contains( "3d_testing" ) )
-				assertEquals( 3, contents.numDimensions ); // NB: xyc, xyt, xyz
+				assertEquals( 3, contents.numDimensions() ); // NB: xyc, xyt, xyz
 			if ( resource.contains( "2d_testing" ) )
-				assertEquals( 2, contents.numDimensions ); // NB: xy
+				assertEquals( 2, contents.numDimensions() ); // NB: xy
 
 		}
 	}
@@ -247,23 +247,23 @@ public interface PyramidBackendTestBase
 		{
 			PyramidContents< ? > contents = load( resource, context );
 			if ( resource.contains( "5d_testing" ) )
-				assertEquals( 4, contents.numTimepoints );
+				assertEquals( 4, contents.numTimepoints() );
 			if ( resource.contains( "4d_testing" ) )
 			{
 				if ( resource.contains( "xyct" ) || resource.contains( "xyzt" ) )
-					assertEquals( 4, contents.numTimepoints );
+					assertEquals( 4, contents.numTimepoints() );
 				if ( resource.contains( "xyzc" ) )
-					assertEquals( 1, contents.numTimepoints );
+					assertEquals( 1, contents.numTimepoints() );
 			}
 			if ( resource.contains( "3d_testing" ) )
 			{
 				if ( resource.contains( "xyt" ) )
-					assertEquals( 4, contents.numTimepoints );
+					assertEquals( 4, contents.numTimepoints() );
 				if ( resource.contains( "xyz" ) || resource.contains( "xyc" ) )
-					assertEquals( 1, contents.numTimepoints );
+					assertEquals( 1, contents.numTimepoints() );
 			}
 			if ( resource.contains( "2d_testing" ) )
-				assertEquals( 1, contents.numTimepoints );
+				assertEquals( 1, contents.numTimepoints() );
 		}
 	}
 
@@ -275,23 +275,23 @@ public interface PyramidBackendTestBase
 		{
 			PyramidContents< ? > contents = load( resource, context );
 			if ( resource.contains( "5d_testing" ) )
-				assertEquals( 3, contents.numChannels );
+				assertEquals( 3, contents.numChannels() );
 			if ( resource.contains( "4d_testing" ) )
 			{
 				if ( resource.contains( "xyct" ) || resource.contains( "xyzc" ) )
-					assertEquals( 3, contents.numChannels );
+					assertEquals( 3, contents.numChannels() );
 				if ( resource.contains( "xyzt" ) )
-					assertEquals( 1, contents.numChannels );
+					assertEquals( 1, contents.numChannels() );
 			}
 			if ( resource.contains( "3d_testing" ) )
 			{
 				if ( resource.contains( "xyc" ) )
-					assertEquals( 3, contents.numChannels );
+					assertEquals( 3, contents.numChannels() );
 				if ( resource.contains( "xyz" ) || resource.contains( "xyt" ) )
-					assertEquals( 1, contents.numChannels );
+					assertEquals( 1, contents.numChannels() );
 			}
 			if ( resource.contains( "2d_testing" ) )
-				assertEquals( 1, contents.numChannels );
+				assertEquals( 1, contents.numChannels() );
 		}
 	}
 
@@ -302,7 +302,7 @@ public interface PyramidBackendTestBase
 		try (Context context = new Context())
 		{
 			PyramidContents< ? > contents = load( resource, context );
-			assertEquals( 2, contents.numResolutionLevels );
+			assertEquals( 2, contents.numResolutionLevels() );
 			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
 			assertEquals( 2, pyramidalBdv.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() );
 		}
@@ -333,7 +333,7 @@ public interface PyramidBackendTestBase
 			ImgPlus< ? > level0Img = new PyramidalDataset( context, contents, 0 ).getImgPlus();
 			double[] level0Extents = physicalExtents( level0Img );
 
-			for ( int level = 1; level < contents.numResolutionLevels; level++ )
+			for ( int level = 1; level < contents.numResolutionLevels(); level++ )
 			{
 				ImgPlus< ? > levelImg = new PyramidalDataset( context, contents, level ).getImgPlus();
 				assertArrayEquals( level0Extents, physicalExtents( levelImg ), 1e-9,
@@ -407,7 +407,7 @@ public interface PyramidBackendTestBase
 			randomAccessLevel2.setPosition( new long[] { 10, 10, 10 } );
 			UnsignedByteType value2 = Cast.unchecked( randomAccessLevel2.get() );
 
-			assertEquals( 3, contents.numResolutionLevels );
+			assertEquals( 3, contents.numResolutionLevels() );
 			assertEquals( 3, spimSource.getNumMipmapLevels() );
 			assertEquals( 180, value0.get() ); // NB: compare values in src/test/resources/sc/fiji/ome/zarr/util/pyramid_testing/create_pyramid.py
 			assertEquals( 100, value1.get() );

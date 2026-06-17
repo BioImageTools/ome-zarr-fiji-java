@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -46,6 +46,9 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  * are in resolution-level order (index 0 is the highest resolution).
  * The imglib2 axis indices follow F-order (x, y, z, c, t), the order produced
  * after the backend has reversed any zarr C-order shapes.
+ * <p>
+ * The resolution-level count and the per-axis sizes are
+ * derived on demand from the full-resolution image.
  *
  * @param <T> pixel type
  */
@@ -53,14 +56,6 @@ public final class PyramidContents<
 		T extends NativeType< T > & RealType< T > >
 {
 	public final String name;
-
-	public final int numResolutionLevels;
-
-	public final int numChannels;
-
-	public final int numTimepoints;
-
-	public final int numDimensions;
 
 	public final T type;
 
@@ -91,10 +86,6 @@ public final class PyramidContents<
 	private PyramidContents( final Builder< T > b )
 	{
 		this.name = b.name;
-		this.numResolutionLevels = b.numResolutionLevels;
-		this.numChannels = b.numChannels;
-		this.numTimepoints = b.numTimepoints;
-		this.numDimensions = b.numDimensions;
 		this.type = b.type;
 		this.transforms = b.transforms;
 		this.cachedCellImgs = b.cachedCellImgs;
@@ -104,6 +95,71 @@ public final class PyramidContents<
 		this.timeAxisPresent = b.timeAxisPresent;
 		this.channelLabels = b.channelLabels;
 		this.omero = b.omero;
+	}
+
+	/**
+	 * Number of resolution levels in the pyramid, i.e. the length of
+	 * {@link #cachedCellImgs}.
+	 */
+	public int numResolutionLevels()
+	{
+		return cachedCellImgs.length;
+	}
+
+	/**
+	 * Number of imglib2 dimensions of the full-resolution image. This is the
+	 * count of axes that are actually present (a subset of x, y, z, c, t), and
+	 * therefore the upper bound on every axis index reported by this class.
+	 */
+	public int numDimensions()
+	{
+		return cachedCellImgs[ 0 ].numDimensions();
+	}
+
+	/**
+	 * Extent of the full-resolution image along the channel axis, or {@code 1}
+	 * when the image has no channel axis. This is the size of one specific axis,
+	 * independent of {@link #numDimensions()} (which only says whether the
+	 * channel axis is present, not how large it is).
+	 */
+	public int numChannels()
+	{
+		return sizeAlongAxis( AxisCalibration.C );
+	}
+
+	/**
+	 * Extent of the full-resolution image along the time axis, or {@code 1} when
+	 * the image has no time axis. As with {@link #numChannels()}, this is the
+	 * size of one specific axis, independent of {@link #numDimensions()}.
+	 */
+	public int numTimepoints()
+	{
+		return sizeAlongAxis( AxisCalibration.T );
+	}
+
+	/**
+	 * Size of the full-resolution image along the axis with the given OME-Zarr
+	 * name, or {@code 1} if no such axis is present.
+	 * <p>
+	 * The axis is located <em>by name</em> rather than by a fixed position: even
+	 * though OME-Zarr fixes the axis order (C-order t, c, z, y, x, which the
+	 * backend reverses to imglib2 F-order x, y, z, c, t), axes may be absent, so
+	 * the index of any given axis shifts with the set of axes actually present
+	 * (e.g. in F-order {@code c} is at index 2 in {@code xyct} but at index 3 in
+	 * {@code xyzc}). A name lookup resolves the correct index for every such combination and
+	 * keeps this method self-contained: it depends only on {@link #axesPerLevel}
+	 * and {@link #cachedCellImgs}.
+	 * <p>
+	 * {@link #axesPerLevel} is in imglib2 F-order and thus aligned 1:1 with the
+	 * dimensions of {@code cachedCellImgs[ 0 ]}.
+	 */
+	private int sizeAlongAxis( final String axisName )
+	{
+		final AxisCalibration[] axes = axesPerLevel[ 0 ];
+		for ( int d = 0; d < axes.length; d++ )
+			if ( axisName.equals( axes[ d ].name ) )
+				return ( int ) cachedCellImgs[ 0 ].dimension( d );
+		return 1;
 	}
 
 	/**
@@ -140,14 +196,6 @@ public final class PyramidContents<
 	{
 		private String name;
 
-		private int numResolutionLevels;
-
-		private int numChannels;
-
-		private int numTimepoints;
-
-		private int numDimensions;
-
 		private T type;
 
 		private AffineTransform3D[] transforms;
@@ -169,30 +217,6 @@ public final class PyramidContents<
 		public Builder< T > name( final String name )
 		{
 			this.name = name;
-			return this;
-		}
-
-		public Builder< T > numResolutionLevels( final int n )
-		{
-			this.numResolutionLevels = n;
-			return this;
-		}
-
-		public Builder< T > numChannels( final int n )
-		{
-			this.numChannels = n;
-			return this;
-		}
-
-		public Builder< T > numTimepoints( final int n )
-		{
-			this.numTimepoints = n;
-			return this;
-		}
-
-		public Builder< T > numDimensions( final int n )
-		{
-			this.numDimensions = n;
 			return this;
 		}
 

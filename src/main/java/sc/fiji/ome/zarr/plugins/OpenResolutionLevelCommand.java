@@ -78,7 +78,7 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 			cancel( "The active image is not an OME-Zarr multi resolution dataset." );
 			return;
 		}
-		final int numResolutions = active.getPyramidContents().numResolutionLevels;
+		final int numResolutions = active.getPyramidContents().numResolutionLevels();
 		final List< String > choices = new ArrayList<>();
 		for ( int i = 0; i < numResolutions; i++ )
 			choices.add( "Resolution " + i );
