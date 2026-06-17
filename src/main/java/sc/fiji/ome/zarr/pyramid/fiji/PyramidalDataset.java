@@ -54,7 +54,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
  * containing additional methods presenting that
  * multi-resolution image data in convenient ways.
  */
-@SuppressWarnings( { "java:S2060", "java:S1948", "java:S110" } )
+@SuppressWarnings( { "java:S2060", "java:S1948", "java:S110", "ExternalizableWithoutPublicNoArgConstructor" } )
 public class PyramidalDataset extends DefaultDataset implements Pyramidal
 {
 	private final PyramidContents< ? > contents;
