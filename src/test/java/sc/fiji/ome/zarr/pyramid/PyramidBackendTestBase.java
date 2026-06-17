@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import net.imagej.Dataset;
@@ -39,6 +40,7 @@ import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Cast;
 
@@ -305,6 +307,25 @@ public interface PyramidBackendTestBase
 			assertEquals( 2, contents.numResolutionLevels() );
 			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
 			assertEquals( 2, pyramidalBdv.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() );
+		}
+	}
+
+	@ParameterizedTest
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	default void testAsImg( String resource ) throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			PyramidContents< ? > contents = load( resource, context );
+
+			Img< ? > fullResolution = contents.asImg();
+			assertNotNull( fullResolution );
+			assertSame( contents.asImg( 0 ), fullResolution );
+			assertEquals( contents.numDimensions(), fullResolution.numDimensions() );
+
+			int resolutionLevels = contents.numResolutionLevels();
+			assertThrows( IndexOutOfBoundsException.class, () -> contents.asImg( -1 ) );
+			assertThrows( IndexOutOfBoundsException.class, () -> contents.asImg( resolutionLevels ) );
 		}
 	}
 

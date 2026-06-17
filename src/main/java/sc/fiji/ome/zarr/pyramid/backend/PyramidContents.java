@@ -31,6 +31,7 @@ package sc.fiji.ome.zarr.pyramid.backend;
 import java.lang.invoke.MethodHandles;
 
 import net.imglib2.cache.img.CachedCellImg;
+import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -119,6 +120,34 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	public int numResolutionLevels()
 	{
 		return cachedCellImgs.length;
+	}
+
+	/**
+	 * Full-resolution image (resolution level 0).
+	 * <p>
+	 * The dimensions are in imglib2 F-order — a subset of (x, y, z, c, t) — so use
+	 * {@link #axisIndex} / {@link #hasAxis} together with {@link #axesPerLevel} to
+	 * map dimension indices to logical axes.
+	 */
+	public Img< T > asImg()
+	{
+		return asImg( 0 );
+	}
+
+	/**
+	 * Image at the given resolution level ({@code 0} = highest resolution). See
+	 * {@link #asImg()} for the axis ordering; {@link #selectResolutionLevel} can
+	 * pick a level by preferred width.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public Img< T > asImg( final int resolutionLevel )
+	{
+		if ( resolutionLevel < 0 || resolutionLevel >= cachedCellImgs.length )
+			throw new IndexOutOfBoundsException( "Invalid resolution level: " + resolutionLevel
+					+ " (numResolutionLevels = " + cachedCellImgs.length + ")" );
+		return cachedCellImgs[ resolutionLevel ];
 	}
 
 	/**

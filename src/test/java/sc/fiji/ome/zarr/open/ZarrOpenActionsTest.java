@@ -880,7 +880,7 @@ class ZarrOpenActionsTest
 
 				Img< ? > cellImgIj0First = ijLevel0First.getImgPlus().getImg();
 				Img< ? > cellImgIj0Second = ijLevel0Second.getImgPlus().getImg();
-				Img< ? > cellImgBdv0 = bdv.getPyramidContents().cachedCellImgs[ 0 ];
+				Img< ? > cellImgBdv0 = bdv.getPyramidContents().asImg( 0 );
 				Img< ? > cellImgIj1 = ijLevel1.getImgPlus().getImg();
 
 				assertSame( cellImgIj0First, cellImgIj0Second,
