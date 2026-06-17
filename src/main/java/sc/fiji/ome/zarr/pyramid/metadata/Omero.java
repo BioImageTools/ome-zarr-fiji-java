@@ -28,11 +28,7 @@
  */
 package sc.fiji.ome.zarr.pyramid.metadata;
 
-import java.lang.invoke.MethodHandles;
 import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 
@@ -42,8 +38,6 @@ import com.google.gson.Gson;
 @SuppressWarnings( "all" )
 public class Omero
 {
-	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
-
 	// Top-level Omero class
 	public int id;
 
@@ -94,19 +88,5 @@ public class Omero
 	public String toString()
 	{
 		return new Gson().toJson( this );
-	}
-
-	public static String[] buildChannelLabels( final String fallbackName, final Omero omero, final int numChannels )
-	{
-		final boolean omeroValid = omero != null && omero.channels != null && omero.channels.size() == numChannels;
-		if ( omeroValid )
-			logger.trace( "Creating with OMERO metadata: {}", omero );
-		else
-			logger.trace( "Creating without OMERO metadata (not consistent or not available)" );
-
-		final String[] labels = new String[ numChannels ];
-		for ( int i = 0; i < numChannels; i++ )
-			labels[ i ] = omeroValid ? omero.channels.get( i ).label : fallbackName;
-		return labels;
 	}
 }

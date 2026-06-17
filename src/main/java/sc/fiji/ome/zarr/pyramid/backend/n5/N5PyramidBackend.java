@@ -95,7 +95,6 @@ public class N5PyramidBackend implements PyramidBackend
 		final T type = N5Utils.type( multiscale.getDataType() );
 		final String name = multiscale.getName();
 		final int numResolutionLevels = multiscale.numResolutionLevels();
-		final int numChannels = getAxisSize( level0, AxisCalibration.C );
 
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
 		for ( final ResolutionLevel level : multiscale.getLevels() )
@@ -109,15 +108,12 @@ public class N5PyramidBackend implements PyramidBackend
 			axesPerLevel[ level.index ] = createAxisCalibrations( level );
 		}
 
-		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
-
 		return PyramidContents.< T >builder()
 				.name( name )
 				.type( type )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
 				.axesPerLevel( axesPerLevel )
-				.channelLabels( channelLabels )
 				.omero( omero )
 				.build();
 	}
@@ -183,21 +179,6 @@ public class N5PyramidBackend implements PyramidBackend
 		for ( int i = 0; i < level.axes.length; i++ )
 			result[ i ] = new AxisCalibration( level.axes[ i ].getName(), level.axes[ i ].getUnit(), level.scales[ i ] );
 		return result;
-	}
-
-	private static int getAxisSize( final ResolutionLevel level, final String axisName )
-	{
-		final int axisIndex = findAxisIndex( level, axisName );
-		return axisIndex >= 0 ? ( int ) level.attributes.getDimensions()[ axisIndex ] : 1;
-	}
-
-	private static int findAxisIndex( final ResolutionLevel level, final String axisName )
-	{
-		if ( level.axes != null )
-			for ( int i = 0; i < level.axes.length; i++ )
-				if ( axisName.equals( level.axes[ i ].getName() ) )
-					return i;
-		return -1;
 	}
 
 	// ---------------------------------------------------------------------

@@ -28,10 +28,15 @@
  */
 package sc.fiji.ome.zarr.pyramid.backend;
 
+import java.lang.invoke.MethodHandles;
+
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
@@ -55,6 +60,8 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 public final class PyramidContents<
 		T extends NativeType< T > & RealType< T > >
 {
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
 	public final String name;
 
 	public final T type;
@@ -68,9 +75,6 @@ public final class PyramidContents<
 	 */
 	public final AxisCalibration[][] axesPerLevel;
 
-	/** One label per channel; used as the source name in BigDataViewer. */
-	public final String[] channelLabels;
-
 	/** OMERO rendering metadata, or {@code null} if unavailable. */
 	public final Omero omero;
 
@@ -81,7 +85,6 @@ public final class PyramidContents<
 		this.transforms = b.transforms;
 		this.cachedCellImgs = b.cachedCellImgs;
 		this.axesPerLevel = b.axesPerLevel;
-		this.channelLabels = b.channelLabels;
 		this.omero = b.omero;
 	}
 
@@ -106,9 +109,8 @@ public final class PyramidContents<
 
 	/**
 	 * Extent of the full-resolution image along the channel axis, or {@code 1}
-	 * when the image has no channel axis. This is the size of one specific axis,
-	 * independent of {@link #numDimensions()} (which only says whether the
-	 * channel axis is present, not how large it is).
+	 * when the image has no channel axis. This method is independent of {@link #numDimensions()},
+	 * which only says whether how many axes are present, not how large they are.
 	 */
 	public int numChannels()
 	{
@@ -117,12 +119,32 @@ public final class PyramidContents<
 
 	/**
 	 * Extent of the full-resolution image along the time axis, or {@code 1} when
-	 * the image has no time axis. As with {@link #numChannels()}, this is the
-	 * size of one specific axis, independent of {@link #numDimensions()}.
+	 * the image has no time axis. This method is independent of {@link #numDimensions()},
+	 * which only says whether how many axes are present, not how large they are.
 	 */
 	public int numTimepoints()
 	{
 		return sizeAlongAxis( AxisCalibration.T );
+	}
+
+	/**
+	 * One label per channel.
+	 * Derived from the OMERO channel metadata when available and consistent with
+	 * {@link #numChannels()}, otherwise falling back to the dataset {@link #name}.
+	 */
+	public String[] channelLabels()
+	{
+		final int numChannels = numChannels();
+		final boolean omeroValid = omero != null && omero.channels != null && omero.channels.size() == numChannels;
+		if ( omeroValid )
+			logger.trace( "Creating with OMERO metadata: {}", omero );
+		else
+			logger.trace( "Creating without OMERO metadata (not consistent or not available)" );
+
+		final String[] labels = new String[ numChannels ];
+		for ( int i = 0; i < numChannels; i++ )
+			labels[ i ] = omeroValid ? omero.channels.get( i ).label : name;
+		return labels;
 	}
 
 	/**
@@ -213,8 +235,6 @@ public final class PyramidContents<
 
 		private AxisCalibration[][] axesPerLevel;
 
-		private String[] channelLabels;
-
 		private Omero omero;
 
 		public Builder< T > name( final String name )
@@ -244,12 +264,6 @@ public final class PyramidContents<
 		public Builder< T > axesPerLevel( final AxisCalibration[][] a )
 		{
 			this.axesPerLevel = a;
-			return this;
-		}
-
-		public Builder< T > channelLabels( final String[] l )
-		{
-			this.channelLabels = l;
 			return this;
 		}
 

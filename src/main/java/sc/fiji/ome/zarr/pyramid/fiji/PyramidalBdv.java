@@ -117,11 +117,12 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final RandomAccessibleInterval< V >[][] levelToVolatileChannels = new RandomAccessibleInterval[ nLevels ][];
 		Arrays.setAll( levelToVolatileChannels, level -> splitInputStackIntoSourceStacks( contents, volatileImgs[ level ] ) );
 
+		final String[] channelLabels = contents.channelLabels();
 		final List< SourceAndConverter< T > > sources = new ArrayList<>( numChannels );
 		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )
 		{
 			final int channel = channelNumber;
-			final String channelLabel = contents.channelLabels[ channelNumber ];
+			final String channelLabel = channelLabels[ channelNumber ];
 			final RandomAccessibleInterval< T >[] mipmapImgs = new RandomAccessibleInterval[ nLevels ];
 			Arrays.setAll( mipmapImgs, level -> levelToChannels[ level ][ channel ] );
 			final RandomAccessibleInterval< V >[] mipmapVolatileImgs = new RandomAccessibleInterval[ nLevels ];
