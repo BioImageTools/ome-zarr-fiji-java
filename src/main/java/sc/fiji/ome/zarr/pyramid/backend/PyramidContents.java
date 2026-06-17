@@ -56,8 +56,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
  *
  * @param <T> pixel type
  */
-public final class PyramidContents<
-		T extends NativeType< T > & RealType< T > >
+public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -215,14 +214,12 @@ public final class PyramidContents<
 		throw new NoMatchingResolutionException( preferredMaxWidth, smallestWidth );
 	}
 
-	public static <
-			T extends NativeType< T > & RealType< T > > Builder< T > builder()
+	public static < T extends NativeType< T > & RealType< T > > Builder< T > builder()
 	{
 		return new Builder<>();
 	}
 
-	public static final class Builder<
-			T extends NativeType< T > & RealType< T > >
+	public static final class Builder< T extends NativeType< T > & RealType< T > >
 	{
 		private String name;
 
