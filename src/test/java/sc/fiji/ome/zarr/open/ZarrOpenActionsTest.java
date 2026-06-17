@@ -99,7 +99,7 @@ import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.util.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 

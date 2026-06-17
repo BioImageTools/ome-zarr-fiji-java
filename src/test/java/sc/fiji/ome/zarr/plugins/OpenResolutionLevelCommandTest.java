@@ -60,7 +60,7 @@ import javax.swing.SwingUtilities;
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
-import sc.fiji.ome.zarr.util.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class OpenResolutionLevelCommandTest

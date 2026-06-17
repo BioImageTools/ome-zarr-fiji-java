@@ -35,7 +35,6 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import sc.fiji.ome.zarr.pyramid.Pyramidal;
-import sc.fiji.ome.zarr.util.PyramidalService;
 
 @Plugin( type = PreprocessorPlugin.class )
 public class PyramidalPreprocessor extends AbstractSingleInputPreprocessor

@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.util;
+package sc.fiji.ome.zarr.pyramid.fiji;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -50,6 +50,7 @@ import javax.swing.SwingUtilities;
 
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.pyramid.Pyramidal;
+import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class PyramidalServiceTest
 {
