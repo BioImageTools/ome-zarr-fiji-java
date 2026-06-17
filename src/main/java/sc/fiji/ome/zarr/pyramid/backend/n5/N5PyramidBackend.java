@@ -70,7 +70,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the N5 universe
- * library. Supports OME-Zarr v0.3, v0.4 and v0.5 (N5 reads Zarr v2 and the
+ * library. Supports OME-Zarr v0.3, v0.4, and v0.5 (N5 reads Zarr v2 and the
  * Zarr v3 variant used by v0.5).
  */
 public class N5PyramidBackend implements PyramidBackend
