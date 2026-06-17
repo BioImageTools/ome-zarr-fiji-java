@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -52,7 +52,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
  * containing additional methods presenting that
  * multi-resolution image data in convenient ways.
  */
-@SuppressWarnings( { "java:S2060", "java:S1948" } )
+@SuppressWarnings( { "java:S2060", "java:S1948", "java:S110" } )
 public class PyramidalDataset extends DefaultDataset implements Pyramidal
 {
 	private final PyramidContents< ? > contents;
@@ -70,7 +70,8 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 	 * @param resolutionLevel
 	 * 		0-based index into the resolution pyramid (0 = highest resolution)
 	 */
-	public < T extends NativeType< T > & RealType< T > > PyramidalDataset( final Context context, final PyramidContents< T > contents, final int resolutionLevel )
+	public < T extends NativeType< T > & RealType< T > > PyramidalDataset( final Context context, final PyramidContents< T > contents,
+			final int resolutionLevel )
 	{
 		super( context, createImgPlus( contents, resolutionLevel ) );
 		this.contents = contents;
