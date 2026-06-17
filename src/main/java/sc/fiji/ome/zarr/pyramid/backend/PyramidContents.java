@@ -44,8 +44,7 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 /**
  * Immutable snapshot of everything a {@link PyramidBackend} produces when
- * opening an OME-Zarr multi-resolution image. The backend-agnostic pyramidal
- * image data class copies these fields into its own state.
+ * opening an OME-Zarr multi-resolution image.
  * <p>
  * Indices in {@code cachedCellImgs} and {@code transforms}
  * are in resolution-level order (index 0 is the highest resolution).
