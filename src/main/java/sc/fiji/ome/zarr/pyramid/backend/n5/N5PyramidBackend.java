@@ -109,10 +109,6 @@ public class N5PyramidBackend implements PyramidBackend
 			axesPerLevel[ level.index ] = createAxisCalibrations( level );
 		}
 
-		final int channelAxisIndex = findAxisIndex( level0, AxisCalibration.C );
-		final int zAxisIndex = findAxisIndex( level0, AxisCalibration.Z );
-		final int timeAxisIndex = findAxisIndex( level0, AxisCalibration.T );
-
 		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
 
 		return PyramidContents.< T >builder()
@@ -121,9 +117,6 @@ public class N5PyramidBackend implements PyramidBackend
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
 				.axesPerLevel( axesPerLevel )
-				.channelAxisIndex( channelAxisIndex )
-				.zAxisPresent( zAxisIndex > 0 )
-				.timeAxisPresent( timeAxisIndex > 0 )
 				.channelLabels( channelLabels )
 				.omero( omero )
 				.build();

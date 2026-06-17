@@ -140,10 +140,6 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 
 		final AffineTransform3D[] transforms = createTransforms( entry, numResolutionLevels, level0Scales );
 
-		final int channelAxisIndex = imglibAxisIndex( entry.axes, AxisCalibration.C, numDimensions );
-		final int zAxisIndex = imglibAxisIndex( entry.axes, AxisCalibration.Z, numDimensions );
-		final int timeAxisIndex = imglibAxisIndex( entry.axes, AxisCalibration.T, numDimensions );
-
 		final Omero omero = convertOmero( multiscaleImage.getOmeroMetadata() );
 		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
 
@@ -153,9 +149,6 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
 				.axesPerLevel( axesPerLevel )
-				.channelAxisIndex( channelAxisIndex )
-				.zAxisPresent( zAxisIndex >= 0 )
-				.timeAxisPresent( timeAxisIndex >= 0 )
 				.channelLabels( channelLabels )
 				.omero( omero )
 				.build();
@@ -359,12 +352,6 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 				return i;
 		}
 		return -1;
-	}
-
-	private static int imglibAxisIndex( final List< Axis > axes, final String axisName, final int numDimensions )
-	{
-		final int zarrIndex = zarrAxisIndex( axes, axisName );
-		return zarrIndex < 0 ? -1 : numDimensions - 1 - zarrIndex;
 	}
 
 	private static double[] getLevel0Scales( final MultiscalesEntry entry, final int numDimensions )

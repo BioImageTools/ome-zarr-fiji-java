@@ -104,9 +104,6 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	{
 		final int nLevels = contents.numResolutionLevels();
 		final int numChannels = contents.numChannels();
-		final int channelAxisIndex = contents.channelAxisIndex;
-		final boolean zAxisPresent = contents.zAxisPresent;
-		final boolean timeAxisPresent = contents.timeAxisPresent;
 		final T type = contents.type;
 		final AffineTransform3D[] mipmapTransforms = contents.transforms;
 		final VoxelDimensions voxelDimensions = voxelDimensions( contents );
@@ -115,14 +112,10 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final V volatileType = volatileImgs[ 0 ].getType();
 
 		final RandomAccessibleInterval< T >[][] levelToChannels = new RandomAccessibleInterval[ nLevels ][];
-		Arrays.setAll( levelToChannels,
-				level -> splitInputStackIntoSourceStacks( numChannels, channelAxisIndex, zAxisPresent, timeAxisPresent,
-						contents.cachedCellImgs[ level ] ) );
+		Arrays.setAll( levelToChannels, level -> splitInputStackIntoSourceStacks( contents, contents.cachedCellImgs[ level ] ) );
 
 		final RandomAccessibleInterval< V >[][] levelToVolatileChannels = new RandomAccessibleInterval[ nLevels ][];
-		Arrays.setAll( levelToVolatileChannels,
-				level -> splitInputStackIntoSourceStacks( numChannels, channelAxisIndex, zAxisPresent, timeAxisPresent,
-						volatileImgs[ level ] ) );
+		Arrays.setAll( levelToVolatileChannels, level -> splitInputStackIntoSourceStacks( contents, volatileImgs[ level ] ) );
 
 		final List< SourceAndConverter< T > > sources = new ArrayList<>( numChannels );
 		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )
@@ -207,33 +200,33 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	 * and ensures every result has XYZ and T dimensions (adding singleton axes where absent).
 	 */
 	@SuppressWarnings( "unchecked" )
-	private static < T > RandomAccessibleInterval< T >[] splitInputStackIntoSourceStacks( final int numChannels, final int channelAxisIndex,
-			final boolean zAxisPresent, final boolean timeAxisPresent, final RandomAccessibleInterval< T > img )
+	private static < T > RandomAccessibleInterval< T >[] splitInputStackIntoSourceStacks( final PyramidContents< ? > contents,
+			final RandomAccessibleInterval< T > img )
 	{
+		final int numChannels = contents.numChannels();
+		final boolean cAxisPresent = contents.hasAxis( AxisCalibration.C );
+		final boolean zAxisPresent = contents.hasAxis( AxisCalibration.Z );
+		final boolean timeAxisPresent = contents.hasAxis( AxisCalibration.T );
 
 		final RandomAccessibleInterval< T >[] sourceStacks = new RandomAccessibleInterval[ numChannels ];
 
-		// If there is a channel dimension, slice img along that dimension.
-		if ( channelAxisIndex != -1 )
-		{
-			Arrays.setAll( sourceStacks, c -> Views.hyperSlice( img, channelAxisIndex, c ) );
-		}
+		// If there is a channel dimension, slice img along channel dimension.
+		if ( cAxisPresent )
+			Arrays.setAll( sourceStacks, channel -> Views.hyperSlice( img, contents.axisIndex( AxisCalibration.C ), channel ) );
 		else
-		{
 			sourceStacks[ 0 ] = img;
-		}
 
 		// If there is no Z dimension, augment the sourceStacks by a Z dimension.
 		if ( !zAxisPresent )
-			Arrays.setAll( sourceStacks, c -> Views.addDimension( sourceStacks[ c ], 0, 0 ) );
+			Arrays.setAll( sourceStacks, channel -> Views.addDimension( sourceStacks[ channel ], 0, 0 ) );
 
 		// If there is no T dimension, augment the sourceStacks by a T dimension.
 		if ( !timeAxisPresent )
-			Arrays.setAll( sourceStacks, c -> Views.addDimension( sourceStacks[ c ], 0, 0 ) );
+			Arrays.setAll( sourceStacks, channel -> Views.addDimension( sourceStacks[ channel ], 0, 0 ) );
 
 		// If at this point the dim order is XYTZ (because there was only a T axis, and we appended a Z axis after that), permute to XYZT
 		if ( !zAxisPresent && timeAxisPresent )
-			Arrays.setAll( sourceStacks, c -> Views.permute( sourceStacks[ c ], 2, 3 ) );
+			Arrays.setAll( sourceStacks, channel -> Views.permute( sourceStacks[ channel ], 2, 3 ) );
 
 		return sourceStacks;
 	}

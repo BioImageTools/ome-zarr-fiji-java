@@ -68,15 +68,6 @@ public final class PyramidContents<
 	 */
 	public final AxisCalibration[][] axesPerLevel;
 
-	/** imglib2-order index of the channel axis, or -1 if absent. */
-	public final int channelAxisIndex;
-
-	/** True if the image has a z axis (in imglib2 / F order - X, Y, Z, C, T). */
-	public final boolean zAxisPresent;
-
-	/** True if the image has a time axis (in imglib2 / F order - X, Y, Z, C, T). */
-	public final boolean timeAxisPresent;
-
 	/** One label per channel; used as the source name in BigDataViewer. */
 	public final String[] channelLabels;
 
@@ -90,9 +81,6 @@ public final class PyramidContents<
 		this.transforms = b.transforms;
 		this.cachedCellImgs = b.cachedCellImgs;
 		this.axesPerLevel = b.axesPerLevel;
-		this.channelAxisIndex = b.channelAxisIndex;
-		this.zAxisPresent = b.zAxisPresent;
-		this.timeAxisPresent = b.timeAxisPresent;
 		this.channelLabels = b.channelLabels;
 		this.omero = b.omero;
 	}
@@ -138,28 +126,49 @@ public final class PyramidContents<
 	}
 
 	/**
-	 * Size of the full-resolution image along the axis with the given OME-Zarr
-	 * name, or {@code 1} if no such axis is present.
+	 * imglib2 F-order index of the axis with the given OME-Zarr name
+	 * ({@link AxisCalibration#X}, {@link AxisCalibration#Y},
+	 * {@link AxisCalibration#Z}, {@link AxisCalibration#C} or
+	 * {@link AxisCalibration#T}), or {@code -1} if that axis is not present.
 	 * <p>
 	 * The axis is located <em>by name</em> rather than by a fixed position: even
 	 * though OME-Zarr fixes the axis order (C-order t, c, z, y, x, which the
 	 * backend reverses to imglib2 F-order x, y, z, c, t), axes may be absent, so
 	 * the index of any given axis shifts with the set of axes actually present
 	 * (e.g. in F-order {@code c} is at index 2 in {@code xyct} but at index 3 in
-	 * {@code xyzc}). A name lookup resolves the correct index for every such combination and
-	 * keeps this method self-contained: it depends only on {@link #axesPerLevel}
-	 * and {@link #cachedCellImgs}.
-	 * <p>
-	 * {@link #axesPerLevel} is in imglib2 F-order and thus aligned 1:1 with the
-	 * dimensions of {@code cachedCellImgs[ 0 ]}.
+	 * {@code xyzc}). A name lookup resolves the correct index for every such
+	 * combination from a single source of truth, {@link #axesPerLevel}, which is
+	 * in imglib2 F-order and thus aligned 1:1 with the dimensions of
+	 * {@code cachedCellImgs[ 0 ]}.
 	 */
-	private int sizeAlongAxis( final String axisName )
+	public int axisIndex( final String axisName )
 	{
 		final AxisCalibration[] axes = axesPerLevel[ 0 ];
 		for ( int d = 0; d < axes.length; d++ )
 			if ( axisName.equals( axes[ d ].name ) )
-				return ( int ) cachedCellImgs[ 0 ].dimension( d );
-		return 1;
+				return d;
+		return -1;
+	}
+
+	/**
+	 * Whether the axis with the given OME-Zarr name ({@link AxisCalibration#X},
+	 * {@link AxisCalibration#Y}, {@link AxisCalibration#Z},
+	 * {@link AxisCalibration#C} or {@link AxisCalibration#T}) is present, i.e.
+	 * {@code axisIndex( axisName ) >= 0}.
+	 */
+	public boolean hasAxis( final String axisName )
+	{
+		return axisIndex( axisName ) >= 0;
+	}
+
+	/**
+	 * Size of the full-resolution image along the axis with the given OME-Zarr
+	 * name, or {@code 1} if no such axis is present.
+	 */
+	private int sizeAlongAxis( final String axisName )
+	{
+		final int index = axisIndex( axisName );
+		return index < 0 ? 1 : ( int ) cachedCellImgs[ 0 ].dimension( index );
 	}
 
 	/**
@@ -204,12 +213,6 @@ public final class PyramidContents<
 
 		private AxisCalibration[][] axesPerLevel;
 
-		private int channelAxisIndex = -1;
-
-		private boolean zAxisPresent;
-
-		private boolean timeAxisPresent;
-
 		private String[] channelLabels;
 
 		private Omero omero;
@@ -241,24 +244,6 @@ public final class PyramidContents<
 		public Builder< T > axesPerLevel( final AxisCalibration[][] a )
 		{
 			this.axesPerLevel = a;
-			return this;
-		}
-
-		public Builder< T > channelAxisIndex( final int i )
-		{
-			this.channelAxisIndex = i;
-			return this;
-		}
-
-		public Builder< T > zAxisPresent( final boolean b )
-		{
-			this.zAxisPresent = b;
-			return this;
-		}
-
-		public Builder< T > timeAxisPresent( final boolean b )
-		{
-			this.timeAxisPresent = b;
 			return this;
 		}
 
