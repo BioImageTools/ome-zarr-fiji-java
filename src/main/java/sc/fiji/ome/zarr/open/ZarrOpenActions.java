@@ -55,13 +55,13 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Cast;
 
 import ij.IJ;
-import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.open.exceptions.NonExistingResolutionLevelException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.open.exceptions.NotASingleScaleImageException;
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;

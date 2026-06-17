@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.fiji;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,6 +43,8 @@ import net.imagej.axis.AxisType;
 import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+
+import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 

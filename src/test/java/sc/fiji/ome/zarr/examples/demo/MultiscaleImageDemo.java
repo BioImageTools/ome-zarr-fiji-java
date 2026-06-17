@@ -34,7 +34,7 @@ import net.imagej.ImageJ;
 
 import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
 import sc.fiji.ome.zarr.examples.legacy.MultiscaleImage;
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 

@@ -57,6 +57,8 @@ import bdv.viewer.Source;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
 import sc.fiji.ome.zarr.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 

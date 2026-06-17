@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.fiji;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
@@ -57,6 +57,7 @@ import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 

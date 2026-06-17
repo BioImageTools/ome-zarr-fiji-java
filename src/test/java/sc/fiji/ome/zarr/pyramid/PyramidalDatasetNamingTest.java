@@ -39,6 +39,7 @@ import org.scijava.Context;
 
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 /**
