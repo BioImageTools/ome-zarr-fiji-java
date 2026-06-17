@@ -28,12 +28,6 @@
  */
 package sc.fiji.ome.zarr.pyramid.backend.n5;
 
-import java.lang.invoke.MethodHandles;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -41,7 +35,6 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 
 import org.janelia.saalfeldlab.n5.DataType;
-import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
@@ -58,16 +51,22 @@ import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMultiScaleMe
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
-import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
-import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
+import sc.fiji.ome.zarr.pyramid.Affine3DUtils;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
-import sc.fiji.ome.zarr.pyramid.Affine3DUtils;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the N5 universe
@@ -86,7 +85,6 @@ public class N5PyramidBackend implements PyramidBackend
 		final OmeNgffMetadata metadata = readMetadata( reader, treeNode, inputUri );
 		final Multiscale multiscale = buildMultiscale( metadata, 0 );
 		final Omero omero = readOmeroMetadata( reader, treeNode );
-		final ResolutionLevel level0 = multiscale.getLevels().get( 0 );
 
 		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
 		final AffineTransform3D[] transforms = spatialMetadata.spatialTransforms3d();
@@ -154,8 +152,7 @@ public class N5PyramidBackend implements PyramidBackend
 			throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
 		final List< ResolutionLevel > levels = new ArrayList<>();
 		for ( int i = 0; i < children.length; i++ )
-			levels.add( new ResolutionLevel( children[ i ].getPath(), i, children[ i ].getAttributes(), children[ i ].getAxes(),
-					children[ i ].getScale() ) );
+			levels.add( new ResolutionLevel( children[ i ].getPath(), i, children[ i ].getAxes(), children[ i ].getScale() ) );
 		return new Multiscale( ms.name, levels, children[ 0 ].getAttributes().getDataType() );
 	}
 
@@ -227,18 +224,14 @@ public class N5PyramidBackend implements PyramidBackend
 
 		private final int index;
 
-		private final DatasetAttributes attributes;
-
 		private final Axis[] axes;
 
 		private final double[] scales;
 
-		private ResolutionLevel( final String datasetPath, final int index, final DatasetAttributes attributes,
-				final Axis[] axes, final double[] scales )
+		private ResolutionLevel( final String datasetPath, final int index, final Axis[] axes, final double[] scales )
 		{
 			this.datasetPath = datasetPath;
 			this.index = index;
-			this.attributes = attributes;
 			this.axes = axes;
 			this.scales = scales;
 		}
