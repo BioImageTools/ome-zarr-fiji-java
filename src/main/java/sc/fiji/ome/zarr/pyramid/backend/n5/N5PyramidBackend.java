@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -67,7 +67,7 @@ import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
-import sc.fiji.ome.zarr.util.Affine3DUtils;
+import sc.fiji.ome.zarr.pyramid.Affine3DUtils;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the N5 universe
@@ -171,7 +171,8 @@ public class N5PyramidBackend implements PyramidBackend
 			throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
 		final List< ResolutionLevel > levels = new ArrayList<>();
 		for ( int i = 0; i < children.length; i++ )
-			levels.add( new ResolutionLevel( children[ i ].getPath(), i, children[ i ].getAttributes(), children[ i ].getAxes(), children[ i ].getScale() ) );
+			levels.add( new ResolutionLevel( children[ i ].getPath(), i, children[ i ].getAttributes(), children[ i ].getAxes(),
+					children[ i ].getScale() ) );
 		return new Multiscale( ms.name, levels, children[ 0 ].getAttributes().getDataType() );
 	}
 
