@@ -33,7 +33,6 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
@@ -64,8 +63,6 @@ public final class PyramidContents<
 	public final int numDimensions;
 
 	public final T type;
-
-	public final VoxelDimensions voxelDimensions;
 
 	public final AffineTransform3D[] transforms;
 
@@ -99,7 +96,6 @@ public final class PyramidContents<
 		this.numTimepoints = b.numTimepoints;
 		this.numDimensions = b.numDimensions;
 		this.type = b.type;
-		this.voxelDimensions = b.voxelDimensions;
 		this.transforms = b.transforms;
 		this.cachedCellImgs = b.cachedCellImgs;
 		this.axesPerLevel = b.axesPerLevel;
@@ -154,8 +150,6 @@ public final class PyramidContents<
 
 		private T type;
 
-		private VoxelDimensions voxelDimensions;
-
 		private AffineTransform3D[] transforms;
 
 		private CachedCellImg< T, ? >[] cachedCellImgs;
@@ -205,12 +199,6 @@ public final class PyramidContents<
 		public Builder< T > type( final T t )
 		{
 			this.type = t;
-			return this;
-		}
-
-		public Builder< T > voxelDimensions( final VoxelDimensions v )
-		{
-			this.voxelDimensions = v;
 			return this;
 		}
 

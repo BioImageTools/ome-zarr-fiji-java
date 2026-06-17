@@ -313,7 +313,8 @@ public interface PyramidBackendTestBase
 		try (Context context = new Context())
 		{
 			PyramidContents< ? > contents = load( resource, context );
-			VoxelDimensions voxelDimensions = contents.voxelDimensions;
+			VoxelDimensions voxelDimensions =
+					new PyramidalBdv<>( context, contents ).asSources().get( 0 ).getSpimSource().getVoxelDimensions();
 			assertNotNull( voxelDimensions );
 			assertEquals( "", voxelDimensions.unit() );
 			assertArrayEquals( new double[] { 1, 1, 1 }, voxelDimensions.dimensionsAsDoubleArray() );

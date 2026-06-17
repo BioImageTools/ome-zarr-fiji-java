@@ -38,6 +38,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
@@ -57,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 
 public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends AbstractContextual implements Pyramidal
 {
@@ -106,7 +108,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final boolean timeAxisPresent = contents.timeAxisPresent;
 		final T type = contents.type;
 		final AffineTransform3D[] mipmapTransforms = contents.transforms;
-		final VoxelDimensions voxelDimensions = contents.voxelDimensions;
+		final VoxelDimensions voxelDimensions = voxelDimensions( contents );
 
 		final RandomAccessibleInterval< V >[] volatileImgs = createVolatileImgs( contents );
 		final V volatileType = Util.getTypeFromInterval( volatileImgs[ 0 ] );
@@ -139,6 +141,39 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 			BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
 		}
 		return sources;
+	}
+
+	/**
+	 * Derives the BigDataViewer {@link VoxelDimensions} (x, y, z spacing and the
+	 * spatial unit) from the full-resolution axis calibrations. Missing spatial
+	 * axes default to a spacing of 1, since BigDataViewer always expects a 3D
+	 * voxel size.
+	 */
+	private static VoxelDimensions voxelDimensions( final PyramidContents< ? > contents )
+	{
+		double xScale = 1.0;
+		double yScale = 1.0;
+		double zScale = 1.0;
+		String unit = "";
+		for ( final AxisCalibration axis : contents.axesPerLevel[ 0 ] )
+		{
+			switch ( axis.name )
+			{
+			case AxisCalibration.X:
+				xScale = axis.scale;
+				unit = axis.unit;
+				break;
+			case AxisCalibration.Y:
+				yScale = axis.scale;
+				break;
+			case AxisCalibration.Z:
+				zScale = axis.scale;
+				break;
+			default:
+				break; // channel / time axes carry no voxel size
+			}
+		}
+		return new FinalVoxelDimensions( unit, xScale, yScale, zScale );
 	}
 
 	/**

@@ -76,8 +76,6 @@ import net.imglib2.util.Cast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import mpicbg.spim.data.sequence.FinalVoxelDimensions;
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.PyramidLevelAccessException;
@@ -141,7 +139,6 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 			axesPerLevel[ level ] = createAxisCalibrations( entry.axes, axisScales );
 		}
 
-		final VoxelDimensions voxelDimensions = createVoxelDimensions( level0Scales, entry.axes );
 		final AffineTransform3D[] transforms = createTransforms( entry, numResolutionLevels, level0Scales );
 
 		final int channelAxisIndex = imglibAxisIndex( entry.axes, AxisCalibration.C, numDimensions );
@@ -158,7 +155,6 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 				.numTimepoints( numTimepoints )
 				.numDimensions( numDimensions )
 				.type( type )
-				.voxelDimensions( voxelDimensions )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
 				.axesPerLevel( axesPerLevel )
@@ -385,39 +381,6 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		final double[] fallback = new double[ n ];
 		Arrays.fill( fallback, 1.0 );
 		return fallback;
-	}
-
-	private static VoxelDimensions createVoxelDimensions( final double[] level0Scales, final List< Axis > zarrAxes )
-	{
-		if ( zarrAxes == null )
-			return new FinalVoxelDimensions( "", 1.0, 1.0, 1.0 );
-		final double xScale = scaleForNamedAxis( zarrAxes, level0Scales, AxisCalibration.X );
-		final double yScale = scaleForNamedAxis( zarrAxes, level0Scales, AxisCalibration.Y );
-		final double zScale = scaleForNamedAxis( zarrAxes, level0Scales, AxisCalibration.Z );
-		return new FinalVoxelDimensions( spatialUnit( zarrAxes ), xScale, yScale, zScale );
-	}
-
-	private static double scaleForNamedAxis( final List< Axis > axes, final double[] scales, final String name )
-	{
-		final int idx = zarrAxisIndex( axes, name );
-		return idx >= 0 ? scales[ idx ] : 1.0;
-	}
-
-	/**
-	 * Returns the unit attached to the last x/y/z axis encountered. OME-Zarr
-	 * spatial axes share a single unit in well-formed datasets, so this
-	 * collapses to "the spatial unit"; the original loop happened to write
-	 * it last-wins, and this preserves that behavior.
-	 */
-	private static String spatialUnit( final List< Axis > axes )
-	{
-		String unit = "";
-		for ( final Axis axis : axes )
-		{
-			if ( AxisCalibration.X.equals( axis.name ) || AxisCalibration.Y.equals( axis.name ) || AxisCalibration.Z.equals( axis.name ) )
-				unit = axis.unit == null ? "" : axis.unit;
-		}
-		return unit;
 	}
 
 	private static AffineTransform3D[] createTransforms( final MultiscalesEntry entry,

@@ -61,8 +61,6 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
-import mpicbg.spim.data.sequence.FinalVoxelDimensions;
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
@@ -92,7 +90,8 @@ public class N5PyramidBackend implements PyramidBackend
 
 		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
 		final AffineTransform3D[] transforms = spatialMetadata.spatialTransforms3d();
-		final VoxelDimensions voxelDimensions = createVoxelDimensions( transforms[ 0 ], spatialMetadata.unit() );
+		if ( !Affine3DUtils.isScaling( transforms[ 0 ], 0.01d ) )
+			logger.warn( "The affine transform is not a strict scaling transform. This may cause problems with the image viewer." );
 		final T type = N5Utils.type( multiscale.getDataType() );
 		final String name = multiscale.getName();
 		final int numResolutionLevels = multiscale.numResolutionLevels();
@@ -125,7 +124,6 @@ public class N5PyramidBackend implements PyramidBackend
 				.numTimepoints( numTimepoints )
 				.numDimensions( numDimensions )
 				.type( type )
-				.voxelDimensions( voxelDimensions )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
 				.axesPerLevel( axesPerLevel )
@@ -183,17 +181,6 @@ public class N5PyramidBackend implements PyramidBackend
 		final String omeroKey = ( base != null && base.isJsonObject() && base.getAsJsonObject().has( "ome" ) )
 				? "ome/omero" : "omero";
 		return new Gson().fromJson( reader.getAttribute( node.getPath(), omeroKey, JsonElement.class ), Omero.class );
-	}
-
-	private VoxelDimensions createVoxelDimensions( final AffineTransform3D transform, final String unit )
-	{
-		if ( !Affine3DUtils.isScaling( transform, 0.01d ) )
-			logger.warn( "The affine transform is not a strict scaling transform. This may cause problems with the image viewer." );
-
-		final double scaleX = transform.get( 0, 0 );
-		final double scaleY = transform.get( 1, 1 );
-		final double scaleZ = transform.get( 2, 2 );
-		return new FinalVoxelDimensions( unit, scaleX, scaleY, scaleZ );
 	}
 
 	// ---------------------------------------------------------------------
