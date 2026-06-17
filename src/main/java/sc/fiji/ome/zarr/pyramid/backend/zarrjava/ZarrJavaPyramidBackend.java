@@ -50,6 +50,7 @@ import dev.zarr.zarrjava.experimental.ome.metadata.OmeroRdefs;
 import dev.zarr.zarrjava.experimental.ome.metadata.OmeroWindow;
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.CoordinateTransformation;
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTransformation;
+import dev.zarr.zarrjava.experimental.ome.metadata.transform.TranslationCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.HttpStore;
 import dev.zarr.zarrjava.store.Store;
@@ -361,10 +362,12 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		for ( int level = 0; level < numResolutionLevels; level++ )
 		{
 			final double[] scales = computeLevelScale( entry, level, level0Scales, spatialZarrIdx );
+			final double[] translation = computeLevelTranslation( entry, level, spatialZarrIdx );
 			final AffineTransform3D t = new AffineTransform3D();
 			t.set( scales[ 0 ], 0, 0 );
 			t.set( scales[ 1 ], 1, 1 );
 			t.set( scales[ 2 ], 2, 2 );
+			t.setTranslation( translation );
 			tr[ level ] = t;
 		}
 		return tr;
@@ -387,6 +390,29 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 				scales[ d ] = fallbackScaleAtAxis( level0Scales, zi );
 		}
 		return scales;
+	}
+
+	/**
+	 * Spatial (x, y, z) translation of {@code level} in physical world units, or
+	 * all-zeros when the level has no translation transformation. Unlike scale, a
+	 * missing translation has a well-defined neutral value (no offset), so the
+	 * fallback is simply zero.
+	 */
+	private static double[] computeLevelTranslation( final MultiscalesEntry entry, final int level,
+			final int[] spatialZarrIdx )
+	{
+		final double[] translation = new double[ 3 ];
+		final double[] levelTranslation = findLevelTranslation( entry, level );
+		if ( levelTranslation == null )
+			return translation;
+
+		for ( int d = 0; d < 3; d++ )
+		{
+			final int zi = spatialZarrIdx[ d ];
+			if ( zi >= 0 && zi < levelTranslation.length )
+				translation[ d ] = levelTranslation[ zi ];
+		}
+		return translation;
 	}
 
 	/**
@@ -422,6 +448,34 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 				final ScaleCoordinateTransformation scaleCt = ( ScaleCoordinateTransformation ) ct;
 				if ( scaleCt.scale != null )
 					return toDoubleArray( scaleCt.scale );
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the resolved translation array of the first
+	 * {@link TranslationCoordinateTransformation} at {@code level} whose
+	 * {@code translation} field is non-null, or {@code null} when the level
+	 * doesn't exist or has no usable translation transformation. {@code null}
+	 * (rather than an empty array, cf. {@code S1168}) lets the caller treat an
+	 * absent translation as a zero offset.
+	 */
+	@SuppressWarnings( "java:S1168" )
+	private static double[] findLevelTranslation( final MultiscalesEntry entry, final int level )
+	{
+		if ( entry.datasets == null || entry.datasets.size() <= level )
+			return null;
+		final dev.zarr.zarrjava.experimental.ome.metadata.Dataset ds = entry.datasets.get( level );
+		if ( ds.coordinateTransformations == null )
+			return null;
+		for ( final CoordinateTransformation ct : ds.coordinateTransformations )
+		{
+			if ( ct instanceof TranslationCoordinateTransformation )
+			{
+				final TranslationCoordinateTransformation translationCt = ( TranslationCoordinateTransformation ) ct;
+				if ( translationCt.translation != null )
+					return toDoubleArray( translationCt.translation );
 			}
 		}
 		return null;
