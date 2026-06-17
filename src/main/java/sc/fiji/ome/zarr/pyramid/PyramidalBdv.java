@@ -28,18 +28,6 @@
  */
 package sc.fiji.ome.zarr.pyramid;
 
-import bdv.BigDataViewer;
-import bdv.cache.SharedQueue;
-import bdv.util.RandomAccessibleIntervalMipmapSource4D;
-import bdv.util.volatiles.VolatileViews;
-import bdv.viewer.SourceAndConverter;
-
-import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import mpicbg.spim.data.sequence.FinalVoxelDimensions;
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -48,8 +36,8 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.util.Util;
 import net.imglib2.view.Views;
+
 import org.scijava.AbstractContextual;
 import org.scijava.Context;
 import org.scijava.object.ObjectService;
@@ -57,6 +45,18 @@ import org.scijava.plugin.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import bdv.BigDataViewer;
+import bdv.cache.SharedQueue;
+import bdv.util.RandomAccessibleIntervalMipmapSource4D;
+import bdv.util.volatiles.VolatileViews;
+import bdv.viewer.SourceAndConverter;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 
@@ -111,7 +111,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final VoxelDimensions voxelDimensions = voxelDimensions( contents );
 
 		final RandomAccessibleInterval< V >[] volatileImgs = createVolatileImgs( contents );
-		final V volatileType = Util.getTypeFromInterval( volatileImgs[ 0 ] );
+		final V volatileType = volatileImgs[ 0 ].getType();
 
 		final RandomAccessibleInterval< T >[][] levelToChannels = new RandomAccessibleInterval[ nLevels ][];
 		Arrays.setAll( levelToChannels,
