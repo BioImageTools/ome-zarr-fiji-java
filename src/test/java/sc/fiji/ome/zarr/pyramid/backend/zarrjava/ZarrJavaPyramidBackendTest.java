@@ -28,9 +28,13 @@
  */
 package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
+import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase;
@@ -45,5 +49,16 @@ public class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
 		return new ZarrJavaPyramidBackend().load( path.toUri() );
+	}
+
+	@Test
+	void testStaticOpen() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
+		PyramidContents< ? > contents = ZarrJavaPyramidBackend.open( path.toUri() );
+		assertNotNull( contents );
+		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+		assertEquals( 5, contents.numDimensions() );
+		assertEquals( 2, contents.numResolutionLevels() );
 	}
 }

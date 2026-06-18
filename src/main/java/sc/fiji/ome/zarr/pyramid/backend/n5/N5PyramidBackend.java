@@ -77,6 +77,20 @@ public class N5PyramidBackend implements PyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	/**
+	 * Convenience entry point for reading an OME-Zarr image with the N5 backend
+	 * without first constructing a backend instance. Equivalent to
+	 * {@code new N5PyramidBackend().load( inputUri )}.
+	 *
+	 * @param <T> pixel type of the image being read
+	 * @param inputUri location of the OME-Zarr root; either a {@code file:} URI
+	 *   for local datasets or an {@code http(s):} URI for remote datasets
+	 */
+	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > open( final URI inputUri )
+	{
+		return new N5PyramidBackend().load( inputUri );
+	}
+
 	@Override
 	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
 	{
