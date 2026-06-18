@@ -106,7 +106,7 @@ public interface PyramidBackendTestBase
 			throws URISyntaxException;
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testAsPyramidalDataset( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -118,7 +118,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testAsDataset( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -140,7 +140,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testAsSources( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -221,7 +221,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testNumDimensions( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -241,7 +241,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testNumTimepoints( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -269,7 +269,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testNumChannels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -297,7 +297,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testNumResolutionLevels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -310,7 +310,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testAsImg( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -329,7 +329,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testVoxelDimensions( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -344,7 +344,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( { "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" } )
+	@MethodSource( { "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" } )
 	default void testPhysicalSizeConsistentAcrossResolutionLevels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -380,7 +380,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testGetType( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -392,7 +392,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testGetName( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -403,7 +403,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#pyramids" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#pyramids" )
 	default void testGetPyramidLevels( String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -436,7 +436,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testPreferredMaxWidth( final String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -473,7 +473,7 @@ public interface PyramidBackendTestBase
 	}
 
 	@ParameterizedTest
-	@MethodSource( "sc.fiji.ome.zarr.pyramid.PyramidBackendTestBase#omeZarrExamples" )
+	@MethodSource( "sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase#omeZarrExamples" )
 	default void testConverterSetup( final String resource ) throws URISyntaxException
 	{
 		try (Context context = new Context())
