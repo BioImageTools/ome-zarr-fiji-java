@@ -39,7 +39,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 
-import sc.fiji.ome.zarr.pyramid.Pyramidal;
+import sc.fiji.ome.zarr.pyramid.fiji.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
 

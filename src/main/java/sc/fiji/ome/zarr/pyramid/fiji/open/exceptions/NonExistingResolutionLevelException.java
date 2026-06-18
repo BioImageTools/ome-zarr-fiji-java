@@ -26,18 +26,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.open.exceptions;
+package sc.fiji.ome.zarr.pyramid.fiji.open.exceptions;
 
-public class NotASingleScaleImageException extends RuntimeException
+public class NonExistingResolutionLevelException extends RuntimeException
 {
-
-	public NotASingleScaleImageException( final String path )
+	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels )
 	{
-		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image." );
+		super( message( resolutionLevel, numResolutionLevels ) );
 	}
 
-	public NotASingleScaleImageException( final String path, final Throwable cause )
+	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels, final Throwable cause )
 	{
-		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image. Cause: " + cause.getMessage(), cause );
+		super( message( resolutionLevel, numResolutionLevels ), cause );
+	}
+
+	private static String message( final int resolutionLevel, final int numResolutionLevels )
+	{
+		return "Resolution level " + resolutionLevel + " does not exist. "
+				+ "The pyramid has " + numResolutionLevels + " level"
+				+ ( numResolutionLevels == 1 ? "" : "s" ) + " (0–" + ( numResolutionLevels - 1 ) + ").";
 	}
 }

@@ -48,7 +48,6 @@ import org.scijava.service.AbstractService;
 import org.scijava.service.SciJavaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sc.fiji.ome.zarr.pyramid.Pyramidal;
 
 /**
  * Tracks which BDV or ImageJ window holding a {@link Pyramidal} was most recently focused.

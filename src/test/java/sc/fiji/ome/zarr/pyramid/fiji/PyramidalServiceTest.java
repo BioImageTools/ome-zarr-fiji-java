@@ -49,7 +49,6 @@ import ij.gui.ImageWindow;
 import javax.swing.SwingUtilities;
 
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
-import sc.fiji.ome.zarr.pyramid.Pyramidal;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class PyramidalServiceTest

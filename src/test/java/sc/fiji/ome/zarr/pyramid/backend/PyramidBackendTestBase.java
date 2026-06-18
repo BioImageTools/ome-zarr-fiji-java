@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.backend;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -57,11 +57,10 @@ import bdv.tools.brightness.ConverterSetup;
 import bdv.util.BdvHandle;
 import bdv.viewer.Source;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
-import sc.fiji.ome.zarr.util.BdvUtils;
+import sc.fiji.ome.zarr.pyramid.fiji.util.BdvUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 /**

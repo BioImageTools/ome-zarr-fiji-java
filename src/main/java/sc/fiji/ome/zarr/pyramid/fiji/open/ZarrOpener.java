@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.open;
+package sc.fiji.ome.zarr.pyramid.fiji.open;
 
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
@@ -49,9 +49,6 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.util.Cast;
 
 import ij.IJ;
-import sc.fiji.ome.zarr.open.exceptions.NonExistingResolutionLevelException;
-import sc.fiji.ome.zarr.open.exceptions.NotASingleScaleImageException;
-import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
@@ -62,7 +59,9 @@ import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
-import sc.fiji.ome.zarr.util.BdvUtils;
+import sc.fiji.ome.zarr.pyramid.fiji.open.exceptions.NonExistingResolutionLevelException;
+import sc.fiji.ome.zarr.pyramid.fiji.open.exceptions.NotASingleScaleImageException;
+import sc.fiji.ome.zarr.pyramid.fiji.util.BdvUtils;
 
 /**
  * Backend-reader-agnostic opener for OME-Zarr datasets.
@@ -263,7 +262,14 @@ public class ZarrOpener
 		return null;
 	}
 
-	Object openImage( final Function< PyramidalDataset, Object > multiScaleImageOpener,
+	/**
+	 * Opens the dataset and applies a caller-supplied function to it: the
+	 * multiscale function receives a {@link PyramidalDataset} at the preferred
+	 * resolution level, the single-scale function an {@link Img} (single-scale
+	 * support is still pending). Returns the function's result, or {@code null}
+	 * if opening failed.
+	 */
+	public Object openImage( final Function< PyramidalDataset, Object > multiScaleImageOpener,
 			final Function< Img< ? >, Object > singleScaleImageOpener )
 	{
 		try

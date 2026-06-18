@@ -48,8 +48,9 @@ import net.imglib2.img.Img;
 import ij.IJ;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
-import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
+import sc.fiji.ome.zarr.pyramid.fiji.open.ZarrReaderBackend;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.fiji.open.ZarrOpener;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 

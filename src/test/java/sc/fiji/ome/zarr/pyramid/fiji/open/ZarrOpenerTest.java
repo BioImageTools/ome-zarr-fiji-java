@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.open;
+package sc.fiji.ome.zarr.pyramid.fiji.open;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -44,7 +44,7 @@ import org.scijava.display.DisplayService;
 import bdv.util.BdvHandle;
 import net.imagej.DatasetService;
 import net.imglib2.util.Cast;
-import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
+
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;

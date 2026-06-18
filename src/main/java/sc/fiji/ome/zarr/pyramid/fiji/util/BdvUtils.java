@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.util;
+package sc.fiji.ome.zarr.pyramid.fiji.util;
 
 import java.awt.Color;
 import java.awt.Container;
