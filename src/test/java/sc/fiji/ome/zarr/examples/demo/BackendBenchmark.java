@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid.backend;
+package sc.fiji.ome.zarr.examples.demo;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -50,6 +50,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
 
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.zarrjava.ZarrJavaPyramidBackend;
@@ -72,7 +73,7 @@ import java.util.logging.Logger;
 /**
  * Simple backend benchmark without extra dependencies.
  * Run with:
- * mvn -q -DskipTests -Dexec.classpathScope=test -Dexec.mainClass=sc.fiji.ome.zarr.pyramid.backend.BackendBenchmark exec:java
+ * mvn -q -DskipTests -Dexec.classpathScope=test -Dexec.mainClass=sc.fiji.ome.zarr.examples.demo.BackendBenchmark exec:java
  */
 public class BackendBenchmark
 {

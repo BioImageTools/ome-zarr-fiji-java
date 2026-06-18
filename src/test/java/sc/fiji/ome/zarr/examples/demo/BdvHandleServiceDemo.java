@@ -35,8 +35,6 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 import java.util.Random;
 
-import sc.fiji.ome.zarr.util.BdvHandleService;
-
 @SuppressWarnings( "all" )
 public class BdvHandleServiceDemo
 {
