@@ -41,7 +41,7 @@ import sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
-public class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
+class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
 {
 	@Override
 	public PyramidContents< ? > load( final String resource, final Context context )
