@@ -136,6 +136,11 @@ public class ZarrOpener
 	 * location using the selected {@link ZarrReaderBackend}, and resolves the
 	 * resolution level matching the preferred width.
 	 */
+	// java:S1452: the wildcard is intentional. The pixel type is only known once
+	// the data is read, and callers use only type-independent members of the
+	// returned PyramidContents; making this generic would push the
+	// wildcard onto every use site.
+	@SuppressWarnings( "java:S1452" )
 	public PyramidContents< ? > getContents()
 	{
 		if ( cachedContents == null )
