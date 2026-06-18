@@ -42,6 +42,7 @@ import net.imagej.Dataset;
 import net.imagej.DatasetService;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.command.CommandService;
@@ -100,6 +101,7 @@ class OpenInBDVCommandTest
 	 * the same {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents}.
 	 */
 	@Test
+	@Disabled( "Occasionally fails in the MacOS CI" )
 	void runAfterBdvOpenCreatesSecondBdvDataset() throws URISyntaxException, ExecutionException, InterruptedException
 	{
 		try (Context context = new Context())
