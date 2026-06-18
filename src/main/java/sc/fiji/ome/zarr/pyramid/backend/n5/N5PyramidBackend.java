@@ -60,7 +60,7 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
-import sc.fiji.ome.zarr.pyramid.Affine3DUtils;
+import sc.fiji.ome.zarr.pyramid.backend.Affine3DUtils;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;

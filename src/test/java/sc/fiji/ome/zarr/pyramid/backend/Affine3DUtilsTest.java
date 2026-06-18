@@ -35,8 +35,6 @@ import net.imglib2.realtransform.AffineTransform3D;
 
 import org.junit.jupiter.api.Test;
 
-import sc.fiji.ome.zarr.pyramid.Affine3DUtils;
-
 /**
  * Unit tests for the {@link Affine3DUtils} class.
  *
