@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fiji.ui;
+package ome.zarr.fiji.ui.plugin;
 
 import java.awt.GraphicsEnvironment;
 import java.awt.KeyEventDispatcher;

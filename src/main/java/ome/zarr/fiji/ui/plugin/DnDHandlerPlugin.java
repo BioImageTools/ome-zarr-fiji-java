@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fiji.ui;
+package ome.zarr.fiji.ui.plugin;
 
 import net.imglib2.util.Cast;
 
@@ -48,7 +48,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 import ome.zarr.fiji.ui.open.ZarrOpenActions;
-import ome.zarr.ZarrUtils;
+import ome.zarr.imglib2.ZarrUtils;
 
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
 public class DnDHandlerPlugin extends AbstractIOPlugin< Object >

@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 import org.scijava.Context;
 
 import ome.zarr.fiji.ui.util.ClipboardUtils;
-import ome.zarr.ZarrUtils;
+import ome.zarr.imglib2.ZarrUtils;
 
 /**
  * Opening orchestration for the "paste an OME-Zarr location and open it" flow,

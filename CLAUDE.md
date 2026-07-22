@@ -52,6 +52,6 @@ Note: `BdvHandleService` is test/example-only now (`src/test/java/ome/zarr/examp
 - `ome.zarr.n5` / `ome.zarr.zarrjava` – N5 / zarr-java backend implementations
 - `ome.zarr.fiji` (+`.open`, `.plugins`, `.util`) – Fiji/BDV integration layer, no backend dependency
 - `ome.zarr.fiji.ui` (+`.open`, `.settings`, `.dialog`, `.util`) – DnD handler, SciJava commands, dialogs, opening-behavior settings
-- `ZarrUtils` and `ZarrTestUtils` sit directly at the `ome.zarr` root since they have no Fiji/backend dependency
+- `ZarrUtils` lives in `ome.zarr.imglib2` (no Fiji/backend dependency); `ZarrTestUtils` sits directly at the `ome.zarr` root
 
 **Test resources** (sample OME-Zarr datasets) live under `src/test/resources/` and are accessed via `ZarrTestUtils.resourcePath()`.

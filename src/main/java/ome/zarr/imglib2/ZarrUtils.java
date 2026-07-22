@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr;
+package ome.zarr.imglib2;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;

@@ -26,30 +26,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fiji.ui;
+package ome.zarr.fiji.ui.plugin;
 
+import static org.mockito.Mockito.times;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.scijava.Context;
-import org.scijava.command.Command;
-import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
+import org.scijava.io.location.FileLocation;
 
-import ij.IJ;
-import ome.zarr.fiji.ui.open.PasteToOpenAction;
+import ome.zarr.fiji.ui.open.ZarrOpenActions;
+import ome.zarr.ZarrTestUtils;
 
-/**
- * Reads a URI from the system clipboard and opens it as an OME-Zarr
- * dataset, using the same backend, resolution, and open-behavior settings as
- * the drag-and-drop pipeline. Mirrors napari's "paste URI to open" UX.
- */
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Paste OME-Zarr URI" )
-public class PasteOmeZarrUrlCommand implements Command
+class DnDHandlerPluginTest
 {
-	@Parameter
-	private Context context;
-
-	@Override
-	public void run()
+	@Test
+	void openDelegatesToZarrOpenActions() throws URISyntaxException, IOException
 	{
-		PasteToOpenAction.pasteFromClipboard( context, IJ::error );
+		try (Context context = new Context())
+		{
+			final Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/" );
+			final FileLocation fileLocation = new FileLocation( path.toUri() );
+
+			final DnDHandlerPlugin dnDHandlerPlugin = new DnDHandlerPlugin();
+			dnDHandlerPlugin.setContext( context );
+
+			try (MockedStatic< ZarrOpenActions > mocked = Mockito.mockStatic( ZarrOpenActions.class ))
+			{
+				dnDHandlerPlugin.open( fileLocation );
+				mocked.verify( () -> ZarrOpenActions.openWithSettings( path.toUri(), context ), times( 1 ) );
+			}
+		}
 	}
 }

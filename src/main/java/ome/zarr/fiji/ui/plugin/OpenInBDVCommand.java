@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,41 +26,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fiji.ui;
+package ome.zarr.fiji.ui.plugin;
 
-import static org.mockito.Mockito.times;
+import java.lang.invoke.MethodHandles;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
+import org.scijava.command.Command;
+import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.scijava.Context;
-import org.scijava.io.location.FileLocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import ome.zarr.fiji.ui.open.ZarrOpenActions;
-import ome.zarr.ZarrTestUtils;
+import ome.zarr.fiji.Pyramidal;
+import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fiji.util.BdvUtils;
 
-class DnDHandlerPluginTest
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
+public class OpenInBDVCommand implements Command
 {
-	@Test
-	void openDelegatesToZarrOpenActions() throws URISyntaxException, IOException
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	@Parameter
+	private UIService uiService;
+
+	@Parameter( required = false )
+	private PyramidalService pyramidalService;
+
+	@Parameter( required = false )
+	private Pyramidal pyramidal;
+
+	@Override
+	public void run()
 	{
-		try (Context context = new Context())
+		logger.trace( "Running OpenInBDVCommand. pyramidal={}", pyramidal );
+		if ( pyramidal == null )
 		{
-			final Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/" );
-			final FileLocation fileLocation = new FileLocation( path.toUri() );
-
-			final DnDHandlerPlugin dnDHandlerPlugin = new DnDHandlerPlugin();
-			dnDHandlerPlugin.setContext( context );
-
-			try (MockedStatic< ZarrOpenActions > mocked = Mockito.mockStatic( ZarrOpenActions.class ))
-			{
-				dnDHandlerPlugin.open( fileLocation );
-				mocked.verify( () -> ZarrOpenActions.openWithSettings( path.toUri(), context ), times( 1 ) );
-			}
+			uiService.showDialog( "The active image is not an OME-Zarr dataset.", "Open in BigDataViewer" );
+			return;
 		}
+		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getContext(), pyramidal.getPyramidContents() );
+		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
 	}
 }
