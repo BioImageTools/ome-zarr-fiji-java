@@ -37,6 +37,12 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static sc.fiji.ome.zarr.util.ZarrTestUtils.IMAGE_NAME;
 
 import net.imagej.Dataset;
@@ -51,7 +57,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.scijava.Context;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
@@ -164,9 +169,9 @@ class ZarrOpenActionsTest
 			final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/" );
 
 			try (MockedConstruction< ZarrOpenActions > actionsConstruction =
-					Mockito.mockConstruction( ZarrOpenActions.class );
+					mockConstruction( ZarrOpenActions.class );
 					MockedConstruction< DnDActionChooser > chooserConstruction =
-							Mockito.mockConstruction( DnDActionChooser.class ))
+							mockConstruction( DnDActionChooser.class ))
 			{
 				settings.setCurrentChoice( ZarrOpenBehavior.BDV_MULTI_RESOLUTION );
 				settings.saveSettingsToPreferences( prefService );
@@ -186,13 +191,13 @@ class ZarrOpenActionsTest
 
 				final List< ZarrOpenActions > actionsInstances = actionsConstruction.constructed();
 				assertEquals( 4, actionsInstances.size() );
-				Mockito.verify( actionsInstances.get( 0 ), Mockito.times( 1 ) ).openBDVWithImage();
-				Mockito.verify( actionsInstances.get( 1 ), Mockito.times( 1 ) ).openIJWithImage();
-				Mockito.verify( actionsInstances.get( 2 ), Mockito.times( 1 ) ).openIJWithImage();
+				verify( actionsInstances.get( 0 ), times( 1 ) ).openBDVWithImage();
+				verify( actionsInstances.get( 1 ), times( 1 ) ).openIJWithImage();
+				verify( actionsInstances.get( 2 ), times( 1 ) ).openIJWithImage();
 
 				final List< DnDActionChooser > chooserInstances = chooserConstruction.constructed();
 				assertEquals( 1, chooserInstances.size() );
-				Mockito.verify( chooserInstances.get( 0 ), Mockito.times( 1 ) ).showDialog();
+				verify( chooserInstances.get( 0 ), times( 1 ) ).showDialog();
 			}
 		}
 	}
@@ -256,7 +261,7 @@ class ZarrOpenActionsTest
 	void openImporterDialogDoesNotThrow() throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr" );
-		try (Context context = new Context(); MockedConstruction< N5Importer > ignored = Mockito.mockConstruction( N5Importer.class ))
+		try (Context context = new Context(); MockedConstruction< N5Importer > ignored = mockConstruction( N5Importer.class ))
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			assertDoesNotThrow( actions::openImporterDialog );
@@ -268,7 +273,7 @@ class ZarrOpenActionsTest
 	{
 		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr" );
 		try (Context context = new Context();
-				MockedConstruction< N5ViewerCreator > ignored = Mockito.mockConstruction( N5ViewerCreator.class ))
+				MockedConstruction< N5ViewerCreator > ignored = mockConstruction( N5ViewerCreator.class ))
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			assertDoesNotThrow( actions::openViewerDialog );
@@ -657,13 +662,13 @@ class ZarrOpenActionsTest
 	@Test
 	void testRunScriptWithNoScriptSpecified() throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
-		try (MockedStatic< JOptionPane > mocked = Mockito.mockStatic( JOptionPane.class ))
+		try (MockedStatic< JOptionPane > mocked = mockStatic( JOptionPane.class ))
 		{
 			mocked.when( () -> JOptionPane.showConfirmDialog(
-					Mockito.any(),
-					Mockito.any(),
-					Mockito.any(),
-					Mockito.anyInt() ) )
+					any(),
+					any(),
+					any(),
+					anyInt() ) )
 					.thenReturn( JOptionPane.NO_OPTION );
 
 			try (Context context = new Context())
