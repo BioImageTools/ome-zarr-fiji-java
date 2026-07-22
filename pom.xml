@@ -8,7 +8,7 @@
 		<version>43.0.0</version>
 	</parent>
 
-	<groupId>sc.fiji</groupId>
+	<groupId>ome.zarr</groupId>
 	<artifactId>ome-zarr-fiji</artifactId>
 	<version>0.5.1-SNAPSHOT</version>
 
@@ -144,7 +144,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<package-name>sc.fiji.ome.zarr</package-name>
+		<package-name>ome.zarr</package-name>
 
 		<license.licenseName>bsd_2</license.licenseName>
 		<license.projectName>OME-Zarr extras for Fiji</license.projectName>

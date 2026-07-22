@@ -1,0 +1,66 @@
+/*-
+ * #%L
+ * OME-Zarr extras for Fiji
+ * %%
+ * Copyright (C) 2022 - 2026 SciJava developers
+ * %%
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ * #L%
+ */
+package ome.zarr.examples.demo;
+
+import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
+import org.janelia.saalfeldlab.n5.universe.N5Factory;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMultiScaleMetadata;
+
+@SuppressWarnings( "all" )
+public class N5ReaderDemo
+{
+	public static void main( String[] args )
+	{
+		//final String path = "/home/ulman/Documents/talks/CEITEC/2025_11_ZarrSymposium_Zurich/data/MitoEM_fixedRes.zarr/MitoEM_fixedRes";
+		//final String path = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0";
+		final String path = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
+		final N5Reader n5reader = new N5Factory().openReader( path );
+		System.out.println( "got reader: " + n5reader );
+		N5Metadata m = N5DatasetDiscoverer.discover( n5reader ).getMetadata();
+		System.out.println( "got metadata: " + m );
+
+		if ( m instanceof OmeNgffMetadata )
+		{
+			OmeNgffMetadata metadata = ( OmeNgffMetadata ) m;
+			System.out.println( "name: " + metadata.getName() );
+			for ( OmeNgffMultiScaleMetadata ms : metadata.multiscales )
+			{
+				System.out.println( "----------------" );
+				System.out.println( "name: " + ms.name + "     type: " + ms.type + "     version: " + ms.version );
+				System.out.println( ms.coordinateTransformations );
+			}
+		}
+
+		//TODO fetch v0.5 NGFF Metadata -> ask John
+		//there was supposed to be some class for it
+	}
+}

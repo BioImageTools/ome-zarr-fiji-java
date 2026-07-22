@@ -25,24 +25,33 @@ export JAVA_TOOL_OPTIONS=-Djava.library.path=$(brew --prefix c-blosc)/lib
 
 ## Architecture
 
-**Entry point:** `DnDHandlerPlugin` – a SciJava `IOPlugin` that intercepts drag-and-drop of filesystem paths, checks whether the path is a Zarr folder via `ZarrUtils.isZarr(URI)`, then delegates to `ZarrOpenActions`.
+**Entry point:** `DnDHandlerPlugin` – a SciJava `IOPlugin` that intercepts drag-and-drop of filesystem paths, checks whether the path is a Zarr folder via `ZarrUtils.isZarr(URI)`, then delegates to `ZarrOpenActions.openWithSettings()`.
 
-**Core data model:** `Pyramidal5DImageDataImpl` (implements `Pyramidal5DImageData`) wraps an N5 reader and exposes the multi-resolution pyramid, channel/timepoint metadata, affine transforms, and conversion to BigDataViewer sources or ImageJ datasets.
+**Core data model:** `PyramidBackend` is a single-method interface (`<T> PyramidContents<T> load(URI)`), implemented independently by `N5PyramidBackend` (N5-universe, OME-NGFF v0.3–v0.5) and `ZarrJavaPyramidBackend` (`dev.zarr:zarr-java`, Zarr v2/v3). Both produce an immutable `PyramidContents<T>` holding the per-level `CachedCellImg`s, affine transforms, axis calibration, and optional OMERO metadata, plus an `asImg()` accessor. `ZarrOpener` picks a backend (`ZarrReaderBackend`: N5 or ZARR_JAVA), loads and caches the `PyramidContents`, and wraps it into either a `PyramidalDataset` (extends `DefaultDataset`, for ImageJ) or a `PyramidalBdv` (per-channel BDV `SourceAndConverter` lists, volatile-wrapped per resolution level) – both implement the marker interface `Pyramidal`.
 
-**Opening modes** (enum `ZarrOpenBehavior` in `sc.fiji.ome.zarr.open.options`):
+**Opening modes** (enum `ZarrOpenBehavior` in `ome.zarr.fiji.ui.open.options`):
 - `IMAGEJ_HIGHEST_RESOLUTION` / `IMAGEJ_CUSTOM_RESOLUTION` → `ZarrOpenActions.openIJWithImage()`
 - `BDV_MULTI_RESOLUTION` → `ZarrOpenActions.openBDVWithImage()`
 - `SHOW_SELECTION_DIALOG` → `DnDActionChooser` Swing dialog with icon buttons
 
-**Settings** are persisted across Fiji sessions via SciJava `PrefService` in `OpeningBehaviorSettings` and `UserScriptSettings`.
+**Settings** are persisted across Fiji sessions via SciJava `PrefService`, read/written through `ZarrOpeningSettings` (open-behavior, preferred width, reader backend) and surfaced via the `OpeningBehaviorSettings` command. `UserScriptSettings` currently only logs the chosen script path – it does not persist it.
+
+**Active-window tracking:** `PyramidalService` (a SciJava service) tracks the most-recently-focused `Pyramidal` window (BDV or ImageJ) via AWT focus listening; `PyramidalPreprocessor` auto-fills any `Pyramidal`-typed command parameter with the currently active one.
 
 **Key utility classes:**
 - `ZarrUtils` – consolidated Zarr-detection utility; `isZarr(URI)` handles both local filesystem (looks for `.zarray` / `zarr.json`) and HTTP (HEAD-requests known metadata files); `isHttpAccessible` is package-private
 - `ClipboardUtils` – reads the system clipboard (`readClipboard()`) and converts strings to URIs (`stringToUri(String, Consumer<String>)`); `readClipboardAsUri(Consumer<String>)` combines both
-- `BdvHandleService` – SciJava service managing the BigDataViewer window lifecycle
-- `BdvUtils` / `Affine3DUtils` – BigDataViewer and affine-transform helpers
+- `BdvUtils` – shows a `PyramidalBdv` in a BDV window, applies OMERO channel colors/display-ranges, wires reference-counting and window-close cleanup
+- `Affine3DUtils` – checks whether an `AffineTransform3D`'s linear part is a pure axis-aligned scaling (no rotation/shear)
 - `ScriptUtils` – opens Fiji script editor with a pre-populated scriptlet
 
-**Package root:** `sc.fiji.ome.zarr`
+Note: `BdvHandleService` is test/example-only now (`src/test/java/ome/zarr/examples/demo/`), not part of the shipped plugin.
+
+**Package root:** `ome.zarr`, organized per future artifact:
+- `ome.zarr.imglib2` (+`.metadata`, `.exceptions`) – backend-agnostic core (`PyramidBackend`, `PyramidContents`)
+- `ome.zarr.n5` / `ome.zarr.zarrjava` – N5 / zarr-java backend implementations
+- `ome.zarr.fiji` (+`.open`, `.plugins`, `.util`) – Fiji/BDV integration layer, no backend dependency
+- `ome.zarr.fiji.ui` (+`.open`, `.settings`, `.dialog`, `.util`) – DnD handler, SciJava commands, dialogs, opening-behavior settings
+- `ZarrUtils` and `ZarrTestUtils` sit directly at the `ome.zarr` root since they have no Fiji/backend dependency
 
 **Test resources** (sample OME-Zarr datasets) live under `src/test/resources/` and are accessed via `ZarrTestUtils.resourcePath()`.
