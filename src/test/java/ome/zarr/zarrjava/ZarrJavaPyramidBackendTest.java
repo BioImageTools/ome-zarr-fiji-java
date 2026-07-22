@@ -37,8 +37,8 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 
-import ome.zarr.imglib2.PyramidBackendTestBase;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.PyramidBackendTestBase;
 import ome.zarr.ZarrTestUtils;
 
 class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
