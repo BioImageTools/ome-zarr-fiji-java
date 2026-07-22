@@ -47,7 +47,7 @@ import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
 import bdv.viewer.SourceAndConverter;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
-import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.plugins.PyramidalService;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 public class BdvUtils

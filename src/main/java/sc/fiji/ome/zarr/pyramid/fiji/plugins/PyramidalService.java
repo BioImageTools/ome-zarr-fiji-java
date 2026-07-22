@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid.fiji;
+package sc.fiji.ome.zarr.pyramid.fiji.plugins;
 
 import ij.ImageListener;
 import ij.ImagePlus;
@@ -48,6 +48,7 @@ import org.scijava.service.AbstractService;
 import org.scijava.service.SciJavaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sc.fiji.ome.zarr.pyramid.fiji.Pyramidal;
 
 /**
  * Tracks which BDV or ImageJ window holding a {@link Pyramidal} was most recently focused.

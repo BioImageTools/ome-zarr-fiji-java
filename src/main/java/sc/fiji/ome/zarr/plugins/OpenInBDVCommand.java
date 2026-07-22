@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import sc.fiji.ome.zarr.pyramid.fiji.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
-import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.plugins.PyramidalService;
 import sc.fiji.ome.zarr.pyramid.fiji.util.BdvUtils;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )

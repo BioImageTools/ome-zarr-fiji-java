@@ -49,7 +49,7 @@ import org.scijava.command.CommandService;
 
 import sc.fiji.ome.zarr.open.ZarrOpenActions;
 import sc.fiji.ome.zarr.pyramid.fiji.Pyramidal;
-import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.plugins.PyramidalService;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 class OpenInBDVCommandTest

@@ -41,7 +41,7 @@ import org.scijava.ui.UIService;
 
 import sc.fiji.ome.zarr.pyramid.fiji.Pyramidal;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
-import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.plugins.PyramidalService;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Resolution Level..." )
 public class OpenResolutionLevelCommand extends DynamicCommand

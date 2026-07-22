@@ -46,7 +46,7 @@ import net.imagej.DatasetService;
 import net.imglib2.util.Cast;
 
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
-import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.plugins.PyramidalService;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 /**

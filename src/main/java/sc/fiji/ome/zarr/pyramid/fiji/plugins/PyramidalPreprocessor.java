@@ -26,13 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid.fiji;
+package sc.fiji.ome.zarr.pyramid.fiji.plugins;
 
 import org.scijava.module.Module;
 import org.scijava.module.process.AbstractSingleInputPreprocessor;
 import org.scijava.module.process.PreprocessorPlugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import sc.fiji.ome.zarr.pyramid.fiji.Pyramidal;
 
 
 @Plugin( type = PreprocessorPlugin.class )

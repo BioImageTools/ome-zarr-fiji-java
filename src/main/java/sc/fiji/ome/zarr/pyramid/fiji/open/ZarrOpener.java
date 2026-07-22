@@ -58,7 +58,7 @@ import sc.fiji.ome.zarr.pyramid.exceptions.NoMatchingResolutionException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
 import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
-import sc.fiji.ome.zarr.pyramid.fiji.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.plugins.PyramidalService;
 import sc.fiji.ome.zarr.pyramid.fiji.open.exceptions.NonExistingResolutionLevelException;
 import sc.fiji.ome.zarr.pyramid.fiji.open.exceptions.NotASingleScaleImageException;
 import sc.fiji.ome.zarr.pyramid.fiji.util.BdvUtils;
