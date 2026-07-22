@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,27 +26,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.examples.demo;
+package ome.zarr.fijiui.dialog;
 
 import net.imagej.ImageJ;
 
-import ij.IJ;
-import ome.zarr.fijiui.util.ScriptUtils;
-
-import java.net.URI;
-import java.nio.file.Paths;
-
-public class ScriptUtilsDemo
+public class StartUI
 {
+
+	static
+	{
+		net.imagej.patcher.LegacyInjector.preinit();
+	}
+
 	public static void main( String[] args )
 	{
-		ImageJ ij = new ImageJ();
+		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-
-		final URI inputUri = Paths
-				.get( "/home/ulman/Documents/talks/CEITEC/2025_11_ZarrSymposium_Zurich/data/MitoEM_fixedRes.zarr/MitoEM_fixedRes" ).toUri();
-		System.out.println( "\nLet's run the script... on URI param: " + inputUri );
-		ScriptUtils.executePresetScript( ij.context(), inputUri, IJ::error );
-		System.out.println( "Done." );
 	}
 }

@@ -32,7 +32,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-import ome.zarr.fiji.ui.dialog.DnDActionChooser;
+import ome.zarr.fijiui.dialog.DnDActionChooser;
 
 @SuppressWarnings( "all" )
 public class DnDActionChooserDemo

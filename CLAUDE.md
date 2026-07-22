@@ -29,7 +29,7 @@ export JAVA_TOOL_OPTIONS=-Djava.library.path=$(brew --prefix c-blosc)/lib
 
 **Core data model:** `PyramidBackend` is a single-method interface (`<T> PyramidContents<T> load(URI)`), implemented independently by `N5PyramidBackend` (N5-universe, OME-NGFF v0.3–v0.5) and `ZarrJavaPyramidBackend` (`dev.zarr:zarr-java`, Zarr v2/v3). Both produce an immutable `PyramidContents<T>` holding the per-level `CachedCellImg`s, affine transforms, axis calibration, and optional OMERO metadata, plus an `asImg()` accessor. `ZarrOpener` picks a backend (`ZarrReaderBackend`: N5 or ZARR_JAVA), loads and caches the `PyramidContents`, and wraps it into either a `PyramidalDataset` (extends `DefaultDataset`, for ImageJ) or a `PyramidalBdv` (per-channel BDV `SourceAndConverter` lists, volatile-wrapped per resolution level) – both implement the marker interface `Pyramidal`.
 
-**Opening modes** (enum `ZarrOpenBehavior` in `ome.zarr.fiji.ui.open.options`):
+**Opening modes** (enum `ZarrOpenBehavior` in `ome.zarr.fijiui.open.options`):
 - `IMAGEJ_HIGHEST_RESOLUTION` / `IMAGEJ_CUSTOM_RESOLUTION` → `ZarrOpenActions.openIJWithImage()`
 - `BDV_MULTI_RESOLUTION` → `ZarrOpenActions.openBDVWithImage()`
 - `SHOW_SELECTION_DIALOG` → `DnDActionChooser` Swing dialog with icon buttons
@@ -51,7 +51,7 @@ Note: `BdvHandleService` is test/example-only now (`src/test/java/ome/zarr/examp
 - `ome.zarr.imglib2` (+`.metadata`, `.exceptions`) – backend-agnostic core (`PyramidBackend`, `PyramidContents`)
 - `ome.zarr.n5` / `ome.zarr.zarrjava` – N5 / zarr-java backend implementations
 - `ome.zarr.fiji` (+`.open`, `.plugins`, `.util`) – Fiji/BDV integration layer, no backend dependency
-- `ome.zarr.fiji.ui` (+`.open`, `.settings`, `.dialog`, `.util`) – DnD handler, SciJava commands, dialogs, opening-behavior settings
+- `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.settings`, `.dialog`, `.util`) – Fiji UI layer (sibling of `ome.zarr.fiji`, future `ome-zarr-fiji-ui` artifact): DnD handler, SciJava commands, dialogs, opening-behavior settings
 - `ZarrUtils` lives in `ome.zarr.imglib2` (no Fiji/backend dependency); `ZarrTestUtils` sits directly at the `ome.zarr` root
 
 **Test resources** (sample OME-Zarr datasets) live under `src/test/resources/` and are accessed via `ZarrTestUtils.resourcePath()`.

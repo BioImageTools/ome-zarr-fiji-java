@@ -48,7 +48,7 @@ import ij.gui.ImageWindow;
 
 import javax.swing.SwingUtilities;
 
-import ome.zarr.fiji.ui.open.ZarrOpenActions;
+import ome.zarr.fijiui.open.ZarrOpenActions;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.ZarrTestUtils;
 

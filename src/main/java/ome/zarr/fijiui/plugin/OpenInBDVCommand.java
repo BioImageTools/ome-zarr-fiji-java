@@ -26,27 +26,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.examples.demo;
+package ome.zarr.fijiui.plugin;
 
-import net.imagej.ImageJ;
+import java.lang.invoke.MethodHandles;
 
-import ij.IJ;
-import ome.zarr.fijiui.util.ScriptUtils;
+import org.scijava.command.Command;
+import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 
-import java.net.URI;
-import java.nio.file.Paths;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ScriptUtilsDemo
+import ome.zarr.fiji.Pyramidal;
+import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fiji.util.BdvUtils;
+
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
+public class OpenInBDVCommand implements Command
 {
-	public static void main( String[] args )
-	{
-		ImageJ ij = new ImageJ();
-		ij.ui().showUI();
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-		final URI inputUri = Paths
-				.get( "/home/ulman/Documents/talks/CEITEC/2025_11_ZarrSymposium_Zurich/data/MitoEM_fixedRes.zarr/MitoEM_fixedRes" ).toUri();
-		System.out.println( "\nLet's run the script... on URI param: " + inputUri );
-		ScriptUtils.executePresetScript( ij.context(), inputUri, IJ::error );
-		System.out.println( "Done." );
+	@Parameter
+	private UIService uiService;
+
+	@Parameter( required = false )
+	private PyramidalService pyramidalService;
+
+	@Parameter( required = false )
+	private Pyramidal pyramidal;
+
+	@Override
+	public void run()
+	{
+		logger.trace( "Running OpenInBDVCommand. pyramidal={}", pyramidal );
+		if ( pyramidal == null )
+		{
+			uiService.showDialog( "The active image is not an OME-Zarr dataset.", "Open in BigDataViewer" );
+			return;
+		}
+		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getContext(), pyramidal.getPyramidContents() );
+		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
 	}
 }
