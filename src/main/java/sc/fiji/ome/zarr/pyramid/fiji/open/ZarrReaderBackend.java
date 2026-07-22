@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,24 +26,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid.exceptions;
+package sc.fiji.ome.zarr.pyramid.fiji.open;
 
-public class NonExistingResolutionLevelException extends RuntimeException
+import java.util.NoSuchElementException;
+
+/**
+ * Selects the library used to read OME-Zarr datasets.
+ */
+public enum ZarrReaderBackend
 {
-	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels )
+	/**
+	 * Read via the N5 library (supports Zarr v2 and v3 through n5-zarr).
+	 */
+	N5( "N5" ),
+
+	/**
+	 * Read via the zarr-java library (supports Zarr v2 and v3).
+	 */
+	ZARR_JAVA( "zarr-java" );
+
+	private final String description;
+
+	ZarrReaderBackend( final String description )
 	{
-		super( message( resolutionLevel, numResolutionLevels ) );
+		this.description = description;
 	}
 
-	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels, final Throwable cause )
+	public static ZarrReaderBackend getByName( final String name )
 	{
-		super( message( resolutionLevel, numResolutionLevels ), cause );
+		for ( final ZarrReaderBackend option : values() )
+			if ( option.name().equals( name ) )
+				return option;
+		throw new NoSuchElementException( name );
 	}
 
-	private static String message( final int resolutionLevel, final int numResolutionLevels )
+	public static ZarrReaderBackend getByDescription( final String description )
 	{
-		return "Resolution level " + resolutionLevel + " does not exist. "
-				+ "The pyramid has " + numResolutionLevels + " level"
-				+ ( numResolutionLevels == 1 ? "" : "s" ) + " (0–" + ( numResolutionLevels - 1 ) + ").";
+		for ( final ZarrReaderBackend option : values() )
+			if ( option.description.equals( description ) )
+				return option;
+		return null;
+	}
+
+	public String getDescription()
+	{
+		return description;
 	}
 }

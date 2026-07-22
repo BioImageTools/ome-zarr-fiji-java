@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 
 import ij.IJ;
 import ij.plugin.tool.MacroToolRunner;
-import sc.fiji.ome.zarr.open.ClipboardActions;
+import sc.fiji.ome.zarr.open.PasteToOpenAction;
 import sc.fiji.ome.zarr.util.ClipboardUtils;
 
 /**
@@ -181,7 +181,7 @@ public class PasteOmeZarrUriToolInstaller extends AbstractService implements Sci
 			final URI uri = ClipboardUtils.readClipboardAsUri( logger::debug );
 			if ( uri == null )
 				return false;
-			return ClipboardActions.pasteFromClipboard( getContext(), null );
+			return PasteToOpenAction.pasteFromClipboard( getContext(), null );
 		};
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher( keyEventDispatcher );
 	}
@@ -255,7 +255,7 @@ public class PasteOmeZarrUriToolInstaller extends AbstractService implements Sci
 			// once from a popup-menu timer (TimerThread). Only the EDT call is genuine.
 			if ( !SwingUtilities.isEventDispatchThread() )
 				return;
-			ClipboardActions.pasteFromClipboard( context, IJ::error );
+			PasteToOpenAction.pasteFromClipboard( context, IJ::error );
 		}
 	}
 }

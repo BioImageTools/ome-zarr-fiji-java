@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.util;
+package sc.fiji.ome.zarr.pyramid.fiji.util;
 
 import java.awt.Color;
 import java.awt.Container;
@@ -36,10 +36,8 @@ import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 
-import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 
-import net.imglib2.type.numeric.RealType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +46,8 @@ import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
 import bdv.viewer.SourceAndConverter;
-import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
+import sc.fiji.ome.zarr.pyramid.fiji.plugins.PyramidalService;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 
 public class BdvUtils
@@ -81,27 +80,23 @@ public class BdvUtils
 	 * If {@code pyramidalService} is non-null, the dataset is immediately marked as active
 	 * and a {@code WindowFocusListener} keeps it up to date as focus moves between windows.
 	 *
-	 * @param pyramidalDataset the input dataset to be displayed in BDV
+	 * @param pyramidalBdv the input {@link PyramidalBdv} to be displayed in BDV
 	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking
 	 * @return a {@code BdvHandle} instance representing the BDV window
 	 */
-	public static < T extends NativeType< T > & RealType< T > > BdvHandle showBdvAndRegisterDataset(
-			final PyramidalBdv< ? > pyramidalDataset,
-			final PyramidalService pyramidalService
-	)
+	public static BdvHandle showBdvAndRegisterDataset( final PyramidalBdv< ? > pyramidalBdv, final PyramidalService pyramidalService )
 	{
-		BdvHandle bdvHandle = BdvFunctions.show( pyramidalDataset.< T >asSources(), pyramidalDataset.numTimepoints(),
-				BdvOptions.options().frameTitle( pyramidalDataset.getName() ) ).getBdvHandle();
+		BdvHandle bdvHandle = BdvFunctions.show( pyramidalBdv.asSources(), pyramidalBdv.getPyramidContents().numTimepoints(),
+				BdvOptions.options().frameTitle( pyramidalBdv.getName() ) ).getBdvHandle();
 
-		setTimepoint( pyramidalDataset.getOmeroProperties(), bdvHandle );
-
-		setChannelProperties( pyramidalDataset, bdvHandle );
+		setTimepoint( pyramidalBdv.getPyramidContents().omero, bdvHandle );
+		setChannelProperties( pyramidalBdv, bdvHandle );
 
 		Container topLevelContainer = bdvHandle.getViewerPanel().getRootPane().getParent();
 		if ( topLevelContainer instanceof Window )
 		{
 			final Window window = ( Window ) topLevelContainer;
-			registerDatasetLifecycle( pyramidalDataset, window, pyramidalService );
+			registerDatasetLifecycle( pyramidalBdv, window, pyramidalService );
 		}
 		return bdvHandle;
 	}
@@ -135,7 +130,7 @@ public class BdvUtils
 
 	private static void setChannelProperties( final PyramidalBdv< ? > pyramidalDataset, final BdvHandle bdvHandle )
 	{
-		Omero omero = pyramidalDataset.getOmeroProperties();
+		Omero omero = pyramidalDataset.getPyramidContents().omero;
 		if ( omero == null || omero.channels == null || omero.channels.isEmpty() )
 			return;
 		List< Omero.Channel > omeroChannels = omero.channels;

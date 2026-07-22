@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,6 +37,12 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static sc.fiji.ome.zarr.util.ZarrTestUtils.IMAGE_NAME;
 
 import net.imagej.Dataset;
@@ -51,7 +57,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.scijava.Context;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
@@ -91,15 +96,15 @@ import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
 import ij.ImagePlus;
 import sc.fiji.ome.zarr.plugins.settings.UserScriptSettings;
-import sc.fiji.ome.zarr.pyramid.Pyramidal;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData;
-import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.fiji.Pyramidal;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
 import sc.fiji.ome.zarr.open.options.ZarrOpeningSettings;
 import sc.fiji.ome.zarr.open.options.ZarrOpenBehavior;
-import sc.fiji.ome.zarr.open.options.ZarrReaderBackend;
+import sc.fiji.ome.zarr.pyramid.fiji.open.ZarrReaderBackend;
 import sc.fiji.ome.zarr.ui.DnDActionChooser;
-import sc.fiji.ome.zarr.util.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.plugins.PyramidalService;
 import sc.fiji.ome.zarr.util.ScriptUtils;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
@@ -164,9 +169,9 @@ class ZarrOpenActionsTest
 			final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr/" );
 
 			try (MockedConstruction< ZarrOpenActions > actionsConstruction =
-					Mockito.mockConstruction( ZarrOpenActions.class );
+					mockConstruction( ZarrOpenActions.class );
 					MockedConstruction< DnDActionChooser > chooserConstruction =
-							Mockito.mockConstruction( DnDActionChooser.class ))
+							mockConstruction( DnDActionChooser.class ))
 			{
 				settings.setCurrentChoice( ZarrOpenBehavior.BDV_MULTI_RESOLUTION );
 				settings.saveSettingsToPreferences( prefService );
@@ -186,13 +191,13 @@ class ZarrOpenActionsTest
 
 				final List< ZarrOpenActions > actionsInstances = actionsConstruction.constructed();
 				assertEquals( 4, actionsInstances.size() );
-				Mockito.verify( actionsInstances.get( 0 ), Mockito.times( 1 ) ).openBDVWithImage();
-				Mockito.verify( actionsInstances.get( 1 ), Mockito.times( 1 ) ).openIJWithImage();
-				Mockito.verify( actionsInstances.get( 2 ), Mockito.times( 1 ) ).openIJWithImage();
+				verify( actionsInstances.get( 0 ), times( 1 ) ).openBDVWithImage();
+				verify( actionsInstances.get( 1 ), times( 1 ) ).openIJWithImage();
+				verify( actionsInstances.get( 2 ), times( 1 ) ).openIJWithImage();
 
 				final List< DnDActionChooser > chooserInstances = chooserConstruction.constructed();
 				assertEquals( 1, chooserInstances.size() );
-				Mockito.verify( chooserInstances.get( 0 ), Mockito.times( 1 ) ).showDialog();
+				verify( chooserInstances.get( 0 ), times( 1 ) ).showDialog();
 			}
 		}
 	}
@@ -256,7 +261,7 @@ class ZarrOpenActionsTest
 	void openImporterDialogDoesNotThrow() throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr" );
-		try (Context context = new Context(); MockedConstruction< N5Importer > ignored = Mockito.mockConstruction( N5Importer.class ))
+		try (Context context = new Context(); MockedConstruction< N5Importer > ignored = mockConstruction( N5Importer.class ))
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			assertDoesNotThrow( actions::openImporterDialog );
@@ -268,7 +273,7 @@ class ZarrOpenActionsTest
 	{
 		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing/2d_dataset_v4.ome.zarr" );
 		try (Context context = new Context();
-				MockedConstruction< N5ViewerCreator > ignored = Mockito.mockConstruction( N5ViewerCreator.class ))
+				MockedConstruction< N5ViewerCreator > ignored = mockConstruction( N5ViewerCreator.class ))
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 			assertDoesNotThrow( actions::openViewerDialog );
@@ -657,13 +662,13 @@ class ZarrOpenActionsTest
 	@Test
 	void testRunScriptWithNoScriptSpecified() throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
-		try (MockedStatic< JOptionPane > mocked = Mockito.mockStatic( JOptionPane.class ))
+		try (MockedStatic< JOptionPane > mocked = mockStatic( JOptionPane.class ))
 		{
 			mocked.when( () -> JOptionPane.showConfirmDialog(
-					Mockito.any(),
-					Mockito.any(),
-					Mockito.any(),
-					Mockito.anyInt() ) )
+					any(),
+					any(),
+					any(),
+					anyInt() ) )
 					.thenReturn( JOptionPane.NO_OPTION );
 
 			try (Context context = new Context())
@@ -708,7 +713,7 @@ class ZarrOpenActionsTest
 	 * then open the same dataset in BigDataViewer twice.
 	 * <p>
 	 * Expected: 2 IJ opens produce 2 datasets; each BDV open produces one additional dataset.
-	 * All 4 datasets share the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData} instance.
+	 * All 4 datasets share the same {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents} instance.
 	 * <p>
 	 * The 5d v4 test dataset has 2 resolution levels:
 	 * level 0 → [x=64, y=64, z=16, c=3, t=4] and level 1 → [x=32, y=32, z=8, c=3, t=4].
@@ -723,7 +728,7 @@ class ZarrOpenActionsTest
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
 
 			// Open both resolution levels in ImageJ – each produces a separate dataset window,
-			// all backed by the same Pyramidal5DImageData (shared cachedCellImgs / volatileImgs)
+			// all backed by the same PyramidContents (shared cachedCellImgs / volatileImgs)
 			actions.openIJWithImage( 0 ); // highest resolution
 			actions.openIJWithImage( 1 ); // coarser resolution
 
@@ -752,13 +757,13 @@ class ZarrOpenActionsTest
 
 				PyramidalBdv< ? > bdv1 = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
 
-				// All 4 datasets (2 IJ + 2 BDV) must be backed by the exact same Pyramidal5DImageData object
-				Pyramidal5DImageData< ? > sharedPyramid = ijLevel0.getPyramidal5DImageData();
+				// All 4 datasets (2 IJ + 2 BDV) must be backed by the exact same PyramidContents object
+				PyramidContents< ? > sharedPyramid = ijLevel0.getPyramidContents();
 				for ( Dataset dataset : datasetService.getDatasets() )
 				{
 					PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
-					assertSame( sharedPyramid, pyramidalDataset.getPyramidal5DImageData(),
-							"Every opened dataset must share the same Pyramidal5DImageData instance" );
+					assertSame( sharedPyramid, pyramidalDataset.getPyramidContents(),
+							"Every opened dataset must share the same PyramidContents instance" );
 				}
 
 				// IJ datasets
@@ -795,7 +800,7 @@ class ZarrOpenActionsTest
 	 * a specific resolution level in ImageJ.
 	 * <p>
 	 * Expected: the BDV open produces 1 {@link Pyramidal}; the subsequent IJ open produces a 2nd {@link Pyramidal} (and {@link Dataset})
-	 * backed by the same {@link sc.fiji.ome.zarr.pyramid.Pyramidal5DImageData} object.
+	 * backed by the same {@link sc.fiji.ome.zarr.pyramid.backend.PyramidContents} object.
 	 * The 5d v4 test dataset has 2 resolution levels:
 	 * level 0 → [x=64, y=64, z=16, c=3, t=4] and level 1 → [x=32, y=32, z=8, c=3, t=4].
 	 */
@@ -819,15 +824,15 @@ class ZarrOpenActionsTest
 				assertEquals( 0, datasetService.getDatasets().size() );
 
 				// Opening a specific resolution level in IJ creates a 2nd dataset window,
-				// backed by the same Pyramidal5DImageData as the BDV dataset
+				// backed by the same PyramidContents as the BDV dataset
 				actions.openIJWithImage( 1 ); // coarser resolution: [x=32, y=32, z=8, c=3, t=4]
 				assertEquals( 2, pyramidalService.getPyramidals().size() );
 				assertEquals( 1, datasetService.getDatasets().size() );
 
 				PyramidalBdv< ? > bdvDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
 				PyramidalDataset ijDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
-				assertSame( bdvDataset.getPyramidal5DImageData(), ijDataset.getPyramidal5DImageData(),
-						"BDV and IJ datasets must share the same Pyramidal5DImageData instance" );
+				assertSame( bdvDataset.getPyramidContents(), ijDataset.getPyramidContents(),
+						"BDV and IJ datasets must share the same PyramidContents instance" );
 				// BDV dataset
 				assertEquals( 3, bdvDataset.asSources().size() ); // 3 channels
 				assertEquals( 2, bdvDataset.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() ); // 2 resolution levels
@@ -880,7 +885,7 @@ class ZarrOpenActionsTest
 
 				Img< ? > cellImgIj0First = ijLevel0First.getImgPlus().getImg();
 				Img< ? > cellImgIj0Second = ijLevel0Second.getImgPlus().getImg();
-				Img< ? > cellImgBdv0 = bdv.getPyramidal5DImageData().getPyramidContents().cachedCellImgs[ 0 ];
+				Img< ? > cellImgBdv0 = bdv.getPyramidContents().asImg( 0 );
 				Img< ? > cellImgIj1 = ijLevel1.getImgPlus().getImg();
 
 				assertSame( cellImgIj0First, cellImgIj0Second,
@@ -975,7 +980,7 @@ class ZarrOpenActionsTest
 						"Dimensions of level 0 should be [x=64, y=64, z=16, c=3, t=4]" );
 				assertArrayEquals( expectedDims1, ifLevel1.getImgPlus().dimensionsAsLongArray(),
 						"Dimensions of level 1 should be [x=32, y=32, z=8, c=3, t=4]" );
-				assertSame( ijLevel0.getPyramidal5DImageData(), ifLevel1.getPyramidal5DImageData() );
+				assertSame( ijLevel0.getPyramidContents(), ifLevel1.getPyramidContents() );
 			}
 			finally
 			{

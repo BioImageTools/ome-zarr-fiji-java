@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,54 +26,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.util;
+package sc.fiji.ome.zarr.pyramid.fiji.open.exceptions;
 
-import net.imglib2.RandomAccessibleInterval;
-
-import bdv.util.BdvFunctions;
-import bdv.util.BdvOptions;
-import bdv.util.BdvStackSource;
-import bdv.viewer.ViewerPanel;
-
-/**
- * Manages a single {@link BdvStackSource} handle — remembers the most recently
- * opened BDV window and can add sources to it. Extracted from the original
- * {@code BdvHandleService} implementation for use in demos and manual tests.
- */
-public class BdvHandleService
+public class NonExistingResolutionLevelException extends RuntimeException
 {
-	private BdvStackSource< ? > lastStartedBdv = null;
-
-	public boolean isLastBdvStillAlive()
+	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels )
 	{
-		if ( lastStartedBdv == null )
-			return false;
-		ViewerPanel panel;
-		try
-		{
-			panel = lastStartedBdv.getBdvHandle().getViewerPanel();
-		}
-		catch ( Exception e )
-		{
-			lastStartedBdv = null;
-			return false;
-		}
-		if ( panel.isValid() )
-			return true;
-		lastStartedBdv = null;
-		return false;
+		super( message( resolutionLevel, numResolutionLevels ) );
 	}
 
-	public void openNewBdv( final RandomAccessibleInterval< ? > img, final String name )
+	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels, final Throwable cause )
 	{
-		lastStartedBdv = BdvFunctions.show( img, name );
+		super( message( resolutionLevel, numResolutionLevels ), cause );
 	}
 
-	public void addToLastOrInNewBdv( final RandomAccessibleInterval< ? > img, final String name )
+	private static String message( final int resolutionLevel, final int numResolutionLevels )
 	{
-		if ( isLastBdvStillAlive() )
-			BdvFunctions.show( img, name, BdvOptions.options().addTo( lastStartedBdv ) );
-		else
-			openNewBdv( img, name );
+		return "Resolution level " + resolutionLevel + " does not exist. "
+				+ "The pyramid has " + numResolutionLevels + " level"
+				+ ( numResolutionLevels == 1 ? "" : "s" ) + " (0–" + ( numResolutionLevels - 1 ) + ").";
 	}
 }

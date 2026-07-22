@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,12 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.fiji;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.scijava.Context;
 import org.scijava.convert.ConvertService;
 
 import ij.ImagePlus;
@@ -42,6 +43,7 @@ import net.imagej.axis.AxisType;
 import net.imagej.axis.DefaultLinearAxis;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 
@@ -51,53 +53,32 @@ import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
  * containing additional methods presenting that
  * multi-resolution image data in convenient ways.
  */
-@SuppressWarnings( { "java:S2060", "java:S1948" } )
+@SuppressWarnings( { "java:S2060", "java:S1948", "java:S110", "ExternalizableWithoutPublicNoArgConstructor" } )
 public class PyramidalDataset extends DefaultDataset implements Pyramidal
 {
-	private final Pyramidal5DImageData< ? > data;
+	private final PyramidContents< ? > contents;
 
 	private final int resolutionLevel;
 
-	/*
-	 * TODO: Should the preferredMaxWidth handling really happen at the
-	 *   Pyramidal5DImageData level? or somewhere else? Maybe just when the
-	 *   pyramid is initially opened as a Dataset via the Command?
-	 *
-	 * (from previous javadoc in Pyramidal5DImageData)
-	 * @return the IJ2 {@code net.imagej.Dataset} at the default resolution level
-	 *   (resolution level 0 = highest resolution, unless a {@code preferredMaxWidth}
-	 *   was specified at construction time, in which case a coarser level may be used);
-	 *   always returns the same cached object
-	 */
-
 	/**
 	 * Create a new IJ2 {@code net.imagej.Dataset} wrapping the image at the
-	 * preferred resolution level of the {@code pyramid}.
+	 * specified resolution level of the {@code contents}.
 	 *
-	 * @param pyramid
-	 * 		multi-resolution pyramid images and metadata
-	 */
-	public PyramidalDataset( final Pyramidal5DImageData< ? > pyramid )
-	{
-		this( pyramid, pyramid.preferredResolutionLevel() );
-	}
-
-	/**
-	 * Create a new IJ2 {@code net.imagej.Dataset} wrapping the image at the
-	 * specified resolution level of the {@code pyramid}.
-	 *
-	 * @param pyramid
+	 * @param context
+	 * 		the SciJava context to associate with this dataset
+	 * @param contents
 	 * 		multi-resolution pyramid images and metadata
 	 * @param resolutionLevel
 	 * 		0-based index into the resolution pyramid (0 = highest resolution)
 	 */
-	public PyramidalDataset( final Pyramidal5DImageData< ? > pyramid, final int resolutionLevel )
+	public < T extends NativeType< T > & RealType< T > > PyramidalDataset( final Context context, final PyramidContents< T > contents,
+			final int resolutionLevel )
 	{
-		super( pyramid.context(), createImgPlus( pyramid, resolutionLevel ) );
-		data = pyramid;
+		super( context, createImgPlus( contents, resolutionLevel ) );
+		this.contents = contents;
 		this.resolutionLevel = resolutionLevel;
-		if ( pyramid.numResolutionLevels() > 1 )
-			setName( multiResolutionName( pyramid.getName() ) );
+		if ( contents.numResolutionLevels() > 1 )
+			setName( multiResolutionName( contents.name ) );
 	}
 
 	public int resolutionLevel()
@@ -111,9 +92,9 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 	}
 
 	@Override
-	public Pyramidal5DImageData< ? > getPyramidal5DImageData()
+	public PyramidContents< ? > getPyramidContents()
 	{
-		return data;
+		return contents;
 	}
 
 	/**
@@ -138,15 +119,13 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 		AXIS_TYPE_MAP = Collections.unmodifiableMap( map );
 	}
 
-	private static < T extends NativeType< T > & RealType< T > > ImgPlus< T > createImgPlus( final Pyramidal5DImageData< T > data,
+	private static < T extends NativeType< T > & RealType< T > > ImgPlus< T > createImgPlus( final PyramidContents< T > contents,
 			final int resolutionLevel )
 	{
-		final PyramidContents< T, ? > contents = data.getPyramidContents();
-
-		if ( resolutionLevel < 0 || resolutionLevel >= data.numResolutionLevels() )
+		if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
 		{
 			throw new IndexOutOfBoundsException( "Invalid resolution level: " + resolutionLevel +
-					" (numResolutionLevels = " + data.numResolutionLevels() + ")" );
+					" (numResolutionLevels = " + contents.numResolutionLevels() + ")" );
 		}
 
 		final AxisCalibration[] selectedAxes = contents.axesPerLevel[ resolutionLevel ];

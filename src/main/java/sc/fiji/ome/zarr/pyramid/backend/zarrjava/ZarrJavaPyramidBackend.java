@@ -50,13 +50,12 @@ import dev.zarr.zarrjava.experimental.ome.metadata.OmeroRdefs;
 import dev.zarr.zarrjava.experimental.ome.metadata.OmeroWindow;
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.CoordinateTransformation;
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTransformation;
+import dev.zarr.zarrjava.experimental.ome.metadata.transform.TranslationCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.HttpStore;
 import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreHandle;
 
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
@@ -78,11 +77,6 @@ import net.imglib2.util.Cast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import bdv.cache.SharedQueue;
-import bdv.util.volatiles.VolatileTypeMatcher;
-import bdv.util.volatiles.VolatileViews;
-import mpicbg.spim.data.sequence.FinalVoxelDimensions;
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
 import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.exceptions.PyramidLevelAccessException;
@@ -94,29 +88,34 @@ import sc.fiji.ome.zarr.pyramid.metadata.Omero;
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the zarr-java library.
  * Supports OME-Zarr v0.4 (Zarr v2) and v0.5 (Zarr v3).
- *
- * @param <T> pixel type
- * @param <V> volatile pixel type
  */
-public class ZarrJavaPyramidBackend<
-		T extends NativeType< T > & RealType< T >,
-		V extends Volatile< T > & NativeType< V > & RealType< V > >
-		implements PyramidBackend< T, V >
+public class ZarrJavaPyramidBackend implements PyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private final URI inputUri;
+	/** Location of the image being read; set for the duration of a {@link #load(URI)} call. */
+	private URI inputUri;
 
 	private StoreHandle activeHandle = null;
 
-	public ZarrJavaPyramidBackend( final URI inputUri )
+	/**
+	 * Convenience entry point for reading an OME-Zarr image with the zarr-java
+	 * backend without first constructing a backend instance. Equivalent to
+	 * {@code new ZarrJavaPyramidBackend().load( inputUri )}.
+	 *
+	 * @param <T> pixel type of the image being read
+	 * @param inputUri location of the OME-Zarr root; either a {@code file:} URI
+	 *   for local datasets or an {@code http(s):} URI for remote datasets
+	 */
+	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > open( final URI inputUri )
 	{
-		this.inputUri = inputUri;
+		return new ZarrJavaPyramidBackend().load( inputUri );
 	}
 
 	@Override
-	public PyramidContents< T, V > load()
+	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
 	{
+		this.inputUri = inputUri;
 		final MultiscaleImage multiscaleImage = openMultiscaleImage();
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
 
@@ -124,22 +123,16 @@ public class ZarrJavaPyramidBackend<
 
 		final Array level0Array = openLevel( multiscaleImage, 0 );
 		final T type = typeForZarrDataType( level0Array.metadata().dataType().getMA2DataType() );
-		final V volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 
 		// zarr shape is C-order [t, c, z, y, x]; imglib2 uses F-order [x, y, z, c, t]
 		final long[] zarrShape = level0Array.metadata().shape;
 		final long[] dimensions = reverseToLong( zarrShape );
 		final int numDimensions = dimensions.length;
 
-		final int numTimepoints = getDimSizeForAxis( entry.axes, zarrShape, AxisCalibration.T );
-		final int numChannels = getDimSizeForAxis( entry.axes, zarrShape, AxisCalibration.C );
-
 		final String name = entry.name != null ? entry.name : defaultName();
 		final double[] level0Scales = getLevel0Scales( entry, numDimensions );
 
-		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
-		final RandomAccessibleInterval< V >[] volatileImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
 		for ( int level = 0; level < numResolutionLevels; level++ )
 		{
 			final Array arr = openLevel( multiscaleImage, level );
@@ -148,7 +141,6 @@ public class ZarrJavaPyramidBackend<
 			final ReadOnlyCachedCellImgOptions opts = ReadOnlyCachedCellImgOptions.options().cellDimensions( imgChunk );
 			cachedCellImgs[ level ] = new ReadOnlyCachedCellImgFactory()
 					.create( imgShape, type, new ZarrJavaCellLoader<>( arr ), opts );
-			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level ], sharedQueue );
 		}
 
 		final AxisCalibration[][] axesPerLevel = new AxisCalibration[ numResolutionLevels ][];
@@ -159,33 +151,16 @@ public class ZarrJavaPyramidBackend<
 			axesPerLevel[ level ] = createAxisCalibrations( entry.axes, axisScales );
 		}
 
-		final VoxelDimensions voxelDimensions = createVoxelDimensions( level0Scales, entry.axes );
 		final AffineTransform3D[] transforms = createTransforms( entry, numResolutionLevels, level0Scales );
 
-		final int channelAxisIndex = imglibAxisIndex( entry.axes, AxisCalibration.C, numDimensions );
-		final int zAxisIndex = imglibAxisIndex( entry.axes, AxisCalibration.Z, numDimensions );
-		final int timeAxisIndex = imglibAxisIndex( entry.axes, AxisCalibration.T, numDimensions );
-
 		final Omero omero = convertOmero( multiscaleImage.getOmeroMetadata() );
-		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
 
-		return PyramidContents.< T, V >builder()
+		return PyramidContents.< T >builder()
 				.name( name )
-				.numResolutionLevels( numResolutionLevels )
-				.numChannels( numChannels )
-				.numTimepoints( numTimepoints )
-				.numDimensions( numDimensions )
 				.type( type )
-				.volatileType( volatileType )
-				.voxelDimensions( voxelDimensions )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
-				.volatileImgs( volatileImgs )
 				.axesPerLevel( axesPerLevel )
-				.channelAxisIndex( channelAxisIndex )
-				.zAxisPresent( zAxisIndex >= 0 )
-				.timeAxisPresent( timeAxisIndex >= 0 )
-				.channelLabels( channelLabels )
 				.omero( omero )
 				.build();
 	}
@@ -366,18 +341,6 @@ public class ZarrJavaPyramidBackend<
 	// Axis / scale helpers
 	// ---------------------------------------------------------------------
 
-	private static int getDimSizeForAxis( final List< Axis > axes, final long[] zarrShape, final String axisName )
-	{
-		if ( axes == null )
-			return 1;
-		for ( int i = 0; i < axes.size(); i++ )
-		{
-			if ( axisName.equals( axes.get( i ).name ) )
-				return ( int ) zarrShape[ i ];
-		}
-		return 1;
-	}
-
 	private static int zarrAxisIndex( final List< Axis > axes, final String axisName )
 	{
 		if ( axes == null )
@@ -390,12 +353,6 @@ public class ZarrJavaPyramidBackend<
 		return -1;
 	}
 
-	private static int imglibAxisIndex( final List< Axis > axes, final String axisName, final int numDimensions )
-	{
-		final int zarrIndex = zarrAxisIndex( axes, axisName );
-		return zarrIndex < 0 ? -1 : numDimensions - 1 - zarrIndex;
-	}
-
 	private static double[] getLevel0Scales( final MultiscalesEntry entry, final int numDimensions )
 	{
 		final double[] scales = findLevelScale( entry, 0 );
@@ -405,39 +362,6 @@ public class ZarrJavaPyramidBackend<
 		final double[] fallback = new double[ n ];
 		Arrays.fill( fallback, 1.0 );
 		return fallback;
-	}
-
-	private static VoxelDimensions createVoxelDimensions( final double[] level0Scales, final List< Axis > zarrAxes )
-	{
-		if ( zarrAxes == null )
-			return new FinalVoxelDimensions( "", 1.0, 1.0, 1.0 );
-		final double xScale = scaleForNamedAxis( zarrAxes, level0Scales, AxisCalibration.X );
-		final double yScale = scaleForNamedAxis( zarrAxes, level0Scales, AxisCalibration.Y );
-		final double zScale = scaleForNamedAxis( zarrAxes, level0Scales, AxisCalibration.Z );
-		return new FinalVoxelDimensions( spatialUnit( zarrAxes ), xScale, yScale, zScale );
-	}
-
-	private static double scaleForNamedAxis( final List< Axis > axes, final double[] scales, final String name )
-	{
-		final int idx = zarrAxisIndex( axes, name );
-		return idx >= 0 ? scales[ idx ] : 1.0;
-	}
-
-	/**
-	 * Returns the unit attached to the last x/y/z axis encountered. OME-Zarr
-	 * spatial axes share a single unit in well-formed datasets, so this
-	 * collapses to "the spatial unit"; the original loop happened to write
-	 * it last-wins, and this preserves that behavior.
-	 */
-	private static String spatialUnit( final List< Axis > axes )
-	{
-		String unit = "";
-		for ( final Axis axis : axes )
-		{
-			if ( AxisCalibration.X.equals( axis.name ) || AxisCalibration.Y.equals( axis.name ) || AxisCalibration.Z.equals( axis.name ) )
-				unit = axis.unit == null ? "" : axis.unit;
-		}
-		return unit;
 	}
 
 	private static AffineTransform3D[] createTransforms( final MultiscalesEntry entry,
@@ -452,10 +376,12 @@ public class ZarrJavaPyramidBackend<
 		for ( int level = 0; level < numResolutionLevels; level++ )
 		{
 			final double[] scales = computeLevelScale( entry, level, level0Scales, spatialZarrIdx );
+			final double[] translation = computeLevelTranslation( entry, level, spatialZarrIdx );
 			final AffineTransform3D t = new AffineTransform3D();
 			t.set( scales[ 0 ], 0, 0 );
 			t.set( scales[ 1 ], 1, 1 );
 			t.set( scales[ 2 ], 2, 2 );
+			t.setTranslation( translation );
 			tr[ level ] = t;
 		}
 		return tr;
@@ -478,6 +404,29 @@ public class ZarrJavaPyramidBackend<
 				scales[ d ] = fallbackScaleAtAxis( level0Scales, zi );
 		}
 		return scales;
+	}
+
+	/**
+	 * Spatial (x, y, z) translation of {@code level} in physical world units, or
+	 * all-zeros when the level has no translation transformation. Unlike scale, a
+	 * missing translation has a well-defined neutral value (no offset), so the
+	 * fallback is simply zero.
+	 */
+	private static double[] computeLevelTranslation( final MultiscalesEntry entry, final int level,
+			final int[] spatialZarrIdx )
+	{
+		final double[] translation = new double[ 3 ];
+		final double[] levelTranslation = findLevelTranslation( entry, level );
+		if ( levelTranslation == null )
+			return translation;
+
+		for ( int d = 0; d < 3; d++ )
+		{
+			final int zi = spatialZarrIdx[ d ];
+			if ( zi >= 0 && zi < levelTranslation.length )
+				translation[ d ] = levelTranslation[ zi ];
+		}
+		return translation;
 	}
 
 	/**
@@ -513,6 +462,34 @@ public class ZarrJavaPyramidBackend<
 				final ScaleCoordinateTransformation scaleCt = ( ScaleCoordinateTransformation ) ct;
 				if ( scaleCt.scale != null )
 					return toDoubleArray( scaleCt.scale );
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the resolved translation array of the first
+	 * {@link TranslationCoordinateTransformation} at {@code level} whose
+	 * {@code translation} field is non-null, or {@code null} when the level
+	 * doesn't exist or has no usable translation transformation. {@code null}
+	 * (rather than an empty array, cf. {@code S1168}) lets the caller treat an
+	 * absent translation as a zero offset.
+	 */
+	@SuppressWarnings( "java:S1168" )
+	private static double[] findLevelTranslation( final MultiscalesEntry entry, final int level )
+	{
+		if ( entry.datasets == null || entry.datasets.size() <= level )
+			return null;
+		final dev.zarr.zarrjava.experimental.ome.metadata.Dataset ds = entry.datasets.get( level );
+		if ( ds.coordinateTransformations == null )
+			return null;
+		for ( final CoordinateTransformation ct : ds.coordinateTransformations )
+		{
+			if ( ct instanceof TranslationCoordinateTransformation )
+			{
+				final TranslationCoordinateTransformation translationCt = ( TranslationCoordinateTransformation ) ct;
+				if ( translationCt.translation != null )
+					return toDoubleArray( translationCt.translation );
 			}
 		}
 		return null;

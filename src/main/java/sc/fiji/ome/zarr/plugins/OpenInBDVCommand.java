@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -38,10 +38,10 @@ import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sc.fiji.ome.zarr.pyramid.Pyramidal;
-import sc.fiji.ome.zarr.pyramid.PyramidalBdv;
-import sc.fiji.ome.zarr.util.PyramidalService;
-import sc.fiji.ome.zarr.util.BdvUtils;
+import sc.fiji.ome.zarr.pyramid.fiji.Pyramidal;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalBdv;
+import sc.fiji.ome.zarr.pyramid.fiji.plugins.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.util.BdvUtils;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
@@ -66,7 +66,7 @@ public class OpenInBDVCommand implements Command
 			uiService.showDialog( "The active image is not an OME-Zarr dataset.", "Open in BigDataViewer" );
 			return;
 		}
-		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getPyramidal5DImageData() );
+		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getContext(), pyramidal.getPyramidContents() );
 		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
 	}
 }

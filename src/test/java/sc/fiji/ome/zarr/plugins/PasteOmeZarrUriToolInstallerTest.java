@@ -52,7 +52,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.scijava.Context;
 
-import sc.fiji.ome.zarr.open.ClipboardActions;
+import sc.fiji.ome.zarr.open.PasteToOpenAction;
 import sc.fiji.ome.zarr.util.ClipboardUtils;
 
 class PasteOmeZarrUriToolInstallerTest
@@ -134,7 +134,7 @@ class PasteOmeZarrUriToolInstallerTest
 		KeyEventDispatcher dispatcher = getDispatcherField( installer );
 		KeyEvent released = keyEvent( KeyEvent.KEY_RELEASED, ctrlShift(), KeyEvent.VK_V );
 
-		try (MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ))
+		try (MockedStatic< PasteToOpenAction > mock = mockStatic( PasteToOpenAction.class ))
 		{
 			assertFalse( dispatcher.dispatchKeyEvent( released ) );
 			mock.verifyNoInteractions();
@@ -148,7 +148,7 @@ class PasteOmeZarrUriToolInstallerTest
 		KeyEventDispatcher dispatcher = getDispatcherField( installer );
 		KeyEvent wrongKey = keyEvent( KeyEvent.KEY_PRESSED, ctrlShift(), KeyEvent.VK_C );
 
-		try (MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ))
+		try (MockedStatic< PasteToOpenAction > mock = mockStatic( PasteToOpenAction.class ))
 		{
 			assertFalse( dispatcher.dispatchKeyEvent( wrongKey ) );
 			mock.verifyNoInteractions();
@@ -162,7 +162,7 @@ class PasteOmeZarrUriToolInstallerTest
 		KeyEventDispatcher dispatcher = getDispatcherField( installer );
 		KeyEvent noModifier = keyEvent( KeyEvent.KEY_PRESSED, 0, KeyEvent.VK_V );
 
-		try (MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ))
+		try (MockedStatic< PasteToOpenAction > mock = mockStatic( PasteToOpenAction.class ))
 		{
 			assertFalse( dispatcher.dispatchKeyEvent( noModifier ) );
 			mock.verifyNoInteractions();
@@ -177,7 +177,7 @@ class PasteOmeZarrUriToolInstallerTest
 		JTextField textField = mock( JTextField.class );
 		KeyEvent e = new KeyEvent( textField, KeyEvent.KEY_PRESSED, 0L, ctrlShift(), KeyEvent.VK_V, 'V' );
 
-		try (MockedStatic< ClipboardActions > mock = mockStatic( ClipboardActions.class ))
+		try (MockedStatic< PasteToOpenAction > mock = mockStatic( PasteToOpenAction.class ))
 		{
 			assertFalse( dispatcher.dispatchKeyEvent( e ) );
 			mock.verifyNoInteractions();
@@ -192,7 +192,7 @@ class PasteOmeZarrUriToolInstallerTest
 		KeyEvent e = keyEvent( KeyEvent.KEY_PRESSED, ctrlShift(), KeyEvent.VK_V );
 
 		try (MockedStatic< ClipboardUtils > mockUtils = mockStatic( ClipboardUtils.class );
-				MockedStatic< ClipboardActions > mockActions = mockStatic( ClipboardActions.class ))
+				MockedStatic< PasteToOpenAction > mockActions = mockStatic( PasteToOpenAction.class ))
 		{
 			mockUtils.when( () -> ClipboardUtils.readClipboardAsUri( any( Consumer.class ) ) ).thenReturn( null );
 
@@ -210,13 +210,13 @@ class PasteOmeZarrUriToolInstallerTest
 		URI uri = URI.create( "https://example.com/data.zarr" );
 
 		try (MockedStatic< ClipboardUtils > mockUtils = mockStatic( ClipboardUtils.class );
-				MockedStatic< ClipboardActions > mockActions = mockStatic( ClipboardActions.class ))
+				MockedStatic< PasteToOpenAction > mockActions = mockStatic( PasteToOpenAction.class ))
 		{
 			mockUtils.when( () -> ClipboardUtils.readClipboardAsUri( any( Consumer.class ) ) ).thenReturn( uri );
-			mockActions.when( () -> ClipboardActions.pasteFromClipboard( any(), isNull() ) ).thenReturn( true );
+			mockActions.when( () -> PasteToOpenAction.pasteFromClipboard( any(), isNull() ) ).thenReturn( true );
 
 			assertTrue( dispatcher.dispatchKeyEvent( e ) );
-			mockActions.verify( () -> ClipboardActions.pasteFromClipboard( context, null ) );
+			mockActions.verify( () -> PasteToOpenAction.pasteFromClipboard( context, null ) );
 		}
 	}
 

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,45 +26,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.open;
+package sc.fiji.ome.zarr.pyramid.fiji;
 
-import java.net.URI;
-import java.util.function.Consumer;
+import org.scijava.Contextual;
 
-import org.scijava.Context;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
 
-import sc.fiji.ome.zarr.util.ClipboardUtils;
-import sc.fiji.ome.zarr.util.ZarrUtils;
-
-public class ClipboardActions
+public interface Pyramidal extends Contextual
 {
-	private ClipboardActions()
-	{
-		// static utility class; do not instantiate
-	}
 
-	/**
-	 * Reads a URL or path from the system clipboard and opens it as an OME-Zarr
-	 * dataset, using the same backend, resolution, and open-behavior settings
-	 * as the drag-and-drop pipeline. Reused by both the menu command and the
-	 * toolbar button.
-	 *
-	 * @param errorHandler called with a user-facing message when the clipboard
-	 *   is empty, the contents can't be parsed, or the location does not point
-	 *   at an OME-Zarr dataset
-	 */
-	public static boolean pasteFromClipboard( final Context context, final Consumer< String > errorHandler )
-	{
-		final URI uri = ClipboardUtils.readClipboardAsUri( errorHandler );
-		if ( uri == null )
-			return false;
-		if ( !ZarrUtils.isZarr( uri ) )
-		{
-			if ( errorHandler != null )
-				errorHandler.accept( "The pasted location does not appear to be an OME-Zarr dataset:\n" + uri + "." );
-			return false;
-		}
-		ZarrOpenActions.openWithSettings( uri, context );
-		return true;
-	}
+	// java:S1452: the wildcard is intentional. Pyramidal is a pixel-type-agnostic
+	// handle held heterogeneously (e.g., PyramidalService keeps a List<Pyramidal>
+	// of mixed pixel types), and callers use only type-independent members of the
+	// returned PyramidContents. Making Pyramidal generic would merely push the
+	// wildcard onto every use site and force the deliberately non-generic
+	// PyramidalDataset to carry a type parameter it has no value for.
+	@SuppressWarnings( "java:S1452" )
+	PyramidContents< ? > getPyramidContents();
 }

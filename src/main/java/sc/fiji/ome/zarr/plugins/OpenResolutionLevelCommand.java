@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -39,9 +39,9 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 
-import sc.fiji.ome.zarr.pyramid.Pyramidal;
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
-import sc.fiji.ome.zarr.util.PyramidalService;
+import sc.fiji.ome.zarr.pyramid.fiji.Pyramidal;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.fiji.plugins.PyramidalService;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Resolution Level..." )
 public class OpenResolutionLevelCommand extends DynamicCommand
@@ -78,7 +78,7 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 			cancel( "The active image is not an OME-Zarr multi resolution dataset." );
 			return;
 		}
-		final int numResolutions = active.numResolutions();
+		final int numResolutions = active.getPyramidContents().numResolutionLevels();
 		final List< String > choices = new ArrayList<>();
 		for ( int i = 0; i < numResolutions; i++ )
 			choices.add( "Resolution " + i );
@@ -97,9 +97,7 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 			return;
 		}
 		final int level = Integer.parseInt( resolutionLevel.replace( "Resolution ", "" ) );
-		final PyramidalDataset levelDataset = new PyramidalDataset( pyramidal.getPyramidal5DImageData(), level );
-		// TODO: PyramidalDataset could also be initialized with context and pyramid content, but without Pyramidal5DImageData:
-		// final PyramidalDataset levelDataset = new PyramidalDataset( pyramidal.getContext(), pyramidal.getPyramidContent(), level );
+		final PyramidalDataset levelDataset = new PyramidalDataset( pyramidal.getContext(), pyramidal.getPyramidContents(), level );
 		uiService.show( levelDataset );
 	}
 }

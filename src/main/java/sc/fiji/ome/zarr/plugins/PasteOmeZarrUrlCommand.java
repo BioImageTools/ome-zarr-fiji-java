@@ -34,7 +34,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import ij.IJ;
-import sc.fiji.ome.zarr.open.ClipboardActions;
+import sc.fiji.ome.zarr.open.PasteToOpenAction;
 
 /**
  * Reads a URI from the system clipboard and opens it as an OME-Zarr
@@ -50,6 +50,6 @@ public class PasteOmeZarrUrlCommand implements Command
 	@Override
 	public void run()
 	{
-		ClipboardActions.pasteFromClipboard( context, IJ::error );
+		PasteToOpenAction.pasteFromClipboard( context, IJ::error );
 	}
 }

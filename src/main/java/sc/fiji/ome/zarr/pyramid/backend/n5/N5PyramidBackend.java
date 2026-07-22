@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,14 +28,6 @@
  */
 package sc.fiji.ome.zarr.pyramid.backend.n5;
 
-import java.lang.invoke.MethodHandles;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -43,7 +35,6 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 
 import org.janelia.saalfeldlab.n5.DataType;
-import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
@@ -60,72 +51,67 @@ import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMultiScaleMe
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
-import bdv.cache.SharedQueue;
-import bdv.util.volatiles.VolatileTypeMatcher;
-import bdv.util.volatiles.VolatileViews;
-import mpicbg.spim.data.sequence.FinalVoxelDimensions;
-import mpicbg.spim.data.sequence.VoxelDimensions;
-import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
-import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
+import sc.fiji.ome.zarr.pyramid.backend.Affine3DUtils;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidBackend;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.exceptions.MultiImageDatasetException;
+import sc.fiji.ome.zarr.pyramid.exceptions.NotAMultiscaleImageException;
 import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 import sc.fiji.ome.zarr.pyramid.metadata.Omero;
-import sc.fiji.ome.zarr.util.Affine3DUtils;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the N5 universe
- * library. Supports OME-Zarr v0.3, v0.4 and v0.5 (N5 reads Zarr v2 and the
+ * library. Supports OME-Zarr v0.3, v0.4, and v0.5 (N5 reads Zarr v2 and the
  * Zarr v3 variant used by v0.5).
- *
- * @param <T> pixel type
- * @param <V> volatile pixel type
  */
-public class N5PyramidBackend<
-		T extends NativeType< T > & RealType< T >,
-		V extends Volatile< T > & NativeType< V > & RealType< V > >
-		implements PyramidBackend< T, V >
+public class N5PyramidBackend implements PyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private final URI inputUri;
-
-	public N5PyramidBackend( final URI inputUri )
+	/**
+	 * Convenience entry point for reading an OME-Zarr image with the N5 backend
+	 * without first constructing a backend instance. Equivalent to
+	 * {@code new N5PyramidBackend().load( inputUri )}.
+	 *
+	 * @param <T> pixel type of the image being read
+	 * @param inputUri location of the OME-Zarr root; either a {@code file:} URI
+	 *   for local datasets or an {@code http(s):} URI for remote datasets
+	 */
+	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > open( final URI inputUri )
 	{
-		this.inputUri = inputUri;
+		return new N5PyramidBackend().load( inputUri );
 	}
 
 	@Override
-	public PyramidContents< T, V > load()
+	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
 	{
 		final N5Reader reader = new N5Factory().openReader( inputUri.toString() );
 		final N5TreeNode treeNode = new N5TreeNode( "" );
-		final OmeNgffMetadata metadata = readMetadata( reader, treeNode );
+		final OmeNgffMetadata metadata = readMetadata( reader, treeNode, inputUri );
 		final Multiscale multiscale = buildMultiscale( metadata, 0 );
 		final Omero omero = readOmeroMetadata( reader, treeNode );
-		final ResolutionLevel level0 = multiscale.getLevels().get( 0 );
 
 		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
 		final AffineTransform3D[] transforms = spatialMetadata.spatialTransforms3d();
-		final VoxelDimensions voxelDimensions = createVoxelDimensions( transforms[ 0 ], spatialMetadata.unit() );
+		if ( !Affine3DUtils.isScaling( transforms[ 0 ], 0.01d ) )
+			logger.warn( "The affine transform is not a strict scaling transform. This may cause problems with the image viewer." );
 		final T type = N5Utils.type( multiscale.getDataType() );
-		final V volatileType = Cast.unchecked( VolatileTypeMatcher.getVolatileTypeForType( type ) );
 		final String name = multiscale.getName();
 		final int numResolutionLevels = multiscale.numResolutionLevels();
-		final int numDimensions = level0.attributes.getDimensions().length;
-		final int numTimepoints = getAxisSize( level0, AxisCalibration.T );
-		final int numChannels = getAxisSize( level0, AxisCalibration.C );
 
-		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
-		final RandomAccessibleInterval< V >[] volatileImgs = Cast.unchecked( new RandomAccessibleInterval[ numResolutionLevels ] );
 		for ( final ResolutionLevel level : multiscale.getLevels() )
 		{
 			cachedCellImgs[ level.index ] = N5Utils.openVolatile( reader, level.datasetPath );
-			volatileImgs[ level.index ] = VolatileViews.wrapAsVolatile( cachedCellImgs[ level.index ], sharedQueue );
 		}
 
 		final AxisCalibration[][] axesPerLevel = new AxisCalibration[ numResolutionLevels ][];
@@ -134,34 +120,17 @@ public class N5PyramidBackend<
 			axesPerLevel[ level.index ] = createAxisCalibrations( level );
 		}
 
-		final int channelAxisIndex = findAxisIndex( level0, AxisCalibration.C );
-		final int zAxisIndex = findAxisIndex( level0, AxisCalibration.Z );
-		final int timeAxisIndex = findAxisIndex( level0, AxisCalibration.T );
-
-		final String[] channelLabels = Omero.buildChannelLabels( name, omero, numChannels );
-
-		return PyramidContents.< T, V >builder()
+		return PyramidContents.< T >builder()
 				.name( name )
-				.numResolutionLevels( numResolutionLevels )
-				.numChannels( numChannels )
-				.numTimepoints( numTimepoints )
-				.numDimensions( numDimensions )
 				.type( type )
-				.volatileType( volatileType )
-				.voxelDimensions( voxelDimensions )
 				.transforms( transforms )
 				.cachedCellImgs( cachedCellImgs )
-				.volatileImgs( volatileImgs )
 				.axesPerLevel( axesPerLevel )
-				.channelAxisIndex( channelAxisIndex )
-				.zAxisPresent( zAxisIndex > 0 )
-				.timeAxisPresent( timeAxisIndex > 0 )
-				.channelLabels( channelLabels )
 				.omero( omero )
 				.build();
 	}
 
-	private OmeNgffMetadata readMetadata( final N5Reader reader, final N5TreeNode node )
+	private OmeNgffMetadata readMetadata( final N5Reader reader, final N5TreeNode node, final URI inputUri )
 	{
 		final List< N5MetadataParser< ? > > parsers = Collections.singletonList( new OmeNgffMetadataParser( reader ) );
 		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, parsers );
@@ -197,7 +166,7 @@ public class N5PyramidBackend<
 			throw new NotAMultiscaleImageException( "Multiscale metadata does not contain any children attributes." );
 		final List< ResolutionLevel > levels = new ArrayList<>();
 		for ( int i = 0; i < children.length; i++ )
-			levels.add( new ResolutionLevel( children[ i ].getPath(), i, children[ i ].getAttributes(), children[ i ].getAxes(), children[ i ].getScale() ) );
+			levels.add( new ResolutionLevel( children[ i ].getPath(), i, children[ i ].getAxes(), children[ i ].getScale() ) );
 		return new Multiscale( ms.name, levels, children[ 0 ].getAttributes().getDataType() );
 	}
 
@@ -207,17 +176,6 @@ public class N5PyramidBackend<
 		final String omeroKey = ( base != null && base.isJsonObject() && base.getAsJsonObject().has( "ome" ) )
 				? "ome/omero" : "omero";
 		return new Gson().fromJson( reader.getAttribute( node.getPath(), omeroKey, JsonElement.class ), Omero.class );
-	}
-
-	private VoxelDimensions createVoxelDimensions( final AffineTransform3D transform, final String unit )
-	{
-		if ( !Affine3DUtils.isScaling( transform, 0.01d ) )
-			logger.warn( "The affine transform is not a strict scaling transform. This may cause problems with the image viewer." );
-
-		final double scaleX = transform.get( 0, 0 );
-		final double scaleY = transform.get( 1, 1 );
-		final double scaleZ = transform.get( 2, 2 );
-		return new FinalVoxelDimensions( unit, scaleX, scaleY, scaleZ );
 	}
 
 	// ---------------------------------------------------------------------
@@ -232,21 +190,6 @@ public class N5PyramidBackend<
 		for ( int i = 0; i < level.axes.length; i++ )
 			result[ i ] = new AxisCalibration( level.axes[ i ].getName(), level.axes[ i ].getUnit(), level.scales[ i ] );
 		return result;
-	}
-
-	private static int getAxisSize( final ResolutionLevel level, final String axisName )
-	{
-		final int axisIndex = findAxisIndex( level, axisName );
-		return axisIndex >= 0 ? ( int ) level.attributes.getDimensions()[ axisIndex ] : 1;
-	}
-
-	private static int findAxisIndex( final ResolutionLevel level, final String axisName )
-	{
-		if ( level.axes != null )
-			for ( int i = 0; i < level.axes.length; i++ )
-				if ( axisName.equals( level.axes[ i ].getName() ) )
-					return i;
-		return -1;
 	}
 
 	// ---------------------------------------------------------------------
@@ -295,18 +238,14 @@ public class N5PyramidBackend<
 
 		private final int index;
 
-		private final DatasetAttributes attributes;
-
 		private final Axis[] axes;
 
 		private final double[] scales;
 
-		private ResolutionLevel( final String datasetPath, final int index, final DatasetAttributes attributes,
-				final Axis[] axes, final double[] scales )
+		private ResolutionLevel( final String datasetPath, final int index, final Axis[] axes, final double[] scales )
 		{
 			this.datasetPath = datasetPath;
 			this.index = index;
-			this.attributes = attributes;
 			this.axes = axes;
 			this.scales = scales;
 		}

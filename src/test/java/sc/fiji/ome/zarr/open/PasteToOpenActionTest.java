@@ -26,50 +26,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.open.options;
+package sc.fiji.ome.zarr.open;
 
-import java.util.NoSuchElementException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Selects the library used to read OME-Zarr datasets.
- */
-public enum ZarrReaderBackend
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+import org.junit.jupiter.api.Test;
+import org.scijava.Context;
+
+import sc.fiji.ome.zarr.util.ZarrTestUtils;
+
+class PasteToOpenActionTest
 {
-	/**
-	 * Read via the N5 library (supports Zarr v2 and v3 through n5-zarr).
-	 */
-	N5( "N5" ),
+	private final List< String > errors = new ArrayList<>();
 
-	/**
-	 * Read via the zarr-java library (supports Zarr v2 and v3).
-	 */
-	ZARR_JAVA( "zarr-java" );
+	private final Consumer< String > errorHandler = errors::add;
 
-	private final String description;
-
-	ZarrReaderBackend( final String description )
+	@Test
+	void nonZarrLocalPathReportsError() throws URISyntaxException
 	{
-		this.description = description;
-	}
-
-	public static ZarrReaderBackend getByName( final String name )
-	{
-		for ( final ZarrReaderBackend option : values() )
-			if ( option.name().equals( name ) )
-				return option;
-		throw new NoSuchElementException( name );
-	}
-
-	public static ZarrReaderBackend getByDescription( final String description )
-	{
-		for ( final ZarrReaderBackend option : values() )
-			if ( option.description.equals( description ) )
-				return option;
-		return null;
-	}
-
-	public String getDescription()
-	{
-		return description;
+		try (Context context = new Context())
+		{
+			final Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/2d_testing" );
+			Toolkit.getDefaultToolkit().getSystemClipboard()
+					.setContents( new StringSelection( path.toString() ), null );
+			boolean result = PasteToOpenAction.pasteFromClipboard( context, errorHandler );
+			assertFalse( result );
+			assertEquals( 1, errors.size() );
+			assertTrue( errors.get( 0 ).contains( "OME-Zarr" ) );
+		}
 	}
 }

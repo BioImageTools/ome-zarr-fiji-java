@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,30 +26,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.backend.zarrjava;
 
-import org.scijava.module.Module;
-import org.scijava.module.process.AbstractSingleInputPreprocessor;
-import org.scijava.module.process.PreprocessorPlugin;
-import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
-import sc.fiji.ome.zarr.util.PyramidalService;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@Plugin( type = PreprocessorPlugin.class )
-public class PyramidalPreprocessor extends AbstractSingleInputPreprocessor
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+
+import org.junit.jupiter.api.Test;
+import org.scijava.Context;
+
+import sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.util.ZarrTestUtils;
+
+class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
 {
-
-	@Parameter
-	private PyramidalService pyramidalService;
-
 	@Override
-	public void process( final Module module )
+	public PyramidContents< ? > load( final String resource, final Context context )
+			throws URISyntaxException
 	{
-		final String input = getSingleInput( module, Pyramidal.class );
-		if ( input != null )
-		{
-			module.setInput( input, pyramidalService.getActivePyramidal() );
-			module.resolveInput( input );
-		}
+		Path path = ZarrTestUtils.resourcePath( resource );
+		return new ZarrJavaPyramidBackend().load( path.toUri() );
+	}
+
+	@Test
+	void testStaticOpen() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
+		PyramidContents< ? > contents = ZarrJavaPyramidBackend.open( path.toUri() );
+		assertNotNull( contents );
+		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+		assertEquals( 5, contents.numDimensions() );
+		assertEquals( 2, contents.numResolutionLevels() );
 	}
 }

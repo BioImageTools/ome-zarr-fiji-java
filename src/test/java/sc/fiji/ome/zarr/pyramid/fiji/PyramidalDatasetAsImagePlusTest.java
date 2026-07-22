@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.fiji;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,6 +41,8 @@ import org.scijava.convert.ConvertService;
 
 import ij.ImagePlus;
 import net.imagej.Dataset;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
 import sc.fiji.ome.zarr.util.ZarrTestUtils;
 
 /**
@@ -50,7 +52,7 @@ import sc.fiji.ome.zarr.util.ZarrTestUtils;
  * the converter itself is provided by {@code imagej-legacy} dependency on the
  * classpath.
  */
-class Pyramidal5DImageDataAsImagePlusTest
+class PyramidalDatasetAsImagePlusTest
 {
 	@Test
 	void testOpenAsImagePlusConvertService() throws URISyntaxException
@@ -59,8 +61,8 @@ class Pyramidal5DImageDataAsImagePlusTest
 
 		try (Context context = new Context())
 		{
-			final Pyramidal5DImageData< ? > pyramidal5DImageData = Pyramidal5DImageData.openWithN5( context, path.toUri(), null );
-			final PyramidalDataset dataset = new PyramidalDataset( pyramidal5DImageData );
+			final PyramidContents< ? > contents = new N5PyramidBackend().load( path.toUri() );
+			final PyramidalDataset dataset = new PyramidalDataset( context, contents, 0 );
 			final ImagePlus imagePlus = dataset.asImagePlus();
 
 			assertNotNull( imagePlus );
@@ -77,12 +79,13 @@ class Pyramidal5DImageDataAsImagePlusTest
 
 		try (Context context = new Context())
 		{
-			ImagePlus imagePlus = new Pyramidal5DImageDataImpl<>( context, path.toUri() ).asPyramidalDataset( 0 ).asImagePlus();
+			final PyramidContents< ? > contents = new N5PyramidBackend().load( path.toUri() );
+			ImagePlus imagePlus = new PyramidalDataset( context, contents, 0 ).asImagePlus();
 
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
 			assertArrayEquals( new int[] { 64, 64, 1, 16, 4 }, imagePlus.getDimensions() );
-			imagePlus = new Pyramidal5DImageDataImpl<>( context, path.toUri() ).asPyramidalDataset( 1 ).asImagePlus();
+			imagePlus = new PyramidalDataset( context, contents, 1 ).asImagePlus();
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
 			assertArrayEquals( new int[] { 32, 32, 1, 8, 4 }, imagePlus.getDimensions() );

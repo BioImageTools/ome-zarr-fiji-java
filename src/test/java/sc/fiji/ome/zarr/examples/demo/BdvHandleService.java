@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,25 +26,54 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid.backend.n5;
+package sc.fiji.ome.zarr.examples.demo;
 
-import java.net.URISyntaxException;
-import java.nio.file.Path;
+import net.imglib2.RandomAccessibleInterval;
 
-import org.scijava.Context;
+import bdv.util.BdvFunctions;
+import bdv.util.BdvOptions;
+import bdv.util.BdvStackSource;
+import bdv.viewer.ViewerPanel;
 
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataTestBase;
-import sc.fiji.ome.zarr.util.ZarrTestUtils;
-
-public class N5BackedPyramidal5DImageDataTest implements Pyramidal5DImageDataTestBase
+/**
+ * Manages a single {@link BdvStackSource} handle — remembers the most recently
+ * opened BDV window and can add sources to it. Extracted from the original
+ * {@code BdvHandleService} implementation for use in demos and manual tests.
+ */
+public class BdvHandleService
 {
-	@Override
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public Pyramidal5DImageDataImpl< ?, ? > load( final String resource, final Context context, final Integer preferredWidth )
-			throws URISyntaxException
+	private BdvStackSource< ? > lastStartedBdv = null;
+
+	public boolean isLastBdvStillAlive()
 	{
-		Path path = ZarrTestUtils.resourcePath( resource );
-		return new Pyramidal5DImageDataImpl<>( context, new N5PyramidBackend( path.toUri() ), preferredWidth );
+		if ( lastStartedBdv == null )
+			return false;
+		ViewerPanel panel;
+		try
+		{
+			panel = lastStartedBdv.getBdvHandle().getViewerPanel();
+		}
+		catch ( Exception e )
+		{
+			lastStartedBdv = null;
+			return false;
+		}
+		if ( panel.isValid() )
+			return true;
+		lastStartedBdv = null;
+		return false;
+	}
+
+	public void openNewBdv( final RandomAccessibleInterval< ? > img, final String name )
+	{
+		lastStartedBdv = BdvFunctions.show( img, name );
+	}
+
+	public void addToLastOrInNewBdv( final RandomAccessibleInterval< ? > img, final String name )
+	{
+		if ( isLastBdvStillAlive() )
+			BdvFunctions.show( img, name, BdvOptions.options().addTo( lastStartedBdv ) );
+		else
+			openNewBdv( img, name );
 	}
 }

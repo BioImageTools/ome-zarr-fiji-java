@@ -26,33 +26,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.examples.demo;
+package sc.fiji.ome.zarr.pyramid.backend.n5;
 
-import java.nio.file.Paths;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import net.imagej.ImageJ;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 
-import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
-import sc.fiji.ome.zarr.pyramid.PyramidalDataset;
+import org.junit.jupiter.api.Test;
+import org.scijava.Context;
 
-@SuppressWarnings( "all" )
-public class Pyramidal5DImageDataDemo
+import sc.fiji.ome.zarr.pyramid.backend.PyramidBackendTestBase;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.util.ZarrTestUtils;
+
+class N5PyramidBackendTest implements PyramidBackendTestBase
 {
-	public static void main( String[] args )
+	@Override
+	public PyramidContents< ? > load( final String resource, final Context context )
+			throws URISyntaxException
 	{
-		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
-		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
+		Path path = ZarrTestUtils.resourcePath( resource );
+		return new N5PyramidBackend().load( path.toUri() );
+	}
 
-		// Show as imagePlus
-		final ImageJ imageJ = new ImageJ();
-		imageJ.ui().showUI();
-		final Pyramidal5DImageDataImpl< ?, ? > pyramidal5DImageData =
-				new Pyramidal5DImageDataImpl<>( imageJ.context(), Paths.get( multiscalePath ).toUri() );
-		PyramidalDataset pyramidalDataset = pyramidal5DImageData.asPyramidalDataset();
-		imageJ.ui().show( pyramidalDataset );
-
-		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true );
+	@Test
+	void testStaticOpen() throws URISyntaxException
+	{
+		Path path = ZarrTestUtils.resourcePath( "sc/fiji/ome/zarr/util/5d_testing/5d_dataset_v4.ome.zarr" );
+		PyramidContents< ? > contents = N5PyramidBackend.open( path.toUri() );
+		assertNotNull( contents );
+		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+		assertEquals( 5, contents.numDimensions() );
+		assertEquals( 2, contents.numResolutionLevels() );
 	}
 }

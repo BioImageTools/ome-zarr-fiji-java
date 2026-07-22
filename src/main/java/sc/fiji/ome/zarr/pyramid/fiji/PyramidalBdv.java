@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,54 +26,60 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.pyramid.fiji;
 
-import bdv.BigDataViewer;
-import bdv.util.RandomAccessibleIntervalMipmapSource4D;
-import bdv.viewer.SourceAndConverter;
-
-import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
+import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.converter.Converter;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
+
 import org.scijava.AbstractContextual;
+import org.scijava.Context;
 import org.scijava.object.ObjectService;
 import org.scijava.plugin.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import bdv.BigDataViewer;
+import bdv.cache.SharedQueue;
+import bdv.util.RandomAccessibleIntervalMipmapSource4D;
+import bdv.util.volatiles.VolatileViews;
+import bdv.viewer.SourceAndConverter;
+import mpicbg.spim.data.sequence.FinalVoxelDimensions;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
-import sc.fiji.ome.zarr.pyramid.metadata.Omero;
+import sc.fiji.ome.zarr.pyramid.metadata.AxisCalibration;
 
 public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends AbstractContextual implements Pyramidal
 {
 
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private final Pyramidal5DImageData< T > data;
+	private final PyramidContents< T > contents;
 
 	private final List< SourceAndConverter< T > > sources;
 
-	public PyramidalBdv( final Pyramidal5DImageData< T > data )
+	public PyramidalBdv( final Context context, final PyramidContents< T > contents )
 	{
-		this.data = data;
-		sources = initSourceAndConverters( data.getPyramidContents() );
-		setContext( data.context() );
+		this.contents = contents;
+		sources = initSourceAndConverters( contents );
+		setContext( context );
 	}
 
 	@Override
-	public Pyramidal5DImageData< ? > getPyramidal5DImageData()
+	public PyramidContents< T > getPyramidContents()
 	{
-		return data;
+		return contents;
 	}
 
 	/**
@@ -86,52 +92,36 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		return sources;
 	}
 
-	@Override
-	public int numTimepoints()
-	{
-		return data.numTimepoints();
-	}
-
 	public String getName()
 	{
-		return data.getName();
-	}
-
-	@Override
-	public Omero getOmeroProperties()
-	{
-		return data.getOmeroProperties();
+		return contents.name;
 	}
 
 	@SuppressWarnings( "unchecked" )
 	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
-			List< SourceAndConverter< T > > initSourceAndConverters( final PyramidContents< T, V > contents )
+			List< SourceAndConverter< T > > initSourceAndConverters( final PyramidContents< T > contents )
 	{
-		final int nLevels = contents.numResolutionLevels;
-		final int numChannels = contents.numChannels;
-		final int channelAxisIndex = contents.channelAxisIndex;
-		final boolean zAxisPresent = contents.zAxisPresent;
-		final boolean timeAxisPresent = contents.timeAxisPresent;
+		final int nLevels = contents.numResolutionLevels();
+		final int numChannels = contents.numChannels();
 		final T type = contents.type;
-		final V volatileType = contents.volatileType;
 		final AffineTransform3D[] mipmapTransforms = contents.transforms;
-		final VoxelDimensions voxelDimensions = contents.voxelDimensions;
+		final VoxelDimensions voxelDimensions = voxelDimensions( contents );
+
+		final RandomAccessibleInterval< V >[] volatileImgs = createVolatileImgs( contents );
+		final V volatileType = volatileImgs[ 0 ].getType();
 
 		final RandomAccessibleInterval< T >[][] levelToChannels = new RandomAccessibleInterval[ nLevels ][];
-		Arrays.setAll( levelToChannels,
-				level -> splitInputStackIntoSourceStacks( numChannels, channelAxisIndex, zAxisPresent, timeAxisPresent,
-						contents.cachedCellImgs[ level ] ) );
+		Arrays.setAll( levelToChannels, level -> splitInputStackIntoSourceStacks( contents, contents.cachedCellImgs[ level ] ) );
 
 		final RandomAccessibleInterval< V >[][] levelToVolatileChannels = new RandomAccessibleInterval[ nLevels ][];
-		Arrays.setAll( levelToVolatileChannels,
-				level -> splitInputStackIntoSourceStacks( numChannels, channelAxisIndex, zAxisPresent, timeAxisPresent,
-						contents.volatileImgs[ level ] ) );
+		Arrays.setAll( levelToVolatileChannels, level -> splitInputStackIntoSourceStacks( contents, volatileImgs[ level ] ) );
 
+		final String[] channelLabels = contents.channelLabels();
 		final List< SourceAndConverter< T > > sources = new ArrayList<>( numChannels );
 		for ( int channelNumber = 0; channelNumber < numChannels; channelNumber++ )
 		{
 			final int channel = channelNumber;
-			final String channelLabel = contents.channelLabels[ channelNumber ];
+			final String channelLabel = channelLabels[ channelNumber ];
 			final RandomAccessibleInterval< T >[] mipmapImgs = new RandomAccessibleInterval[ nLevels ];
 			Arrays.setAll( mipmapImgs, level -> levelToChannels[ level ][ channel ] );
 			final RandomAccessibleInterval< V >[] mipmapVolatileImgs = new RandomAccessibleInterval[ nLevels ];
@@ -145,6 +135,53 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 			BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
 		}
 		return sources;
+	}
+
+	/**
+	 * Derives the BigDataViewer {@link VoxelDimensions} (x, y, z spacing and the
+	 * spatial unit) from the full-resolution axis calibrations. Missing spatial
+	 * axes default to a spacing of 1, since BigDataViewer always expects a 3D
+	 * voxel size.
+	 */
+	private static VoxelDimensions voxelDimensions( final PyramidContents< ? > contents )
+	{
+		double xScale = 1.0;
+		double yScale = 1.0;
+		double zScale = 1.0;
+		String unit = "";
+		for ( final AxisCalibration axis : contents.axesPerLevel[ 0 ] )
+		{
+			switch ( axis.name )
+			{
+			case AxisCalibration.X:
+				xScale = axis.scale;
+				unit = axis.unit;
+				break;
+			case AxisCalibration.Y:
+				yScale = axis.scale;
+				break;
+			case AxisCalibration.Z:
+				zScale = axis.scale;
+				break;
+			default:
+				break; // channel / time axes carry no voxel size
+			}
+		}
+		return new FinalVoxelDimensions( unit, xScale, yScale, zScale );
+	}
+
+	/**
+	 * Wraps each resolution level's {@link CachedCellImg} as a volatile view.
+	 */
+	@SuppressWarnings( "unchecked" )
+	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
+			RandomAccessibleInterval< V >[] createVolatileImgs( final PyramidContents< T > contents )
+	{
+		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
+		final RandomAccessibleInterval< V >[] volatileImgs = new RandomAccessibleInterval[ contents.numResolutionLevels() ];
+		for ( int level = 0; level < contents.numResolutionLevels(); level++ )
+			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( contents.cachedCellImgs[ level ], sharedQueue );
+		return volatileImgs;
 	}
 
 	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
@@ -163,33 +200,33 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	 * and ensures every result has XYZ and T dimensions (adding singleton axes where absent).
 	 */
 	@SuppressWarnings( "unchecked" )
-	private static < T > RandomAccessibleInterval< T >[] splitInputStackIntoSourceStacks( final int numChannels, final int channelAxisIndex,
-			final boolean zAxisPresent, final boolean timeAxisPresent, final RandomAccessibleInterval< T > img )
+	private static < T > RandomAccessibleInterval< T >[] splitInputStackIntoSourceStacks( final PyramidContents< ? > contents,
+			final RandomAccessibleInterval< T > img )
 	{
+		final int numChannels = contents.numChannels();
+		final boolean cAxisPresent = contents.hasAxis( AxisCalibration.C );
+		final boolean zAxisPresent = contents.hasAxis( AxisCalibration.Z );
+		final boolean timeAxisPresent = contents.hasAxis( AxisCalibration.T );
 
 		final RandomAccessibleInterval< T >[] sourceStacks = new RandomAccessibleInterval[ numChannels ];
 
-		// If there is a channel dimension, slice img along that dimension.
-		if ( channelAxisIndex != -1 )
-		{
-			Arrays.setAll( sourceStacks, c -> Views.hyperSlice( img, channelAxisIndex, c ) );
-		}
+		// If there is a channel dimension, slice img along channel dimension.
+		if ( cAxisPresent )
+			Arrays.setAll( sourceStacks, channel -> Views.hyperSlice( img, contents.axisIndex( AxisCalibration.C ), channel ) );
 		else
-		{
 			sourceStacks[ 0 ] = img;
-		}
 
 		// If there is no Z dimension, augment the sourceStacks by a Z dimension.
 		if ( !zAxisPresent )
-			Arrays.setAll( sourceStacks, c -> Views.addDimension( sourceStacks[ c ], 0, 0 ) );
+			Arrays.setAll( sourceStacks, channel -> Views.addDimension( sourceStacks[ channel ], 0, 0 ) );
 
 		// If there is no T dimension, augment the sourceStacks by a T dimension.
 		if ( !timeAxisPresent )
-			Arrays.setAll( sourceStacks, c -> Views.addDimension( sourceStacks[ c ], 0, 0 ) );
+			Arrays.setAll( sourceStacks, channel -> Views.addDimension( sourceStacks[ channel ], 0, 0 ) );
 
 		// If at this point the dim order is XYTZ (because there was only a T axis, and we appended a Z axis after that), permute to XYZT
 		if ( !zAxisPresent && timeAxisPresent )
-			Arrays.setAll( sourceStacks, c -> Views.permute( sourceStacks[ c ], 2, 3 ) );
+			Arrays.setAll( sourceStacks, channel -> Views.permute( sourceStacks[ channel ], 2, 3 ) );
 
 		return sourceStacks;
 	}

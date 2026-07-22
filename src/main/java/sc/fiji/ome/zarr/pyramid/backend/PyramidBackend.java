@@ -28,32 +28,33 @@
  */
 package sc.fiji.ome.zarr.pyramid.backend;
 
-import net.imglib2.Volatile;
+import java.net.URI;
+
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
-import sc.fiji.ome.zarr.pyramid.Pyramidal5DImageDataImpl;
 
 /**
  * Plug-point for reading an OME-Zarr multi-resolution image.
  * <p>
  * An implementation encapsulates everything specific to one reader library
  * (N5, zarr-java, ...): discovering multiscale metadata, selecting a resolution
- * level, opening cached cell images, and assembling axis information. The
- * backend-agnostic {@link Pyramidal5DImageDataImpl}
- * calls {@link #load()} once and derives its state from the returned
- * {@link PyramidContents}.
- *
- * @param <T> pixel type
- * @param <V> volatile pixel type
+ * level, opening cached cell images, and assembling axis information. Callers
+ * invoke {@link #load(URI)} and consume the returned {@link PyramidContents}.
+ * <p>
+ * The pixel type is a property of the data being read, not of the backend, so
+ * it is a type parameter of {@link #load(URI)} rather than of the backend
+ * itself: a single (untyped) backend instance can read images of any pixel
+ * type, and callers never have to choose {@code T} before the data is opened.
  */
-public interface PyramidBackend<
-		T extends NativeType< T > & RealType< T >,
-		V extends Volatile< T > & NativeType< V > & RealType< V > >
+public interface PyramidBackend
 {
 	/**
-	 * Open the multi-resolution image and return all state needed by the
-	 * concrete pyramidal image data class. Called exactly once per image.
+	 * Open the OME-Zarr multi-resolution image at {@code inputUri} and return
+	 * all of its state as an immutable {@link PyramidContents}.
+	 *
+	 * @param <T> pixel type of the image being read
+	 * @param inputUri location of the OME-Zarr root; either a {@code file:} URI
+	 *   for local datasets or an {@code http(s):} URI for remote datasets
 	 */
-	PyramidContents< T, V > load();
+	< T extends NativeType< T > & RealType< T > > PyramidContents< T > load( URI inputUri );
 }

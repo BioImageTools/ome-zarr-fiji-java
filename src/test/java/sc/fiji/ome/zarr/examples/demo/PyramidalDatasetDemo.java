@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,46 +26,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package sc.fiji.ome.zarr.pyramid;
+package sc.fiji.ome.zarr.examples.demo;
 
-import org.scijava.Contextual;
+import java.nio.file.Paths;
 
-import mpicbg.spim.data.sequence.VoxelDimensions;
-import sc.fiji.ome.zarr.pyramid.metadata.Omero;
+import net.imagej.ImageJ;
 
-public interface Pyramidal extends Contextual
+import sc.fiji.ome.zarr.plugins.OpenInBDVCommand;
+import sc.fiji.ome.zarr.pyramid.fiji.PyramidalDataset;
+import sc.fiji.ome.zarr.pyramid.backend.PyramidContents;
+import sc.fiji.ome.zarr.pyramid.backend.n5.N5PyramidBackend;
+
+@SuppressWarnings( "all" )
+public class PyramidalDatasetDemo
 {
-
-	Pyramidal5DImageData< ? > getPyramidal5DImageData();
-
-	default int numResolutions()
+	public static void main( String[] args )
 	{
-		return getPyramidal5DImageData().numResolutionLevels();
-	}
+		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
+		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
 
-	// TODO: the methods below this may be removed
-	default int numChannels()
-	{
-		return getPyramidal5DImageData().numChannels();
-	}
+		// Show as imagePlus
+		final ImageJ imageJ = new ImageJ();
+		imageJ.ui().showUI();
+		final PyramidContents< ? > contents =
+				new N5PyramidBackend().load( Paths.get( multiscalePath ).toUri() );
+		PyramidalDataset pyramidalDataset = new PyramidalDataset( imageJ.context(), contents, 0 );
+		imageJ.ui().show( pyramidalDataset );
 
-	default int numTimepoints()
-	{
-		return getPyramidal5DImageData().numTimepoints();
-	}
-
-	default Omero getOmeroProperties()
-	{
-		return getPyramidal5DImageData().getOmeroProperties();
-	}
-
-	default VoxelDimensions voxelDimensions()
-	{
-		return getPyramidal5DImageData().voxelDimensions();
-	}
-
-	default String getPyramidName()
-	{
-		return getPyramidal5DImageData().getName();
+		// Also show the displayed image in BDV
+		imageJ.command().run( OpenInBDVCommand.class, true );
 	}
 }
