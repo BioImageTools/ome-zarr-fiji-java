@@ -150,6 +150,6 @@
 	</root>
 
 	<!-- Example how to change log level for certain packages -->
-	<logger name="sc.fiji.ome.zarr" level="DEBUG"/>
+	<logger name="ome.zarr" level="DEBUG"/>
 
 </configuration>
