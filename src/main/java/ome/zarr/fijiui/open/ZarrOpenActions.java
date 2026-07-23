@@ -107,6 +107,22 @@ public class ZarrOpenActions
 	}
 
 	/**
+	 * Convenience factory for a backend-agnostic {@link ZarrOpener} that uses the
+	 * default reader backend ({@link ZarrOpeningSettings#DEFAULT_READER_BACKEND})
+	 * at the highest resolution, reporting failures via {@code IJ::error}.
+	 * <p>
+	 * This lives in the fiji-ui layer because picking a concrete backend is a
+	 * fiji-ui concern: {@link ZarrOpener} itself only knows {@link PyramidBackend}
+	 * and the fiji layer therefore depends on no concrete backend. It restores the
+	 * one-liner ergonomics of the former no-backend {@code ZarrOpener}
+	 * constructor.
+	 */
+	public static ZarrOpener defaultOpener( final URI inputUri, final Context context )
+	{
+		return new ZarrOpener( inputUri, context, ZarrOpeningSettings.DEFAULT_READER_BACKEND.createBackend(), null );
+	}
+
+	/**
 	 * Actions for {@code inputUri} with default opening settings, reporting
 	 * failures via {@code IJ::error}.
 	 */
