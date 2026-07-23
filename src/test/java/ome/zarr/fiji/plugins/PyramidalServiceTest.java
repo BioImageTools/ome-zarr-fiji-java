@@ -48,8 +48,9 @@ import ij.gui.ImageWindow;
 
 import javax.swing.SwingUtilities;
 
-import ome.zarr.fijiui.open.ZarrOpenActions;
 import ome.zarr.fiji.Pyramidal;
+import ome.zarr.fiji.open.ZarrOpener;
+import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.ZarrTestUtils;
 
 class PyramidalServiceTest
@@ -69,7 +70,7 @@ class PyramidalServiceTest
 		try (Context context = new Context())
 		{
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
-			BdvHandle bdvHandle = ( BdvHandle ) new ZarrOpenActions( path.toUri(), context ).openBDVWithImage();
+			BdvHandle bdvHandle = ( BdvHandle ) new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null ).openBDVWithImage();
 			try
 			{
 				assertNotNull( pyramidalService.getActivePyramidal() );
@@ -97,7 +98,7 @@ class PyramidalServiceTest
 		try (Context context = new Context())
 		{
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
-			BdvHandle bdvHandle = ( BdvHandle ) new ZarrOpenActions( path.toUri(), context ).openBDVWithImage();
+			BdvHandle bdvHandle = ( BdvHandle ) new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null ).openBDVWithImage();
 			ImagePlus nonOmeZarrImagePlus = null;
 			try
 			{
@@ -142,8 +143,8 @@ class PyramidalServiceTest
 		try (Context context = new Context())
 		{
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
-			BdvHandle bdvHandle1 = ( BdvHandle ) new ZarrOpenActions( path1.toUri(), context ).openBDVWithImage();
-			BdvHandle bdvHandle2 = ( BdvHandle ) new ZarrOpenActions( path2.toUri(), context ).openBDVWithImage();
+			BdvHandle bdvHandle1 = ( BdvHandle ) new ZarrOpener( path1.toUri(), context, new N5PyramidBackend(), null ).openBDVWithImage();
+			BdvHandle bdvHandle2 = ( BdvHandle ) new ZarrOpener( path2.toUri(), context, new N5PyramidBackend(), null ).openBDVWithImage();
 			try
 			{
 				assertEquals( 2, pyramidalService.getPyramidals().size() );
