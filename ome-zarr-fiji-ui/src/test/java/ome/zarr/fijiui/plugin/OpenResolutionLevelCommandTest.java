@@ -241,8 +241,26 @@ class OpenResolutionLevelCommandTest
 	private static void runCommand( final Context context, final Map< String, Object > inputs )
 			throws ExecutionException, InterruptedException
 	{
+		// A dataset opened in ImageJ becomes the active pyramidal only via the
+		// asynchronous AWT "activeWindow" event that PyramidalService listens for.
+		// Flush the event queue so that event is processed and the active pyramidal
+		// is resolved before the command's preprocessor injects it; otherwise the
+		// command cancels for lack of an active dataset (flaky under test load).
+		flushEventQueue();
 		CommandInfo info = context.getService( CommandService.class ).getCommand( OpenResolutionLevelCommand.class );
 		context.getService( ModuleService.class ).run( info, true, inputs ).get();
+	}
+
+	private static void flushEventQueue() throws InterruptedException
+	{
+		try
+		{
+			SwingUtilities.invokeAndWait( () -> {} );
+		}
+		catch ( InvocationTargetException e )
+		{
+			throw new IllegalStateException( e );
+		}
 	}
 
 	private static void closeWindows()

@@ -33,10 +33,13 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.awt.Window;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import javax.swing.SwingUtilities;
 
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
@@ -61,6 +64,18 @@ class OpenInBDVCommandTest
 			window.dispose();
 	}
 
+	private static void flushEventQueue() throws InterruptedException
+	{
+		try
+		{
+			SwingUtilities.invokeAndWait( () -> {} );
+		}
+		catch ( InvocationTargetException e )
+		{
+			throw new IllegalStateException( e );
+		}
+	}
+
 	// 2 resolution levels: level 0 = 64x64x16, level 1 = 32x32x8
 	private static final String PYRAMID_RESOURCE = "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr";
 
@@ -82,6 +97,10 @@ class OpenInBDVCommandTest
 			assertEquals( 1, pyramidalService.getPyramidals().size() );
 
 			final Pyramidal ij2Dataset = pyramidalService.getPyramidals().get( 0 );
+			// The IJ dataset becomes the active pyramidal only via the asynchronous AWT
+			// "activeWindow" event; flush the event queue so it is resolved before the
+			// command's preprocessor injects the active dataset.
+			flushEventQueue();
 			context.getService( CommandService.class ).run( OpenInBDVCommand.class, true ).get();
 
 			final List< Dataset > datasets = datasetService.getDatasets();
