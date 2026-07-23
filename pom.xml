@@ -9,12 +9,14 @@
 	</parent>
 
 	<groupId>ome.zarr</groupId>
-	<artifactId>ome-zarr-fiji</artifactId>
+	<artifactId>ome-zarr-parent</artifactId>
 	<version>0.5.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
 
-	<name>OME-Zarr additional interfaces for Fiji</name>
-	<description>As of now, drag-and-drop scijava (Fiji) handler that opens N5 Importer dialog or BigDataViewer
-		right-away.
+	<name>OME-Zarr additional interfaces for Fiji (parent)</name>
+	<description>Aggregator for the OME-Zarr imglib2 core, N5/zarr-java backends,
+		and Fiji integration artifacts. Provides drag-and-drop support for opening
+		OME-Zarr image datasets in Fiji/ImageJ and BigDataViewer.
 	</description>
 	<url>https://github.com/BioImageTools/ome-zarr-fiji-java</url>
 
@@ -137,7 +139,15 @@
 		<url>https://github.com/BioImageTools/ome-zarr-fiji-java/actions</url>
 	</ciManagement>
 
-	<packaging>jar</packaging>
+	<!-- ====================================== -->
+
+	<modules>
+		<module>ome-zarr-imglib2</module>
+		<module>ome-zarr-n5</module>
+		<module>ome-zarr-zarrjava</module>
+		<module>ome-zarr-fiji</module>
+		<module>ome-zarr-fiji-ui</module>
+	</modules>
 
 	<!-- ====================================== -->
 
@@ -151,6 +161,8 @@
 		<license.organizationName>SciJava</license.organizationName>
 		<license.copyrightOwners>SciJava developers</license.copyrightOwners>
 		<license.excludes>**/zarr.json</license.excludes>
+
+		<zarr-java.version>0.1.3</zarr-java.version>
 
 		<n5.version>4.0.0</n5.version>
 		<n5-aws-s3.version>5.0.0</n5-aws-s3.version>
@@ -182,112 +194,133 @@
 		</repository>
 	</repositories>
 
+	<!-- ====================================== -->
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- Internal modules: single source of truth for the shared reactor version. -->
+			<dependency>
+				<groupId>ome.zarr</groupId>
+				<artifactId>ome-zarr-imglib2</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>ome.zarr</groupId>
+				<artifactId>ome-zarr-n5</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>ome.zarr</groupId>
+				<artifactId>ome-zarr-zarrjava</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>ome.zarr</groupId>
+				<artifactId>ome-zarr-fiji</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<!-- Not managed by pom-scijava. -->
+			<dependency>
+				<groupId>dev.zarr</groupId>
+				<artifactId>zarr-java</artifactId>
+				<version>${zarr-java.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>5.23.0</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<!-- Test dependencies shared by every module (all modules test with JUnit 5 -->
+	<!-- and use the shared logback-test.xml from test-shared/resources). -->
 	<dependencies>
-		<dependency>
-			<groupId>dev.zarr</groupId>
-			<artifactId>zarr-java</artifactId>
-			<version>0.1.3</version>
-		</dependency>
-		<!-- N5 implementations of OME-Zarr including BDV Viewer adaptions -->
-		<dependency>
-			<groupId>org.janelia.saalfeldlab</groupId>
-			<artifactId>n5-viewer_fiji</artifactId>
-		</dependency>
-		<!-- to open Fiji script editor on DnD when no script is preset -->
-		<dependency>
-			<groupId>org.scijava</groupId>
-			<artifactId>script-editor</artifactId>
-		</dependency>
-
-		<!-- ====================================== -->
-		<!-- test dependencies -->
-		<!-- ====================================== -->
-		<!-- for testing/development purposes: include imagej at test runtime -->
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>fiji</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<!-- for testing/development purposes: include logback-classic at test runtime -->
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<!-- for testing/development purposes: include logback-core at test runtime -->
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-core</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<!-- JUnit 5 - https://junit.org/junit5/ -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<version>${org.junit.jupiter.junit-jupiter-api.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-params</artifactId>
-			<version>${org.junit.jupiter.junit-jupiter-params.version}</version>
 			<scope>test</scope>
 		</dependency>
-
-		<!-- Mockito used in some unit tests -->
 		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<version>5.23.0</version>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
 			<scope>test</scope>
 		</dependency>
-
-
-		<!-- ====================================== -->
-
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-core</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
-	<profiles>
-		<profile>
-			<id>build</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<build>
-				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 4gb while running tests. -->
-					<!-- forkCount=1 with reuseForks=true runs tests in a single forked JVM; -->
-					<!-- without this, argLine (and therefore -Xmx) would be ignored because -->
-					<!-- tests would share Maven's own JVM (whose heap defaults are smaller and -->
-					<!-- vary per CI runner — macOS GitHub runners OOM under that setup). -->
-					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-surefire-plugin</artifactId>
-						<version>3.1.0</version>
+	<!-- ====================================== -->
+
+	<build>
+		<!-- ZarrTestUtils and the sample OME-Zarr datasets live once, under -->
+		<!-- test-shared/, and are wired into every module's test build below. -->
+		<!-- ZarrTestUtils.resourcePath() resolves resources to a real filesystem -->
+		<!-- Path, so the data must be copied into each module's target/test-classes -->
+		<!-- (a test-jar would expose them only as jar: URLs, which Paths.get rejects). -->
+		<testResources>
+			<testResource>
+				<directory>${project.basedir}/../test-shared/resources</directory>
+			</testResource>
+			<testResource>
+				<directory>${project.basedir}/src/test/resources</directory>
+			</testResource>
+		</testResources>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>add-shared-test-source</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>add-test-source</goal>
+						</goals>
 						<configuration>
-							<forkCount>1</forkCount>
-							<reuseForks>true</reuseForks>
-							<argLine>-Xmx4g -da -Dimagej.legacy.disable=true</argLine>
+							<sources>
+								<source>${project.basedir}/../test-shared/java</source>
+							</sources>
 						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!-- Run tests in a single forked JVM so -Xmx4g takes effect (macOS CI -->
+				<!-- runners OOM otherwise). -da avoids a bigdataviewer-core assertion bug: -->
+				<!-- https://github.com/bigdataviewer/bigdataviewer-core/pull/217 -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<configuration>
+						<forkCount>1</forkCount>
+						<reuseForks>true</reuseForks>
+						<argLine>-Xmx4g -da -Dimagej.legacy.disable=true</argLine>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<profiles>
 		<profile>
 			<id>coverage</id>
 			<build>
 				<plugins>
-					<!-- Configure the maven-surefire-plugin to use a heap size of 4gb while running tests for jacoco coverage analysis. -->
-					<!-- forkCount=1 with reuseForks=true keeps the jacoco agent argLine effective -->
-					<!-- against a forked test JVM rather than Maven's own (see comment in the -->
-					<!-- default profile above). -->
-					<!-- Assertions are disabled via -da flag to avoid a bug in bigdataviewer-core:, see https://github.com/bigdataviewer/bigdataviewer-core/pull/217. -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
-						<version>3.1.0</version>
 						<configuration>
 							<forkCount>1</forkCount>
 							<reuseForks>true</reuseForks>

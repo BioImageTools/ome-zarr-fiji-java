@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>ome.zarr</groupId>
+		<artifactId>ome-zarr-parent</artifactId>
+		<version>0.5.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>ome-zarr-fiji</artifactId>
+
+	<name>OME-Zarr Fiji integration</name>
+	<description>Opens OME-Zarr datasets in ImageJ and BigDataViewer (PyramidalDataset /
+		PyramidalBdv) without UI sugar. Backend-agnostic: requires an ome-zarr-n5 or
+		ome-zarr-zarrjava backend at runtime.
+	</description>
+	<url>https://github.com/BioImageTools/ome-zarr-fiji-java</url>
+
+	<inceptionYear>2022</inceptionYear>
+
+	<organization>
+		<name>SciJava</name>
+		<url>https://scijava.org/</url>
+	</organization>
+
+	<licenses>
+		<license>
+			<name>Simplified BSD License</name>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>xulman</id>
+			<name>Vladimir Ulman</name>
+			<url>https://imagej.net/people/xulman</url>
+			<roles>
+				<role>founder</role>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>stefanhahmann</id>
+			<name>Stefan Hahmann</name>
+			<email>stefan.hahmann@tu-dresden.de</email>
+			<organization>MPI CBG</organization>
+			<organizationUrl>https://www.mpi-cbg.de/</organizationUrl>
+			<roles>
+				<role>lead</role>
+				<role>developer</role>
+				<role>reviewer</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+	</developers>
+
+	<contributors>
+		<!-- NB: Need at least one element to override the parent. See: https://issues.apache.org/jira/browse/MNG-5220 -->
+		<contributor>
+			<name>None</name>
+		</contributor>
+	</contributors>
+
+	<mailingLists>
+		<mailingList>
+			<name>Image.sc Forum</name>
+			<archive>https://forum.image.sc/tag/ome-zarr</archive>
+		</mailingList>
+	</mailingLists>
+
+	<scm>
+		<connection>scm:git:git://github.com/BioImageTools/ome-zarr-fiji-java</connection>
+		<developerConnection>scm:git:git@github.com:BioImageTools/ome-zarr-fiji-java</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/BioImageTools/ome-zarr-fiji-java</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/BioImageTools/ome-zarr-fiji-java/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>GitHub Actions</system>
+		<url>https://github.com/BioImageTools/ome-zarr-fiji-java/actions</url>
+	</ciManagement>
+
+	<properties>
+		<license.licenseName>bsd_2</license.licenseName>
+		<license.projectName>OME-Zarr extras for Fiji</license.projectName>
+		<license.organizationName>SciJava</license.organizationName>
+		<license.copyrightOwners>SciJava developers</license.copyrightOwners>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>ome.zarr</groupId>
+			<artifactId>ome-zarr-imglib2</artifactId>
+		</dependency>
+
+		<!-- BigDataViewer + ImageJ integration -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigdataviewer-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>bigdataviewer-vistools</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>spim_data</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-common</artifactId>
+		</dependency>
+
+		<!-- External N5 library for the single-scale opening -->
+		<!-- NOT the ome-zarr-n5 backend. -->
+		<dependency>
+			<groupId>org.janelia.saalfeldlab</groupId>
+			<artifactId>n5</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.janelia.saalfeldlab</groupId>
+			<artifactId>n5-imglib2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.janelia.saalfeldlab</groupId>
+			<artifactId>n5-universe</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+
+		<!-- ====================================== -->
+		<!-- test dependencies -->
+		<!-- ====================================== -->
+		<!-- Tests exercise both concrete backends and the full Fiji runtime. -->
+		<dependency>
+			<groupId>ome.zarr</groupId>
+			<artifactId>ome-zarr-n5</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ome.zarr</groupId>
+			<artifactId>ome-zarr-zarrjava</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>
