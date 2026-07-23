@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>ome.zarr</groupId>
+		<artifactId>ome-zarr-parent</artifactId>
+		<version>0.5.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>ome-zarr-coverage-report</artifactId>
+
+	<name>OME-Zarr aggregate coverage report</name>
+	<description>Internal build utility: aggregates JaCoCo coverage across all modules
+		into a single report for SonarCloud. Not published.
+	</description>
+
+	<properties>
+		<!-- Internal build utility: do not publish, do not enforce SciJava metadata, -->
+		<!-- and keep it off the SonarCloud dashboard (it has no sources of its own). -->
+		<maven.deploy.skip>true</maven.deploy.skip>
+		<maven.install.skip>true</maven.install.skip>
+		<enforcer.skip>true</enforcer.skip>
+		<sonar.skip>true</sonar.skip>
+	</properties>
+
+	<!-- report-aggregate collects jacoco.exec + classes from these reactor modules -->
+	<dependencies>
+		<dependency>
+			<groupId>ome.zarr</groupId>
+			<artifactId>ome-zarr-imglib2</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ome.zarr</groupId>
+			<artifactId>ome-zarr-n5</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ome.zarr</groupId>
+			<artifactId>ome-zarr-zarrjava</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ome.zarr</groupId>
+			<artifactId>ome-zarr-fiji</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ome.zarr</groupId>
+			<artifactId>ome-zarr-fiji-ui</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.7</version>
+				<executions>
+					<execution>
+						<id>aggregate-report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report-aggregate</goal>
+						</goals>
+						<configuration>
+							<!-- output: target/site/jacoco-aggregate/jacoco.xml -->
+							<formats>
+								<format>XML</format>
+							</formats>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

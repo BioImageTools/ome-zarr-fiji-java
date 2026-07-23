@@ -179,7 +179,7 @@
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-		<sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml
+		<sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/ome-zarr-coverage-report/target/site/jacoco-aggregate/jacoco.xml
 		</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.language>java</sonar.language>
 		<sonar.verbose>false</sonar.verbose>
@@ -316,6 +316,12 @@
 	<profiles>
 		<profile>
 			<id>coverage</id>
+			<!-- Only pull the aggregate-coverage module into the reactor when measuring -->
+			<!-- coverage, so normal builds and releases do not build it. It depends on -->
+			<!-- all five modules, so it is built last and can read their jacoco.exec. -->
+			<modules>
+				<module>ome-zarr-coverage-report</module>
+			</modules>
 			<build>
 				<plugins>
 					<plugin>
