@@ -26,9 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fiji.open;
+package ome.zarr.fijiui.open.options;
 
 import java.util.NoSuchElementException;
+
+import ome.zarr.imglib2.PyramidBackend;
+import ome.zarr.n5.N5PyramidBackend;
+import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 
 /**
  * Selects the library used to read OME-Zarr datasets.
@@ -71,5 +75,21 @@ public enum ZarrReaderBackend
 	public String getDescription()
 	{
 		return description;
+	}
+
+	/**
+	 * Creates a fresh {@link PyramidBackend} for the reader library this constant
+	 * represents.
+	 */
+	public PyramidBackend createBackend()
+	{
+		switch ( this )
+		{
+		case ZARR_JAVA:
+			return new ZarrJavaPyramidBackend();
+		case N5:
+		default:
+			return new N5PyramidBackend();
+		}
 	}
 }

@@ -35,8 +35,6 @@ import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ome.zarr.fiji.open.ZarrReaderBackend;
-
 public class ZarrOpeningSettings
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );

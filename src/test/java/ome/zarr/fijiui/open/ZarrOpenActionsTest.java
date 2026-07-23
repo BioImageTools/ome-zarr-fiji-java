@@ -102,7 +102,7 @@ import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
-import ome.zarr.fiji.open.ZarrReaderBackend;
+import ome.zarr.fijiui.open.options.ZarrReaderBackend;
 import ome.zarr.fijiui.dialog.DnDActionChooser;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fijiui.util.ScriptUtils;

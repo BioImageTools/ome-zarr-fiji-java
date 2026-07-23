@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
-import ome.zarr.fiji.open.ZarrReaderBackend;
+import ome.zarr.fijiui.open.options.ZarrReaderBackend;
 
 /**
  * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.

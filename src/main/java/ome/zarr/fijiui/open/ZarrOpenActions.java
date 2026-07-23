@@ -48,11 +48,12 @@ import net.imglib2.img.Img;
 import ij.IJ;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
-import ome.zarr.fiji.open.ZarrReaderBackend;
+import ome.zarr.fijiui.open.options.ZarrReaderBackend;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fijiui.dialog.DnDActionChooser;
 import ome.zarr.fijiui.util.ScriptUtils;
+import ome.zarr.imglib2.PyramidBackend;
 
 /**
  * Fiji-ui orchestration of the OME-Zarr opening pipeline: it reads the user's
@@ -136,7 +137,8 @@ public class ZarrOpenActions
 		this.inputUri = inputUri;
 		this.context = context;
 		this.errorHandler = errorHandler;
-		this.opener = new ZarrOpener( inputUri, context, readerBackend( settings ), preferredMaxWidth( settings ), errorHandler );
+		PyramidBackend pyramidBackend = readerBackend( settings ).createBackend();
+		this.opener = new ZarrOpener( inputUri, context, pyramidBackend, preferredMaxWidth( settings ), errorHandler );
 	}
 
 	/**

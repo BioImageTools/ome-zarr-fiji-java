@@ -44,7 +44,7 @@ import org.scijava.prefs.PrefService;
 
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
-import ome.zarr.fiji.open.ZarrReaderBackend;
+import ome.zarr.fijiui.open.options.ZarrReaderBackend;
 
 /**
  * Unit tests for the {@link OpeningBehaviorSettings#run()} method.

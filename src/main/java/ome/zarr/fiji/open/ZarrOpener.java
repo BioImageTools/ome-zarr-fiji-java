@@ -51,8 +51,6 @@ import net.imglib2.util.Cast;
 import ij.IJ;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.n5.N5PyramidBackend;
-import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NoMatchingResolutionException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
@@ -65,11 +63,10 @@ import ome.zarr.fiji.util.BdvUtils;
 
 /**
  * Backend-reader-agnostic opener for OME-Zarr datasets.
- * Given a {@link URI} location, a {@link ZarrReaderBackend} choice and
- * an optional preferred resolution width, it loads a {@link PyramidContents} and
+ * Given a {@link URI} location, a {@link PyramidBackend} and an optional
+ * preferred resolution width, it loads a {@link PyramidContents} and
  * opens it in ImageJ (as a {@link PyramidalDataset}) or in BigDataViewer (as a
- * {@link PyramidalBdv}, registered in both cases
- * with the {@link PyramidalService} lifecycle).
+ * {@link PyramidalBdv}, registered in both cases with the {@link PyramidalService} lifecycle).
  */
 public class ZarrOpener
 {
@@ -79,7 +76,7 @@ public class ZarrOpener
 
 	private final Context context;
 
-	private final ZarrReaderBackend backend;
+	private final PyramidBackend backend;
 
 	private final Integer preferredMaxWidth;
 
@@ -90,50 +87,41 @@ public class ZarrOpener
 	private int preferredResolutionLevel;
 
 	/**
-	 * Opener for {@code inputUri} using the default reader backend (N5), the
-	 * highest resolution, and {@code IJ::error} for reporting failures.
-	 */
-	public ZarrOpener( final URI inputUri, final Context context )
-	{
-		this( inputUri, context, null, null, IJ::error );
-	}
-
-	/**
-	 * Opener for {@code inputUri} with an explicit reader backend and preferred
+	 * Opener for {@code inputUri} with an explicit backend and preferred
 	 * resolution, reporting failures via {@code IJ::error}.
 	 *
-	 * @param backend reader library to use, or {@code null} for the default (N5)
+	 * @param backend the backend used to read the dataset
 	 * @param preferredMaxWidth the coarsest level whose width is still &le; this is
 	 *   opened, or {@code null} for the highest resolution
 	 */
-	public ZarrOpener( final URI inputUri, final Context context, final ZarrReaderBackend backend,
+	public ZarrOpener( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth )
 	{
 		this( inputUri, context, backend, preferredMaxWidth, IJ::error );
 	}
 
 	/**
-	 * Opener for {@code inputUri} with an explicit reader backend, preferred
+	 * Opener for {@code inputUri} with an explicit backend, preferred
 	 * resolution, and error sink.
 	 *
-	 * @param backend reader library to use, or {@code null} for the default (N5)
+	 * @param backend the backend used to read the dataset
 	 * @param preferredMaxWidth the coarsest level whose width is still &le; this is
 	 *   opened, or {@code null} for the highest resolution
 	 * @param errorHandler receives a user-facing message when opening fails
 	 */
-	public ZarrOpener( final URI inputUri, final Context context, final ZarrReaderBackend backend,
+	public ZarrOpener( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth, final Consumer< String > errorHandler )
 	{
 		this.inputUri = inputUri;
 		this.context = context;
-		this.backend = backend == null ? ZarrReaderBackend.N5 : backend;
+		this.backend = backend;
 		this.preferredMaxWidth = preferredMaxWidth;
 		this.errorHandler = errorHandler;
 	}
 
 	/**
 	 * Loads (once, then caches) the {@link PyramidContents} for the configured
-	 * location using the selected {@link ZarrReaderBackend}, and resolves the
+	 * location using the configured {@link PyramidBackend}, and resolves the
 	 * resolution level matching the preferred width.
 	 */
 	// java:S1452: the wildcard is intentional. The pixel type is only known once
@@ -145,10 +133,7 @@ public class ZarrOpener
 	{
 		if ( cachedContents == null )
 		{
-			final PyramidBackend pyramidBackend = ( backend == ZarrReaderBackend.ZARR_JAVA )
-					? new ZarrJavaPyramidBackend()
-					: new N5PyramidBackend();
-			final PyramidContents< ? > contents = pyramidBackend.load( inputUri );
+			final PyramidContents< ? > contents = backend.load( inputUri );
 			preferredResolutionLevel = contents.selectResolutionLevel( preferredMaxWidth );
 			cachedContents = contents;
 		}

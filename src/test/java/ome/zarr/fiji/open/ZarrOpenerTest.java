@@ -32,11 +32,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import javax.swing.SwingUtilities;
 
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.display.DisplayService;
@@ -45,22 +46,30 @@ import bdv.util.BdvHandle;
 import net.imagej.DatasetService;
 import net.imglib2.util.Cast;
 
+import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.n5.N5PyramidBackend;
+import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.ZarrTestUtils;
 
 /**
  * Direct coverage of the fiji-layer {@link ZarrOpener}: it loads and opens a
- * dataset in ImageJ and BigDataViewer for either reader backend, without going
- * through any fiji-ui settings or dialogs.
+ * dataset in ImageJ and BigDataViewer for either backend implementation,
+ * without going through any fiji-ui settings or dialogs.
  */
 class ZarrOpenerTest
 {
 	private static final String DATASET = "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr";
 
+	static Stream< PyramidBackend > backends()
+	{
+		return Stream.of( new N5PyramidBackend(), new ZarrJavaPyramidBackend() );
+	}
+
 	@ParameterizedTest
-	@EnumSource( ZarrReaderBackend.class )
-	void getContentsLoadsWithChosenBackend( ZarrReaderBackend backend ) throws Exception
+	@MethodSource( "backends" )
+	void getContentsLoadsWithChosenBackend( PyramidBackend backend ) throws Exception
 	{
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
@@ -79,7 +88,7 @@ class ZarrOpenerTest
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
-			new ZarrOpener( path.toUri(), context ).openIJWithImage();
+			new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null ).openIJWithImage();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertEquals( 1, datasetService.getDatasets().size() );
@@ -97,7 +106,8 @@ class ZarrOpenerTest
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
-			BdvHandle bdvHandle = Cast.unchecked( new ZarrOpener( path.toUri(), context ).openBDVWithImage() );
+			BdvHandle bdvHandle =
+					Cast.unchecked( new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null ).openBDVWithImage() );
 			assertNotNull( bdvHandle );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
