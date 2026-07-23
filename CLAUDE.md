@@ -8,19 +8,26 @@ A Fiji/ImageJ plugin that provides drag-and-drop support for opening OME-Zarr (O
 
 ## Build and test commands
 
+This is a multi-module Maven reactor; commands run at the repo root operate on all modules.
+
 ```bash
-mvn clean package          # build
-mvn test                   # run all tests (requires 2 GB heap – configured in pom.xml)
-mvn test -Dtest=ClassName  # run a single test class
-mvn test -Dtest=ClassName#methodName   # run a single test method
-mvn clean test -Pcoverage  # build with JaCoCo coverage report
+mvn clean package                                     # build all modules
+mvn test                                              # run all tests across all modules (4 GB heap – configured in pom.xml)
+mvn -pl ome-zarr-fiji test -Dtest=ClassName           # single test class (scope to its module)
+mvn -pl ome-zarr-fiji test -Dtest=ClassName#methodName  # single test method
+mvn -pl ome-zarr-n5 -am test                          # build & test one module plus its upstream modules
+mvn clean verify -Pcoverage                           # aggregated JaCoCo coverage → ome-zarr-coverage-report/target/site/jacoco-aggregate/jacoco.xml
 ```
+
+Single-class/method runs are scoped to the owning module with `-pl` (a bare `-Dtest=` at the reactor root fails in modules that lack the class). `-am` ("also make") builds the upstream modules a `-pl` target depends on without a prior `mvn install`.
 
 Blosc native library is required for tests. On macOS:
 ```bash
 brew install c-blosc
 export DYLD_LIBRARY_PATH=$(brew --prefix c-blosc)/lib:$DYLD_LIBRARY_PATH
-export JAVA_TOOL_OPTIONS=-Djava.library.path=$(brew --prefix c-blosc)/lib
+# both flags are needed: n5-blosc loads libblosc via JNA (jna.library.path), and
+# macOS SIP strips DYLD_LIBRARY_PATH from the forked test JVM
+export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna.library.path=$(brew --prefix c-blosc)/lib"
 ```
 
 ## Architecture
@@ -45,13 +52,24 @@ export JAVA_TOOL_OPTIONS=-Djava.library.path=$(brew --prefix c-blosc)/lib
 - `Affine3DUtils` – checks whether an `AffineTransform3D`'s linear part is a pure axis-aligned scaling (no rotation/shear)
 - `ScriptUtils` – opens Fiji script editor with a pre-populated scriptlet
 
-Note: `BdvHandleService` is test/example-only now (`src/test/java/ome/zarr/examples/demo/`), not part of the shipped plugin.
+Note: `BdvHandleService` is test/example-only now (`ome-zarr-fiji-ui/src/test/java/ome/zarr/examples/demo/`), not part of the shipped plugin.
 
-**Package root:** `ome.zarr`, organized per future artifact:
-- `ome.zarr.imglib2` (+`.metadata`, `.exceptions`) – backend-agnostic core (`PyramidBackend`, `PyramidContents`)
-- `ome.zarr.n5` / `ome.zarr.zarrjava` – N5 / zarr-java backend implementations
-- `ome.zarr.fiji` (+`.open`, `.plugins`, `.util`) – Fiji/BDV integration layer, no backend dependency
-- `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.settings`, `.dialog`, `.util`) – Fiji UI layer (sibling of `ome.zarr.fiji`, future `ome-zarr-fiji-ui` artifact): DnD handler, SciJava commands, dialogs, opening-behavior settings
-- `ZarrUtils` lives in `ome.zarr.imglib2` (no Fiji/backend dependency); `ZarrTestUtils` sits directly at the `ome.zarr` root
+## Modules
 
-**Test resources** (sample OME-Zarr datasets) live under `src/test/resources/` and are accessed via `ZarrTestUtils.resourcePath()`.
+Multi-module reactor. The root `pom.xml` is the aggregator (`ome.zarr:ome-zarr-parent`, packaging `pom`) and inherits `pom-scijava`. Each module lives in its own directory `ome-zarr-<name>/` with its own `pom.xml` and carries its own SciJava provenance (required by the enforcer). Five published modules:
+
+- **`ome-zarr-imglib2`** – package `ome.zarr.imglib2` (+`.metadata`, `.exceptions`); backend-agnostic core (`PyramidBackend`, `PyramidContents`, `ZarrUtils`, `Affine3DUtils`). No Fiji or backend dependency.
+- **`ome-zarr-n5`** – `ome.zarr.n5` (`N5PyramidBackend`); depends on imglib2 + external N5-universe (codecs `n5-zarr`/`n5-blosc`/zstd arrive transitively via `n5-universe`).
+- **`ome-zarr-zarrjava`** – `ome.zarr.zarrjava` (`ZarrJavaPyramidBackend`); depends on imglib2 + `dev.zarr:zarr-java`.
+- **`ome-zarr-fiji`** (+`.open`, `.plugins`, `.util`) – ImageJ/BDV integration (`ZarrOpener`, `PyramidalDataset`, `PyramidalBdv`, `PyramidalService`, `BdvUtils`). Depends on imglib2 only (no backend artifact); uses the *external* N5 library directly for the single-scale fallback in `ZarrOpener`.
+- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.settings`, `.dialog`, `.util`); DnD handler, SciJava commands, dialogs, opening-behavior settings. Depends on all four other modules – the batteries-included artifact.
+
+Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`imglib2`, `n5`, `zarrjava`, `fiji`}. Backends are selected at runtime (`ZarrReaderBackend`), so `fiji` needs at least one backend on the classpath at runtime even though it doesn't depend on one.
+
+A sixth, non-published module **`ome-zarr-coverage-report`** only runs `jacoco:report-aggregate` to produce a cross-module coverage report for SonarCloud; it joins the reactor solely under the `coverage` profile.
+
+**Shared test code and resources** live once under `test-shared/` at the repo root, wired into every module by `build-helper-maven-plugin` (`add-test-source`) and `<testResources>` in the parent pom:
+- `test-shared/java/` – `ZarrTestUtils` (at the `ome.zarr` root) and `PyramidBackendTestBase` (at `ome.zarr.imglib2`), the shared backend test base subclassed by the n5/zarrjava/fiji suites.
+- `test-shared/resources/` – sample OME-Zarr datasets (`ome/zarr/testdata/…`) and `logback-test.xml`.
+
+`ZarrTestUtils.resourcePath()` resolves resources to a real filesystem `Path`, so they are copied into each module's `target/test-classes` via the shared `<testResources>` (a test-jar would expose them only as `jar:` URLs, which `Paths.get` rejects) – hence the shared-source approach rather than a published test-jar.
