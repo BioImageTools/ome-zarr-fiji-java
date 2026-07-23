@@ -63,7 +63,11 @@ public class OpenInBDVCommand implements Command
 		logger.trace( "Running OpenInBDVCommand. pyramidal={}", pyramidal );
 		if ( pyramidal == null )
 		{
-			uiService.showDialog( "The active image is not an OME-Zarr dataset.", "Open in BigDataViewer" );
+			final String message = "The active image is not an OME-Zarr dataset.";
+			if ( uiService.isVisible() )
+				uiService.showDialog( message, "Open in BigDataViewer" );
+			else
+				logger.warn( message );
 			return;
 		}
 		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getContext(), pyramidal.getPyramidContents() );
