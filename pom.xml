@@ -299,6 +299,19 @@
 						<argLine>-Xmx4g -da -Dimagej.legacy.disable=true</argLine>
 					</configuration>
 				</plugin>
+				<!-- Force javadoc onto the classpath instead of the JPMS module path. -->
+				<!-- All modules share the ome.zarr base package, so in modular mode the -->
+				<!-- plugin collapses them into a single "ome.zarr" module and drops the -->
+				<!-- reactor-sibling jar (e.g. ome-zarr-imglib2), making its packages -->
+				<!-- invisible to dependent modules ("package ome.zarr.imglib2 does not -->
+				<!-- exist"). legacyMode keeps the pre-JPMS classpath behaviour. -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<configuration>
+						<legacyMode>true</legacyMode>
+					</configuration>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 	</build>
