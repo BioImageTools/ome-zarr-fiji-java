@@ -20,11 +20,13 @@
     * [ ] Confirm version number
     * [ ] The release script pushes to master on github.com
         * This triggers a *github Action* which copies the version to be released to maven.scijava.org.
-          cf. https://maven.scijava.org/#browse/search/generic=keyword%3Dome-zarr-fiji
-* [ ] Download the created artefact from maven.scijava.org file
-  central (https://maven.scijava.org/#browse/search/generic=keyword%3Dome-zarr-fiji)
-    * [ ] Delete jar-file from last release version from local Fiji installation path (if any)
-    * [ ] Copy jar file of the new version to local Fiji installation path
+          cf. https://maven.scijava.org/#browse/search/generic=keyword%3Dome-zarr
+* [ ] Download the created artefacts from maven.scijava.org file
+  central (https://maven.scijava.org/#browse/search/generic=keyword%3Dome-zarr)
+    * The build releases five artefacts: `ome-zarr-imglib2`, `ome-zarr-n5`, `ome-zarr-zarrjava`,
+      `ome-zarr-fiji`, `ome-zarr-fiji-ui` (plus the `ome-zarr-parent` POM).
+    * [ ] Delete the jar-files from the last release version from the local Fiji installation path (if any)
+    * [ ] Copy the five new module jars to the local Fiji installation path
     * [ ] Copy new dependencies, if any
         * [ ] zarr-java-0.1.3.jar
     * [ ] Test, if Fiji starts successfully
@@ -34,7 +36,7 @@
     * [ ] Set Updater to Advanced Mode
         * [ ] If needed, add `webdav:stefanhahmann` (or any other valid username for the update site) as `Host` under
           `Manage Update Sites > OME-Zarr-PREVIEW`
-    * [ ] Upload ome-zarr-fiji-*.*.*.jar
+    * [ ] Upload all five module jars: ome-zarr-imglib2-*.jar, ome-zarr-n5-*.jar, ome-zarr-zarrjava-*.jar, ome-zarr-fiji-*.jar, ome-zarr-fiji-ui-*.jar
     * [ ] Check Upload success: https://sites.imagej.net/OME-Zarr-PREVIEW/jars/
 * [ ] Add Release documentation: https://github.com/BioImageTools/ome-zarr-fiji-java/releases
 * [ ] Make an announcement on image.sc: https://forum.image.sc/t/ngff-weekly-dev-update-thread/110810/
