@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -55,6 +55,7 @@ import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.HttpStore;
 import dev.zarr.zarrjava.store.S3Store;
 import dev.zarr.zarrjava.store.Store;
+import dev.zarr.zarrjava.store.StoreException;
 import dev.zarr.zarrjava.store.StoreHandle;
 
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
@@ -87,6 +88,7 @@ import org.slf4j.LoggerFactory;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.PyramidLevelAccessException;
+import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
@@ -244,7 +246,8 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		{
 			final S3Client s3 = S3Client.builder().region( Region.US_EAST_1 )
 					.credentialsProvider( AwsCredentialsProviderChain.builder()
-							.credentialsProviders( DefaultCredentialsProvider.builder().build(), AnonymousCredentialsProvider.create() ).build() )
+							.credentialsProviders( DefaultCredentialsProvider.builder().build(), AnonymousCredentialsProvider.create() )
+							.build() )
 					.build();
 			final String bucket = inputUri.getHost();
 			final String rawPath = inputUri.getPath();
@@ -253,7 +256,17 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		}
 		else
 			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
-		return openMultiscaleImageFromHandle( store.resolve() );
+		try
+		{
+			return openMultiscaleImageFromHandle( store.resolve() );
+		}
+		catch ( StoreException e )
+		{
+			// Store-level failure (e.g., S3 auth failure, missing bucket, network
+			// error) before we could reach the dataset. Wrap in a backend-agnostic
+			// exception.
+			throw new StoreAccessException( inputUri.toString(), e );
+		}
 	}
 
 	private MultiscaleImage openMultiscaleImageFromHandle( final StoreHandle handle )

@@ -96,10 +96,10 @@ import javax.swing.SwingUtilities;
 import bdv.viewer.ViewerFrame;
 import bdv.util.BdvStackSource;
 import ij.ImagePlus;
-import dev.zarr.zarrjava.store.StoreException;
 import ome.zarr.fijiui.settings.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
+import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
@@ -703,7 +703,8 @@ class ZarrOpenActionsTest
 				try ( MockedConstruction< ZarrJavaPyramidBackend > mock = mockConstruction(
 						ZarrJavaPyramidBackend.class,
 						( mockBackend, ctx ) -> when( mockBackend.load( any() ) )
-								.thenThrow( new StoreException( "Access Denied (403)" ) ) ) )
+								.thenThrow( new StoreAccessException( uri.toString(),
+										new RuntimeException( "Access Denied (403)" ) ) ) ) )
 				{
 					final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings, capturedError::set );
 					assertDoesNotThrow( () -> actions.openImage( dataset -> null, img -> null ) );

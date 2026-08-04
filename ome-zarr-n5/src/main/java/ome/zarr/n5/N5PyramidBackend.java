@@ -35,6 +35,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 
 import org.janelia.saalfeldlab.n5.DataType;
+import org.janelia.saalfeldlab.n5.N5Exception;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
@@ -67,6 +68,7 @@ import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
+import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
 
@@ -96,11 +98,23 @@ public class N5PyramidBackend implements PyramidBackend
 	@Override
 	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
 	{
-		final N5Reader reader = new N5Factory()
-				.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) )
-				.openReader( inputUri.toString() );
+		final N5Reader reader;
 		final N5TreeNode treeNode = new N5TreeNode( "" );
-		final OmeNgffMetadata metadata = readMetadata( reader, treeNode, inputUri );
+		final OmeNgffMetadata metadata;
+		try
+		{
+			reader = new N5Factory()
+					.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) )
+					.openReader( inputUri.toString() );
+			metadata = readMetadata( reader, treeNode, inputUri );
+		}
+		catch ( N5Exception e )
+		{
+			// Store-level failure (e.g., S3 auth failure, missing bucket, network
+			// error) before we could reach the dataset. Wrap in a backend-agnostic
+			// exception.
+			throw new StoreAccessException( inputUri.toString(), e );
+		}
 		final Multiscale multiscale = buildMultiscale( metadata, 0 );
 		final Omero omero = readOmeroMetadata( reader, treeNode );
 

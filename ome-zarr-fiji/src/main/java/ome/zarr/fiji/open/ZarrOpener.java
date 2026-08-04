@@ -60,8 +60,7 @@ import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.open.exceptions.NonExistingResolutionLevelException;
 import ome.zarr.fiji.open.exceptions.NotASingleScaleImageException;
 import ome.zarr.fiji.util.BdvUtils;
-import dev.zarr.zarrjava.store.StoreException;
-import org.janelia.saalfeldlab.n5.N5Exception;
+import ome.zarr.imglib2.exceptions.StoreAccessException;
 
 /**
  * Backend-reader-agnostic opener for OME-Zarr datasets.
@@ -247,7 +246,7 @@ public class ZarrOpener
 			showSingleScaleNotSupported();
 			// TODO: openSingleScaleImage( singleScaleOpener ) when single-scale support is added
 		}
-		catch ( StoreException | N5Exception e )
+		catch ( StoreAccessException e )
 		{
 			showStoreAccessError( e );
 		}
