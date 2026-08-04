@@ -143,7 +143,15 @@ Check out the repo and compile with:
 mvn clean package
 ```
 
-and place the resulting `.jar` file into your `Fiji.app/jars` folder.
+The build is a multi-module reactor and produces five jars — one per module. Copy **all five** into
+your `Fiji.app/jars` folder (Fiji does not resolve Maven dependencies, so every module jar must be
+present):
+
+* `ome-zarr-imglib2/target/ome-zarr-imglib2-<version>.jar`
+* `ome-zarr-n5/target/ome-zarr-n5-<version>.jar`
+* `ome-zarr-zarrjava/target/ome-zarr-zarrjava-<version>.jar`
+* `ome-zarr-fiji/target/ome-zarr-fiji-<version>.jar`
+* `ome-zarr-fiji-ui/target/ome-zarr-fiji-ui-<version>.jar`
 
 You also need to copy the following `.jar` files to your `Fiji.app/jars` folder (and delete the older versions, if they
 are present):
