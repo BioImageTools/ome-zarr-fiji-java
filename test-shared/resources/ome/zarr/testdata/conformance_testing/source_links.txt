@@ -1,0 +1,5 @@
+Open SciVis Datasets:   https://raw.githubusercontent.com/InsightSoftwareConsortium/OMEZarrOpenSciVisDatasets/refs/heads/main/README.md
+                        http://klacansky.com/open-scivis-datasets/datasets.json
+
+IDR table:              https://raw.githubusercontent.com/IDR/ome-ngff-samples/refs/heads/main/_data/table.csv
+
