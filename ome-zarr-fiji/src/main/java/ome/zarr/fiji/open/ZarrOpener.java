@@ -257,35 +257,6 @@ public class ZarrOpener
 		return null;
 	}
 
-	/**
-	 * Opens the dataset and applies a caller-supplied function to it: the
-	 * multiscale function receives a {@link PyramidalDataset} at the preferred
-	 * resolution level, the single-scale function an {@link Img} (single-scale
-	 * support is still pending). Returns the function's result, or {@code null}
-	 * if opening failed.
-	 */
-	public Object openImage( final Function< PyramidalDataset, Object > multiScaleImageOpener,
-			final Function< Img< ? >, Object > singleScaleImageOpener )
-	{
-		try
-		{
-			return openPyramidImage(
-					() -> {
-						final PyramidContents< ? > contents = getContents();
-						final PyramidalDataset dataset = new PyramidalDataset( context, contents, preferredResolutionLevel );
-						final Object result = multiScaleImageOpener.apply( dataset );
-						logger.info( "Opened dataset: {}", inputUri );
-						return result;
-					},
-					singleScaleImageOpener );
-		}
-		catch ( NoMatchingResolutionException e )
-		{
-			showNonMatchingResolutionError( e );
-		}
-		return null;
-	}
-
 	private Object openSingleScaleImage( final Function< Img< ? >, Object > singleScaleImageOpener ) throws NotASingleScaleImageException
 	{
 		N5Reader reader = new N5Factory().openReader( inputUri.toString() );

@@ -34,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
@@ -78,10 +77,8 @@ import com.sun.net.httpserver.HttpServer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import bdv.tools.brightness.ConverterSetup;
@@ -100,7 +97,9 @@ import ome.zarr.fijiui.settings.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
+import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
@@ -113,9 +112,26 @@ import ome.zarr.ZarrTestUtils;
 
 class ZarrOpenActionsTest
 {
+
 	static Stream< ZarrReaderBackend > readerBackends()
 	{
 		return Stream.of( ZarrReaderBackend.N5, ZarrReaderBackend.ZARR_JAVA );
+	}
+
+	/**
+	 * Loads the dataset headlessly through {@link ZarrOpener#getContents()} with
+	 * the given backend, without instantiating any UI. Returns the loaded
+	 * {@link PyramidContents}; throws the relevant domain exception (e.g.
+	 * {@link ome.zarr.imglib2.exceptions.NotAMultiscaleImageException} or
+	 * {@link ome.zarr.imglib2.exceptions.MultiImageDatasetException}).
+	 * Lets tests assert that a dataset opens as a multiscale image without showing a window.
+	 */
+	private static PyramidContents< ? > loadMultiscaleHeadless( final URI uri, final Context context,
+			final ZarrReaderBackend backend )
+	{
+		final PyramidBackend pyramidBackend = backend.createBackend();
+		final ZarrOpener opener = new ZarrOpener( uri, context, pyramidBackend, null, error -> {} );
+		return opener.getContents();
 	}
 
 	static Stream< String > omeZarrExamples()
@@ -290,18 +306,13 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
-			AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
-			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-			Function< PyramidalDataset, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
-			Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
-			actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter );
-			assertEquals( 1, multiScaleCounter.get() );
-			assertEquals( 0, singleScaleCounter.get() );
+			assertNotNull( loadMultiscaleHeadless( path.toUri(), context, ZarrOpeningSettings.DEFAULT_READER_BACKEND ),
+					"Expected " + resource + " to open as a multiscale image" );
 		}
 	}
 
 	@Test
+	@SuppressWarnings( "java:S1612" )
 	void testOpenValidSingleScaleImagePath() throws URISyntaxException
 	{
 		String[] validPaths = {
@@ -313,19 +324,19 @@ class ZarrOpenActionsTest
 			for ( String invalidPath : validPaths )
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
-				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
-				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-				Function< PyramidalDataset, Object > multiScaleOpeningCounter = dataset -> multiScaleCounter.incrementAndGet();
-				Function< Img< ? >, Object > singleScaleOpeningCounter = img -> singleScaleCounter.incrementAndGet();
-				actions.openImage( multiScaleOpeningCounter, singleScaleOpeningCounter );
-				assertEquals( 0, multiScaleCounter.get() );
-				assertEquals( 0, singleScaleCounter.get() ); // currently not supported
+				AtomicReference< String > capturedError = new AtomicReference<>();
+				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, capturedError::set );
+				assertDoesNotThrow( () -> {
+					actions.openIJWithImage();
+				} );
+				assertNotNull( capturedError.get(),
+						"Single-scale path " + invalidPath + " should be reported as not (yet) supported" );
 			}
 		}
 	}
 
 	@Test
+	@SuppressWarnings( "java:S1612" )
 	void testOpenInvalidImagePaths() throws URISyntaxException
 	{
 		String[] invalidPaths = {
@@ -338,15 +349,16 @@ class ZarrOpenActionsTest
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
 				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-				Function< PyramidalDataset, Object > multiScaleNoOp = pyramidalDataset -> null;
-				Function< Img< ? >, Object > singleScaleNoOp = img -> null;
-				assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp ) );
+				assertDoesNotThrow( () -> {
+					actions.openIJWithImage();
+				} );
 			}
 		}
 	}
 
 	@ParameterizedTest
 	@MethodSource( "readerBackends" )
+	@SuppressWarnings( "java:S1612" )
 	void testOpenBioformats2rawCollectionRootReportsMultiImage( ZarrReaderBackend backend ) throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr" );
@@ -357,13 +369,9 @@ class ZarrOpenActionsTest
 			ZarrOpeningSettings settings = new ZarrOpeningSettings();
 			settings.setReaderBackend( backend );
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, errorHandler );
-			AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
-			AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-			Function< PyramidalDataset, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
-			Function< Img< ? >, Object > singleScaleOpener = img -> singleScaleCounter.incrementAndGet();
-			assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener ) );
-			assertEquals( 0, multiScaleCounter.get(), "Multi-image collection must not be opened as a single multiscale image" );
-			assertEquals( 0, singleScaleCounter.get() );
+			assertDoesNotThrow( () -> {
+				actions.openIJWithImage();
+			} );
 			assertNotNull( capturedError.get(), "Error handler should have been called for backend " + backend );
 			assertTrue( capturedError.get().contains( "multiple images" ),
 					"Expected multi-image message from backend, got: " + capturedError.get() );
@@ -383,27 +391,14 @@ class ZarrOpenActionsTest
 			for ( String childPath : childPaths )
 			{
 				Path path = ZarrTestUtils.resourcePath( childPath );
-				AtomicReference< String > capturedError = new AtomicReference<>();
-				Consumer< String > errorHandler = capturedError::set;
-				ZarrOpeningSettings settings = new ZarrOpeningSettings();
-				settings.setReaderBackend( backend );
-				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, errorHandler );
-				AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
-				AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-				Function< PyramidalDataset, Object > multiScaleOpener = dataset -> multiScaleCounter.incrementAndGet();
-				Function< Img< ? >, Object > singleScaleOpener = img -> singleScaleCounter.incrementAndGet();
-				assertDoesNotThrow( () -> actions.openImage( multiScaleOpener, singleScaleOpener ),
-						"Opening child image " + childPath + " should not throw" );
-				assertEquals( 1, multiScaleCounter.get(),
-						"Child image " + childPath + " should be opened as a multiscale image" );
-				assertEquals( 0, singleScaleCounter.get() );
-				assertNull( capturedError.get(),
-						"Error handler should not have been called for child " + childPath + ", got: " + capturedError.get() );
+				assertNotNull( loadMultiscaleHeadless( path.toUri(), context, backend ),
+						"Child image " + childPath + " should open as a multiscale image" );
 			}
 		}
 	}
 
 	@Test
+	@SuppressWarnings( "java:S1612" )
 	void testOpenNonMatchingResolution() throws URISyntaxException
 	{
 		try (Context context = new Context())
@@ -411,9 +406,9 @@ class ZarrOpenActionsTest
 			Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 			ZarrOpeningSettings settings = new ZarrOpeningSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, System.out::println );
-			Function< PyramidalDataset, Object > multiScaleNoOp = pyramidalDataset -> null;
-			Function< Img< ? >, Object > singleScaleNoOp = img -> null;
-			assertDoesNotThrow( () -> actions.openImage( multiScaleNoOp, singleScaleNoOp ) );
+			assertDoesNotThrow( () -> {
+				actions.openIJWithImage();
+			} );
 		}
 	}
 
@@ -673,25 +668,17 @@ class ZarrOpenActionsTest
 	{
 		try (Context context = new Context())
 		{
-			final AtomicReference< String > error = new AtomicReference<>();
-			final ZarrOpeningSettings settings = new ZarrOpeningSettings();
-			settings.setReaderBackend( backend );
-			final ZarrOpenActions actions = new ZarrOpenActions( S3_JANELIA_CHOROID_PLEXUS, context, settings, error::set );
-			final AtomicInteger multiScaleCounter = new AtomicInteger( 0 );
-			final AtomicInteger singleScaleCounter = new AtomicInteger( 0 );
-			actions.openImage( dataset -> multiScaleCounter.incrementAndGet(), img -> singleScaleCounter.incrementAndGet() );
-			assertNull( error.get(), "Error handler called for backend " + backend + ": " + error.get() );
-			assertEquals( 1, multiScaleCounter.get() );
-			assertEquals( 0, singleScaleCounter.get() );
+			final PyramidContents< ? > contents = loadMultiscaleHeadless( S3_JANELIA_CHOROID_PLEXUS, context, backend );
+			assertNotNull( contents, "Expected the S3 dataset to open as a multiscale image for backend " + backend );
 		}
 	}
 
 	@ParameterizedTest
 	@MethodSource( "readerBackends" )
-	@SuppressWarnings( "rawtypes" )
+	@SuppressWarnings( "java:S1612" )
 	void storeAccessErrorIsReportedToErrorHandler( final ZarrReaderBackend backend )
 	{
-		try ( Context context = new Context() )
+		try (Context context = new Context())
 		{
 			final URI uri = URI.create( "s3://nonexistent-bucket/some/path" );
 			final AtomicReference< String > capturedError = new AtomicReference<>();
@@ -700,14 +687,16 @@ class ZarrOpenActionsTest
 
 			if ( backend == ZarrReaderBackend.ZARR_JAVA )
 			{
-				try ( MockedConstruction< ZarrJavaPyramidBackend > mock = mockConstruction(
+				try (MockedConstruction< ZarrJavaPyramidBackend > mock = mockConstruction(
 						ZarrJavaPyramidBackend.class,
 						( mockBackend, ctx ) -> when( mockBackend.load( any() ) )
 								.thenThrow( new StoreAccessException( uri.toString(),
-										new RuntimeException( "Access Denied (403)" ) ) ) ) )
+										new RuntimeException( "Access Denied (403)" ) ) ) ))
 				{
 					final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings, capturedError::set );
-					assertDoesNotThrow( () -> actions.openImage( dataset -> null, img -> null ) );
+					assertDoesNotThrow( () -> {
+						actions.openIJWithImage();
+					} );
 					assertEquals( 1, mock.constructed().size(), "Expected exactly one ZarrJavaPyramidBackend to be constructed" );
 				}
 			}
@@ -715,7 +704,9 @@ class ZarrOpenActionsTest
 			{
 				// N5 backend throws N5Exception.N5IOException immediately (local failure, no network needed)
 				final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings, capturedError::set );
-				assertDoesNotThrow( () -> actions.openImage( dataset -> null, img -> null ) );
+				assertDoesNotThrow( () -> {
+					actions.openIJWithImage();
+				} );
 			}
 
 			assertNotNull( capturedError.get(), "Error handler should have been called for backend " + backend );

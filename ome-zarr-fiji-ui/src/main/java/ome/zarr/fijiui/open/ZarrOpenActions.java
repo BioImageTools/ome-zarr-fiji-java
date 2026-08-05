@@ -41,15 +41,12 @@ import java.net.URI;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-import net.imglib2.img.Img;
 
 import ij.IJ;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrReaderBackend;
-import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fijiui.dialog.DnDActionChooser;
 import ome.zarr.fijiui.util.ScriptUtils;
@@ -238,11 +235,6 @@ public class ZarrOpenActions
 		return opener.openBDVWithImage();
 	}
 
-	Object openImage( final Function< PyramidalDataset, Object > multiScaleImageOpener,
-			final Function< Img< ? >, Object > singleScaleImageOpener )
-	{
-		return opener.openImage( multiScaleImageOpener, singleScaleImageOpener );
-	}
 
 	/**
 	 * Opens the Fiji script editor pre-filled with a scriptlet that opens the
