@@ -103,9 +103,11 @@ public class N5PyramidBackend implements PyramidBackend
 		final OmeNgffMetadata metadata;
 		try
 		{
-			reader = new N5Factory()
-					.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) )
-					.openReader( inputUri.toString() );
+			final N5Factory factory = new N5Factory();
+			// The region default only matters for s3:// URIs.
+			if ( "s3".equalsIgnoreCase( inputUri.getScheme() ) )
+				factory.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) );
+			reader = factory.openReader( inputUri.toString() );
 			metadata = readMetadata( reader, treeNode, inputUri );
 		}
 		catch ( N5Exception e )
