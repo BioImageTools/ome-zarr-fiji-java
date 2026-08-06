@@ -156,6 +156,7 @@ public class ZarrOpener
 						final PyramidContents< ? > contents = getContents();
 						final PyramidalDataset dataset = new PyramidalDataset( context, contents, preferredResolutionLevel );
 						context.getService( UIService.class ).show( dataset );
+						context.getService( PyramidalService.class ).registerImageJDataset( dataset );
 						logger.info( "Opened dataset in ImageJ: {}", inputUri );
 						return null;
 					},
@@ -191,6 +192,7 @@ public class ZarrOpener
 							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels() );
 						final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
 						context.getService( UIService.class ).show( dataset );
+						context.getService( PyramidalService.class ).registerImageJDataset( dataset );
 						logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
 						return null;
 					},
