@@ -12,7 +12,7 @@ If the dropped / pasted target is not recognized as a **OME-Zarr v0.3 - v0.5** r
 
 # Features
 
-## Drag & Drop of local OME-Zarr folders and Copy & Paste of OME-Zarr URIs (local folder, http, https)
+## Drag & Drop of local OME-Zarr folders and Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)
 
 There are several options for what Fiji can do after drag & drop / copy & paste:
 
@@ -37,7 +37,12 @@ and easily handles even the huge ones.
 
 ### Copy & Paste:
 
-* Supports local paths and http(s) URLs (s3 is planned)
+* Supports local paths, http(s) URLs, and `s3://` URIs
+    * Public (anonymous) S3 buckets work out of the box, e.g.
+      `s3://janelia-cosem-datasets/jrc_mus-choroid-plexus-3/jrc_mus-choroid-plexus-3.zarr/recon-1/em/fibsem-uint8`.
+    * Private buckets use your ambient AWS credentials (environment variables, `~/.aws/credentials`,
+      instance profile, etc.); if those are absent, access falls back to anonymous.
+    * The AWS region defaults to `us-east-1`.
 * Three entry points:
     * Paste with `CTRL` / `CMD` / `SHIFT` + `V` (requires FIJI latest)
     * Paste via menu: Plugins -> OME-Zarr -> Paste OME-Zarr URI
