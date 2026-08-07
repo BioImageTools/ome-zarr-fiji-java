@@ -35,6 +35,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 
 import org.janelia.saalfeldlab.n5.DataType;
+import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Exception;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
@@ -66,8 +67,10 @@ import software.amazon.awssdk.regions.Region;
 import ome.zarr.imglib2.Affine3DUtils;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.ZarrUtils;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
+import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
@@ -98,16 +101,26 @@ public class N5PyramidBackend implements PyramidBackend
 	@Override
 	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
 	{
+		try
+		{
+			return loadMultiscale( inputUri );
+		}
+		catch ( NotAMultiscaleImageException e )
+		{
+			// The location is a bare array (a single resolution level), not a
+			// multiscales group. Open it as a one-level pyramid instead.
+			return loadSingleArray( inputUri );
+		}
+	}
+
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale( final URI inputUri )
+	{
 		final N5Reader reader;
 		final N5TreeNode treeNode = new N5TreeNode( "" );
 		final OmeNgffMetadata metadata;
 		try
 		{
-			final N5Factory factory = new N5Factory();
-			// The region default only matters for s3:// URIs.
-			if ( "s3".equalsIgnoreCase( inputUri.getScheme() ) )
-				factory.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) );
-			reader = factory.openReader( inputUri.toString() );
+			reader = openReader( inputUri );
 			metadata = readMetadata( reader, treeNode, inputUri );
 		}
 		catch ( N5Exception e )
@@ -150,18 +163,165 @@ public class N5PyramidBackend implements PyramidBackend
 				.build();
 	}
 
+	private static N5Reader openReader( final URI uri )
+	{
+		final N5Factory factory = new N5Factory();
+		// The region default only matters for s3:// URIs.
+		if ( "s3".equalsIgnoreCase( uri.getScheme() ) )
+			factory.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) );
+		return factory.openReader( uri.toString() );
+	}
+
 	private OmeNgffMetadata readMetadata( final N5Reader reader, final N5TreeNode node, final URI inputUri )
 	{
-		final List< N5MetadataParser< ? > > parsers = Collections.singletonList( new OmeNgffMetadataParser( reader ) );
-		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, parsers );
-		final N5Metadata n5Metadata = node.getMetadata();
-		if ( n5Metadata == null )
+		final OmeNgffMetadata metadata = readMetadataOrNull( reader, node );
+		if ( metadata == null )
 		{
 			if ( isBioformats2rawLayout( reader ) )
 				throw new MultiImageDatasetException( inputUri.toString() );
 			throw new NotAMultiscaleImageException( inputUri.toString() );
 		}
-		return Cast.unchecked( n5Metadata );
+		return metadata;
+	}
+
+	/**
+	 * Parses OME-NGFF multiscales metadata at {@code node}, or returns
+	 * {@code null} when the node carries none (a bare array, or a group that is
+	 * not a multiscales group). Unlike {@link #readMetadata}, this never throws
+	 * for a missing multiscale, so callers walking to a parent can fall back
+	 * cleanly.
+	 */
+	private OmeNgffMetadata readMetadataOrNull( final N5Reader reader, final N5TreeNode node )
+	{
+		final List< N5MetadataParser< ? > > parsers = Collections.singletonList( new OmeNgffMetadataParser( reader ) );
+		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, parsers );
+		final N5Metadata n5Metadata = node.getMetadata();
+		return n5Metadata == null ? null : Cast.unchecked( n5Metadata );
+	}
+
+	/**
+	 * Opens a bare array node (a single resolution level) as a one-level pyramid.
+	 * Prefers the parent multiscales group so the level keeps its axis
+	 * calibration and OMERO metadata; failing that, uses the array's own
+	 * {@code dimension_names} (Zarr v3) to open it uncalibrated; and if neither
+	 * yields axis names, refuses with {@link SingleArrayAxesUnknownException}.
+	 */
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadSingleArray( final URI arrayUri )
+	{
+		final URI parentUri = ZarrUtils.parentUri( arrayUri );
+		if ( parentUri != null )
+		{
+			final PyramidContents< T > viaParent = tryLoadLevelFromParent( parentUri, arrayUri );
+			if ( viaParent != null )
+				return viaParent;
+		}
+		final PyramidContents< T > nodeOnly = tryLoadArrayNodeOnly( arrayUri );
+		if ( nodeOnly != null )
+			return nodeOnly;
+		throw new SingleArrayAxesUnknownException( arrayUri.toString() );
+	}
+
+	/**
+	 * Attempts to open {@code arrayUri} as one level of the multiscales group at
+	 * {@code parentUri}, returning a one-level pyramid carrying that level's
+	 * axes, scale and transform plus the group's OMERO metadata. Returns
+	 * {@code null} (so the caller can fall back) when the parent is not a
+	 * readable multiscales group or does not list this array.
+	 */
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadLevelFromParent(
+			final URI parentUri, final URI arrayUri )
+	{
+		final N5Reader reader;
+		final OmeNgffMetadata metadata;
+		final Multiscale multiscale;
+		final Omero omero;
+		try
+		{
+			reader = openReader( parentUri );
+			final N5TreeNode node = new N5TreeNode( "" );
+			metadata = readMetadataOrNull( reader, node );
+			if ( metadata == null )
+				return null;
+			multiscale = buildMultiscale( metadata, 0 );
+			omero = readOmeroMetadata( reader, node );
+		}
+		catch ( RuntimeException e )
+		{
+			logger.debug( "Parent of {} is not a usable multiscales group: {}", arrayUri, e.getMessage() );
+			return null;
+		}
+		final ResolutionLevel matched = levelForChild( multiscale, arrayUri );
+		if ( matched == null )
+		{
+			logger.debug( "Parent multiscales at {} does not list child array {}", parentUri, arrayUri );
+			return null;
+		}
+		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
+		final AffineTransform3D transform = spatialMetadata.spatialTransforms3d()[ matched.index ];
+		final T type = N5Utils.type( multiscale.getDataType() );
+		final CachedCellImg< T, ? > img = N5Utils.openVolatile( reader, matched.datasetPath );
+		return PyramidContents.singleLevel( multiscale.getName(), type, transform, img, createAxisCalibrations( matched ), omero );
+	}
+
+	private static ResolutionLevel levelForChild( final Multiscale multiscale, final URI arrayUri )
+	{
+		for ( final ResolutionLevel level : multiscale.getLevels() )
+			if ( ZarrUtils.isChildPath( arrayUri, level.datasetPath ) )
+				return level;
+		return null;
+	}
+
+	/**
+	 * Opens {@code arrayUri} purely from its own metadata, without a parent
+	 * multiscales group: it uses the Zarr v3 {@code dimension_names} for axis
+	 * names and opens uncalibrated (unit scale, no units, no OMERO). Returns
+	 * {@code null} when the node cannot be opened as an array or declares no
+	 * dimension names (e.g. a Zarr v2 array), so the caller refuses.
+	 */
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( final URI arrayUri )
+	{
+		final N5Reader reader = openReader( arrayUri );
+		final String[] names = readDimensionNames( reader );
+		if ( names == null || names.length == 0 )
+			return null;
+		final DatasetAttributes attributes;
+		final CachedCellImg< T, ? > img;
+		try
+		{
+			attributes = reader.getDatasetAttributes( "" );
+			if ( attributes == null )
+				return null;
+			img = N5Utils.openVolatile( reader, "" );
+		}
+		catch ( RuntimeException e )
+		{
+			logger.debug( "Could not open {} as a plain array: {}", arrayUri, e.getMessage() );
+			return null;
+		}
+		final T type = N5Utils.type( attributes.getDataType() );
+		final AxisCalibration[] axes = AxisCalibration.fromZarrDimensionNames( names );
+		return PyramidContents.singleLevel( ZarrUtils.lastSegment( arrayUri ), type, new AffineTransform3D(), img, axes, null );
+	}
+
+	/**
+	 * Reads the Zarr v3 {@code dimension_names} attribute of the array node, or
+	 * {@code null} when absent (e.g. a Zarr v2 array, which has none).
+	 * <p>
+	 * NB: this relies on the N5 zarr reader surfacing {@code dimension_names} as a
+	 * top-level attribute; it is a best-effort fallback only. The parent-group
+	 * path above is the primary route and supplies axis names for both Zarr v2
+	 * and v3, so a {@code null} here simply means an uncalibratable lone array.
+	 */
+	private static String[] readDimensionNames( final N5Reader reader )
+	{
+		try
+		{
+			return reader.getAttribute( "", "dimension_names", String[].class );
+		}
+		catch ( RuntimeException e )
+		{
+			return null;
+		}
 	}
 
 	private static boolean isBioformats2rawLayout( final N5Reader reader )

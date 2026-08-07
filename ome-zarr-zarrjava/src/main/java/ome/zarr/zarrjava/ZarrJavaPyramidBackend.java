@@ -43,6 +43,7 @@ import dev.zarr.zarrjava.core.Attributes;
 import dev.zarr.zarrjava.core.Group;
 import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;
 import dev.zarr.zarrjava.experimental.ome.metadata.Axis;
+import dev.zarr.zarrjava.experimental.ome.metadata.Dataset;
 import dev.zarr.zarrjava.experimental.ome.metadata.MultiscalesEntry;
 import dev.zarr.zarrjava.experimental.ome.metadata.OmeroChannel;
 import dev.zarr.zarrjava.experimental.ome.metadata.OmeroMetadata;
@@ -89,9 +90,11 @@ import org.slf4j.LoggerFactory;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.PyramidLevelAccessException;
+import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.ZarrUtils;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
 
@@ -126,6 +129,20 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
 	{
 		this.inputUri = inputUri;
+		try
+		{
+			return loadMultiscale();
+		}
+		catch ( NotAMultiscaleImageException e )
+		{
+			// The location is a bare array (a single resolution level), not a
+			// multiscales group. Open it as a one-level pyramid instead.
+			return loadSingleArray( inputUri );
+		}
+	}
+
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale()
+	{
 		final MultiscaleImage multiscaleImage = openMultiscaleImage();
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
 
@@ -145,12 +162,7 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
 		for ( int level = 0; level < numResolutionLevels; level++ )
 		{
-			final Array arr = openLevel( multiscaleImage, level );
-			final long[] imgShape = reverseToLong( arr.metadata().shape );
-			final int[] imgChunk = reverseToInt( arr.metadata().chunkShape() );
-			final ReadOnlyCachedCellImgOptions opts = ReadOnlyCachedCellImgOptions.options().cellDimensions( imgChunk );
-			cachedCellImgs[ level ] = new ReadOnlyCachedCellImgFactory()
-					.create( imgShape, type, new ZarrJavaCellLoader<>( arr ), opts );
+			cachedCellImgs[ level ] = createCellImg( openLevel( multiscaleImage, level ), type );
 		}
 
 		final AxisCalibration[][] axesPerLevel = new AxisCalibration[ numResolutionLevels ][];
@@ -237,12 +249,30 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 
 	private MultiscaleImage openMultiscaleImage()
 	{
-		final String scheme = inputUri.getScheme();
-		Store store;
+		return openMultiscaleImageAt( inputUri );
+	}
+
+	private MultiscaleImage openMultiscaleImageAt( final URI uri )
+	{
+		try
+		{
+			return openMultiscaleImageFromHandle( resolveHandle( uri ), uri );
+		}
+		catch ( StoreException | SdkException e )
+		{
+			// Store-level failures. Wrap them in a backend-agnostic exception.
+			throw new StoreAccessException( uri.toString(), e );
+		}
+	}
+
+	private StoreHandle resolveHandle( final URI uri )
+	{
+		final String scheme = uri.getScheme();
+		final Store store;
 		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
-			store = new FilesystemStore( Paths.get( inputUri ) );
+			store = new FilesystemStore( Paths.get( uri ) );
 		else if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
-			store = new HttpStore( inputUri.toString() );
+			store = new HttpStore( uri.toString() );
 		else if ( "s3".equalsIgnoreCase( scheme ) )
 		{
 			final S3Client s3 = S3Client.builder().region( Region.US_EAST_1 )
@@ -250,25 +280,17 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 							.credentialsProviders( DefaultCredentialsProvider.builder().build(), AnonymousCredentialsProvider.create() )
 							.build() )
 					.build();
-			final String bucket = inputUri.getHost();
-			final String rawPath = inputUri.getPath();
+			final String bucket = uri.getHost();
+			final String rawPath = uri.getPath();
 			final String keyPrefix = rawPath == null ? "" : rawPath.replaceFirst( "^/", "" );
 			store = new S3Store( s3, bucket, keyPrefix.isEmpty() ? null : keyPrefix );
 		}
 		else
-			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
-		try
-		{
-			return openMultiscaleImageFromHandle( store.resolve() );
-		}
-		catch ( StoreException | SdkException e )
-		{
-			// Store-level failures. Wrap them in a backend-agnostic exception.
-			throw new StoreAccessException( inputUri.toString(), e );
-		}
+			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + uri );
+		return store.resolve();
 	}
 
-	private MultiscaleImage openMultiscaleImageFromHandle( final StoreHandle handle )
+	private MultiscaleImage openMultiscaleImageFromHandle( final StoreHandle handle, final URI uri )
 	{
 		try
 		{
@@ -278,7 +300,7 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		catch ( ZarrException | IOException e )
 		{
 			checkForBioformats2rawLayout( handle );
-			throw new NotAMultiscaleImageException( inputUri.toString(), e );
+			throw new NotAMultiscaleImageException( uri.toString(), e );
 		}
 	}
 
@@ -337,6 +359,143 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 				checkForBioformats2rawLayout( activeHandle );
 			throw new NotAMultiscaleImageException( "No multiscale metadata at: " + inputUri, e );
 		}
+	}
+
+	// ---------------------------------------------------------------------
+	// Single-array (single resolution level) fallback
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Opens a bare array node (a single resolution level) as a one-level pyramid.
+	 * Prefers the parent multiscales group so the level keeps its axis
+	 * calibration and OMERO metadata; failing that, uses the array's own
+	 * {@code dimension_names} (Zarr v3) to open it uncalibrated; and if neither
+	 * yields axis names, refuses with {@link SingleArrayAxesUnknownException}.
+	 */
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadSingleArray( final URI arrayUri )
+	{
+		final URI parentUri = ZarrUtils.parentUri( arrayUri );
+		if ( parentUri != null )
+		{
+			final PyramidContents< T > viaParent = tryLoadLevelFromParent( parentUri, arrayUri );
+			if ( viaParent != null )
+				return viaParent;
+		}
+		final PyramidContents< T > nodeOnly = tryLoadArrayNodeOnly( arrayUri );
+		if ( nodeOnly != null )
+			return nodeOnly;
+		throw new SingleArrayAxesUnknownException( arrayUri.toString() );
+	}
+
+	/**
+	 * Attempts to open {@code arrayUri} as one level of the multiscales group at
+	 * {@code parentUri}, returning a one-level pyramid carrying that level's
+	 * axes, scale and transform plus the group's OMERO metadata. Returns
+	 * {@code null} (so the caller can fall back) when the parent is not a
+	 * readable multiscales group or does not list this array.
+	 */
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadLevelFromParent(
+			final URI parentUri, final URI arrayUri )
+	{
+		final MultiscaleImage parent;
+		final MultiscalesEntry entry;
+		try
+		{
+			parent = openMultiscaleImageAt( parentUri );
+			entry = parent.getMultiscaleNode( 0 );
+		}
+		catch ( ZarrException | RuntimeException e )
+		{
+			logger.debug( "Parent of {} is not a usable multiscales group: {}", arrayUri, e.getMessage() );
+			return null;
+		}
+		final int levelIndex = levelIndexForChild( entry, arrayUri );
+		if ( levelIndex < 0 )
+		{
+			logger.debug( "Parent multiscales at {} does not list child array {}", parentUri, arrayUri );
+			return null;
+		}
+		return buildSingleLevelFromParent( parent, entry, levelIndex );
+	}
+
+	private static int levelIndexForChild( final MultiscalesEntry entry, final URI arrayUri )
+	{
+		if ( entry == null || entry.datasets == null )
+			return -1;
+		for ( int i = 0; i < entry.datasets.size(); i++ )
+		{
+			final Dataset dataset = entry.datasets.get( i );
+			if ( dataset != null && ZarrUtils.isChildPath( arrayUri, dataset.path ) )
+				return i;
+		}
+		return -1;
+	}
+
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > buildSingleLevelFromParent(
+			final MultiscaleImage parent, final MultiscalesEntry entry, final int levelIndex )
+	{
+		final Array arr = openLevel( parent, levelIndex );
+		final T type = typeForZarrDataType( arr.metadata().dataType().getMA2DataType() );
+		final CachedCellImg< T, ? > img = createCellImg( arr, type );
+
+		final int numDimensions = img.numDimensions();
+		final double[] level0Scales = getLevel0Scales( entry, numDimensions );
+		final double[] levelScales = findLevelScale( entry, levelIndex );
+		final double[] axisScales = levelScales != null ? levelScales : level0Scales;
+		final AxisCalibration[] axes = createAxisCalibrations( entry.axes, axisScales );
+
+		final AffineTransform3D transform =
+				createTransforms( entry, entry.datasets.size(), level0Scales )[ levelIndex ];
+		final Omero omero = convertOmero( parent.getOmeroMetadata() );
+		final String name = entry.name != null ? entry.name : defaultName();
+
+		return PyramidContents.singleLevel( name, type, transform, img, axes, omero );
+	}
+
+	/**
+	 * Opens {@code arrayUri} purely from its own metadata, without a parent
+	 * multiscales group: it uses the Zarr v3 {@code dimension_names} for axis
+	 * names and opens uncalibrated (unit scale, no units, no OMERO). Returns
+	 * {@code null} when the node cannot be opened as an array or declares no
+	 * dimension names (e.g. a Zarr v2 array), so the caller refuses.
+	 */
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( final URI arrayUri )
+	{
+		final Array arr;
+		try
+		{
+			arr = Array.open( resolveHandle( arrayUri ) );
+		}
+		catch ( ZarrException | IOException | RuntimeException e )
+		{
+			logger.debug( "Could not open {} as a plain array: {}", arrayUri, e.getMessage() );
+			return null;
+		}
+		final String[] names = dimensionNames( arr );
+		if ( names == null || names.length == 0 )
+			return null;
+		final T type = typeForZarrDataType( arr.metadata().dataType().getMA2DataType() );
+		final CachedCellImg< T, ? > img = createCellImg( arr, type );
+		final AxisCalibration[] axes = AxisCalibration.fromZarrDimensionNames( names );
+		return PyramidContents.singleLevel( ZarrUtils.lastSegment( arrayUri ), type, new AffineTransform3D(), img, axes, null );
+	}
+
+	/** Zarr v3 {@code dimension_names} of {@code arr}, or {@code null} for a Zarr v2 array (which has none). */
+	private static String[] dimensionNames( final Array arr )
+	{
+		final dev.zarr.zarrjava.core.ArrayMetadata metadata = arr.metadata();
+		if ( metadata instanceof dev.zarr.zarrjava.v3.ArrayMetadata )
+			return ( ( dev.zarr.zarrjava.v3.ArrayMetadata ) metadata ).dimensionNames;
+		return null;
+	}
+
+	private static < T extends NativeType< T > & RealType< T > > CachedCellImg< T, ? > createCellImg(
+			final Array arr, final T type )
+	{
+		final long[] imgShape = reverseToLong( arr.metadata().shape );
+		final int[] imgChunk = reverseToInt( arr.metadata().chunkShape() );
+		final ReadOnlyCachedCellImgOptions opts = ReadOnlyCachedCellImgOptions.options().cellDimensions( imgChunk );
+		return new ReadOnlyCachedCellImgFactory().create( imgShape, type, new ZarrJavaCellLoader<>( arr ), opts );
 	}
 
 	// ---------------------------------------------------------------------
