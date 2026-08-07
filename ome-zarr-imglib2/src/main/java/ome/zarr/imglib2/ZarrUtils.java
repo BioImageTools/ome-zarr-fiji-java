@@ -149,6 +149,78 @@ public class ZarrUtils
 		return s.endsWith( "/" ) ? uri : URI.create( s + "/" );
 	}
 
+	/**
+	 * Parent location of {@code uri}, i.e. {@code uri} with its last path segment
+	 * removed and a trailing slash kept, or {@code null} if {@code uri} has no
+	 * parent segment.
+	 * <p>
+	 * This is deliberately scheme-agnostic string manipulation rather than store
+	 * access, so it behaves identically for {@code file:}, {@code http(s):} and
+	 * {@code s3:} locations and — importantly for remote stores — costs no I/O.
+	 * It is used to walk from a dropped resolution-level folder up to the
+	 * multiscales group that holds the axis and OMERO metadata.
+	 *
+	 * @param uri location to take the parent of
+	 * @return the parent URI (with trailing slash), or {@code null}
+	 */
+	public static URI parentUri( final URI uri )
+	{
+		if ( uri == null )
+			return null;
+		final String stripped = stripTrailingSlashes( uri.toString() );
+		final int slash = stripped.lastIndexOf( '/' );
+		if ( slash < 0 )
+			return null;
+		// Keep the trailing slash so the result is treated as a folder location.
+		return URI.create( stripped.substring( 0, slash + 1 ) );
+	}
+
+	/**
+	 * Last path segment of {@code uri} (its folder or file name), ignoring any
+	 * trailing slash, or an empty string when there is none.
+	 *
+	 * @param uri location whose last segment is wanted
+	 * @return the last path segment, or {@code ""}
+	 */
+	public static String lastSegment( final URI uri )
+	{
+		if ( uri == null )
+			return "";
+		final String stripped = stripTrailingSlashes( uri.toString() );
+		final int slash = stripped.lastIndexOf( '/' );
+		return slash < 0 ? stripped : stripped.substring( slash + 1 );
+	}
+
+	/**
+	 * Whether {@code childUri} is the location described by a multiscales
+	 * {@code datasets[].path} entry. Matches either when the dataset path equals
+	 * the child's last segment (the common single-segment case, e.g. {@code "0"})
+	 * or when the child location ends with {@code "/" + datasetPath} (a
+	 * multi-segment relative dataset path).
+	 *
+	 * @param childUri location of the dropped array node
+	 * @param datasetPath a {@code datasets[].path} value from parent multiscales
+	 *   metadata
+	 * @return {@code true} if {@code datasetPath} identifies {@code childUri}
+	 */
+	public static boolean isChildPath( final URI childUri, final String datasetPath )
+	{
+		if ( childUri == null || datasetPath == null || datasetPath.isEmpty() )
+			return false;
+		if ( datasetPath.equals( lastSegment( childUri ) ) )
+			return true;
+		final String stripped = stripTrailingSlashes( childUri.toString() );
+		return stripped.endsWith( "/" + stripTrailingSlashes( datasetPath ) );
+	}
+
+	private static String stripTrailingSlashes( final String s )
+	{
+		int end = s.length();
+		while ( end > 0 && s.charAt( end - 1 ) == '/' )
+			end--;
+		return s.substring( 0, end );
+	}
+
 	private static boolean isHttpAccessible( final URI uri )
 	{
 		HttpURLConnection conn = null;

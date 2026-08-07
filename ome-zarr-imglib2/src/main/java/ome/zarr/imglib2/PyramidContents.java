@@ -35,6 +35,7 @@ import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Cast;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -280,6 +281,35 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	public static < T extends NativeType< T > & RealType< T > > Builder< T > builder()
 	{
 		return new Builder<>();
+	}
+
+	/**
+	 * Convenience factory for a single-resolution-level pyramid: a
+	 * {@link PyramidContents} with exactly one level. Wraps the one image,
+	 * transform and axis list into the length-1 arrays the builder expects.
+	 * Used by {@link PyramidBackend} implementations when opening a bare array
+	 * node (a single resolution level) rather than a whole multiscale image.
+	 *
+	 * @param <T> pixel type
+	 * @param name dataset name
+	 * @param type pixel type instance
+	 * @param transform level-to-world transform for the single level
+	 * @param img the single-level cached cell image
+	 * @param axes per-axis calibration for the single level, in imglib2 F-order
+	 * @param omero OMERO rendering metadata, or {@code null} if unavailable
+	 */
+	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > singleLevel(
+			final String name, final T type, final AffineTransform3D transform,
+			final CachedCellImg< T, ? > img, final AxisCalibration[] axes, final Omero omero )
+	{
+		return PyramidContents.< T >builder()
+				.name( name )
+				.type( type )
+				.transforms( new AffineTransform3D[] { transform } )
+				.cachedCellImgs( Cast.unchecked( new CachedCellImg[] { img } ) )
+				.axesPerLevel( new AxisCalibration[][] { axes } )
+				.omero( omero )
+				.build();
 	}
 
 	public static final class Builder< T extends NativeType< T > & RealType< T > >
