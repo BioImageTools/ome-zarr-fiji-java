@@ -50,7 +50,6 @@ import net.imglib2.img.Img;
 import net.imglib2.util.Cast;
 import net.imglib2.util.Util;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -90,8 +89,6 @@ import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import javax.swing.SwingUtilities;
 
 import bdv.viewer.ViewerFrame;
-import bdv.util.BdvStackSource;
-import ij.ImagePlus;
 import ome.zarr.fijiui.settings.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.imglib2.PyramidBackend;
@@ -309,25 +306,24 @@ class ZarrOpenActionsTest
 	}
 
 	@Test
-	@SuppressWarnings( "java:S1612" )
-	void testOpenValidSingleScaleImagePath() throws URISyntaxException
+	void testOpenSingleResolutionLevelOpensAsImage() throws URISyntaxException
 	{
-		String[] validPaths = {
+		// A single resolution level (a bare array) now opens as a one-level dataset,
+		// with axes recovered from its parent multiscales group.
+		String[] singleLevelPaths = {
 				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/0",
 				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr/0"
 		};
 		try (Context context = new Context())
 		{
-			for ( String invalidPath : validPaths )
+			for ( String levelPath : singleLevelPaths )
 			{
-				Path path = ZarrTestUtils.resourcePath( invalidPath );
-				AtomicReference< String > capturedError = new AtomicReference<>();
-				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, capturedError::set );
-				assertDoesNotThrow( () -> {
-					actions.openIJWithImage();
-				} );
-				assertNotNull( capturedError.get(),
-						"Single-scale path " + invalidPath + " should be reported as not (yet) supported" );
+				Path path = ZarrTestUtils.resourcePath( levelPath );
+				PyramidContents< ? > contents = loadMultiscaleHeadless( path.toUri(), context,
+						ZarrOpeningSettings.DEFAULT_READER_BACKEND );
+				assertNotNull( contents, "Single resolution level should open as a one-level dataset: " + levelPath );
+				assertEquals( 1, contents.numResolutionLevels(),
+						"Single resolution level should open as exactly one level: " + levelPath );
 			}
 		}
 	}
@@ -336,6 +332,7 @@ class ZarrOpenActionsTest
 	@SuppressWarnings( "java:S1612" )
 	void testOpenInvalidImagePaths() throws URISyntaxException
 	{
+		// These are chunk files inside an array, not openable OME-Zarr nodes.
 		String[] invalidPaths = {
 				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/0/0",
 				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr/0/c/0"
@@ -477,90 +474,73 @@ class ZarrOpenActionsTest
 		}
 	}
 
-	@Disabled( "This test is currently failing, since full support for opening single scale images is not yet implemented." )
 	@ParameterizedTest
 	@MethodSource( "omeZarrSingleImages" )
-	void testOpenSingleScaleImageInImageJ( String resource ) throws URISyntaxException
+	void testOpenSingleScaleImageInImageJ( String resource ) throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-			ImagePlus imagePlus = Cast.unchecked( actions.openIJWithImage() );
-			assertNotNull( imagePlus );
-			int channels = imagePlus.getNChannels();
-			int frames = imagePlus.getNFrames();
-			int slices = imagePlus.getNSlices();
-			int[] dimensions = imagePlus.getDimensions();
+			actions.openIJWithImage();
+
+			DatasetService datasetService = context.getService( DatasetService.class );
+			assertNotNull( datasetService );
+			List< Dataset > datasets = datasetService.getDatasets();
+			assertNotNull( datasets );
+			// A single resolution level opens as a one-level PyramidalDataset, just like a multiscale image.
+			assertEquals( 1, datasets.size() );
+			Dataset dataset = datasets.get( 0 );
+			PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
+			long[] dimensions = pyramidalDataset.getImgPlus().dimensionsAsLongArray();
 			if ( resource.contains( "2d_testing" ) )
 			{
-				assertArrayEquals( new int[] { 64, 64, 1, 1, 1 }, dimensions );
-				assertEquals( 1, channels );
-				assertEquals( 1, frames );
-				assertEquals( 1, slices );
+				assertArrayEquals( new long[] { 64, 64 }, dimensions );
 			}
 			if ( resource.contains( "3d_testing" ) )
 			{
 				if ( resource.contains( "xyc" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 3, 1, 1 }, dimensions );
-					assertEquals( 3, channels );
-					assertEquals( 1, frames );
-					assertEquals( 1, slices );
+					assertArrayEquals( new long[] { 64, 64, 3 }, dimensions );
 				}
 				if ( resource.contains( "xyt" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 4, 1, 1 }, dimensions );
-					assertEquals( 1, channels );
-					assertEquals( 4, frames );
-					assertEquals( 1, slices );
+					assertArrayEquals( new long[] { 64, 64, 4 }, dimensions );
 				}
 				if ( resource.contains( "xyz" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 16, 1, 1 }, dimensions );
-					assertEquals( 1, channels );
-					assertEquals( 1, frames );
-					assertEquals( 16, slices );
+					assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
 				}
 			}
 			if ( resource.contains( "4d_testing" ) )
 			{
 				if ( resource.contains( "xyct" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 3, 4, 1 }, dimensions );
-					assertEquals( 3, channels );
-					assertEquals( 4, frames );
-					assertEquals( 1, slices );
+					assertArrayEquals( new long[] { 64, 64, 3, 4 }, dimensions );
 				}
 				if ( resource.contains( "xyzc" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 16, 3, 1 }, dimensions );
-					assertEquals( 3, channels );
-					assertEquals( 1, frames );
-					assertEquals( 16, slices );
+					assertArrayEquals( new long[] { 64, 64, 16, 3 }, dimensions );
 				}
 				if ( resource.contains( "xyzt" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 16, 4, 1 }, dimensions );
-					assertEquals( 1, channels );
-					assertEquals( 4, frames );
-					assertEquals( 16, slices );
+					assertArrayEquals( new long[] { 64, 64, 16, 4 }, dimensions );
 				}
 			}
 			if ( resource.contains( "5d_testing" ) )
 			{
-				assertArrayEquals( new int[] { 64, 64, 16, 3, 4 }, dimensions );
-				assertEquals( 3, channels );
-				assertEquals( 4, frames );
-				assertEquals( 16, slices );
+				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, dimensions );
 			}
-
-			DatasetService datasetService = context.getService( DatasetService.class );
-			assertNotNull( datasetService );
-			List< Dataset > datasets = datasetService.getDatasets();
-			assertNotNull( datasets );
-			assertEquals( 0, datasets.size() ); // A single scale image is opened as image not as dataset
-			imagePlus.close();
+			// One level, so no "(R)" multi-resolution suffix is appended to the name.
+			assertEquals( IMAGE_NAME, dataset.getName() );
+			DisplayService displayService = context.getService( DisplayService.class );
+			assertNotNull( displayService );
+			SwingUtilities.invokeAndWait( () -> {} ); // wait until all Swing events are processed
+			Display< ? > activeDisplay = displayService.getActiveDisplay();
+			assertNotNull( activeDisplay );
+			activeDisplay.close();
+			assertTrue( displayService.getDisplays().isEmpty() );
+			assertEquals( 0, datasetService.getDatasets().size() ); // The dataset is dereferenced now
 		}
 	}
 
@@ -591,66 +571,54 @@ class ZarrOpenActionsTest
 		}
 	}
 
-	@Disabled( "This test is currently failing, since full support for opening single scale images is not yet implemented." )
 	@ParameterizedTest
 	@MethodSource( "omeZarrSingleImages" )
-	void testOpenSingleScaleImageInBDV( String resource ) throws URISyntaxException
+	void testOpenSingleScaleImageInBDV( String resource ) throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-			BdvStackSource< ? > bdvStackSource = Cast.unchecked( actions.openBDVWithImage() );
-			DatasetService datasetService = context.getService( DatasetService.class );
-			assertNotNull( datasetService );
-			List< Dataset > datasets = datasetService.getDatasets();
-			assertNotNull( datasets );
-			assertEquals( 0, datasets.size() ); // A single scale image is opened in BDV as an image, not as a dataset
-			assertNotNull( bdvStackSource );
-			ConverterSetup converterSetup0 = bdvStackSource.getConverterSetups().get( 0 );
-			assertEquals( 0, converterSetup0.getDisplayRangeMin() ); // omero metadata is not supported for a single scale image
-			assertEquals( 255, converterSetup0.getDisplayRangeMax() );
-			assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup0.getColor().toString() );
-			assertEquals( 0, bdvStackSource.getBdvHandle().getViewerPanel().state().getCurrentTimepoint() );
-			if ( resource.contains( "2d_testing" ) )
+			BdvHandle bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
+
+			PyramidalService pyramidalService = context.getService( PyramidalService.class );
+			assertNotNull( pyramidalService );
+			List< Pyramidal > pyramidals = pyramidalService.getPyramidals();
+			assertNotNull( pyramidals );
+			// A single resolution level opens in BDV as a one-level PyramidalBdv, tracked like a multiscale image.
+			assertEquals( 1, pyramidals.size() );
+
+			PyramidalBdv< ? > pyramidalBdv = Cast.unchecked( pyramidals.get( 0 ) );
+			List< ConverterSetup > converterSetups = bdvHandle.getConverterSetups().getConverterSetups( pyramidalBdv.asSources() );
+			assertNotNull( converterSetups );
+			// One converter setup per channel; only the xyc, xyct, xyzc and 5d datasets have a c axis.
+			boolean threeChannels = resource.contains( "5d_testing" ) || resource.contains( "xyc" ) || resource.contains( "xyzc" );
+			assertEquals( threeChannels ? 3 : 1, converterSetups.size() );
+
+			if ( resource.contains( "2d_testing" ) ) // no OMERO metadata to recover, so BDV defaults apply
 			{
-				assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
-			}
-			if ( resource.contains( "3d_testing" ) )
-			{
-				if ( resource.contains( "xyc" ) )
-				{
-					assertEquals( 3, bdvStackSource.getConverterSetups().size() );
-				}
-				if ( resource.contains( "xyt" ) )
-				{
-					assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
-				}
-				if ( resource.contains( "xyz" ) )
-				{
-					assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
-				}
-			}
-			if ( resource.contains( "4d_testing" ) )
-			{
-				if ( resource.contains( "xyct" ) )
-				{
-					assertEquals( 3, bdvStackSource.getConverterSetups().size() );
-				}
-				if ( resource.contains( "xyzc" ) )
-				{
-					assertEquals( 3, bdvStackSource.getConverterSetups().size() );
-				}
-				if ( resource.contains( "xyzt" ) )
-				{
-					assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
-				}
+				ConverterSetup converterSetup = converterSetups.get( 0 );
+				assertEquals( 0, converterSetup.getDisplayRangeMin() );
+				assertEquals( 255, converterSetup.getDisplayRangeMax() );
+				assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup.getColor().toString() );
 			}
 			if ( resource.contains( "5d_testing" ) )
 			{
-				assertEquals( 3, bdvStackSource.getConverterSetups().size() );
+				// 5d carries OMERO channel settings and rdefs (defaultT=1), recovered from the parent group.
+				ConverterSetup converterSetup0 = converterSetups.get( 0 );
+				assertEquals( 3, converterSetup0.getDisplayRangeMin() );
+				assertEquals( 246, converterSetup0.getDisplayRangeMax() );
+				assertEquals( "(r=0,g=255,b=0,a=255)", converterSetup0.getColor().toString() );
+				ConverterSetup converterSetup1 = converterSetups.get( 1 );
+				assertEquals( 6, converterSetup1.getDisplayRangeMin() );
+				assertEquals( 133, converterSetup1.getDisplayRangeMax() );
+				assertEquals( "(r=255,g=0,b=0,a=255)", converterSetup1.getColor().toString() );
+				assertEquals( 1, bdvHandle.getViewerPanel().state().getCurrentTimepoint() );
 			}
-			bdvStackSource.close();
+			bdvHandle.close();
+			SwingUtilities.invokeAndWait( () -> {} ); // wait until all Swing events are processed
+			pyramidals = pyramidalService.getPyramidals();
+			assertEquals( 0, pyramidals.size() ); // The pyramidal service has correctly removed the dataset from the cache
 		}
 	}
 

@@ -28,9 +28,6 @@
  */
 package ome.zarr.fiji.open;
 
-import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
-import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.scijava.Context;
 import org.scijava.ui.UIService;
 import org.slf4j.Logger;
@@ -39,14 +36,9 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.gson.JsonSyntaxException;
-
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.util.Cast;
 
 import ij.IJ;
 import ome.zarr.imglib2.PyramidBackend;
@@ -55,11 +47,11 @@ import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NoMatchingResolutionException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
+import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.open.exceptions.NonExistingResolutionLevelException;
-import ome.zarr.fiji.open.exceptions.NotASingleScaleImageException;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 
@@ -170,9 +162,9 @@ public class ZarrOpener
 
 	/**
 	 * Opens the dataset in ImageJ as a {@link PyramidalDataset} at the preferred
-	 * resolution level. Returns {@code null} for a multiscale image (it is shown
-	 * via the {@code UIService}); the return value is reserved for the future
-	 * single-scale path.
+	 * resolution level, shown via the {@code UIService}. A location pointing at a
+	 * single resolution level opens as a one-level dataset. Always returns
+	 * {@code null}.
 	 */
 	public Object openIJWithImage()
 	{
@@ -186,8 +178,7 @@ public class ZarrOpener
 						context.getService( PyramidalService.class ).registerImageJDataset( dataset );
 						logger.info( "Opened dataset in ImageJ: {}", inputUri );
 						return null;
-					},
-					singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ) );
+					} );
 		}
 		catch ( NoMatchingResolutionException e )
 		{
@@ -222,8 +213,7 @@ public class ZarrOpener
 						context.getService( PyramidalService.class ).registerImageJDataset( dataset );
 						logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
 						return null;
-					},
-					singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ) );
+					} );
 		}
 		catch ( NonExistingResolutionLevelException e )
 		{
@@ -249,8 +239,7 @@ public class ZarrOpener
 						final Object result = BdvUtils.showBdvAndRegisterDataset( dataset, pyramidalService );
 						logger.info( "Opened dataset in BigDataViewer: {}", inputUri );
 						return result;
-					},
-					singleScaleImage -> null );
+					} );
 		}
 		catch ( NoMatchingResolutionException e )
 		{
@@ -259,21 +248,23 @@ public class ZarrOpener
 		return null;
 	}
 
-	private Object openPyramidImage( final Supplier< Object > multiScaleOpener, final Function< Img< ? >, Object > singleScaleOpener )
+	private Object openPyramidImage( final Supplier< Object > imageOpener )
 	{
 		try
 		{
-			return multiScaleOpener.get();
+			return imageOpener.get();
 		}
 		catch ( MultiImageDatasetException e )
 		{
 			showMultiImageNotSupported( e );
 		}
+		catch ( SingleArrayAxesUnknownException e )
+		{
+			showSingleArrayAxesUnknown( e );
+		}
 		catch ( NotAMultiscaleImageException e )
 		{
-			logger.warn( "Not a multiscale image: {}", e.getMessage() );
-			showSingleScaleNotSupported();
-			// TODO: openSingleScaleImage( singleScaleOpener ) when single-scale support is added
+			showNotAMultiscaleError( e );
 		}
 		catch ( StoreAccessException e )
 		{
@@ -286,42 +277,25 @@ public class ZarrOpener
 		return null;
 	}
 
-	private Object openSingleScaleImage( final Function< Img< ? >, Object > singleScaleImageOpener ) throws NotASingleScaleImageException
-	{
-		N5Reader reader = new N5Factory().openReader( inputUri.toString() );
-		Img< ? > img;
-		try
-		{
-			img = N5Utils.open( reader, "" );
-		}
-		catch ( Exception e )
-		{
-			throw new NotASingleScaleImageException( inputUri.toString(), e );
-		}
-		Object result = singleScaleImageOpener.apply( img );
-		logger.info( "Opened single scale image: {}", inputUri );
-		return result;
-	}
-
 	private void showMultiImageNotSupported( final MultiImageDatasetException e )
 	{
 		errorHandler.accept( e.getMessage() );
 		logger.info( e.getMessage() );
 	}
 
-	private void showSingleScaleNotSupported()
+	private void showSingleArrayAxesUnknown( final SingleArrayAxesUnknownException e )
 	{
-		errorHandler.accept(
-				"Opening a single resolution OME-Zarr dataset, as was found in: " + inputUri + ", is currently not supported.\n\n"
-						+ "Consider opening one level higher in the hierarchy instead." );
-		logger.info( "Opening a single resolution OME-Zarr dataset, as was found in: {}, is currently not supported.", inputUri );
+		errorHandler.accept( "Could not determine the axes of the single OME-Zarr resolution level at: " + inputUri + "\n\r\n"
+				+ "OME-Zarr v0.4 (Zarr v2) resolution levels carry no axis metadata of their own, so a single level can only "
+				+ "be interpreted via its parent group.\n\r\nConsider opening one level higher in the hierarchy instead." );
+		logger.info( "Cannot determine axes of single resolution level at {}: {}", inputUri, e.getMessage() );
 	}
 
-	private void showSingleScaleError( final Exception e )
+	private void showNotAMultiscaleError( final NotAMultiscaleImageException e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
-				+ "Consider opening one level higher or lower in the hierarchy instead." );
-		logger.warn( "Could not open dataset as single resolution image: {}. Error message: {}", inputUri, e.getMessage() );
+				+ "The location is not a readable OME-Zarr multiscale image and could not be opened as a single resolution level." );
+		logger.warn( "Not a multiscale image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
 	private void showStoreAccessError( final Exception e )
