@@ -51,6 +51,7 @@ import net.imglib2.util.Cast;
 import ij.IJ;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NoMatchingResolutionException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
@@ -136,8 +137,34 @@ public class ZarrOpener
 			final PyramidContents< ? > contents = backend.load( inputUri );
 			preferredResolutionLevel = contents.selectResolutionLevel( preferredMaxWidth );
 			cachedContents = contents;
+			logDimensions( contents );
 		}
 		return cachedContents;
+	}
+
+	/**
+	 * Logs, at debug level, the full-resolution extent along every OME-Zarr axis
+	 * (x, y, z, c, t) plus the number of resolution levels. Axes that are not
+	 * present in the dataset are reported as {@code absent}.
+	 */
+	private void logDimensions( final PyramidContents< ? > contents )
+	{
+		if ( !logger.isDebugEnabled() )
+			return;
+		logger.debug( "Opened image {} with dimensions x={}, y={}, z={}, c={}, t={}, resolution levels={}",
+				inputUri,
+				axisSize( contents, AxisCalibration.X ),
+				axisSize( contents, AxisCalibration.Y ),
+				axisSize( contents, AxisCalibration.Z ),
+				axisSize( contents, AxisCalibration.C ),
+				axisSize( contents, AxisCalibration.T ),
+				contents.numResolutionLevels() );
+	}
+
+	private static String axisSize( final PyramidContents< ? > contents, final String axisName )
+	{
+		final int index = contents.axisIndex( axisName );
+		return index < 0 ? "absent" : Long.toString( contents.asImg().dimension( index ) );
 	}
 
 	/**
