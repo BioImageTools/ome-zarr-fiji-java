@@ -42,7 +42,6 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.function.Consumer;
 
-
 import ij.IJ;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
@@ -212,9 +211,9 @@ public class ZarrOpenActions
 	 * Opens the dataset in ImageJ at the resolution selected by the settings.
 	 * Delegates to {@link ZarrOpener#openIJWithImage()}.
 	 */
-	public Object openIJWithImage()
+	public void openIJWithImage()
 	{
-		return opener.openIJWithImage();
+		opener.openIJWithImage();
 	}
 
 	/**

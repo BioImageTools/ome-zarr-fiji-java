@@ -163,14 +163,13 @@ public class ZarrOpener
 	/**
 	 * Opens the dataset in ImageJ as a {@link PyramidalDataset} at the preferred
 	 * resolution level, shown via the {@code UIService}. A location pointing at a
-	 * single resolution level opens as a one-level dataset. Always returns
-	 * {@code null}.
+	 * single resolution level opens as a one-level dataset.
 	 */
-	public Object openIJWithImage()
+	public void openIJWithImage()
 	{
 		try
 		{
-			return openPyramidImage(
+			openPyramidImage(
 					() -> {
 						final PyramidContents< ? > contents = getContents();
 						final PyramidalDataset dataset = new PyramidalDataset( context, contents, preferredResolutionLevel );
@@ -184,7 +183,6 @@ public class ZarrOpener
 		{
 			showNonMatchingResolutionError( e );
 		}
-		return null;
 	}
 
 	/**
