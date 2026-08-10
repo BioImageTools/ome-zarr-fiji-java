@@ -235,7 +235,6 @@ public class ZarrOpenActions
 		return opener.openBDVWithImage();
 	}
 
-
 	/**
 	 * Opens the Fiji script editor pre-filled with a scriptlet that opens the
 	 * dataset, so the user can adapt it for macros/scripts.

@@ -130,24 +130,7 @@ class ZarrOpenActionsTest
 
 	static Stream< String > omeZarrExamples()
 	{
-		return Stream.of(
-				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyc/3d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyc/3d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyt/3d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyt/3d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyz/3d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyz/3d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyct/4d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyct/4d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyzc/4d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyzc/4d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyzt/4d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyzt/4d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr"
-		);
+		return ZarrTestUtils.omeZarrExamples();
 	}
 
 	static Stream< String > omeZarrSingleImages()
@@ -293,116 +276,16 @@ class ZarrOpenActionsTest
 		}
 	}
 
-	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testOpenValidMultiScaleImagePath( String resource ) throws URISyntaxException
-	{
-		Path path = ZarrTestUtils.resourcePath( resource );
-		try (Context context = new Context())
-		{
-			assertNotNull( loadMultiscaleHeadless( path.toUri(), context, ZarrOpeningSettings.DEFAULT_READER_BACKEND ),
-					"Expected " + resource + " to open as a multiscale image" );
-		}
-	}
-
 	@Test
-	void testOpenSingleResolutionLevelOpensAsImage() throws URISyntaxException
+	void defaultOpenerReadsWithTheDefaultBackend() throws URISyntaxException
 	{
-		// A single resolution level (a bare array) now opens as a one-level dataset,
-		// with axes recovered from its parent multiscales group.
-		String[] singleLevelPaths = {
-				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/0",
-				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr/0"
-		};
+		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			for ( String levelPath : singleLevelPaths )
-			{
-				Path path = ZarrTestUtils.resourcePath( levelPath );
-				PyramidContents< ? > contents = loadMultiscaleHeadless( path.toUri(), context,
-						ZarrOpeningSettings.DEFAULT_READER_BACKEND );
-				assertNotNull( contents, "Single resolution level should open as a one-level dataset: " + levelPath );
-				assertEquals( 1, contents.numResolutionLevels(),
-						"Single resolution level should open as exactly one level: " + levelPath );
-			}
-		}
-	}
-
-	@Test
-	@SuppressWarnings( "java:S1612" )
-	void testOpenInvalidImagePaths() throws URISyntaxException
-	{
-		// These are chunk files inside an array, not openable OME-Zarr nodes.
-		String[] invalidPaths = {
-				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/0/0",
-				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr/0/c/0"
-		};
-		try (Context context = new Context())
-		{
-			for ( String invalidPath : invalidPaths )
-			{
-				Path path = ZarrTestUtils.resourcePath( invalidPath );
-				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-				assertDoesNotThrow( () -> {
-					actions.openIJWithImage();
-				} );
-			}
-		}
-	}
-
-	@ParameterizedTest
-	@MethodSource( "readerBackends" )
-	@SuppressWarnings( "java:S1612" )
-	void testOpenBioformats2rawCollectionRootReportsMultiImage( ZarrReaderBackend backend ) throws URISyntaxException
-	{
-		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr" );
-		try (Context context = new Context())
-		{
-			AtomicReference< String > capturedError = new AtomicReference<>();
-			Consumer< String > errorHandler = capturedError::set;
-			ZarrOpeningSettings settings = new ZarrOpeningSettings();
-			settings.setReaderBackend( backend );
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, errorHandler );
-			assertDoesNotThrow( () -> {
-				actions.openIJWithImage();
-			} );
-			assertNotNull( capturedError.get(), "Error handler should have been called for backend " + backend );
-			assertTrue( capturedError.get().contains( "multiple images" ),
-					"Expected multi-image message from backend, got: " + capturedError.get() );
-		}
-	}
-
-	@ParameterizedTest
-	@MethodSource( "readerBackends" )
-	void testOpenBioformats2rawCollectionChildOpens( ZarrReaderBackend backend ) throws URISyntaxException
-	{
-		String[] childPaths = {
-				"ome/zarr/testdata/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr/0",
-				"ome/zarr/testdata/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr/1"
-		};
-		try (Context context = new Context())
-		{
-			for ( String childPath : childPaths )
-			{
-				Path path = ZarrTestUtils.resourcePath( childPath );
-				assertNotNull( loadMultiscaleHeadless( path.toUri(), context, backend ),
-						"Child image " + childPath + " should open as a multiscale image" );
-			}
-		}
-	}
-
-	@Test
-	@SuppressWarnings( "java:S1612" )
-	void testOpenNonMatchingResolution() throws URISyntaxException
-	{
-		try (Context context = new Context())
-		{
-			Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
-			ZarrOpeningSettings settings = new ZarrOpeningSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, System.out::println );
-			assertDoesNotThrow( () -> {
-				actions.openIJWithImage();
-			} );
+			ZarrOpener opener = ZarrOpenActions.defaultOpener( path.toUri(), context );
+			PyramidContents< ? > contents = opener.getContents();
+			assertEquals( 2, contents.numResolutionLevels() );
+			assertEquals( 3, contents.numChannels() );
 		}
 	}
 

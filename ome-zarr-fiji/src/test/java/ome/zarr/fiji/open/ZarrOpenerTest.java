@@ -28,10 +28,14 @@
  */
 package ome.zarr.fiji.open;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import javax.swing.SwingUtilities;
@@ -57,6 +61,7 @@ import ome.zarr.ZarrTestUtils;
  * Direct coverage of the fiji-layer {@link ZarrOpener}: it loads and opens a
  * dataset in ImageJ and BigDataViewer for either backend implementation,
  * without going through any fiji-ui settings or dialogs.
+ * <p>
  */
 class ZarrOpenerTest
 {
@@ -65,6 +70,11 @@ class ZarrOpenerTest
 	static Stream< PyramidBackend > backends()
 	{
 		return Stream.of( new N5PyramidBackend(), new ZarrJavaPyramidBackend() );
+	}
+
+	static Stream< String > omeZarrExamples()
+	{
+		return ZarrTestUtils.omeZarrExamples();
 	}
 
 	@ParameterizedTest
@@ -82,10 +92,11 @@ class ZarrOpenerTest
 		}
 	}
 
-	@Test
-	void openIJWithImageShowsDataset() throws Exception
+	@ParameterizedTest
+	@MethodSource( "omeZarrExamples" )
+	void openIJWithImageShowsDataset( String resource ) throws Exception
 	{
-		Path path = ZarrTestUtils.resourcePath( DATASET );
+		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
 			new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null ).openIJWithImage();
@@ -116,6 +127,130 @@ class ZarrOpenerTest
 			bdvHandle.close();
 			SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the close
 			assertEquals( 0, pyramidalService.getPyramidals().size() );
+		}
+	}
+
+	@Test
+	void openIJWithImageOpensSingleResolutionLevelAsImage() throws Exception
+	{
+		String[] singleLevelPaths = {
+				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/0",
+				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr/0"
+		};
+		try (Context context = new Context())
+		{
+			DatasetService datasetService = context.getService( DatasetService.class );
+			DisplayService displayService = context.getService( DisplayService.class );
+			for ( String levelPath : singleLevelPaths )
+			{
+				Path path = ZarrTestUtils.resourcePath( levelPath );
+				AtomicReference< String > capturedError = new AtomicReference<>();
+				new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null, capturedError::set ).openIJWithImage();
+
+				assertEquals( 1, datasetService.getDatasets().size(),
+						"Single resolution level should open as a one-level dataset: " + levelPath );
+				assertNull( capturedError.get(), "Error handler should not have been called for " + levelPath );
+
+				SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the show
+				displayService.getActiveDisplay().close();
+				assertEquals( 0, datasetService.getDatasets().size() ); // dereferenced again, so the next level starts clean
+			}
+		}
+	}
+
+	@Test
+	@SuppressWarnings( "java:S1612" )
+	void openIJWithImageReportsInvalidImagePaths() throws Exception
+	{
+		// These are chunk files inside an array, not openable OME-Zarr nodes.
+		String[] invalidPaths = {
+				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/0/0",
+				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr/0/c/0"
+		};
+		try (Context context = new Context())
+		{
+			DatasetService datasetService = context.getService( DatasetService.class );
+			for ( String invalidPath : invalidPaths )
+			{
+				Path path = ZarrTestUtils.resourcePath( invalidPath );
+				AtomicReference< String > capturedError = new AtomicReference<>();
+				ZarrOpener opener = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null, capturedError::set );
+
+				assertDoesNotThrow( () -> opener.openIJWithImage(), "Opening " + invalidPath + " should not throw" );
+				assertNotNull( capturedError.get(), "Error handler should have been called for " + invalidPath );
+				assertTrue( datasetService.getDatasets().isEmpty(),
+						"Nothing must be opened for the non-image path " + invalidPath );
+			}
+		}
+	}
+
+	@ParameterizedTest
+	@MethodSource( "backends" )
+	@SuppressWarnings( "java:S1612" )
+	void openIJWithImageReportsBioformats2rawCollectionRootAsMultiImage( PyramidBackend backend ) throws Exception
+	{
+		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr" );
+		try (Context context = new Context())
+		{
+			AtomicReference< String > capturedError = new AtomicReference<>();
+			ZarrOpener opener = new ZarrOpener( path.toUri(), context, backend, null, capturedError::set );
+
+			assertDoesNotThrow( () -> opener.openIJWithImage() );
+			assertTrue( context.getService( DatasetService.class ).getDatasets().isEmpty(),
+					"Multi-image collection must not be opened as a single multiscale image" );
+			assertNotNull( capturedError.get(), "Error handler should have been called for backend " + backend );
+			assertTrue( capturedError.get().contains( "multiple images" ),
+					"Expected multi-image message from backend, got: " + capturedError.get() );
+		}
+	}
+
+	@ParameterizedTest
+	@MethodSource( "backends" )
+	@SuppressWarnings( "java:S1612" )
+	void openIJWithImageOpensBioformats2rawCollectionChild( PyramidBackend backend ) throws Exception
+	{
+		String[] childPaths = {
+				"ome/zarr/testdata/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr/0",
+				"ome/zarr/testdata/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr/1"
+		};
+		try (Context context = new Context())
+		{
+			DatasetService datasetService = context.getService( DatasetService.class );
+			DisplayService displayService = context.getService( DisplayService.class );
+			for ( String childPath : childPaths )
+			{
+				Path path = ZarrTestUtils.resourcePath( childPath );
+				AtomicReference< String > capturedError = new AtomicReference<>();
+				ZarrOpener opener = new ZarrOpener( path.toUri(), context, backend, null, capturedError::set );
+
+				assertDoesNotThrow( () -> opener.openIJWithImage(), "Opening child image " + childPath + " should not throw" );
+				assertEquals( 1, datasetService.getDatasets().size(),
+						"Child image " + childPath + " should be opened as a multiscale image" );
+				assertNull( capturedError.get(),
+						"Error handler should not have been called for child " + childPath + ", got: " + capturedError.get() );
+
+				SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the show
+				displayService.getActiveDisplay().close();
+				assertEquals( 0, datasetService.getDatasets().size() ); // dereferenced again, so the next child starts clean
+			}
+		}
+	}
+
+	@Test
+	@SuppressWarnings( "java:S1612" )
+	void openIJWithImageReportsNonMatchingResolution() throws Exception
+	{
+		Path path = ZarrTestUtils.resourcePath( DATASET );
+		try (Context context = new Context())
+		{
+			AtomicReference< String > capturedError = new AtomicReference<>();
+			// no level of this dataset is 10 pixels wide or narrower
+			ZarrOpener opener = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set );
+
+			assertDoesNotThrow( () -> opener.openIJWithImage() );
+			assertTrue( context.getService( DatasetService.class ).getDatasets().isEmpty(),
+					"No level matches the preferred width, so nothing must be opened" );
+			assertNotNull( capturedError.get(), "Error handler should have been called" );
 		}
 	}
 }
