@@ -64,13 +64,13 @@ import com.google.gson.JsonElement;
 
 import software.amazon.awssdk.regions.Region;
 
+import ome.zarr.imglib2.AbstractPyramidBackend;
 import ome.zarr.imglib2.Affine3DUtils;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.ZarrUtils;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
-import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
@@ -80,7 +80,7 @@ import ome.zarr.imglib2.metadata.Omero;
  * library. Supports OME-Zarr v0.3, v0.4, and v0.5 (N5 reads Zarr v2 and the
  * Zarr v3 variant used by v0.5).
  */
-public class N5PyramidBackend implements PyramidBackend
+public class N5PyramidBackend extends AbstractPyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -99,21 +99,7 @@ public class N5PyramidBackend implements PyramidBackend
 	}
 
 	@Override
-	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
-	{
-		try
-		{
-			return loadMultiscale( inputUri );
-		}
-		catch ( NotAMultiscaleImageException e )
-		{
-			// The location is a bare array (a single resolution level), not a
-			// multiscales group. Open it as a one-level pyramid instead.
-			return loadSingleArray( inputUri );
-		}
-	}
-
-	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale( final URI inputUri )
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale( final URI inputUri )
 	{
 		final N5Reader reader;
 		final N5TreeNode treeNode = new N5TreeNode( "" );
@@ -200,35 +186,13 @@ public class N5PyramidBackend implements PyramidBackend
 	}
 
 	/**
-	 * Opens a bare array node (a single resolution level) as a one-level pyramid.
-	 * Prefers the parent multiscales group so the level keeps its axis
-	 * calibration and OMERO metadata; failing that, uses the array's own
-	 * {@code dimension_names} (Zarr v3) to open it uncalibrated; and if neither
-	 * yields axis names, refuses with {@link SingleArrayAxesUnknownException}.
+	 * {@inheritDoc}
+	 * <p>
+	 * Parses the parent's OME-NGFF multiscales metadata and matches
+	 * {@code arrayUri} against the dataset path of each resolution level.
 	 */
-	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadSingleArray( final URI arrayUri )
-	{
-		final URI parentUri = ZarrUtils.parentUri( arrayUri );
-		if ( parentUri != null )
-		{
-			final PyramidContents< T > viaParent = tryLoadLevelFromParent( parentUri, arrayUri );
-			if ( viaParent != null )
-				return viaParent;
-		}
-		final PyramidContents< T > nodeOnly = tryLoadArrayNodeOnly( arrayUri );
-		if ( nodeOnly != null )
-			return nodeOnly;
-		throw new SingleArrayAxesUnknownException( arrayUri.toString() );
-	}
-
-	/**
-	 * Attempts to open {@code arrayUri} as one level of the multiscales group at
-	 * {@code parentUri}, returning a one-level pyramid carrying that level's
-	 * axes, scale and transform plus the group's OMERO metadata. Returns
-	 * {@code null} (so the caller can fall back) when the parent is not a
-	 * readable multiscales group or does not list this array.
-	 */
-	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadLevelFromParent(
+	@Override
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadLevelFromParent(
 			final URI parentUri, final URI arrayUri )
 	{
 		final OmeNgffMetadata parentMetadata;
@@ -271,13 +235,14 @@ public class N5PyramidBackend implements PyramidBackend
 	}
 
 	/**
-	 * Opens {@code arrayUri} purely from its own metadata, without a parent
-	 * multiscales group: it uses the Zarr v3 {@code dimension_names} for axis
-	 * names and opens uncalibrated (unit scale, no units, no OMERO). Returns
-	 * {@code null} when the node cannot be opened as an array or declares no
-	 * dimension names (e.g. a Zarr v2 array), so the caller refuses.
+	 * {@inheritDoc}
+	 * <p>
+	 * Takes the axis names from the array's {@code dimension_names} attribute (see
+	 * {@link #readDimensionNames}), which only a Zarr v3 array has; a Zarr v2 array
+	 * therefore declines.
 	 */
-	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( final URI arrayUri )
+	@Override
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( final URI arrayUri )
 	{
 		final String[] names;
 		final DataType dataType;
