@@ -472,7 +472,7 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 			return null;
 		}
 		final String[] names = dimensionNames( arr );
-		if ( names == null || names.length == 0 )
+		if ( names.length == 0 )
 			return null;
 		final T type = typeForZarrDataType( arr.metadata().dataType().getMA2DataType() );
 		final CachedCellImg< T, ? > img = createCellImg( arr, type );
@@ -480,13 +480,17 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		return PyramidContents.singleLevel( ZarrUtils.lastSegment( arrayUri ), type, new AffineTransform3D(), img, axes, null );
 	}
 
-	/** Zarr v3 {@code dimension_names} of {@code arr}, or {@code null} for a Zarr v2 array (which has none). */
+	/** Zarr v3 {@code dimension_names} of {@code arr}, or an empty array for a Zarr v2 array (which has none). */
 	private static String[] dimensionNames( final Array arr )
 	{
 		final dev.zarr.zarrjava.core.ArrayMetadata metadata = arr.metadata();
 		if ( metadata instanceof dev.zarr.zarrjava.v3.ArrayMetadata )
-			return ( ( dev.zarr.zarrjava.v3.ArrayMetadata ) metadata ).dimensionNames;
-		return null;
+		{
+			final String[] names = ( ( dev.zarr.zarrjava.v3.ArrayMetadata ) metadata ).dimensionNames;
+			if ( names != null )
+				return names;
+		}
+		return new String[ 0 ];
 	}
 
 	private static < T extends NativeType< T > & RealType< T > > CachedCellImg< T, ? > createCellImg(

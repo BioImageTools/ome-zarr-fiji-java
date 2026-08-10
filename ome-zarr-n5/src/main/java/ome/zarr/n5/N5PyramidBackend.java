@@ -231,19 +231,18 @@ public class N5PyramidBackend implements PyramidBackend
 	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadLevelFromParent(
 			final URI parentUri, final URI arrayUri )
 	{
-		final N5Reader reader;
-		final OmeNgffMetadata metadata;
+		final OmeNgffMetadata parentMetadata;
 		final Multiscale multiscale;
 		final Omero omero;
-		try
+		// the reader that backs the returned image is opened separately below and must stay open.
+		try (N5Reader readerForParent = openReader( parentUri ))
 		{
-			reader = openReader( parentUri );
 			final N5TreeNode node = new N5TreeNode( "" );
-			metadata = readMetadataOrNull( reader, node );
-			if ( metadata == null )
+			parentMetadata = readMetadataOrNull( readerForParent, node );
+			if ( parentMetadata == null )
 				return null;
-			multiscale = buildMultiscale( metadata, 0 );
-			omero = readOmeroMetadata( reader, node );
+			multiscale = buildMultiscale( parentMetadata, 0 );
+			omero = readOmeroMetadata( readerForParent, node );
 		}
 		catch ( RuntimeException e )
 		{
@@ -256,10 +255,10 @@ public class N5PyramidBackend implements PyramidBackend
 			logger.debug( "Parent multiscales at {} does not list child array {}", parentUri, arrayUri );
 			return null;
 		}
-		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
+		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( parentMetadata );
 		final AffineTransform3D transform = spatialMetadata.spatialTransforms3d()[ matched.index ];
 		final T type = N5Utils.type( multiscale.getDataType() );
-		final CachedCellImg< T, ? > img = N5Utils.openVolatile( reader, matched.datasetPath );
+		final CachedCellImg< T, ? > img = N5Utils.openVolatile( openReader( parentUri ), matched.datasetPath );
 		return PyramidContents.singleLevel( multiscale.getName(), type, transform, img, createAxisCalibrations( matched ), omero );
 	}
 
@@ -280,47 +279,47 @@ public class N5PyramidBackend implements PyramidBackend
 	 */
 	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( final URI arrayUri )
 	{
-		final N5Reader reader = openReader( arrayUri );
-		final String[] names = readDimensionNames( reader );
-		if ( names == null || names.length == 0 )
-			return null;
-		final DatasetAttributes attributes;
-		final CachedCellImg< T, ? > img;
-		try
+		final String[] names;
+		final DataType dataType;
+		// The reader that backs the returned image is opened separately below and must stay open.
+		try (N5Reader metadataReader = openReader( arrayUri ))
 		{
-			attributes = reader.getDatasetAttributes( "" );
-			if ( attributes == null )
+			names = readDimensionNames( metadataReader );
+			final DatasetAttributes attributes = metadataReader.getDatasetAttributes( "" );
+			if ( names.length == 0 || attributes == null )
 				return null;
-			img = N5Utils.openVolatile( reader, "" );
+			dataType = attributes.getDataType();
 		}
 		catch ( RuntimeException e )
 		{
 			logger.debug( "Could not open {} as a plain array: {}", arrayUri, e.getMessage() );
 			return null;
 		}
-		final T type = N5Utils.type( attributes.getDataType() );
+		final T type = N5Utils.type( dataType );
 		final AxisCalibration[] axes = AxisCalibration.fromZarrDimensionNames( names );
+		final CachedCellImg< T, ? > img = N5Utils.openVolatile( openReader( arrayUri ), "" );
 		return PyramidContents.singleLevel( ZarrUtils.lastSegment( arrayUri ), type, new AffineTransform3D(), img, axes, null );
 	}
 
 	/**
-	 * Reads the Zarr v3 {@code dimension_names} attribute of the array node, or
-	 * {@code null} when absent (e.g. a Zarr v2 array, which has none).
+	 * Reads the Zarr v3 {@code dimension_names} attribute of the array node, or an
+	 * empty array when absent (e.g. a Zarr v2 array, which has none).
 	 * <p>
 	 * NB: this relies on the N5 zarr reader surfacing {@code dimension_names} as a
 	 * top-level attribute; it is a best-effort fallback only. The parent-group
 	 * path above is the primary route and supplies axis names for both Zarr v2
-	 * and v3, so a {@code null} here simply means an uncalibratable lone array.
+	 * and v3, so an empty result here simply means an uncalibratable lone array.
 	 */
 	private static String[] readDimensionNames( final N5Reader reader )
 	{
 		try
 		{
-			return reader.getAttribute( "", "dimension_names", String[].class );
+			final String[] names = reader.getAttribute( "", "dimension_names", String[].class );
+			return names != null ? names : new String[ 0 ];
 		}
 		catch ( RuntimeException e )
 		{
-			return null;
+			return new String[ 0 ];
 		}
 	}
 
