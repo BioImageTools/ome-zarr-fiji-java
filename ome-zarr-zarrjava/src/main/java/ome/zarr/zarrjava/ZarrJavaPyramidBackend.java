@@ -61,6 +61,7 @@ import dev.zarr.zarrjava.store.StoreHandle;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
@@ -260,11 +261,9 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		{
 			return openMultiscaleImageFromHandle( store.resolve() );
 		}
-		catch ( StoreException e )
+		catch ( StoreException | SdkException e )
 		{
-			// Store-level failure (e.g., S3 auth failure, missing bucket, network
-			// error) before we could reach the dataset. Wrap in a backend-agnostic
-			// exception.
+			// Store-level failures. Wrap them in a backend-agnostic exception.
 			throw new StoreAccessException( inputUri.toString(), e );
 		}
 	}

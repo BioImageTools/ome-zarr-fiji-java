@@ -42,7 +42,6 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static ome.zarr.ZarrTestUtils.IMAGE_NAME;
 
 import net.imagej.Dataset;
@@ -95,8 +94,6 @@ import bdv.util.BdvStackSource;
 import ij.ImagePlus;
 import ome.zarr.fijiui.settings.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
-import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
-import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.fiji.open.ZarrOpener;
@@ -685,29 +682,10 @@ class ZarrOpenActionsTest
 			final ZarrOpeningSettings settings = new ZarrOpeningSettings();
 			settings.setReaderBackend( backend );
 
-			if ( backend == ZarrReaderBackend.ZARR_JAVA )
-			{
-				try (MockedConstruction< ZarrJavaPyramidBackend > mock = mockConstruction(
-						ZarrJavaPyramidBackend.class,
-						( mockBackend, ctx ) -> when( mockBackend.load( any() ) )
-								.thenThrow( new StoreAccessException( uri.toString(),
-										new RuntimeException( "Access Denied (403)" ) ) ) ))
-				{
-					final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings, capturedError::set );
-					assertDoesNotThrow( () -> {
-						actions.openIJWithImage();
-					} );
-					assertEquals( 1, mock.constructed().size(), "Expected exactly one ZarrJavaPyramidBackend to be constructed" );
-				}
-			}
-			else
-			{
-				// N5 backend throws N5Exception.N5IOException immediately (local failure, no network needed)
-				final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings, capturedError::set );
-				assertDoesNotThrow( () -> {
-					actions.openIJWithImage();
-				} );
-			}
+			final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings, capturedError::set );
+			assertDoesNotThrow( () -> {
+				actions.openIJWithImage();
+			}, "Store access failures must not escape openIJWithImage() for backend " + backend );
 
 			assertNotNull( capturedError.get(), "Error handler should have been called for backend " + backend );
 			assertTrue( capturedError.get().contains( uri.toString() ),
