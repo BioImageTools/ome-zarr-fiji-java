@@ -36,6 +36,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
@@ -136,7 +137,7 @@ public final class ClipboardUtils
 		{
 			parsed = new URI( text );
 		}
-		catch ( Exception e )
+		catch ( URISyntaxException e )
 		{
 			logger.debug( "Text is not valid URI syntax, will try as a local path: {}", e.getMessage() );
 		}
