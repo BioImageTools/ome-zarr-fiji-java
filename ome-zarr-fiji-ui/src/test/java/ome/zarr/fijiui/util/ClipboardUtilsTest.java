@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -112,6 +112,15 @@ class ClipboardUtilsTest
 	}
 
 	@Test
+	void s3UriIsAccepted()
+	{
+		final URI result = ClipboardUtils.stringToUri( "s3://my-bucket/path/to/dataset", errorHandler );
+		assertNotNull( result );
+		assertEquals( URI.create( "s3://my-bucket/path/to/dataset" ), result );
+		assertTrue( errors.isEmpty(), "Unexpected errors: " + errors );
+	}
+
+	@Test
 	void unsupportedSchemeReportsError()
 	{
 		assertNull( ClipboardUtils.stringToUri("ftp://example.com/foo.zarr", errorHandler ) );
@@ -119,7 +128,13 @@ class ClipboardUtilsTest
 		assertTrue( errors.get( 0 ).contains( "ftp" ) );
 	}
 
-	// --- readClipboard() and parseClipboardUri(Consumer) via system clipboard ---
+	@Test
+	void fileUriWithHostReportsError()
+	{
+		assertNull( ClipboardUtils.stringToUri( "file://some-server/path/to/data.zarr", errorHandler ) );
+		assertEquals( 1, errors.size() );
+		assertTrue( errors.get( 0 ).contains( "host" ), "Unexpected message: " + errors.get( 0 ) );
+	}
 
 	@Test
 	void systemClipboardWithHttpsUrlReturnsUri()

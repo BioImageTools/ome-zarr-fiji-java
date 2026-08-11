@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,6 +36,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
@@ -81,10 +82,14 @@ public final class ClipboardUtils
 
 	/**
 	 * Resolve text read from clipboard to a URI suitable for opening an OME-Zarr dataset.
-	 * Handles three input forms:
+	 * Handles four input forms:
 	 * <ul>
 	 *   <li>{@code http://} or {@code https://} URLs &ndash; used as-is</li>
-	 *   <li>{@code file:} URIs &ndash; used as-is</li>
+	 *   <li>{@code s3://} URIs &ndash; used as-is</li>
+	 *   <li>{@code file:} URIs &ndash; used as-is; both {@code file:/path/to/data.zarr} and
+	 *       {@code file:///path/to/data.zarr} are usable. A URI naming a host
+	 *       ({@code file://some-server/path/to/data.zarr}) is rejected by the backends,
+	 *       because {@link Paths#get(URI)} accepts no authority component.</li>
 	 *   <li>plain filesystem paths &ndash; converted with
 	 *       {@link Paths#get(String, String...)}{@code .toUri()}</li>
 	 * </ul>
@@ -99,10 +104,14 @@ public final class ClipboardUtils
 
 	/**
 	 * Converts a string to a {@link URI} suitable for opening an OME-Zarr dataset.
-	 * Handles three input forms:
+	 * Handles four input forms:
 	 * <ul>
 	 *   <li>{@code http://} or {@code https://} URLs &ndash; used as-is</li>
-	 *   <li>{@code file:} URIs &ndash; used as-is</li>
+	 *   <li>{@code s3://} URIs &ndash; used as-is</li>
+	 *   <li>{@code file:} URIs &ndash; used as-is; both {@code file:/path/to/data.zarr} and
+	 *       {@code file:///path/to/data.zarr} are usable. A URI naming a host
+	 *       ({@code file://some-server/path/to/data.zarr}) is rejected by the backends,
+	 *       because {@link Paths#get(URI)} accepts no authority component.</li>
 	 *   <li>plain filesystem paths &ndash; converted with
 	 *       {@link Paths#get(String, String...)}{@code .toUri()}</li>
 	 * </ul>
@@ -128,7 +137,7 @@ public final class ClipboardUtils
 		{
 			parsed = new URI( text );
 		}
-		catch ( Exception e )
+		catch ( URISyntaxException e )
 		{
 			logger.debug( "Text is not valid URI syntax, will try as a local path: {}", e.getMessage() );
 		}
@@ -137,12 +146,19 @@ public final class ClipboardUtils
 		if ( parsed != null )
 		{
 			final String scheme = parsed.getScheme();
-			if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) || "file".equalsIgnoreCase( scheme ) )
+			if ( "file".equalsIgnoreCase( scheme ) && parsed.getAuthority() != null )
+			{
+				errorHandler.accept( "A 'file:' URL cannot name a host:\n" + text + "\n\n"
+						+ "Use file:///path/to/data.zarr (three slashes) for a local path." );
+				return null;
+			}
+			if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme )
+					|| "file".equalsIgnoreCase( scheme ) || "s3".equalsIgnoreCase( scheme ) )
 				return parsed;
 			if ( scheme != null )
 			{
 				errorHandler.accept( "Unsupported URL scheme '" + scheme + "':\n" + text + "\n\n"
-						+ "Supported schemes are http, https, and file." );
+						+ "Supported schemes are http, https, file, and s3." );
 				return null;
 			}
 		}

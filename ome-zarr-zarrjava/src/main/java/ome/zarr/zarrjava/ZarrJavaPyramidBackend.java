@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -53,8 +53,17 @@ import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTran
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.TranslationCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.HttpStore;
+import dev.zarr.zarrjava.store.S3Store;
 import dev.zarr.zarrjava.store.Store;
+import dev.zarr.zarrjava.store.StoreException;
 import dev.zarr.zarrjava.store.StoreHandle;
+
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
@@ -80,6 +89,7 @@ import org.slf4j.LoggerFactory;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.PyramidLevelAccessException;
+import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
@@ -233,9 +243,29 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 			store = new FilesystemStore( Paths.get( inputUri ) );
 		else if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
 			store = new HttpStore( inputUri.toString() );
+		else if ( "s3".equalsIgnoreCase( scheme ) )
+		{
+			final S3Client s3 = S3Client.builder().region( Region.US_EAST_1 )
+					.credentialsProvider( AwsCredentialsProviderChain.builder()
+							.credentialsProviders( DefaultCredentialsProvider.builder().build(), AnonymousCredentialsProvider.create() )
+							.build() )
+					.build();
+			final String bucket = inputUri.getHost();
+			final String rawPath = inputUri.getPath();
+			final String keyPrefix = rawPath == null ? "" : rawPath.replaceFirst( "^/", "" );
+			store = new S3Store( s3, bucket, keyPrefix.isEmpty() ? null : keyPrefix );
+		}
 		else
 			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
-		return openMultiscaleImageFromHandle( store.resolve() );
+		try
+		{
+			return openMultiscaleImageFromHandle( store.resolve() );
+		}
+		catch ( StoreException | SdkException e )
+		{
+			// Store-level failures. Wrap them in a backend-agnostic exception.
+			throw new StoreAccessException( inputUri.toString(), e );
+		}
 	}
 
 	private MultiscaleImage openMultiscaleImageFromHandle( final StoreHandle handle )

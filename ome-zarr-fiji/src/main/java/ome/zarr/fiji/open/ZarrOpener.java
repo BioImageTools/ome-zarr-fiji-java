@@ -61,6 +61,7 @@ import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.open.exceptions.NonExistingResolutionLevelException;
 import ome.zarr.fiji.open.exceptions.NotASingleScaleImageException;
 import ome.zarr.fiji.util.BdvUtils;
+import ome.zarr.imglib2.exceptions.StoreAccessException;
 
 /**
  * Backend-reader-agnostic opener for OME-Zarr datasets.
@@ -182,6 +183,7 @@ public class ZarrOpener
 						final PyramidContents< ? > contents = getContents();
 						final PyramidalDataset dataset = new PyramidalDataset( context, contents, preferredResolutionLevel );
 						context.getService( UIService.class ).show( dataset );
+						context.getService( PyramidalService.class ).registerImageJDataset( dataset );
 						logger.info( "Opened dataset in ImageJ: {}", inputUri );
 						return null;
 					},
@@ -217,6 +219,7 @@ public class ZarrOpener
 							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels() );
 						final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
 						context.getService( UIService.class ).show( dataset );
+						context.getService( PyramidalService.class ).registerImageJDataset( dataset );
 						logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
 						return null;
 					},
@@ -272,38 +275,13 @@ public class ZarrOpener
 			showSingleScaleNotSupported();
 			// TODO: openSingleScaleImage( singleScaleOpener ) when single-scale support is added
 		}
+		catch ( StoreAccessException e )
+		{
+			showStoreAccessError( e );
+		}
 		catch ( IllegalArgumentException | JsonSyntaxException e )
 		{
 			showNonZarrError( e );
-		}
-		return null;
-	}
-
-	/**
-	 * Opens the dataset and applies a caller-supplied function to it: the
-	 * multiscale function receives a {@link PyramidalDataset} at the preferred
-	 * resolution level, the single-scale function an {@link Img} (single-scale
-	 * support is still pending). Returns the function's result, or {@code null}
-	 * if opening failed.
-	 */
-	public Object openImage( final Function< PyramidalDataset, Object > multiScaleImageOpener,
-			final Function< Img< ? >, Object > singleScaleImageOpener )
-	{
-		try
-		{
-			return openPyramidImage(
-					() -> {
-						final PyramidContents< ? > contents = getContents();
-						final PyramidalDataset dataset = new PyramidalDataset( context, contents, preferredResolutionLevel );
-						final Object result = multiScaleImageOpener.apply( dataset );
-						logger.info( "Opened dataset: {}", inputUri );
-						return result;
-					},
-					singleScaleImageOpener );
-		}
-		catch ( NoMatchingResolutionException e )
-		{
-			showNonMatchingResolutionError( e );
 		}
 		return null;
 	}
@@ -344,6 +322,12 @@ public class ZarrOpener
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
 				+ "Consider opening one level higher or lower in the hierarchy instead." );
 		logger.warn( "Could not open dataset as single resolution image: {}. Error message: {}", inputUri, e.getMessage() );
+	}
+
+	private void showStoreAccessError( final Exception e )
+	{
+		errorHandler.accept( "Could not access the dataset at: " + inputUri + "\n\n" + e.getMessage() );
+		logger.warn( "Store access failed for {}: {}", inputUri, e.getMessage() );
 	}
 
 	private void showNonZarrError( final Exception e )
