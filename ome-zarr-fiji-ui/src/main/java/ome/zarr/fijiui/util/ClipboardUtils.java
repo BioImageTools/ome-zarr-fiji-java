@@ -81,11 +81,14 @@ public final class ClipboardUtils
 
 	/**
 	 * Resolve text read from clipboard to a URI suitable for opening an OME-Zarr dataset.
-	 * Handles three input forms:
+	 * Handles four input forms:
 	 * <ul>
 	 *   <li>{@code http://} or {@code https://} URLs &ndash; used as-is</li>
 	 *   <li>{@code s3://} URIs &ndash; used as-is</li>
-	 *   <li>{@code file:} URIs &ndash; used as-is</li>
+	 *   <li>{@code file:} URIs &ndash; used as-is; both {@code file:/path/to/data.zarr} and
+	 *       {@code file:///path/to/data.zarr} are usable. A URI naming a host
+	 *       ({@code file://some-server/path/to/data.zarr}) is rejected by the backends,
+	 *       because {@link Paths#get(URI)} accepts no authority component.</li>
 	 *   <li>plain filesystem paths &ndash; converted with
 	 *       {@link Paths#get(String, String...)}{@code .toUri()}</li>
 	 * </ul>
@@ -104,7 +107,10 @@ public final class ClipboardUtils
 	 * <ul>
 	 *   <li>{@code http://} or {@code https://} URLs &ndash; used as-is</li>
 	 *   <li>{@code s3://} URIs &ndash; used as-is</li>
-	 *   <li>{@code file:} URIs &ndash; used as-is</li>
+	 *   <li>{@code file:} URIs &ndash; used as-is; both {@code file:/path/to/data.zarr} and
+	 *       {@code file:///path/to/data.zarr} are usable. A URI naming a host
+	 *       ({@code file://some-server/path/to/data.zarr}) is rejected by the backends,
+	 *       because {@link Paths#get(URI)} accepts no authority component.</li>
 	 *   <li>plain filesystem paths &ndash; converted with
 	 *       {@link Paths#get(String, String...)}{@code .toUri()}</li>
 	 * </ul>
