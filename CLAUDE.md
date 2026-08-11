@@ -8,6 +8,8 @@ A Fiji/ImageJ plugin that provides drag-and-drop support for opening OME-Zarr (O
 
 ## Build and test commands
 
+**Java baseline: 8.** The `pom-scijava` 45 parent defaults `maven.compiler.release` to 11, but the root `pom.xml` overrides it back to 8 (`scijava.jvm.version=8`, `scijava.jvm.build.version=[1.8.0-101,)`) so the plugin keeps running on **both Fiji-Stable (Java 8) and Fiji-Latest (Java 21)**. Targeting release 8 requires that every dependency also be release-8 bytecode — the `EnforceBytecodeVersion` enforcer rule fails the build otherwise. pom-scijava 45 resolves some BigDataViewer artifacts at release 11, so the root pom pins Java-8-compatible versions: `bigdataviewer-core.version=10.6.8` and `bigdataviewer-vistools.version=1.0.0-beta-36`. If you bump either (or the pom-scijava parent) and the enforcer reports a "Banned Dependency … bytecode version" for a new transitive artifact, either pin an older release-8 build of it or drop the Java-8 override and accept Java-11-only (Fiji-Latest) support.
+
 This is a multi-module Maven reactor; commands run at the repo root operate on all modules.
 
 ```bash

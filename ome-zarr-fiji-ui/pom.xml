@@ -147,6 +147,13 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji</artifactId>
 			<scope>test</scope>
+			<!-- Exclude scijava-desktop here to be able to run tests without a dependency built with target java 11 -->
+			<exclusions>
+				<exclusion>
+					<groupId>org.scijava</groupId>
+					<artifactId>scijava-desktop</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
