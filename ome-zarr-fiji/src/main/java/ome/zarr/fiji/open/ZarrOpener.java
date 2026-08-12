@@ -181,7 +181,7 @@ public class ZarrOpener
 		}
 		catch ( NoMatchingResolutionException e )
 		{
-			showNonMatchingResolutionError( e );
+			showNoMatchingResolutionError( e );
 		}
 	}
 
@@ -241,7 +241,7 @@ public class ZarrOpener
 		}
 		catch ( NoMatchingResolutionException e )
 		{
-			showNonMatchingResolutionError( e );
+			showNoMatchingResolutionError( e );
 		}
 		return null;
 	}
@@ -309,7 +309,7 @@ public class ZarrOpener
 		logger.warn( "Could not open dataset image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
-	private void showNonMatchingResolutionError( final Exception e )
+	private void showNoMatchingResolutionError( final Exception e )
 	{
 		errorHandler.accept( "Safety check failed when opening dataset: " + inputUri + "\n\r\n" + e.getMessage() + "\n\r\n"
 				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Settings > Opening Behavior Settings to still open the image." );
