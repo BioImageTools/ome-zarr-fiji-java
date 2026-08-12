@@ -221,7 +221,7 @@ public class ZarrOpener
 	}
 
 	/**
-	 * Opens the dataset in BigDataViewer as a {@link PyramidalBdv} and registers
+	 * Opens the {@link ome.zarr.fiji.Pyramidal} in BigDataViewer as a {@link PyramidalBdv} and registers
 	 * it with the {@link PyramidalService} lifecycle.
 	 *
 	 * @return the resulting {@code BdvHandle}, or {@code null} if opening failed
@@ -232,10 +232,10 @@ public class ZarrOpener
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidalBdv< ? > dataset = new PyramidalBdv<>( context, getContents() );
+						final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, getContents() );
 						final PyramidalService pyramidalService = context.getService( PyramidalService.class );
-						final Object result = BdvUtils.showBdvAndRegisterDataset( dataset, pyramidalService );
-						logger.info( "Opened dataset in BigDataViewer: {}", inputUri );
+						final Object result = BdvUtils.showBdvAndRegisterDataset( pyramidal, pyramidalService );
+						logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );
 						return result;
 					} );
 		}
