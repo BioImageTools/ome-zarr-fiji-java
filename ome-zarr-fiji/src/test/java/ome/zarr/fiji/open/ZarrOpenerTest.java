@@ -133,12 +133,14 @@ class ZarrOpenerTest
 		}
 	}
 
-	@Test
-	void openIJWithImageOpensSingleResolutionLevelAsImage() throws Exception
+	@ParameterizedTest
+	@MethodSource( "backends" )
+	void openIJWithImageOpensSingleResolutionLevelAsImage( PyramidBackend backend ) throws Exception
 	{
 		String[] singleLevelPaths = {
 				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/0",
-				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr/0"
+				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr/0",
+				"ome/zarr/testdata/single_resolution_testing/nested_multiscale_v5.ome.zarr/sub/0" // Note: for ome zarr v0.4, the code does not support nested multiscales
 		};
 		try (Context context = new Context())
 		{
@@ -148,7 +150,7 @@ class ZarrOpenerTest
 			{
 				Path path = ZarrTestUtils.resourcePath( levelPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null, capturedError::set ).openIJWithImage();
+				new ZarrOpener( path.toUri(), context, backend, null, capturedError::set ).openIJWithImage();
 
 				assertEquals( 1, datasetService.getDatasets().size(),
 						"Single resolution level should open as a one-level dataset: " + levelPath );
@@ -161,9 +163,10 @@ class ZarrOpenerTest
 		}
 	}
 
-	@Test
+	@ParameterizedTest
+	@MethodSource( "backends" )
 	@SuppressWarnings( "java:S1612" )
-	void openIJWithImageReportsInvalidImagePaths() throws Exception
+	void openIJWithImageReportsInvalidImagePaths( PyramidBackend backend ) throws Exception
 	{
 		// These are chunk files inside an array, not openable OME-Zarr nodes.
 		String[] invalidPaths = {
@@ -177,7 +180,7 @@ class ZarrOpenerTest
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				ZarrOpener opener = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null, capturedError::set );
+				ZarrOpener opener = new ZarrOpener( path.toUri(), context, backend, null, capturedError::set );
 
 				assertDoesNotThrow( () -> opener.openIJWithImage(), "Opening " + invalidPath + " should not throw" );
 				assertNotNull( capturedError.get(), "Error handler should have been called for " + invalidPath );
