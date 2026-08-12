@@ -69,22 +69,23 @@ public final class AxisCalibration
 	}
 
 	/**
-	 * Builds uncalibrated axes (unit scale, empty unit) from Zarr
-	 * {@code dimension_names}. The input is in Zarr storage (C) order and is
-	 * reversed into the imglib2 F-order expected by
-	 * {@link ome.zarr.imglib2.PyramidContents}. Used when a single Zarr v3 array
-	 * is opened without a parent multiscales group to supply scale and unit
-	 * information.
+	 * Builds uncalibrated axes (unit scale, empty unit) from axis names. Used when
+	 * a single Zarr v3 array is opened without a parent multiscales group to supply
+	 * scale and unit information.
+	 * <p>
+	 * The names must already be in the imglib2 F-order expected by
+	 * {@link ome.zarr.imglib2.PyramidContents}; a reader whose library hands out
+	 * Zarr's {@code dimension_names} in storage (C) order has to reverse them
+	 * first, just as it does for the shape.
 	 *
-	 * @param zarrDimensionNames axis names in Zarr C-order
-	 * @return axis calibrations in imglib2 F-order, each with unit scale and no unit
+	 * @param axisNames axis names in imglib2 F-order
+	 * @return axis calibrations in the same order, each with unit scale and no unit
 	 */
-	public static AxisCalibration[] fromZarrDimensionNames( final String[] zarrDimensionNames )
+	public static AxisCalibration[] fromAxisNames( final String[] axisNames )
 	{
-		final int n = zarrDimensionNames.length;
-		final AxisCalibration[] result = new AxisCalibration[ n ];
-		for ( int zarrDim = 0; zarrDim < n; zarrDim++ )
-			result[ n - 1 - zarrDim ] = new AxisCalibration( zarrDimensionNames[ zarrDim ], "", 1.0 );
+		final AxisCalibration[] result = new AxisCalibration[ axisNames.length ];
+		for ( int d = 0; d < axisNames.length; d++ )
+			result[ d ] = new AxisCalibration( axisNames[ d ], "", 1.0 );
 		return result;
 	}
 }

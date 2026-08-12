@@ -425,11 +425,15 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 			return null;
 		final T type = typeForZarrDataType( arr.metadata().dataType().getMA2DataType() );
 		final CachedCellImg< T, ? > img = createCellImg( arr, type );
-		final AxisCalibration[] axes = AxisCalibration.fromZarrDimensionNames( names );
+		final AxisCalibration[] axes = AxisCalibration.fromAxisNames( names );
 		return PyramidContents.singleLevel( ZarrUtils.lastSegment( arrayUri ), type, new AffineTransform3D(), img, axes, null );
 	}
 
-	/** Zarr v3 {@code dimension_names} of {@code arr}, or an empty array for a Zarr v2 array (which has none). */
+	/**
+	 * Zarr v3 {@code dimension_names} of {@code arr} reversed into imglib2 F-order
+	 * (as {@link #reverseToLong} does for the shape), or an empty array for a Zarr
+	 * v2 array (which has none).
+	 */
 	private static String[] dimensionNames( final Array arr )
 	{
 		final dev.zarr.zarrjava.core.ArrayMetadata metadata = arr.metadata();
@@ -437,7 +441,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		{
 			final String[] names = ( ( dev.zarr.zarrjava.v3.ArrayMetadata ) metadata ).dimensionNames;
 			if ( names != null )
-				return names;
+				return reverse( names );
 		}
 		return new String[ 0 ];
 	}
@@ -715,6 +719,14 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	private static int[] reverseToInt( final int[] arr )
 	{
 		final int[] out = new int[ arr.length ];
+		for ( int i = 0; i < arr.length; i++ )
+			out[ i ] = arr[ arr.length - 1 - i ];
+		return out;
+	}
+
+	private static String[] reverse( final String[] arr )
+	{
+		final String[] out = new String[ arr.length ];
 		for ( int i = 0; i < arr.length; i++ )
 			out[ i ] = arr[ arr.length - 1 - i ];
 		return out;

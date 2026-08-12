@@ -50,6 +50,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.NgffSingleScaleAxes
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMultiScaleMetadata;
+import org.janelia.saalfeldlab.n5.zarr.v3.ZarrV3DatasetAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -237,21 +238,23 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	/**
 	 * {@inheritDoc}
 	 * <p>
-	 * Takes the axis names from the array's {@code dimension_names} attribute (see
-	 * {@link #readDimensionNames}), which only a Zarr v3 array has; a Zarr v2 array
+	 * Takes the axis names from the array's {@code dimension_names} (see
+	 * {@link #readAxisNames}), which only a Zarr v3 array has; a Zarr v2 array
 	 * therefore declines.
 	 */
 	@Override
 	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( final URI arrayUri )
 	{
-		final String[] names;
+		final String[] axisNames;
 		final DataType dataType;
 		// The reader that backs the returned image is opened separately below and must stay open.
 		try (N5Reader metadataReader = openReader( arrayUri ))
 		{
-			names = readDimensionNames( metadataReader );
 			final DatasetAttributes attributes = metadataReader.getDatasetAttributes( "" );
-			if ( names.length == 0 || attributes == null )
+			if ( attributes == null )
+				return null; // not an array (e.g. a group, or a plain directory)
+			axisNames = readAxisNames( attributes );
+			if ( axisNames.length == 0 )
 				return null;
 			dataType = attributes.getDataType();
 		}
@@ -261,31 +264,31 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 			return null;
 		}
 		final T type = N5Utils.type( dataType );
-		final AxisCalibration[] axes = AxisCalibration.fromZarrDimensionNames( names );
+		final AxisCalibration[] axes = AxisCalibration.fromAxisNames( axisNames );
 		final CachedCellImg< T, ? > img = N5Utils.openVolatile( openReader( arrayUri ), "" );
 		return PyramidContents.singleLevel( ZarrUtils.lastSegment( arrayUri ), type, new AffineTransform3D(), img, axes, null );
 	}
 
 	/**
-	 * Reads the Zarr v3 {@code dimension_names} attribute of the array node, or an
-	 * empty array when absent (e.g. a Zarr v2 array, which has none).
+	 * Axis names of the array's Zarr v3 {@code dimension_names}, or an empty array
+	 * when it has none — a Zarr v2 array (which has no such field) or a v3 array
+	 * that omits it.
 	 * <p>
-	 * NB: this relies on the N5 zarr reader surfacing {@code dimension_names} as a
-	 * top-level attribute; it is a best-effort fallback only. The parent-group
-	 * path above is the primary route and supplies axis names for both Zarr v2
-	 * and v3, so an empty result here simply means an uncalibratable lone array.
+	 * NB: {@code dimension_names} is part of the Zarr v3 array metadata, not of the
+	 * user attributes, so it is only reachable through the dataset attributes;
+	 * {@link N5Reader#getAttribute} does not see it. n5-zarr already reverses the
+	 * names into the imglib2 F-order that {@link AxisCalibration#fromAxisNames}
+	 * expects, so no further reversal is needed here.
 	 */
-	private static String[] readDimensionNames( final N5Reader reader )
+	private static String[] readAxisNames( final DatasetAttributes attributes )
 	{
-		try
+		if ( attributes instanceof ZarrV3DatasetAttributes )
 		{
-			final String[] names = reader.getAttribute( "", "dimension_names", String[].class );
-			return names != null ? names : new String[ 0 ];
+			final String[] names = ( ( ZarrV3DatasetAttributes ) attributes ).getDimensionNames();
+			if ( names != null )
+				return names;
 		}
-		catch ( RuntimeException e )
-		{
-			return new String[ 0 ];
-		}
+		return new String[ 0 ];
 	}
 
 	private static boolean isBioformats2rawLayout( final N5Reader reader )
