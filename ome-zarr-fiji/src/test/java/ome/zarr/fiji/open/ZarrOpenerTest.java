@@ -28,6 +28,7 @@
  */
 package ome.zarr.fiji.open;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -52,6 +53,7 @@ import bdv.util.BdvHandle;
 import javax.swing.SwingUtilities;
 
 import ome.zarr.ZarrTestUtils;
+import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
@@ -237,27 +239,56 @@ class ZarrOpenerTest
 		}
 	}
 
+	/**
+	 * No level of {@link #DATASET} is 10 pixels wide or narrower (level 0 is 64,
+	 * level 1 is 32), so the opener offers the coarsest level and opens it only when
+	 * the confirmation is accepted.
+	 */
 	@Test
 	@SuppressWarnings( "java:S1612" )
-	void openIJWithImageReportsNonMatchingResolution() throws Exception
+	void openIJWithImageAsksBeforeOpeningLevelWiderThanPreferred() throws Exception
 	{
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
+			DatasetService datasetService = context.getService( DatasetService.class );
+			DisplayService displayService = context.getService( DisplayService.class );
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			// no level of this dataset is 10 pixels wide or narrower
-			ZarrOpener opener = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set );
+			AtomicReference< String > shownMessage = new AtomicReference<>();
 
-			assertDoesNotThrow( () -> opener.openIJWithImage() );
-			assertTrue( context.getService( DatasetService.class ).getDatasets().isEmpty(),
-					"No level matches the preferred width, so nothing must be opened" );
-			assertNotNull( capturedError.get(), "Error handler should have been called" );
+			ZarrOpener declining = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
+					message -> {
+						shownMessage.set( message );
+						return false;
+					} );
+			assertDoesNotThrow( () -> declining.openIJWithImage() );
+
+			assertTrue( datasetService.getDatasets().isEmpty(),
+					"Nothing must be opened when the confirmation is declined" );
+			assertNull( capturedError.get(), "Declining is a user choice, not an error" );
+			assertNotNull( shownMessage.get(), "The user should have been asked" );
+			assertTrue( shownMessage.get().contains( "wider than your preferred maximum width" ),
+					"Unexpected confirmation message: " + shownMessage.get() );
+			assertTrue( shownMessage.get().contains( "2 resolution levels" ),
+					"A multi-level dataset should say that no level is narrow enough: " + shownMessage.get() );
+
+			ZarrOpener accepting = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
+					message -> true );
+			accepting.openIJWithImage();
+
+			assertEquals( 1, datasetService.getDatasets().size(), "Accepting must open the image" );
+			PyramidalDataset opened = Cast.unchecked( context.getService( PyramidalService.class ).getPyramidals().get( 0 ) );
+			assertArrayEquals( new long[] { 32, 32, 8, 3, 4 }, opened.getImgPlus().dimensionsAsLongArray(),
+					"The coarsest level is the closest match to the preferred width" );
+
+			SwingUtilities.invokeAndWait( () -> {} );
+			displayService.getActiveDisplay().close();
 		}
 	}
 
 	/**
 	 * BigDataViewer shows the whole pyramid, so the preferred width — a limit on the
-	 * single level an ImageJ window holds — must not be applied to it.
+	 * single level an ImageJ window holds — must neither be checked nor asked about.
 	 */
 	@Test
 	void openBDVWithImageIgnoresPreferredWidth() throws Exception
@@ -266,7 +297,10 @@ class ZarrOpenerTest
 		try (Context context = new Context())
 		{
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			ZarrOpener opener = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set );
+			ZarrOpener opener = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
+					message -> {
+						throw new AssertionError( "BDV must not ask about the preferred width: " + message );
+					} );
 			BdvHandle bdvHandle = Cast.unchecked( opener.openBDVWithImage() );
 
 			assertNull( capturedError.get(), "Opening should not have failed, got: " + capturedError.get() );

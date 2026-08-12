@@ -40,7 +40,6 @@ import net.imglib2.util.Cast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ome.zarr.imglib2.exceptions.NoMatchingResolutionException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
 
@@ -256,26 +255,39 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
-	 * Returns the index of the coarsest resolution level whose x-width (index 0
-	 * in imglib2 F-order) is &le; {@code preferredMaxWidth}, or 0 when
-	 * {@code preferredMaxWidth} is {@code null}.
+	 * Width of the image at the given resolution level, i.e. its extent along x
+	 * (index 0 in imglib2 F-order).
 	 *
-	 * @throws NoMatchingResolutionException if {@code preferredMaxWidth} is
-	 *   smaller than the width of every resolution level
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public long widthAtLevel( final int resolutionLevel )
+	{
+		return asImg( resolutionLevel ).dimension( 0 );
+	}
+
+	/**
+	 * Returns the index of the highest-resolution level that is still no wider
+	 * than {@code preferredMaxWidth}, or 0 when {@code preferredMaxWidth} is
+	 * {@code null}.
+	 * <p>
+	 * When no level is narrow enough — including the trivial case of a
+	 * single-level pyramid that is already too wide — the coarsest level
+	 * ({@code numResolutionLevels() - 1}) is returned as the closest available
+	 * match. Callers for which an oversized image is a problem should therefore
+	 * compare the {@link #widthAtLevel} of the returned level against their own
+	 * limit rather than assume the result fits.
 	 */
 	public int selectResolutionLevel( final Integer preferredMaxWidth )
 	{
 		if ( preferredMaxWidth == null )
 			return 0;
-		int smallestWidth = Integer.MAX_VALUE;
 		for ( int level = 0; level < cachedCellImgs.length; level++ )
 		{
-			final int width = ( int ) cachedCellImgs[ level ].dimension( 0 );
-			if ( width <= preferredMaxWidth )
+			if ( widthAtLevel( level ) <= preferredMaxWidth )
 				return level;
-			smallestWidth = Math.min( smallestWidth, width );
 		}
-		throw new NoMatchingResolutionException( preferredMaxWidth, smallestWidth );
+		return cachedCellImgs.length - 1;
 	}
 
 	public static < T extends NativeType< T > & RealType< T > > Builder< T > builder()

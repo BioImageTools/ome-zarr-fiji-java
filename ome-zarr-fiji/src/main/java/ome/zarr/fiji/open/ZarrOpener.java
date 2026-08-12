@@ -36,16 +36,17 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.google.gson.JsonSyntaxException;
 
 import ij.IJ;
+import ij.gui.YesNoCancelDialog;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
-import ome.zarr.imglib2.exceptions.NoMatchingResolutionException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.fiji.PyramidalBdv;
@@ -62,14 +63,17 @@ import ome.zarr.imglib2.exceptions.StoreAccessException;
  * opens it in ImageJ (as a {@link PyramidalDataset}) or in BigDataViewer (as a
  * {@link PyramidalBdv}, registered in both cases with the {@link PyramidalService} lifecycle).
  * <p>
- * The preferred width applies to {@link #openIJWithImage()} only, the one opener
- * that has to pick a single resolution level. BigDataViewer displays all levels
- * and streams them lazily, and {@link #openIJWithImage(int)} is told which level
- * to use, so neither consults the preferred width.
+ * The preferred width applies to the ImageJ openers only, which show one
+ * resolution level at a time: it picks that level and, when even the level to be
+ * opened is wider than preferred, asks the user for confirmation before opening
+ * it. BigDataViewer displays all levels and streams them lazily, so
+ * {@link #openBDVWithImage()} ignores the preferred width entirely.
  */
 public class ZarrOpener
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	private static final String OVERSIZE_DIALOG_TITLE = "Image larger than preferred size";
 
 	private final URI inputUri;
 
@@ -80,6 +84,8 @@ public class ZarrOpener
 	private final Integer preferredMaxWidth;
 
 	private final Consumer< String > errorHandler;
+
+	private final Predicate< String > oversizeConfirmation;
 
 	private PyramidContents< ? > cachedContents;
 
@@ -109,11 +115,33 @@ public class ZarrOpener
 	public ZarrOpener( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth, final Consumer< String > errorHandler )
 	{
+		this( inputUri, context, backend, preferredMaxWidth, errorHandler, ZarrOpener::confirmWithDialog );
+	}
+
+	/**
+	 * Opener for {@code inputUri} with an explicit backend, preferred resolution,
+	 * error sink, and oversize confirmation.
+	 *
+	 * @param backend the backend used to read the dataset
+	 * @param preferredMaxWidth the highest-resolution level that is still no wider
+	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
+	 * @param errorHandler receives a user-facing message when opening fails
+	 * @param oversizeConfirmation asked whether to open a level that is wider than
+	 *   {@code preferredMaxWidth} after all; receives the user-facing message and
+	 *   returns whether to go ahead. Never consulted when {@code preferredMaxWidth}
+	 *   is {@code null} or the level fits. Pass a non-interactive implementation
+	 *   for headless use — the default shows a modal {@link YesNoCancelDialog}.
+	 */
+	public ZarrOpener( final URI inputUri, final Context context, final PyramidBackend backend,
+			final Integer preferredMaxWidth, final Consumer< String > errorHandler,
+			final Predicate< String > oversizeConfirmation )
+	{
 		this.inputUri = inputUri;
 		this.context = context;
 		this.backend = backend;
 		this.preferredMaxWidth = preferredMaxWidth;
 		this.errorHandler = errorHandler;
+		this.oversizeConfirmation = oversizeConfirmation;
 	}
 
 	/**
@@ -165,22 +193,19 @@ public class ZarrOpener
 	 * Opens the dataset in ImageJ as a {@link PyramidalDataset} at the preferred
 	 * resolution level, shown via the {@code UIService}. A location pointing at a
 	 * single resolution level opens as a one-level dataset.
+	 * <p>
+	 * When no level is narrow enough for the preferred width — which is always the
+	 * case for a single-level location that is too wide — the coarsest level is
+	 * offered instead, and opened only if the user confirms.
 	 */
 	public void openIJWithImage()
 	{
-		try
-		{
-			openPyramidImage(
-					() -> {
-						final PyramidContents< ? > contents = getContents();
-						showAsDataset( contents, contents.selectResolutionLevel( preferredMaxWidth ) );
-						return null;
-					} );
-		}
-		catch ( NoMatchingResolutionException e )
-		{
-			showNoMatchingResolutionError( e );
-		}
+		openPyramidImage(
+				() -> {
+					final PyramidContents< ? > contents = getContents();
+					showAsDataset( contents, contents.selectResolutionLevel( preferredMaxWidth ) );
+					return null;
+				} );
 	}
 
 	/**
@@ -193,8 +218,9 @@ public class ZarrOpener
 	 * and volatile images are the single source of truth and are never loaded more than once
 	 * per resolution level.
 	 * <p>
-	 * The preferred width is not applied here: the caller has already chosen the
-	 * level to open.
+	 * No level is selected here — the caller has already chosen one — but the level
+	 * is still opened only if the user confirms when it is wider than the preferred
+	 * width.
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
 	 */
@@ -220,14 +246,69 @@ public class ZarrOpener
 
 	/**
 	 * Shows {@code resolutionLevel} of {@code contents} as a new ImageJ dataset,
-	 * registered with the {@link PyramidalService} lifecycle.
+	 * registered with the {@link PyramidalService} lifecycle — unless the level is
+	 * wider than the preferred width and the user declines to open it anyway, in
+	 * which case nothing is opened.
 	 */
 	private void showAsDataset( final PyramidContents< ? > contents, final int resolutionLevel )
 	{
+		if ( !mayOpenLevel( contents, resolutionLevel ) )
+			return;
 		final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
 		context.getService( UIService.class ).show( dataset );
 		context.getService( PyramidalService.class ).registerImageJDataset( dataset );
 		logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
+	}
+
+	/**
+	 * Whether {@code resolutionLevel} may be opened: {@code true} when no preferred
+	 * width is configured or the level is no wider than it, otherwise the user's
+	 * answer to the oversize confirmation.
+	 */
+	private boolean mayOpenLevel( final PyramidContents< ? > contents, final int resolutionLevel )
+	{
+		final long width = contents.widthAtLevel( resolutionLevel );
+		if ( preferredMaxWidth == null || width <= preferredMaxWidth )
+			return true;
+		final boolean openAnyway = oversizeConfirmation.test( oversizeMessage( contents, resolutionLevel, width ) );
+		logger.info( "Resolution level {} of {} is {} pixels wide, preferred maximum is {}. Opening anyway: {}.",
+				resolutionLevel, inputUri, width, preferredMaxWidth, openAnyway );
+		return openAnyway;
+	}
+
+	/**
+	 * The confirmation text for a level that is wider than the preferred width. The
+	 * hint that no level of the pyramid is narrow enough is added only when the
+	 * level in question is the coarsest one of several — for a finer level, a
+	 * narrower one does exist and the hint would contradict the offer.
+	 */
+	private String oversizeMessage( final PyramidContents< ? > contents, final int resolutionLevel, final long width )
+	{
+		final int numLevels = contents.numResolutionLevels();
+		final StringBuilder message = new StringBuilder( "This image is wider than your preferred maximum width.\n\r\n" )
+				.append( "Location: " ).append( inputUri ).append( "\n" )
+				.append( "Width: " ).append( width )
+				.append( " pixels (preferred maximum: " ).append( preferredMaxWidth ).append( " pixels)\n\r\n" );
+		if ( numLevels > 1 && resolutionLevel == numLevels - 1 )
+			message.append( "The dataset has " ).append( numLevels )
+					.append( " resolution levels, but even the smallest one is " )
+					.append( width ).append( " pixels wide.\n\r\n" );
+		return message.append( "Open it anyway?\n\r\n" )
+				.append( "Large images can be slow to display and may exceed available memory.\n" )
+				.append( "You can change the settings under:\n" )
+				.append( "Plugins > OME-Zarr > Settings > Opening Behavior Settings." )
+				.toString();
+	}
+
+	/**
+	 * Default oversize confirmation: a modal ImageJ dialog whose "Cancel" button is
+	 * a synonym for "Don't open", so only "Open anyway" opens the image. Requires a
+	 * display and therefore cannot be used headlessly.
+	 */
+	private static boolean confirmWithDialog( final String message )
+	{
+		return new YesNoCancelDialog( IJ.getInstance(), OVERSIZE_DIALOG_TITLE, message,
+				"Open anyway", "Don't open" ).yesPressed();
 	}
 
 	/**
@@ -313,13 +394,6 @@ public class ZarrOpener
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
 				+ "The opener for OME-Zarr only supports locations that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
 		logger.warn( "Could not open dataset image: {}. Error message: {}", inputUri, e.getMessage() );
-	}
-
-	private void showNoMatchingResolutionError( final Exception e )
-	{
-		errorHandler.accept( "Safety check failed when opening dataset: " + inputUri + "\n\r\n" + e.getMessage() + "\n\r\n"
-				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Settings > Opening Behavior Settings to still open the image." );
-		logger.warn( "Not opening dataset: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
 	private void showNonExistingResolutionLevelError( final NonExistingResolutionLevelException e )

@@ -48,7 +48,6 @@ import java.net.URISyntaxException;
 import java.util.stream.Stream;
 
 import ome.zarr.ZarrTestUtils;
-import ome.zarr.imglib2.exceptions.NoMatchingResolutionException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 
 /**
@@ -254,8 +253,10 @@ public interface PyramidBackendTestBase
 			assertSelectedLevelDimensions( contents, 64, 64, 16, is3D ); // equals the highest resolution
 			assertSelectedLevelDimensions( contents, 50, 32, 8, is3D ); // between the lowest and highest resolution
 			assertSelectedLevelDimensions( contents, 32, 32, 8, is3D ); // equals the lowest resolution
-			// less than the lowest resolution
-			assertThrows( NoMatchingResolutionException.class, () -> contents.selectResolutionLevel( 30 ) );
+			// less than the lowest resolution: falls back to the coarsest level
+			assertSelectedLevelDimensions( contents, 30, 32, 8, is3D );
+			assertEquals( contents.numResolutionLevels() - 1, contents.selectResolutionLevel( 30 ),
+					"Without a narrow enough level, the coarsest one must be selected" );
 			assertSelectedLevelDimensions( contents, null, 64, 16, is3D ); // null preferred width results in the highest resolution
 		}
 	}
