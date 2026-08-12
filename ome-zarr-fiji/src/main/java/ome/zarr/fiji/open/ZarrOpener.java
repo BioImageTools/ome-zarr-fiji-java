@@ -61,6 +61,11 @@ import ome.zarr.imglib2.exceptions.StoreAccessException;
  * preferred resolution width, it loads a {@link PyramidContents} and
  * opens it in ImageJ (as a {@link PyramidalDataset}) or in BigDataViewer (as a
  * {@link PyramidalBdv}, registered in both cases with the {@link PyramidalService} lifecycle).
+ * <p>
+ * The preferred width applies to {@link #openIJWithImage()} only, the one opener
+ * that has to pick a single resolution level. BigDataViewer displays all levels
+ * and streams them lazily, and {@link #openIJWithImage(int)} is told which level
+ * to use, so neither consults the preferred width.
  */
 public class ZarrOpener
 {
@@ -78,15 +83,13 @@ public class ZarrOpener
 
 	private PyramidContents< ? > cachedContents;
 
-	private int preferredResolutionLevel;
-
 	/**
 	 * Opener for {@code inputUri} with an explicit backend and preferred
 	 * resolution, reporting failures via {@code IJ::error}.
 	 *
 	 * @param backend the backend used to read the dataset
-	 * @param preferredMaxWidth the coarsest level whose width is still &le; this is
-	 *   opened, or {@code null} for the highest resolution
+	 * @param preferredMaxWidth the highest-resolution level that is still no wider
+	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
 	 */
 	public ZarrOpener( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth )
@@ -99,8 +102,8 @@ public class ZarrOpener
 	 * resolution, and error sink.
 	 *
 	 * @param backend the backend used to read the dataset
-	 * @param preferredMaxWidth the coarsest level whose width is still &le; this is
-	 *   opened, or {@code null} for the highest resolution
+	 * @param preferredMaxWidth the highest-resolution level that is still no wider
+	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
 	 * @param errorHandler receives a user-facing message when opening fails
 	 */
 	public ZarrOpener( final URI inputUri, final Context context, final PyramidBackend backend,
@@ -115,8 +118,7 @@ public class ZarrOpener
 
 	/**
 	 * Loads (once, then caches) the {@link PyramidContents} for the configured
-	 * location using the configured {@link PyramidBackend}, and resolves the
-	 * resolution level matching the preferred width.
+	 * location using the configured {@link PyramidBackend}.
 	 */
 	// java:S1452: the wildcard is intentional. The pixel type is only known once
 	// the data is read, and callers use only type-independent members of the
@@ -128,7 +130,6 @@ public class ZarrOpener
 		if ( cachedContents == null )
 		{
 			final PyramidContents< ? > contents = backend.load( inputUri );
-			preferredResolutionLevel = contents.selectResolutionLevel( preferredMaxWidth );
 			cachedContents = contents;
 			logDimensions( contents );
 		}
@@ -172,10 +173,7 @@ public class ZarrOpener
 			openPyramidImage(
 					() -> {
 						final PyramidContents< ? > contents = getContents();
-						final PyramidalDataset dataset = new PyramidalDataset( context, contents, preferredResolutionLevel );
-						context.getService( UIService.class ).show( dataset );
-						context.getService( PyramidalService.class ).registerImageJDataset( dataset );
-						logger.info( "Opened dataset in ImageJ: {}", inputUri );
+						showAsDataset( contents, contents.selectResolutionLevel( preferredMaxWidth ) );
 						return null;
 					} );
 		}
@@ -194,6 +192,9 @@ public class ZarrOpener
 	 * {@link ome.zarr.imglib2.PyramidContents} object: the cached cell images
 	 * and volatile images are the single source of truth and are never loaded more than once
 	 * per resolution level.
+	 * <p>
+	 * The preferred width is not applied here: the caller has already chosen the
+	 * level to open.
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
 	 */
@@ -206,10 +207,7 @@ public class ZarrOpener
 						final PyramidContents< ? > contents = getContents();
 						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
 							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels() );
-						final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
-						context.getService( UIService.class ).show( dataset );
-						context.getService( PyramidalService.class ).registerImageJDataset( dataset );
-						logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
+						showAsDataset( contents, resolutionLevel );
 						return null;
 					} );
 		}
@@ -221,29 +219,37 @@ public class ZarrOpener
 	}
 
 	/**
+	 * Shows {@code resolutionLevel} of {@code contents} as a new ImageJ dataset,
+	 * registered with the {@link PyramidalService} lifecycle.
+	 */
+	private void showAsDataset( final PyramidContents< ? > contents, final int resolutionLevel )
+	{
+		final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
+		context.getService( UIService.class ).show( dataset );
+		context.getService( PyramidalService.class ).registerImageJDataset( dataset );
+		logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
+	}
+
+	/**
 	 * Opens the {@link ome.zarr.fiji.Pyramidal} in BigDataViewer as a {@link PyramidalBdv} and registers
 	 * it with the {@link PyramidalService} lifecycle.
+	 * <p>
+	 * BigDataViewer shows the whole pyramid and loads from the level that suits the
+	 * current zoom, so the preferred width — a limit on the single level an ImageJ
+	 * window would hold — does not apply and is not checked here.
 	 *
 	 * @return the resulting {@code BdvHandle}, or {@code null} if opening failed
 	 */
 	public Object openBDVWithImage()
 	{
-		try
-		{
-			return openPyramidImage(
-					() -> {
-						final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, getContents() );
-						final PyramidalService pyramidalService = context.getService( PyramidalService.class );
-						final Object result = BdvUtils.showBdvAndRegisterDataset( pyramidal, pyramidalService );
-						logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );
-						return result;
-					} );
-		}
-		catch ( NoMatchingResolutionException e )
-		{
-			showNoMatchingResolutionError( e );
-		}
-		return null;
+		return openPyramidImage(
+				() -> {
+					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, getContents() );
+					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
+					final Object result = BdvUtils.showBdvAndRegisterDataset( pyramidal, pyramidalService );
+					logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );
+					return result;
+				} );
 	}
 
 	private Object openPyramidImage( final Supplier< Object > imageOpener )

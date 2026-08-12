@@ -34,28 +34,29 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import net.imagej.DatasetService;
+import net.imglib2.util.Cast;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.scijava.Context;
+import org.scijava.display.DisplayService;
+
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import bdv.util.BdvHandle;
+
 import javax.swing.SwingUtilities;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.api.Test;
-import org.scijava.Context;
-import org.scijava.display.DisplayService;
-
-import bdv.util.BdvHandle;
-import net.imagej.DatasetService;
-import net.imglib2.util.Cast;
-
+import ome.zarr.ZarrTestUtils;
+import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
-import ome.zarr.fiji.plugins.PyramidalService;
-import ome.zarr.ZarrTestUtils;
 
 /**
  * Direct coverage of the fiji-layer {@link ZarrOpener}: it loads and opens a
@@ -251,6 +252,27 @@ class ZarrOpenerTest
 			assertTrue( context.getService( DatasetService.class ).getDatasets().isEmpty(),
 					"No level matches the preferred width, so nothing must be opened" );
 			assertNotNull( capturedError.get(), "Error handler should have been called" );
+		}
+	}
+
+	/**
+	 * BigDataViewer shows the whole pyramid, so the preferred width — a limit on the
+	 * single level an ImageJ window holds — must not be applied to it.
+	 */
+	@Test
+	void openBDVWithImageIgnoresPreferredWidth() throws Exception
+	{
+		Path path = ZarrTestUtils.resourcePath( DATASET );
+		try (Context context = new Context())
+		{
+			AtomicReference< String > capturedError = new AtomicReference<>();
+			ZarrOpener opener = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set );
+			BdvHandle bdvHandle = Cast.unchecked( opener.openBDVWithImage() );
+
+			assertNull( capturedError.get(), "Opening should not have failed, got: " + capturedError.get() );
+			assertNotNull( bdvHandle, "BDV should open regardless of the preferred width" );
+			bdvHandle.close();
+			SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the close
 		}
 	}
 }
