@@ -95,8 +95,8 @@ public class OpeningBehaviorSettings extends DynamicCommand
 	@Parameter( visibility = ItemVisibility.MESSAGE, required = false, persist = false )
 	private String readerBackendInfo = "<html>"
 			+ "<body width=" + WIDTH + "cm align=left>"
-			+ "N5 supports OME-Zarr v0.4 (Zarr v2) - v0.5 (Zarr v3).<br>"
-			+ "zarr-java supports OME-Zarr v0.4 (Zarr v2) - v0.3 (Zarr v3)."
+			+ "N5 supports OME-Zarr v0.3 (Zarr v2) - v0.5 (Zarr v3).<br>"
+			+ "zarr-java supports OME-Zarr v0.4 (Zarr v2) - v0.5 (Zarr v3)."
 			+ "</body>"
 			+ "</html>";
 
