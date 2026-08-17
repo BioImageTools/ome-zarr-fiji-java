@@ -148,8 +148,9 @@ Check out the repo and compile with:
 mvn clean package
 ```
 
-The build is a multi-module reactor and produces five jars — one per module. Copy **all five** into
-your `Fiji.app/jars` folder:
+All jars mentioned below go into your Fiji installation's `jars` folder.
+
+The build is a multi-module reactor and produces five jars — one per module. Copy **all five** into that `jars` folder:
 
 * `ome-zarr-imglib2/target/ome-zarr-imglib2-<version>.jar`
 * `ome-zarr-n5/target/ome-zarr-n5-<version>.jar`
@@ -157,7 +158,7 @@ your `Fiji.app/jars` folder:
 * `ome-zarr-fiji/target/ome-zarr-fiji-<version>.jar`
 * `ome-zarr-fiji-ui/target/ome-zarr-fiji-ui-<version>.jar`
 
-You also need to copy the following `.jar` files to your `Fiji.app/jars` folder (and delete the older versions, if they
+You also need to copy the following `.jar` files there (and delete the older versions, if they
 are present):
 
 * [n5-4.0.1](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5/4.0.1/n5-4.0.1.jar)
@@ -171,9 +172,8 @@ are present):
 * [n5-zarr-2.0.1](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-zarr/2.0.1/n5-zarr-2.0.1.jar)
 * [n5-zstandard-2.0.0](https://maven.scijava.org/repository/releases/org/janelia/n5-zstandard/2.0.0/n5-zstandard-2.0.0.jar)
 
-Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` folder:
+Beyond that, you need to copy these extra `.jar` files into the same folder:
 
-* [n5-viewer_fiji-6.2.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-viewer_fiji/6.2.0/n5-viewer_fiji-6.2.0.jar)
 * [s3-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.46.15/s3-2.46.15.jar)
 * [auth-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/auth/2.46.15/auth-2.46.15.jar)
 * [annotations-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/annotations/2.46.15/annotations-2.46.15.jar)
@@ -187,8 +187,20 @@ Beyond that, you need to copy this extra `.jar` files to your `Fiji.app/jars` fo
 * [retries-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/retries-spi/2.46.15/retries-spi-2.46.15.jar)
 * [endpoints-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/endpoints-spi/2.46.15/endpoints-spi-2.46.15.jar)
 * [http-auth-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/http-auth-spi/2.46.15/http-auth-spi-2.46.15.jar)
+
+One more jar is needed, but it belongs in the `plugins` folder rather than in `jars`, because it is itself a Fiji plugin:
+
+* [n5-viewer_fiji-6.2.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-viewer_fiji/6.2.0/n5-viewer_fiji-6.2.0.jar)
+
+Finally, the zarr-java reader backend needs three more `.jar` files in the `jars` folder. Fiji does not ship
+`zarr-java`, and the other two are its dependencies:
+
+* [zarr-java-0.1.3](https://repo1.maven.org/maven2/dev/zarr/zarr-java/0.1.3/zarr-java-0.1.3.jar)
 * [jackson-datatype-jdk8-2.20.0](https://repo1.maven.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.20.0/jackson-datatype-jdk8-2.20.0.jar)
-* [blosc-java-0.3-1.21.6.jar](https://repo1.maven.org/maven2/com/scalableminds/blosc-java/0.3-1.21.6/blosc-java-0.3-1.21.6.jar)
+* [blosc-java-0.3-1.21.6](https://repo1.maven.org/maven2/com/scalableminds/blosc-java/0.3-1.21.6/blosc-java-0.3-1.21.6.jar)
+
+Without them, `ome-zarr-zarrjava` cannot be loaded and selecting the zarr-java backend in
+`Plugins -> OME-Zarr -> Settings -> Open Behavior settings` fails. The N5 backend (the default) is unaffected.
 
 # History
 
