@@ -34,12 +34,12 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URI;
 
 import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 
+import net.imagej.patcher.LegacyInjector;
 import org.scijava.Context;
 import org.scijava.event.EventHandler;
 import org.scijava.plugin.Plugin;
@@ -51,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ij.IJ;
+import ij.gui.Toolbar;
 import ij.plugin.tool.MacroToolRunner;
 import ome.zarr.fijiui.open.PasteToOpenAction;
 import ome.zarr.fijiui.util.ClipboardUtils;
@@ -63,25 +64,21 @@ import ome.zarr.fijiui.util.ClipboardUtils;
  * Four subtleties shape this implementation:
  * <ul>
  *   <li><b>Why {@code @EventHandler(UIShownEvent)} and not
- *       {@code initialize()}</b>: scheduling the install via
- *       {@code SwingUtilities.invokeLater} from {@code initialize} lets the
- *       EDT pick up the task <em>during</em> {@code Context} construction,
- *       before {@code LegacyService.<clinit>} has run
- *       {@code LegacyInjector.preinit()} — the first {@code ij.IJ}
- *       reference would then load it unpatched
- *       ({@code "No _hooks field found in ij.IJ"}). By the time
- *       {@code UIShownEvent} fires, every service is initialized, the
- *       patcher has run, and the toolbar is up.</li>
- *   <li><b>Why all {@code ij.*} access is reflective</b>: SciJava walks our
- *       declared methods to discover {@code @EventHandler} bindings, which
- *       resolves the parameter types of every method on this class. Putting
- *       {@code ij.gui.Toolbar} in a signature, field type, or class literal
- *       loads {@code ij.gui.Toolbar} into the AppClassLoader before the IJ1
- *       patcher gets to it, producing a
- *       {@code "duplicate class definition for ij.gui.Toolbar"} warning when
- *       {@code LegacyInjector.injectHooks} later tries to redefine it.
- *       Routing through {@code Class.forName} keeps the installer's
- *       constant pool free of {@code ij.*} types until the event fires.</li>
+ *       {@code initialize()}</b>: {@link Toolbar#getInstance()} returns
+ *       {@code null} until the IJ1 user interface is up, so during
+ *       {@code Context} construction there is no toolbar to install into
+ *       yet. By the time {@code UIShownEvent} fires, every service is
+ *       initialized and the toolbar exists.</li>
+ *   <li><b>Why the static initializer calls
+ *       {@link LegacyInjector#preinit()}</b>: SciJava walks our declared
+ *       fields and methods to discover {@code @Parameter}s and
+ *       {@code @EventHandler} bindings while the {@code Context} is still
+ *       being built, which resolves the {@code ij.*} types in our
+ *       signatures. Without patching up front they would be loaded
+ *       unpatched, and {@code LegacyInjector.injectHooks} would later fail
+ *       with {@code "duplicate class definition for ij.gui.Toolbar"},
+ *       leaving those classes without their IJ1/IJ2 bridge hooks.
+ *       {@code preinit()} is idempotent, so running it early is harmless.</li>
  *   <li><b>Why we set {@code installingStartupTool=true} via reflection</b>:
  *       {@code Toolbar.addPlugInTool} ends with {@code setTool(ourId)}.
  *       Even though our {@code "Action Tool"} name causes {@code setTool}
@@ -105,6 +102,13 @@ import ome.zarr.fijiui.util.ClipboardUtils;
 @Plugin( type = Service.class )
 public class PasteOmeZarrUriToolInstaller extends AbstractService implements SciJavaService
 {
+	static
+	{
+		// Patch IJ1 before ij.* classes are loaded during Context startup:
+		// unpatched IJ1 classes make the later patcher run fail with a LinkageError.
+		LegacyInjector.preinit();
+	}
+
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	private KeyEventDispatcher keyEventDispatcher;
@@ -116,8 +120,7 @@ public class PasteOmeZarrUriToolInstaller extends AbstractService implements Sci
 			return;
 		try
 		{
-			final Class< ? > toolbarClass = Class.forName( "ij.gui.Toolbar" );
-			final Object toolbar = toolbarClass.getMethod( "getInstance" ).invoke( null );
+			final Toolbar toolbar = Toolbar.getInstance();
 			if ( toolbar == null )
 				return;
 
@@ -125,13 +128,11 @@ public class PasteOmeZarrUriToolInstaller extends AbstractService implements Sci
 			// slot doesn't render in pressed state. installingStartupTool is
 			// a private instance field; IJ1 itself resets it to false inside
 			// addPlugInTool.
-			suppressStartupToolSelection( toolbarClass, toolbar );
+			suppressStartupToolSelection( toolbar );
 
-			final Class< ? > pluginToolClass = Class.forName( "ij.plugin.tool.PlugInTool" );
-			final Method addPlugInTool = toolbarClass.getMethod( "addPlugInTool", pluginToolClass );
-			addPlugInTool.invoke( null, new PasteOmeZarrUriActionTool( getContext() ) );
+			Toolbar.addPlugInTool( new PasteOmeZarrUriActionTool( getContext() ) );
 		}
-		catch ( ReflectiveOperationException | RuntimeException e )
+		catch ( RuntimeException e )
 		{
 			logger.warn( "Could not install OME-Zarr toolbar button: {}", e.getMessage() );
 		}
@@ -151,11 +152,11 @@ public class PasteOmeZarrUriToolInstaller extends AbstractService implements Sci
 	}
 
 	@SuppressWarnings( "java:S3011" ) // setAccessible is the only way to reach this private IJ1 field
-	private void suppressStartupToolSelection( final Class< ? > toolbarClass, final Object toolbar )
+	private void suppressStartupToolSelection( final Toolbar toolbar )
 	{
 		try
 		{
-			final Field flag = toolbarClass.getDeclaredField( "installingStartupTool" );
+			final Field flag = Toolbar.class.getDeclaredField( "installingStartupTool" );
 			flag.setAccessible( true );
 			flag.setBoolean( toolbar, true );
 		}
