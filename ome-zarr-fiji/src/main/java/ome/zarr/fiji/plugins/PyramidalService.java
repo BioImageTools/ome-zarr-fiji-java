@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import net.imagej.Dataset;
+import net.imagej.patcher.LegacyInjector;
 import org.scijava.convert.ConvertService;
 import org.scijava.object.ObjectService;
 import org.scijava.plugin.Parameter;
@@ -62,6 +63,13 @@ import ome.zarr.fiji.Pyramidal;
 @Plugin( type = SciJavaService.class )
 public class PyramidalService extends AbstractService implements SciJavaService
 {
+	static
+	{
+		// Patch IJ1 before ij.* classes are loaded during Context startup:
+		// unpatched IJ1 classes make the later patcher run fail with a LinkageError.
+		LegacyInjector.preinit();
+	}
+
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	@SuppressWarnings( "unused" )
