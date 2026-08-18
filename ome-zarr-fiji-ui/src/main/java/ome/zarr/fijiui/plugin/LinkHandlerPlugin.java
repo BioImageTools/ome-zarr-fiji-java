@@ -40,8 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -50,9 +48,7 @@ import java.util.List;
 @Plugin( type = LinkHandler.class )
 public class LinkHandlerPlugin extends AbstractLinkHandler
 {
-	//private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
-
-	private static final String HANDLER_NAME = "ZarrHandlerPlugin";
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	private static final String APP_NAME = "fiji";
 
@@ -73,20 +69,20 @@ public class LinkHandlerPlugin extends AbstractLinkHandler
 		String op = Links.operation( uri );
 		if ( op.equals( "file" ) )
 		{
-			reporter( "open file URI: " + uri );
+			logger.debug( "open file URI: {}", uri );
 			String path = uri.getQuery().split( "=" )[ 1 ];
-			reporter( "open file path: " + path );
+			logger.debug( "open file path: {}", path );
 			new ZarrOpenActions( Paths.get( path ).toUri(), context ).openIJWithImage();
 		}
 		else if ( op.equals( "url" ) )
 		{
-			reporter( "open url URI: " + uri );
+			logger.debug( "open url URI: {}", uri );
 			String path = uri.getQuery().split( "=" )[ 1 ];
-			reporter( "open remote path: " + path );
+			logger.debug( "open remote path: {}", path );
 		}
 		else
 		{
-			reporter( "Sorry, don't know how to open this URI: " + uri );
+			logger.warn( "Sorry, don't know how to open this URI: {}", uri );
 		}
 	}
 
@@ -95,17 +91,5 @@ public class LinkHandlerPlugin extends AbstractLinkHandler
 	{
 		// makes sure that the following schemes are registered with the OS
 		return Arrays.asList( APP_NAME );
-	}
-
-	private void reporter( String msg )
-	{
-		try (FileWriter f = new FileWriter( "/dev/pts/17" ))
-		{
-			f.write( HANDLER_NAME + ": " + msg + "\n" );
-		}
-		catch ( IOException e )
-		{
-			throw new RuntimeException( e );
-		}
 	}
 }
