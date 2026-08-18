@@ -126,10 +126,18 @@
 			<groupId>org.scijava</groupId>
 			<artifactId>script-editor</artifactId>
 		</dependency>
-		<!-- LinkHandler / Links API used by LinkHandlerPlugin. -->
+		<!-- LinkHandler / Links API used by LinkHandlerPlugin.
+		     NB: scijava-desktop is Java 11 bytecode, so it cannot be loaded on a
+		     Java 8 Fiji-Stable. It is therefore 'provided': Fiji-Latest ships it in
+		     jars/, and it must not be dragged along as a transitive runtime
+		     dependency onto Fiji-Stable. This module itself stays Java 8 (see the
+		     enforcer configuration below).
+		     When scijava-desktop is absent (Fiji-Stable), SciJava plugin discovery
+		     skips LinkHandlerPlugin with a logged warning. -->
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>scijava-desktop</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		<!-- N5ViewerCreator (n5.bdv) + N5Importer (n5.ij) used by ZarrOpenActions. -->
 		<dependency>
