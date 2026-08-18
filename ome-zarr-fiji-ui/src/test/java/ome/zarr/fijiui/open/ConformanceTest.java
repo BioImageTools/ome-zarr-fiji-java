@@ -141,6 +141,7 @@ class ConformanceTest
 			assertInstanceOf( PyramidalDataset.class, d,
 					"After opening, incorrect Dataset is available in Fiji." );
 
+			//TODO VLADO CHECK check
 			final PyramidalDataset pyramidalDataset = ( PyramidalDataset ) d;
 			//the multi-resolution pyramid and its metadata; note that the opened
 			//IJ window may show a coarser resolution level (see setPreferredMaxWidth
@@ -180,6 +181,7 @@ class ConformanceTest
 				checkPixelTypes( refType, pyramidalDataset );
 
 			final double ACCURACY_DELTA = 0.00001f;
+			//TODO VLADO CHECK check - scaleAlongAxis why?
 			if ( testDataset.getScaleX() != -1 )
 				assertEquals( testDataset.getScaleX(), scaleAlongAxis( contents, AxisCalibration.X ),
 						ACCURACY_DELTA, "Mismatch in extracted pixel resolution along X-axis." );
