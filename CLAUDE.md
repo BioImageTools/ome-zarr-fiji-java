@@ -49,8 +49,35 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
 
 ## Architecture
 
-**Entry point:** `OmeZarrIOPlugin` – a SciJava `IOPlugin` that intercepts drag-and-drop of filesystem paths, checks
-whether the path is a Zarr folder via `ZarrUtils.isZarr(URI)`, then delegates to `ZarrOpenActions.openWithSettings()`.
+**Two independent entry paths**, both ending in `ZarrOpenActions.openWithSettings()`:
+
+- **Via SciJava `IOService`** (drag-and-drop, `fiji://` links): `OmeZarrIOPlugin` – an `IOPlugin` that claims any
+  `Location` whose URI passes `ZarrUtils.isZarr(URI)`. It accepts both `FileLocation` (drag-and-drop) and remote
+  locations (`HTTPLocation`/`URLLocation`); `Location`s with no URI (`Location.getURI()` returns `null`, e.g.
+  `BytesLocation`) are declined.
+- **Directly, bypassing `IOService`** (clipboard paste – menu command, toolbar button, Ctrl/Cmd+Shift+V):
+  `PasteToOpenAction.pasteFromClipboard()` calls `openWithSettings()` itself. It does not route through
+  `OmeZarrIOPlugin`, and deliberately so: it adds clipboard reading (`ClipboardUtils`), user-facing error messages via
+  its `errorHandler`, and the `s3:` bypass below — none of which fit the `IOPlugin` contract. Nothing in this repo calls
+  `IOService` itself.
+
+**`s3:` support is paste-only.** `ZarrUtils.isZarr` cannot probe `s3:` cheaply (see its javadoc), so
+`PasteToOpenAction` skips the check for that scheme and opens directly. `OmeZarrIOPlugin` therefore declines `s3:` (as
+it always has), and `fiji://…?p=s3://…` cannot be fixed from our side either: fiji-links' `open/url` branch dies in
+`new URL(p)` with `MalformedURLException: unknown protocol: s3`, and its `open/source` branch has
+`LocationService.resolve` fall back to a bogus *relative* `FileLocation` (`file:/<cwd>/s3:/bucket/…`). Giving links s3
+parity would need an s3 `Location`/`DataHandle` plugin on the classpath, not a change here.
+
+**`fiji://` links need no code of ours.** Fiji-Latest ships `sc.fiji:fiji-links` (verified present in a Fiji-Latest
+`jars/` alongside `scijava-desktop` and `scijava-io-http`). Its `OpenLinkHandler` owns the
+`fiji://open/{file,url,source}?p=…` syntax, the OS-level scheme registration, and the URI parsing, and finishes by
+calling `IOService.open(Location)` – which dispatches to whichever `IOPlugin` claims the location, i.e. to
+`OmeZarrIOPlugin`. So `fiji://` links honor the user's `ZarrOpenBehavior` for free. **Do not add a `LinkHandler` plugin
+of our own**: it would need `org.scijava:scijava-desktop` (Java 11 bytecode, breaking the Java-8/Fiji-Stable baseline,
+and its unresolvable plugin *type* string in the annotation index makes `DefaultPluginService` log `"1 exceptions
+occurred during plugin discovery."` on every Fiji-Stable start), and it would compete with `fiji-links` for the same
+URIs — `HandlerService.getHandler` returns the first match by priority, so which one wins would be arbitrary. See the
+abandoned `add-link-handler` branch and issue #68 / PR #101 for that dead end.
 
 **Core data model:** `PyramidBackend` is a single-method interface (`<T> PyramidContents<T> load(URI)`).
 `AbstractPyramidBackend` implements `load` as a template method – try the multiscales group, fall back to a single
@@ -125,8 +152,8 @@ SciJava provenance (required by the enforcer). Five published modules:
   all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrOpener` is gone, single arrays are
   loaded through the selected backend as one-level pyramids).
 - **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.settings`, `.dialog`, `.util`);
-  the OME-Zarr `IOPlugin`, SciJava commands, dialogs, opening-behavior settings. Depends on all four other modules –
-  the batteries-included artifact.
+  the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links), SciJava commands, dialogs, opening-behavior settings.
+  Depends on all four other modules – the batteries-included artifact.
 
 Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`imglib2`, `n5`, `zarrjava`, `fiji`}. Backends
 are selected at runtime (`ZarrReaderBackend`), so `fiji` needs at least one backend on the classpath at runtime even
