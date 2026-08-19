@@ -51,7 +51,7 @@ import ome.zarr.fijiui.open.ZarrOpenActions;
 import ome.zarr.imglib2.ZarrUtils;
 
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
-public class DnDHandlerPlugin extends AbstractIOPlugin< Object >
+public class OmeZarrIOPlugin extends AbstractIOPlugin< Object >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 

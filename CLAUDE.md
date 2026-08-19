@@ -34,7 +34,7 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
 
 ## Architecture
 
-**Entry point:** `DnDHandlerPlugin` – a SciJava `IOPlugin` that intercepts drag-and-drop of filesystem paths, checks whether the path is a Zarr folder via `ZarrUtils.isZarr(URI)`, then delegates to `ZarrOpenActions.openWithSettings()`.
+**Entry point:** `OmeZarrIOPlugin` – a SciJava `IOPlugin` that intercepts drag-and-drop of filesystem paths, checks whether the path is a Zarr folder via `ZarrUtils.isZarr(URI)`, then delegates to `ZarrOpenActions.openWithSettings()`.
 
 **Core data model:** `PyramidBackend` is a single-method interface (`<T> PyramidContents<T> load(URI)`), implemented independently by `N5PyramidBackend` (N5-universe, OME-NGFF v0.3–v0.5) and `ZarrJavaPyramidBackend` (`dev.zarr:zarr-java`, Zarr v2/v3). Both produce an immutable `PyramidContents<T>` holding the per-level `CachedCellImg`s, affine transforms, axis calibration, and optional OMERO metadata, plus an `asImg()` accessor. `ZarrOpener` picks a backend (`ZarrReaderBackend`: N5 or ZARR_JAVA), loads and caches the `PyramidContents`, and wraps it into either a `PyramidalDataset` (extends `DefaultDataset`, for ImageJ) or a `PyramidalBdv` (per-channel BDV `SourceAndConverter` lists, volatile-wrapped per resolution level) – both implement the marker interface `Pyramidal`.
 
@@ -64,7 +64,7 @@ Multi-module reactor. The root `pom.xml` is the aggregator (`ome.zarr:ome-zarr-p
 - **`ome-zarr-n5`** – `ome.zarr.n5` (`N5PyramidBackend`); depends on imglib2 + external N5-universe (codecs `n5-zarr`/`n5-blosc`/zstd arrive transitively via `n5-universe`).
 - **`ome-zarr-zarrjava`** – `ome.zarr.zarrjava` (`ZarrJavaPyramidBackend`); depends on imglib2 + `dev.zarr:zarr-java`.
 - **`ome-zarr-fiji`** (+`.open`, `.plugins`, `.util`) – ImageJ/BDV integration (`ZarrOpener`, `PyramidalDataset`, `PyramidalBdv`, `PyramidalService`, `BdvUtils`). Depends on imglib2 only (no backend artifact); uses the *external* N5 library directly for the single-scale fallback in `ZarrOpener`.
-- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.settings`, `.dialog`, `.util`); DnD handler, SciJava commands, dialogs, opening-behavior settings. Depends on all four other modules – the batteries-included artifact.
+- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.settings`, `.dialog`, `.util`); the OME-Zarr `IOPlugin`, SciJava commands, dialogs, opening-behavior settings. Depends on all four other modules – the batteries-included artifact.
 
 Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`imglib2`, `n5`, `zarrjava`, `fiji`}. Backends are selected at runtime (`ZarrReaderBackend`), so `fiji` needs at least one backend on the classpath at runtime even though it doesn't depend on one.
 

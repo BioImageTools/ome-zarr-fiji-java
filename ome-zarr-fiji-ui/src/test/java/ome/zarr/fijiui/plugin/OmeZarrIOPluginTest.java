@@ -43,7 +43,7 @@ import org.scijava.io.location.FileLocation;
 import ome.zarr.fijiui.open.ZarrOpenActions;
 import ome.zarr.ZarrTestUtils;
 
-class DnDHandlerPluginTest
+class OmeZarrIOPluginTest
 {
 	@Test
 	void openDelegatesToZarrOpenActions() throws URISyntaxException, IOException
@@ -53,12 +53,12 @@ class DnDHandlerPluginTest
 			final Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/" );
 			final FileLocation fileLocation = new FileLocation( path.toUri() );
 
-			final DnDHandlerPlugin dnDHandlerPlugin = new DnDHandlerPlugin();
-			dnDHandlerPlugin.setContext( context );
+			final OmeZarrIOPlugin plugin = new OmeZarrIOPlugin();
+			plugin.setContext( context );
 
 			try (MockedStatic< ZarrOpenActions > mocked = Mockito.mockStatic( ZarrOpenActions.class ))
 			{
-				dnDHandlerPlugin.open( fileLocation );
+				plugin.open( fileLocation );
 				mocked.verify( () -> ZarrOpenActions.openWithSettings( path.toUri(), context ), times( 1 ) );
 			}
 		}
