@@ -46,6 +46,29 @@ import java.util.ArrayList;
 import ome.zarr.fijiui.open.ZarrOpenActions;
 import ome.zarr.imglib2.ZarrUtils;
 
+/**
+ * SciJava {@link IOPlugin} that claims OME-Zarr locations and opens them via
+ * {@link ZarrOpenActions#openWithSettings(URI, org.scijava.Context)}.
+ * <p>
+ * Besides drag-and-drop, this is also what makes {@code fiji://open/...} links
+ * work. Fiji-Latest ships {@code fiji-links}, whose {@code OpenLinkHandler}
+ * parses the link, resolves {@code ?p=} into a {@link Location} and then calls
+ * {@code IOService.open(Location)} – which dispatches to whichever
+ * {@code IOPlugin} claims that location, i.e. to this one.
+ * </p>
+ * <p>
+ * Both local and remote locations are accepted, because {@code fiji-links}
+ * resolves {@code fiji://open/file?p=} to a {@code FileLocation} but
+ * {@code fiji://open/url?p=} to an {@code HTTPLocation} (or
+ * {@code URLLocation}). Either way we only need {@link Location#getURI()}: it
+ * yields the URI for anything that can be expressed as one, and {@code null}
+ * otherwise (e.g. an in-memory {@code BytesLocation}), which we decline.</p>
+ * <p>
+ * NB: for remote locations {@link #supportsOpen} costs a few HTTP HEAD requests, see
+ * {@link ZarrUtils#isZarr(URI)}. {@code s3:} locations are declined, because
+ * {@code isZarr} cannot probe them cheaply.
+ * </p>
+ */
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
 public class OmeZarrIOPlugin extends AbstractIOPlugin< Object >
 {
