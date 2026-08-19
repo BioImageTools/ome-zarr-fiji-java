@@ -49,7 +49,7 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
 
 ## Architecture
 
-**Entry point:** `DnDHandlerPlugin` – a SciJava `IOPlugin` that intercepts drag-and-drop of filesystem paths, checks
+**Entry point:** `OmeZarrIOPlugin` – a SciJava `IOPlugin` that intercepts drag-and-drop of filesystem paths, checks
 whether the path is a Zarr folder via `ZarrUtils.isZarr(URI)`, then delegates to `ZarrOpenActions.openWithSettings()`.
 
 **Core data model:** `PyramidBackend` is a single-method interface (`<T> PyramidContents<T> load(URI)`).
@@ -125,8 +125,8 @@ SciJava provenance (required by the enforcer). Five published modules:
   all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrOpener` is gone, single arrays are
   loaded through the selected backend as one-level pyramids).
 - **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.settings`, `.dialog`, `.util`);
-  DnD handler, SciJava commands, dialogs, opening-behavior settings. Depends on all four other modules – the
-  batteries-included artifact.
+  the OME-Zarr `IOPlugin`, SciJava commands, dialogs, opening-behavior settings. Depends on all four other modules –
+  the batteries-included artifact.
 
 Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`imglib2`, `n5`, `zarrjava`, `fiji`}. Backends
 are selected at runtime (`ZarrReaderBackend`), so `fiji` needs at least one backend on the classpath at runtime even
