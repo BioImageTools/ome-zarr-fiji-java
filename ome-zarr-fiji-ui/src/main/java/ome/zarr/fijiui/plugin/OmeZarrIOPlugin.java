@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,11 +28,8 @@
  */
 package ome.zarr.fijiui.plugin;
 
-import net.imglib2.util.Cast;
-
 import org.scijava.io.AbstractIOPlugin;
 import org.scijava.io.IOPlugin;
-import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
 import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
@@ -44,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.ArrayList;
 
 import ome.zarr.fijiui.open.ZarrOpenActions;
@@ -65,33 +61,28 @@ public class OmeZarrIOPlugin extends AbstractIOPlugin< Object >
 	@Override
 	public boolean supportsOpen( final Location source )
 	{
-		logger.debug(
-				"OME-Zarr DnD plugin: supportsOpen check, location type={}, path={}", source.getClass().getSimpleName(),
-				source.getURI().getPath()
-		);
-
-		if ( !( source instanceof FileLocation ) )
-			return false;
-
-		return ZarrUtils.isZarr( source.getURI() );
+		final URI uri = source.getURI();
+		logger.debug( "OME-Zarr IO plugin: supportsOpen check, location type={}, uri={}", source.getClass().getSimpleName(), uri );
+		return ZarrUtils.isZarr( uri );
 	}
 
 	@Override
 	public Object open( final Location source ) throws IOException
 	{
-		logger.debug( "OME-Zarr DnD plugin: opening {}", source.getURI().getPath() );
+		logger.debug( "OME-Zarr IO plugin: open, location type={}", source.getClass().getSimpleName() );
+		final URI inputUri = source.getURI();
+		if ( inputUri == null )
+			throw new IOException( "Cannot express as a URI, and therefore not open: " + source );
 
-		final FileLocation fileLocation = Cast.unchecked( source );
-		final Path droppedInPath = fileLocation.getFile().toPath();
-		final URI inputUri = droppedInPath.toUri();
+		logger.debug( "OME-Zarr IO plugin: opening {}", inputUri );
 
 		ZarrOpenActions.openWithSettings( inputUri, context() );
 
-		// Returning such an object makes Scijava's DnD subsystem believe that the dropped object
-		// has been already fully loaded, and Scijava (Fiji) will attempt to display it now (and
+		// Returning such an object makes Scijava's IO handler subsystem believe that the dropped object
+		// has been already fully loaded. Scijava (Fiji) will attempt to display it now (and
 		// will realize that it doesn't know how to display it and will silently not display, which
-		// is exactly what is desired now). The processing of this DnD event will then finish finally.
-		// (While our DnDActionChoose window will still be up there...)
+		// is exactly what is desired now). The processing of this IO event will then finish finally.
+		// (While our Action Chooser window will still be up there...)
 		return FAKE_INPUT;
 	}
 
