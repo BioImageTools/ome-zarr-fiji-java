@@ -185,8 +185,7 @@ public class ZarrOpener
 
 	private static String axisSize( final PyramidContents< ? > contents, final String axisName )
 	{
-		final int index = contents.axisIndex( axisName );
-		return index < 0 ? "absent" : Long.toString( contents.asImg().dimension( index ) );
+		return contents.hasAxis( axisName ) ? Long.toString( contents.sizeAlongAxis( axisName ) ) : "absent";
 	}
 
 	/**
@@ -267,7 +266,7 @@ public class ZarrOpener
 	 */
 	private boolean mayOpenLevel( final PyramidContents< ? > contents, final int resolutionLevel )
 	{
-		final long width = contents.widthAtLevel( resolutionLevel );
+		final long width = contents.sizeAlongAxis( AxisCalibration.X, resolutionLevel );
 		if ( preferredMaxWidth == null || width <= preferredMaxWidth )
 			return true;
 		final boolean openAnyway = oversizeConfirmation.test( oversizeMessage( contents, resolutionLevel, width ) );

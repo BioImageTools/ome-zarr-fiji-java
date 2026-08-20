@@ -171,7 +171,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 */
 	public int numChannels()
 	{
-		return sizeAlongAxis( AxisCalibration.C );
+		return ( int ) sizeAlongAxis( AxisCalibration.C );
 	}
 
 	/**
@@ -185,7 +185,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 */
 	public int numTimepoints()
 	{
-		return sizeAlongAxis( AxisCalibration.T );
+		return ( int ) sizeAlongAxis( AxisCalibration.T );
 	}
 
 	/**
@@ -245,25 +245,31 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
-	 * Size of the full-resolution image along the axis with the given OME-Zarr
-	 * name, or {@code 1} if no such axis is present.
+	 * Extent of the full-resolution image along the axis with the given OME-Zarr
+	 * name, or {@code 1} if no such axis is present. Shorthand for
+	 * {@code sizeAlongAxis( axisName, 0 )}.
 	 */
-	private int sizeAlongAxis( final String axisName )
+	public long sizeAlongAxis( final String axisName )
 	{
-		final int index = axisIndex( axisName );
-		return index < 0 ? 1 : ( int ) cachedCellImgs[ 0 ].dimension( index );
+		return sizeAlongAxis( axisName, 0 );
 	}
 
 	/**
-	 * Width of the image at the given resolution level, i.e. its extent along x
-	 * (index 0 in imglib2 F-order).
+	 * Extent of the image at the given resolution level along the axis with the
+	 * given OME-Zarr name, or {@code 1} if no such axis is present.
+	 * <p>
+	 * The axis is located by name via {@link #axisIndex}, so callers never depend
+	 * on a fixed dimension position. The width of a level, for instance, is
+	 * {@code sizeAlongAxis( AxisCalibration.X, level )}.
 	 *
 	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
 	 *   {@code [0, numResolutionLevels())}
 	 */
-	public long widthAtLevel( final int resolutionLevel )
+	public long sizeAlongAxis( final String axisName, final int resolutionLevel )
 	{
-		return asImg( resolutionLevel ).dimension( 0 );
+		final int index = axisIndex( axisName );
+		final Img< T > img = asImg( resolutionLevel );
+		return index < 0 ? 1 : img.dimension( index );
 	}
 
 	/**
@@ -275,8 +281,8 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * single-level pyramid that is already too wide — the coarsest level
 	 * ({@code numResolutionLevels() - 1}) is returned as the closest available
 	 * match. Callers for which an oversized image is a problem should therefore
-	 * compare the {@link #widthAtLevel} of the returned level against their own
-	 * limit rather than assume the result fits.
+	 * compare the returned level's {@code sizeAlongAxis( AxisCalibration.X, level )}
+	 * against their own limit rather than assume the result fits.
 	 */
 	public int selectResolutionLevel( final Integer preferredMaxWidth )
 	{
@@ -284,7 +290,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 			return 0;
 		for ( int level = 0; level < cachedCellImgs.length; level++ )
 		{
-			if ( widthAtLevel( level ) <= preferredMaxWidth )
+			if ( sizeAlongAxis( AxisCalibration.X, level ) <= preferredMaxWidth )
 				return level;
 		}
 		return cachedCellImgs.length - 1;
