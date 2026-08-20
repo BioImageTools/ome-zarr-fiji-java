@@ -35,6 +35,9 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,11 +157,62 @@ public class ZarrUtils
 	 * removed and a trailing slash kept, or {@code null} if {@code uri} has no
 	 * parent segment.
 	 * <p>
-	 * This is deliberately scheme-agnostic string manipulation rather than store
-	 * access, so it behaves identically for {@code file:}, {@code http(s):} and
-	 * {@code s3:} locations and — importantly for remote stores — costs no I/O.
-	 * It is used to walk from a dropped resolution-level folder up to the
-	 * multiscales group that holds the axis and OMERO metadata.
+	 * This is URI resolution rather than store access, so it behaves identically
+	 * for {@code file:}, {@code http(s):} and {@code s3:} locations and costs no I/O.
+	 * It is used to walk from a dropped resolution-level folder up to the multiscales group
+	 * that holds the axis and OMERO metadata.
+	 * <p>
+	 * Only the path is walked up, since that is the only part of a URI with
+	 * traversable segments: e.g. {@code https://example.com} and
+	 * {@code https://example.com/} have no parent, and neither has an opaque URI
+	 * such as {@code mailto:someone@example.com}. Any query or fragment is
+	 * dropped from the parent before walking up.
+	 * <table border="1">
+	 *   <caption>Examples, as covered by {@code ZarrUtilsTest}</caption>
+	 *   <tr><th>{@code uri}</th><th>result</th><th>note</th></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/0}</td>
+	 *       <td>{@code file:/data/img.ome.zarr/}</td>
+	 *       <td>a dropped resolution level</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/0/}</td>
+	 *       <td>{@code file:/data/img.ome.zarr/}</td>
+	 *       <td>a trailing slash makes no difference</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/sub/0}</td>
+	 *       <td>{@code file:/data/img.ome.zarr/sub/}</td>
+	 *       <td>the immediate parent, not the multiscales group above it</td></tr>
+	 *   <tr><td>{@code file:///data/my%20img.ome.zarr/0}</td>
+	 *       <td>{@code file:/data/my%20img.ome.zarr/}</td>
+	 *       <td>percent-encoded segments stay encoded</td></tr>
+	 *   <tr><td>{@code https://example.com/img.ome.zarr/0}</td>
+	 *       <td>{@code https://example.com/img.ome.zarr/}</td>
+	 *       <td>the same walk over HTTP, host and scheme untouched</td></tr>
+	 *   <tr><td>{@code s3://bucket/img.ome.zarr/0}</td>
+	 *       <td>{@code s3://bucket/img.ome.zarr/}</td>
+	 *       <td>and over S3, without contacting the store</td></tr>
+	 *   <tr><td>{@code https://example.com/0}</td>
+	 *       <td>{@code https://example.com/}</td>
+	 *       <td>a single segment has the store root as its parent</td></tr>
+	 *   <tr><td>{@code s3://bucket/img.ome.zarr}</td>
+	 *       <td>{@code s3://bucket/}</td>
+	 *       <td>likewise, the bucket root</td></tr>
+	 *   <tr><td>{@code https://example.com/a/b?x=1}</td>
+	 *       <td>{@code https://example.com/a/}</td>
+	 *       <td>query dropped</td></tr>
+	 *   <tr><td>{@code https://example.com/a/b#f}</td>
+	 *       <td>{@code https://example.com/a/}</td>
+	 *       <td>fragment dropped</td></tr>
+	 *   <tr><td>{@code https://example.com}</td><td>{@code null}</td>
+	 *       <td>the host is not a path segment</td></tr>
+	 *   <tr><td>{@code https://example.com/}</td><td>{@code null}</td>
+	 *       <td>likewise, a trailing slash adds no segment</td></tr>
+	 *   <tr><td>{@code file:///}</td><td>{@code null}</td>
+	 *       <td>no path segment</td></tr>
+	 *   <tr><td>{@code mailto:someone@example.com}</td><td>{@code null}</td>
+	 *       <td>opaque URI, no path at all</td></tr>
+	 *   <tr><td>{@code 0}</td><td>{@code null}</td>
+	 *       <td>a lone relative segment</td></tr>
+	 *   <tr><td>{@code null}</td><td>{@code null}</td>
+	 *       <td>never throws on a missing location</td></tr>
+	 * </table>
 	 *
 	 * @param uri location to take the parent of
 	 * @return the parent URI (with trailing slash), or {@code null}
@@ -167,36 +221,131 @@ public class ZarrUtils
 	{
 		if ( uri == null )
 			return null;
-		final String stripped = stripTrailingSlashes( uri.toString() );
-		final int slash = stripped.lastIndexOf( '/' );
-		if ( slash < 0 )
+		final String rawPath = uri.getRawPath();
+		if ( rawPath == null ) // opaque URI: no path to walk up
 			return null;
-		// Keep the trailing slash so the result is treated as a folder location.
-		return URI.create( stripped.substring( 0, slash + 1 ) );
+		final int numSegments = pathSegments( uri ).size();
+		if ( numSegments == 0 || ( numSegments == 1 && !rawPath.startsWith( "/" ) ) )
+			return null; // no path segment to remove, hence no parent
+		// Let URI resolution remove the last path segment: it keeps the trailing
+		// slash (so the result is treated as a folder location), collapses
+		// doubled slashes, and leaves scheme and authority alone. A location
+		// already ending in a slash needs ".." to lose its last segment.
+		return rawPath.endsWith( "/" ) ? uri.resolve( ".." ) : uri.resolve( "." );
 	}
 
 	/**
 	 * Last path segment of {@code uri} (its folder or file name), ignoring any
-	 * trailing slash, or an empty string when there is none.
+	 * trailing slash. Used as the display name of a single array node, so the
+	 * segment is decoded: {@code file:///data/my%20img.zarr} yields
+	 * {@code "my img.zarr"}.
+	 * <p>
+	 * A location without path segments is a store root and is named after its
+	 * host or bucket instead ({@code s3://bucket} yields {@code "bucket"}); only
+	 * a location with neither, such as an opaque URI, yields {@code ""}.
+	 * <table border="1">
+	 *   <caption>Examples, as covered by {@code ZarrUtilsTest}</caption>
+	 *   <tr><th>{@code uri}</th><th>result</th><th>note</th></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/0}</td><td>{@code "0"}</td>
+	 *       <td>the name of a dropped resolution level</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/0/}</td><td>{@code "0"}</td>
+	 *       <td>a trailing slash is not a segment</td></tr>
+	 *   <tr><td>{@code s3://bucket/img.ome.zarr/1}</td><td>{@code "1"}</td>
+	 *       <td>the scheme plays no role</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr//0}</td><td>{@code "0"}</td>
+	 *       <td>a doubled slash adds no empty segment</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/./0}</td><td>{@code "0"}</td>
+	 *       <td>{@code "."} segments are resolved away</td></tr>
+	 *   <tr><td>{@code file:///data/my%20img.ome.zarr}</td>
+	 *       <td>{@code "my img.ome.zarr"}</td>
+	 *       <td>decoded, since this is a display name</td></tr>
+	 *   <tr><td>{@code https://example.com/img.zarr/0?x=1}</td><td>{@code "0"}</td>
+	 *       <td>a query is not part of the name</td></tr>
+	 *   <tr><td>{@code https://example.com/img.zarr/0#f}</td><td>{@code "0"}</td>
+	 *       <td>nor is a fragment</td></tr>
+	 *   <tr><td>{@code https://example.com}</td><td>{@code "example.com"}</td>
+	 *       <td>no path segment, so the host names the store root</td></tr>
+	 *   <tr><td>{@code https://example.com/}</td><td>{@code "example.com"}</td>
+	 *       <td>likewise</td></tr>
+	 *   <tr><td>{@code s3://bucket}</td><td>{@code "bucket"}</td>
+	 *       <td>and the bucket names an S3 store root</td></tr>
+	 *   <tr><td>{@code file:///}</td><td>{@code ""}</td>
+	 *       <td>neither a segment nor an authority to fall back on</td></tr>
+	 *   <tr><td>{@code mailto:someone@example.com}</td><td>{@code ""}</td>
+	 *       <td>opaque URI, no path at all</td></tr>
+	 *   <tr><td>{@code null}</td><td>{@code ""}</td>
+	 *       <td>never throws on a missing location</td></tr>
+	 * </table>
 	 *
 	 * @param uri location whose last segment is wanted
-	 * @return the last path segment, or {@code ""}
+	 * @return the last path segment, the host or bucket, or {@code ""}
 	 */
 	public static String lastSegment( final URI uri )
 	{
 		if ( uri == null )
 			return "";
-		final String stripped = stripTrailingSlashes( uri.toString() );
-		final int slash = stripped.lastIndexOf( '/' );
-		return slash < 0 ? stripped : stripped.substring( slash + 1 );
+		final List< String > segments = pathSegments( uri );
+		if ( !segments.isEmpty() )
+			return segments.get( segments.size() - 1 );
+		return uri.getAuthority() != null ? uri.getAuthority() : "";
 	}
 
 	/**
 	 * Whether {@code childUri} is the location described by a multiscales
-	 * {@code datasets[].path} entry. Matches either when the dataset path equals
-	 * the child's last segment (the common single-segment case, e.g. {@code "0"})
-	 * or when the child location ends with {@code "/" + datasetPath} (a
-	 * multi-segment relative dataset path).
+	 * {@code datasets[].path} entry, i.e. whether the child's trailing path
+	 * segments are exactly those of {@code datasetPath}. This covers the common
+	 * single-segment case ({@code "0"}) as well as a multi-segment relative
+	 * dataset path ({@code "sub/0"}).
+	 * <p>
+	 * Whole segments are compared, so {@code "0"} does not match a child ending
+	 * in {@code "x0"}, and the comparison is unaffected by trailing slashes,
+	 * doubled slashes, percent-encoding in the child location, or a query or
+	 * fragment.
+	 * <table border="1">
+	 *   <caption>Examples, as covered by {@code ZarrUtilsTest}</caption>
+	 *   <tr><th>{@code childUri}</th><th>{@code datasetPath}</th>
+	 *       <th>result</th><th>note</th></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/0}</td><td>{@code "0"}</td>
+	 *       <td>{@code true}</td><td>the common single-segment case</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/0/}</td><td>{@code "0"}</td>
+	 *       <td>{@code true}</td><td>a trailing slash makes no difference</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/1}</td><td>{@code "1"}</td>
+	 *       <td>{@code true}</td><td>any level, not just level 0</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr//0}</td><td>{@code "0"}</td>
+	 *       <td>{@code true}</td><td>a doubled slash adds no empty segment</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/./0}</td><td>{@code "0"}</td>
+	 *       <td>{@code true}</td><td>{@code "."} segments are resolved away</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/sub/0}</td><td>{@code "sub/0"}</td>
+	 *       <td>{@code true}</td><td>a multi-segment dataset path</td></tr>
+	 *   <tr><td>{@code file:///data/my%20img.zarr/level%200}</td>
+	 *       <td>{@code "level 0"}</td><td>{@code true}</td>
+	 *       <td>the location is encoded, the metadata value is plain text</td></tr>
+	 *   <tr><td>{@code https://example.com/img.zarr/0?x=1}</td><td>{@code "0"}</td>
+	 *       <td>{@code true}</td><td>a query does not hide the segment</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/0}</td><td>{@code "/0"}</td>
+	 *       <td>{@code true}</td>
+	 *       <td>a dataset path is relative per the spec, but a stray leading
+	 *           slash still identifies the same segment</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/1}</td><td>{@code "0"}</td>
+	 *       <td>{@code false}</td><td>a different level</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/x0}</td><td>{@code "0"}</td>
+	 *       <td>{@code false}</td>
+	 *       <td>whole segments only: {@code "0"} is not the tail of
+	 *           {@code "x0"}</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/nosub/0}</td>
+	 *       <td>{@code "sub/0"}</td><td>{@code false}</td>
+	 *       <td>the dataset path must match at a segment boundary</td></tr>
+	 *   <tr><td>{@code file:///data/0}</td><td>{@code "img.ome.zarr/0"}</td>
+	 *       <td>{@code false}</td>
+	 *       <td>a dataset path longer than the child's path cannot identify
+	 *           it</td></tr>
+	 *   <tr><td>{@code https://example.com}</td><td>{@code "example.com"}</td>
+	 *       <td>{@code false}</td><td>the host is not a path segment</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/0}</td><td>{@code ""}</td>
+	 *       <td>{@code false}</td><td>nothing to compare against</td></tr>
+	 *   <tr><td>{@code null} or any</td><td>any or {@code null}</td>
+	 *       <td>{@code false}</td><td>never throws on missing arguments</td></tr>
+	 * </table>
 	 *
 	 * @param childUri location of the dropped array node
 	 * @param datasetPath a {@code datasets[].path} value from parent multiscales
@@ -205,20 +354,40 @@ public class ZarrUtils
 	 */
 	public static boolean isChildPath( final URI childUri, final String datasetPath )
 	{
-		if ( childUri == null || datasetPath == null || datasetPath.isEmpty() )
+		if ( childUri == null || datasetPath == null )
 			return false;
-		if ( datasetPath.equals( lastSegment( childUri ) ) )
-			return true;
-		final String stripped = stripTrailingSlashes( childUri.toString() );
-		return stripped.endsWith( "/" + stripTrailingSlashes( datasetPath ) );
+		final List< String > dataset = segments( datasetPath );
+		final List< String > child = pathSegments( childUri );
+		if ( dataset.isEmpty() || dataset.size() > child.size() )
+			return false;
+		return child.subList( child.size() - dataset.size(), child.size() ).equals( dataset );
 	}
 
-	private static String stripTrailingSlashes( final String s )
+	/**
+	 * Decoded path segments of {@code uri}, e.g. {@code [img.ome.zarr, 0]} for
+	 * {@code file:///data/img.ome.zarr/0/}, or an empty list when the URI has no
+	 * path segments (a store root, or an opaque URI).
+	 */
+	private static List< String > pathSegments( final URI uri )
 	{
-		int end = s.length();
-		while ( end > 0 && s.charAt( end - 1 ) == '/' )
-			end--;
-		return s.substring( 0, end );
+		return segments( uri.normalize().getPath() );
+	}
+
+	/**
+	 * Non-empty segments of the slash-separated {@code path}, ignoring empty and
+	 * {@code "."} segments, or an empty list when there are none.
+	 */
+	private static List< String > segments( final String path )
+	{
+		if ( path == null || path.isEmpty() )
+			return Collections.emptyList();
+		final List< String > segments = new ArrayList<>();
+		for ( final String segment : path.split( "/" ) )
+		{
+			if ( !segment.isEmpty() && !".".equals( segment ) )
+				segments.add( segment );
+		}
+		return segments;
 	}
 
 	private static boolean isHttpAccessible( final URI uri )
