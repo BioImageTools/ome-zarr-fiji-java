@@ -69,6 +69,7 @@ import ome.zarr.imglib2.ZarrUtils;
  * {@code isZarr} cannot probe them cheaply.
  * </p>
  */
+@SuppressWarnings( "java:S110" ) // NB: deliberately extends AbstractIOPlugin, which is a long class hierarchy
 @Plugin( type = IOPlugin.class, attrs = @Attr( name = "eager" ) )
 public class OmeZarrIOPlugin extends AbstractIOPlugin< Object >
 {
