@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -64,6 +65,7 @@ import org.scijava.ui.swing.script.TextEditor;
 import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -92,6 +94,7 @@ import bdv.viewer.ViewerFrame;
 import ome.zarr.fijiui.settings.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.imglib2.PyramidBackend;
+import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fiji.PyramidalBdv;
@@ -277,16 +280,28 @@ class ZarrOpenActionsTest
 	}
 
 	@Test
-	void defaultOpenerReadsWithTheDefaultBackend() throws URISyntaxException
+	void defaultOpenerReadsWithTheDefaultBackend() throws URISyntaxException, ReflectiveOperationException
 	{
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
 			ZarrOpener opener = ZarrOpenActions.defaultOpener( path.toUri(), context );
+			
+			assertEquals( ZarrReaderBackend.N5, ZarrOpeningSettings.DEFAULT_READER_BACKEND );
+			assertInstanceOf( N5PyramidBackend.class, backendOf( opener ) );
+
+			// The wired backend also has to be usable, not just of the right type.
 			PyramidContents< ? > contents = opener.getContents();
 			assertEquals( 2, contents.numResolutionLevels() );
 			assertEquals( 3, contents.numChannels() );
 		}
+	}
+	
+	private static PyramidBackend backendOf( ZarrOpener opener ) throws ReflectiveOperationException
+	{
+		Field field = ZarrOpener.class.getDeclaredField( "backend" );
+		field.setAccessible( true );
+		return ( PyramidBackend ) field.get( opener );
 	}
 
 	@ParameterizedTest
