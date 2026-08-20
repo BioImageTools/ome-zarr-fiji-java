@@ -370,9 +370,9 @@ public class ZarrOpener
 
 	private void showSingleArrayAxesUnknown( final SingleArrayAxesUnknownException e )
 	{
-		errorHandler.accept( "Could not determine the axes of the single OME-Zarr resolution level at: " + inputUri + "\n\r\n"
-				+ "OME-Zarr v0.4 (Zarr v2) resolution levels carry no axis metadata of their own, so a single level can only "
-				+ "be interpreted via its parent group.\n\r\nConsider opening one level higher in the hierarchy instead." );
+		errorHandler.accept( "Could not determine the axes of the single OME-Zarr array at: " + inputUri + "\n\r\n"
+				+ "The array declares no axis names of its own and no parent multiscales metadata listing it could be read."
+				+ "\n\r\nConsider opening one level higher in the hierarchy instead." );
 		logger.info( "Cannot determine axes of single resolution level at {}: {}", inputUri, e.getMessage() );
 	}
 
