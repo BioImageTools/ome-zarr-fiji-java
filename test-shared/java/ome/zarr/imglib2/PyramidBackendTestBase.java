@@ -41,7 +41,6 @@ import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.util.Cast;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -529,7 +528,7 @@ public interface PyramidBackendTestBase
 	{
 		final RandomAccess< ? > randomAccess = contents.asImg( level ).randomAccess();
 		randomAccess.setPosition( position );
-		final UnsignedByteType value = Cast.unchecked( randomAccess.get() );
+		final UnsignedByteType value = assertInstanceOf( UnsignedByteType.class, randomAccess.get() );
 		return value.get();
 	}
 }

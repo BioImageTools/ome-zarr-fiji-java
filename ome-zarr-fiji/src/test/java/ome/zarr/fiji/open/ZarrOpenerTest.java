@@ -31,12 +31,12 @@ package ome.zarr.fiji.open;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.imagej.DatasetService;
-import net.imglib2.util.Cast;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -120,9 +120,8 @@ class ZarrOpenerTest
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
-			BdvHandle bdvHandle =
-					Cast.unchecked( new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null ).openBDVWithImage() );
-			assertNotNull( bdvHandle );
+			final ZarrOpener opener = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null );
+			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, opener.openBDVWithImage() );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertEquals( 1, pyramidalService.getPyramidals().size() );
@@ -280,7 +279,8 @@ class ZarrOpenerTest
 			accepting.openIJWithImage();
 
 			assertEquals( 1, datasetService.getDatasets().size(), "Accepting must open the image" );
-			PyramidalDataset opened = Cast.unchecked( context.getService( PyramidalService.class ).getPyramidals().get( 0 ) );
+			PyramidalDataset opened =
+					assertInstanceOf( PyramidalDataset.class, context.getService( PyramidalService.class ).getPyramidals().get( 0 ) );
 			assertArrayEquals( new long[] { 32, 32, 8, 3, 4 }, opened.getImgPlus().dimensionsAsLongArray(),
 					"The coarsest level is the closest match to the preferred width" );
 
@@ -304,10 +304,10 @@ class ZarrOpenerTest
 					message -> {
 						throw new AssertionError( "BDV must not ask about the preferred width: " + message );
 					} );
-			BdvHandle bdvHandle = Cast.unchecked( opener.openBDVWithImage() );
+			Object opened = opener.openBDVWithImage();
 
 			assertNull( capturedError.get(), "Opening should not have failed, got: " + capturedError.get() );
-			assertNotNull( bdvHandle, "BDV should open regardless of the preferred width" );
+			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, opened, "BDV should open regardless of the preferred width" );
 			bdvHandle.close();
 			SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the close
 		}

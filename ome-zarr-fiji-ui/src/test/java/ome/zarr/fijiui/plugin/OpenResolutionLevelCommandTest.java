@@ -36,7 +36,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.imagej.DatasetService;
-import net.imglib2.util.Cast;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -92,7 +91,7 @@ class OpenResolutionLevelCommandTest
 			new ZarrOpenActions( path.toUri(), context ).openBDVWithImage();
 			cmd.initialize();
 			assertFalse( cmd.isCanceled() );
-			final MutableModuleItem< ? > item = Cast.unchecked( cmd.getInfo().getInput( "resolutionLevel" ) );
+			final MutableModuleItem< ? > item = assertInstanceOf( MutableModuleItem.class, cmd.getInfo().getInput( "resolutionLevel" ) );
 			assertEquals( Arrays.asList( "Resolution 0", "Resolution 1" ), item.getChoices() );
 		}
 	}
@@ -132,11 +131,9 @@ class OpenResolutionLevelCommandTest
 			runCommand( context, inputs );
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
-			final PyramidalDataset sourceDataset = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-			final PyramidalDataset levelDataset = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
 			assertEquals( 2, datasetService.getDatasets().size() );
-			assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 0 ) );
-			assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 1 ) );
+			final PyramidalDataset sourceDataset = assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 0 ) );
+			final PyramidalDataset levelDataset = assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 1 ) );
 			assertSame( sourceDataset.getPyramidContents(), levelDataset.getPyramidContents() );
 		}
 	}

@@ -286,7 +286,7 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			ZarrOpener opener = ZarrOpenActions.defaultOpener( path.toUri(), context );
-			
+
 			assertEquals( ZarrReaderBackend.N5, ZarrOpeningSettings.DEFAULT_READER_BACKEND );
 			assertInstanceOf( N5PyramidBackend.class, backendOf( opener ) );
 
@@ -296,7 +296,7 @@ class ZarrOpenActionsTest
 			assertEquals( 3, contents.numChannels() );
 		}
 	}
-	
+
 	private static PyramidBackend backendOf( ZarrOpener opener ) throws ReflectiveOperationException
 	{
 		Field field = ZarrOpener.class.getDeclaredField( "backend" );
@@ -320,7 +320,7 @@ class ZarrOpenActionsTest
 			assertNotNull( datasets );
 			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
 			Dataset dataset = datasets.get( 0 );
-			PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
+			PyramidalDataset pyramidalDataset = assertInstanceOf( PyramidalDataset.class, dataset );
 			long[] dimensions = pyramidalDataset.getImgPlus().dimensionsAsLongArray();
 			if ( resource.contains( "2d_testing" ) )
 			{
@@ -389,7 +389,7 @@ class ZarrOpenActionsTest
 			// A single resolution level opens as a one-level PyramidalDataset, just like a multiscale image.
 			assertEquals( 1, datasets.size() );
 			Dataset dataset = datasets.get( 0 );
-			PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
+			PyramidalDataset pyramidalDataset = assertInstanceOf( PyramidalDataset.class, dataset );
 			// An ImgPlus reports only the axes the dataset actually has, so the expected
 			// arrays below are as short as the image is dimensional.
 			long[] dimensions = pyramidalDataset.getImgPlus().dimensionsAsLongArray();
@@ -452,7 +452,7 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
-			BdvHandle bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
+			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertNotNull( pyramidalService );
@@ -479,7 +479,7 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-			BdvHandle bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
+			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertNotNull( pyramidalService );
@@ -488,7 +488,7 @@ class ZarrOpenActionsTest
 			// A single resolution level opens in BDV as a one-level PyramidalBdv, tracked like a multiscale image.
 			assertEquals( 1, pyramidals.size() );
 
-			PyramidalBdv< ? > pyramidalBdv = Cast.unchecked( pyramidals.get( 0 ) );
+			PyramidalBdv< ? > pyramidalBdv = assertInstanceOf( PyramidalBdv.class, pyramidals.get( 0 ) );
 			List< ConverterSetup > converterSetups = bdvHandle.getConverterSetups().getConverterSetups( pyramidalBdv.asSources() );
 			assertNotNull( converterSetups );
 			// One converter setup per channel; only the xyc, xyct, xyzc and 5d datasets have a c axis.
@@ -645,25 +645,25 @@ class ZarrOpenActionsTest
 			BdvHandle bdvHandle2 = null;
 			try
 			{
-				bdvHandle1 = Cast.unchecked( actions.openBDVWithImage() );
+				bdvHandle1 = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 				assertEquals( 3, pyramidalService.getPyramidals().size() );
 
-				bdvHandle2 = Cast.unchecked( actions.openBDVWithImage() );
+				bdvHandle2 = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 				assertEquals( 4, pyramidalService.getPyramidals().size() );
 
 				assertSame( datasetService.getDatasets().get( 0 ), pyramidalService.getPyramidals().get( 0 ) );
 				assertSame( datasetService.getDatasets().get( 1 ), pyramidalService.getPyramidals().get( 1 ) );
 
-				PyramidalDataset ijLevel0 = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
-				PyramidalDataset ijLevel1 = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
+				PyramidalDataset ijLevel0 = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalDataset ijLevel1 = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 1 ) );
 
-				PyramidalBdv< ? > bdv1 = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
+				PyramidalBdv< ? > bdv1 = assertInstanceOf( PyramidalBdv.class, pyramidalService.getPyramidals().get( 2 ) );
 
 				// All 4 datasets (2 IJ + 2 BDV) must be backed by the exact same PyramidContents object
 				PyramidContents< ? > sharedPyramid = ijLevel0.getPyramidContents();
 				for ( Dataset dataset : datasetService.getDatasets() )
 				{
-					PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
+					PyramidalDataset pyramidalDataset = assertInstanceOf( PyramidalDataset.class, dataset );
 					assertSame( sharedPyramid, pyramidalDataset.getPyramidContents(),
 							"Every opened dataset must share the same PyramidContents instance" );
 				}
@@ -718,7 +718,7 @@ class ZarrOpenActionsTest
 			try
 			{
 				// BDV open covers all resolution levels and registers one dataset
-				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
+				bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 
 				PyramidalService pyramidalService = context.getService( PyramidalService.class );
 				DatasetService datasetService = context.getService( DatasetService.class );
@@ -731,8 +731,8 @@ class ZarrOpenActionsTest
 				assertEquals( 2, pyramidalService.getPyramidals().size() );
 				assertEquals( 1, datasetService.getDatasets().size() );
 
-				PyramidalBdv< ? > bdvDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
-				PyramidalDataset ijDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
+				PyramidalBdv< ? > bdvDataset = assertInstanceOf( PyramidalBdv.class, pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalDataset ijDataset = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 1 ) );
 				assertSame( bdvDataset.getPyramidContents(), ijDataset.getPyramidContents(),
 						"BDV and IJ datasets must share the same PyramidContents instance" );
 				// BDV dataset
@@ -776,14 +776,14 @@ class ZarrOpenActionsTest
 			{
 				actions.openIJWithImage( 0 ); // first instance of level 0
 				actions.openIJWithImage( 0 ); // second instance of level 0
-				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
+				bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 				actions.openIJWithImage( 1 );
 
 				PyramidalService pyramidalService = context.getService( PyramidalService.class );
-				PyramidalDataset ijLevel0First = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
-				PyramidalDataset ijLevel0Second = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
-				PyramidalBdv< ? > bdv = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
-				PyramidalDataset ijLevel1 = Cast.unchecked( pyramidalService.getPyramidals().get( 3 ) );
+				PyramidalDataset ijLevel0First = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalDataset ijLevel0Second = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 1 ) );
+				PyramidalBdv< ? > bdv = assertInstanceOf( PyramidalBdv.class, pyramidalService.getPyramidals().get( 2 ) );
+				PyramidalDataset ijLevel1 = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 3 ) );
 
 				Img< ? > cellImgIj0First = ijLevel0First.getImgPlus().getImg();
 				Img< ? > cellImgIj0Second = ijLevel0Second.getImgPlus().getImg();
@@ -871,8 +871,8 @@ class ZarrOpenActionsTest
 				actions.openIJWithImage( 1 );
 
 				DatasetService datasetService = context.getService( DatasetService.class );
-				PyramidalDataset ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset ifLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				PyramidalDataset ijLevel0 = assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset ifLevel1 = assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 1 ) );
 
 				assertFalse( Util.imagesEqual( Cast.unchecked( ijLevel0.getImgPlus().getImg() ), ifLevel1.getImgPlus().getImg() ) );
 				long[] expectedDims0 = new long[] { 64, 64, 16, 3, 4 };
