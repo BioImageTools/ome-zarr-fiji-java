@@ -28,10 +28,14 @@
  */
 package ome.zarr.imglib2;
 
+import java.lang.invoke.MethodHandles;
 import java.net.URI;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
@@ -59,6 +63,8 @@ import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
  */
 public abstract class AbstractPyramidBackend implements PyramidBackend
 {
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
 	/**
 	 * {@inheritDoc}
 	 * <p>
@@ -105,6 +111,10 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	 *   <li>{@link #tryLoadArrayNodeOnly} against the array itself — typically the
 	 *       Zarr v3 {@code dimension_names}, opened uncalibrated.</li>
 	 * </ol>
+	 * Taking the second route means the scale and unit are placeholders rather than
+	 * anything the dataset states (see
+	 * {@link ome.zarr.imglib2.metadata.AxisCalibration#createPlaceholderCalibration}).
+	 * <p>
 	 * If both decline (return {@code null}), the array cannot be interpreted and a
 	 * {@link SingleArrayAxesUnknownException} is thrown.
 	 *
@@ -124,7 +134,12 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 		}
 		final PyramidContents< T > nodeOnly = tryLoadArrayNodeOnly( arrayUri );
 		if ( nodeOnly != null )
+		{
+			logger.warn( "Opening {} with a placeholder calibration: its axis names are correct, but "
+					+ "neither scale nor unit were supplied. "
+					+ "Measurements taken from this image are in pixels, not in physical units.", arrayUri );
 			return nodeOnly;
+		}
 		throw new SingleArrayAxesUnknownException( arrayUri.toString() );
 	}
 
