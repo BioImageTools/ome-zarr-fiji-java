@@ -104,6 +104,16 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	/** OMERO rendering metadata, or {@code null} if unavailable. */
 	public final Omero omero;
 
+	/**
+	 * Whether the scale and unit in {@link #axesPerLevel} are placeholders that no
+	 * part of the dataset states, rather than real calibration (see
+	 * {@link AxisCalibration#createPlaceholderCalibration}).
+	 * <p>
+	 * {@code true} only for a single array opened from its own axis names alone,
+	 * with no parent multiscales group to supply a scale or unit.
+	 */
+	public final boolean hasPlaceholderCalibration;
+
 	private PyramidContents( final Builder< T > b )
 	{
 		this.name = b.name;
@@ -112,6 +122,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		this.cachedCellImgs = b.cachedCellImgs;
 		this.axesPerLevel = b.axesPerLevel;
 		this.omero = b.omero;
+		this.hasPlaceholderCalibration = b.hasPlaceholderCalibration;
 
 		final int numDimensions = cachedCellImgs[ 0 ].numDimensions();
 		if ( axesPerLevel[ 0 ].length != numDimensions )
@@ -365,6 +376,32 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 				.build();
 	}
 
+	/**
+	 * Factory for one case where a level's calibration has to be made up: a bare
+	 * array node opened from its own axis names alone, with no parent multiscales
+	 * group to state a scale or unit. The result has
+	 * {@link #hasPlaceholderCalibration} set.
+	 *
+	 * @param <T> pixel type
+	 * @param name dataset name
+	 * @param type pixel type instance
+	 * @param img the single-level cached cell image
+	 * @param axes per-axis calibration for the single level, in imglib2 F-order
+	 */
+	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > singleLevelWithPlaceholderCalibration(
+			final String name, final T type, final CachedCellImg< T, ? > img, final AxisCalibration[] axes )
+	{
+		return PyramidContents.< T >builder()
+				.name( name )
+				.type( type )
+				.transforms( new AffineTransform3D[] { new AffineTransform3D() } )
+				.cachedCellImgs( Cast.unchecked( new CachedCellImg[] { img } ) )
+				.axesPerLevel( new AxisCalibration[][] { axes } )
+				.omero( null )
+				.hasPlaceholderCalibration( true )
+				.build();
+	}
+
 	public static final class Builder< T extends NativeType< T > & RealType< T > >
 	{
 		private String name;
@@ -378,6 +415,8 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		private AxisCalibration[][] axesPerLevel;
 
 		private Omero omero;
+
+		private boolean hasPlaceholderCalibration;
 
 		public Builder< T > name( final String name )
 		{
@@ -412,6 +451,13 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		public Builder< T > omero( final Omero o )
 		{
 			this.omero = o;
+			return this;
+		}
+
+		/** See {@link PyramidContents#hasPlaceholderCalibration}. Defaults to {@code false}. */
+		public Builder< T > hasPlaceholderCalibration( final boolean h )
+		{
+			this.hasPlaceholderCalibration = h;
 			return this;
 		}
 

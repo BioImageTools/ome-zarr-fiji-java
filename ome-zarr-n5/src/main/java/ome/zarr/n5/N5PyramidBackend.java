@@ -266,7 +266,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 		final T type = N5Utils.type( dataType );
 		final AxisCalibration[] axes = AxisCalibration.createPlaceholderCalibration( axisNames );
 		final CachedCellImg< T, ? > img = N5Utils.openVolatile( openReader( arrayUri ), "" );
-		return PyramidContents.singleLevel( ZarrUtils.lastSegment( arrayUri ), type, new AffineTransform3D(), img, axes, null );
+		return PyramidContents.singleLevelWithPlaceholderCalibration( ZarrUtils.lastSegment( arrayUri ), type, img, axes );
 	}
 
 	/**

@@ -30,6 +30,7 @@ package ome.zarr.imglib2;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -150,6 +151,8 @@ public interface PyramidBackendTestBase
 			assertEquals( 2, contents.numDimensions() );
 			assertEquals( "0", contents.name, "Without a multiscales name, the array node name is used" );
 			assertNull( contents.omero );
+			assertTrue( contents.hasPlaceholderCalibration,
+					"An array opened from its own axis names has no real scale or unit, and must say so" );
 
 			// dimension_names are y, x; the imglib2 image is in F-order, so x comes first.
 			assertEquals( 0, contents.axisIndex( AxisCalibration.X ) );
@@ -233,6 +236,9 @@ public interface PyramidBackendTestBase
 			assertArrayEquals( new double[] { 2.0, 2.0, 2.0 },
 					new double[] { transform.get( 0, 0 ), transform.get( 1, 1 ), transform.get( 2, 2 ) },
 					"The transform is the one of the opened level, not of level 0" );
+
+			assertFalse( contents.hasPlaceholderCalibration,
+					"The scale and unit come from the parent multiscales group, so they are real" );
 
 			Omero omero = contents.omero;
 			assertNotNull( omero, "OMERO metadata is inherited from the parent group" );
