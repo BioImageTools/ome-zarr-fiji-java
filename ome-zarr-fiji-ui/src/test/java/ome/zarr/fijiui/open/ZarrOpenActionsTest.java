@@ -390,6 +390,8 @@ class ZarrOpenActionsTest
 			assertEquals( 1, datasets.size() );
 			Dataset dataset = datasets.get( 0 );
 			PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
+			// An ImgPlus reports only the axes the dataset actually has, so the expected
+			// arrays below are as short as the image is dimensional.
 			long[] dimensions = pyramidalDataset.getImgPlus().dimensionsAsLongArray();
 			if ( resource.contains( "2d_testing" ) )
 			{
