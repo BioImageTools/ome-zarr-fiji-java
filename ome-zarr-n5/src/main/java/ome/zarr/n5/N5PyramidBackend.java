@@ -264,7 +264,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 			return null;
 		}
 		final T type = N5Utils.type( dataType );
-		final AxisCalibration[] axes = AxisCalibration.fromAxisNames( axisNames );
+		final AxisCalibration[] axes = AxisCalibration.createPlaceholderCalibration( axisNames );
 		final CachedCellImg< T, ? > img = N5Utils.openVolatile( openReader( arrayUri ), "" );
 		return PyramidContents.singleLevel( ZarrUtils.lastSegment( arrayUri ), type, new AffineTransform3D(), img, axes, null );
 	}
@@ -277,7 +277,8 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	 * NB: {@code dimension_names} is part of the Zarr v3 array metadata, not of the
 	 * user attributes, so it is only reachable through the dataset attributes;
 	 * {@link N5Reader#getAttribute} does not see it. n5-zarr already reverses the
-	 * names into the imglib2 F-order that {@link AxisCalibration#fromAxisNames}
+	 * names into the imglib2 F-order that
+	 * {@link AxisCalibration#createPlaceholderCalibration}
 	 * expects, so no further reversal is needed here.
 	 */
 	private static String[] readAxisNames( final DatasetAttributes attributes )

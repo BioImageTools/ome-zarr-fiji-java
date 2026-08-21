@@ -69,9 +69,10 @@ public final class AxisCalibration
 	}
 
 	/**
-	 * Builds uncalibrated axes (unit scale, empty unit) from axis names. Used when
-	 * a single Zarr v3 array is opened without a parent multiscales group to supply
-	 * scale and unit information.
+	 * Builds axes whose calibration is a <em>placeholder</em>: the names are real,
+	 * but the unit is empty and the scale is {@code 1.0} because nothing in the data
+	 * says what they are. Used when a single Zarr v3 array is opened without a parent
+	 * multiscales group to supply scale and unit information.
 	 * <p>
 	 * The names must already be in the imglib2 F-order expected by
 	 * {@link ome.zarr.imglib2.PyramidContents}; a reader whose library hands out
@@ -79,9 +80,10 @@ public final class AxisCalibration
 	 * first, just as it does for the shape.
 	 *
 	 * @param axisNames axis names in imglib2 F-order
-	 * @return axis calibrations in the same order, each with unit scale and no unit
+	 * @return axis calibrations in the same order, each with a placeholder unit
+	 *   ({@code ""}) and scale ({@code 1.0})
 	 */
-	public static AxisCalibration[] fromAxisNames( final String[] axisNames )
+	public static AxisCalibration[] createPlaceholderCalibration( final String[] axisNames )
 	{
 		final AxisCalibration[] result = new AxisCalibration[ axisNames.length ];
 		for ( int d = 0; d < axisNames.length; d++ )

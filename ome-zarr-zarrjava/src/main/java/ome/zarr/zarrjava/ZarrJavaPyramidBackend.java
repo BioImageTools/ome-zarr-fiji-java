@@ -425,7 +425,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 			return null;
 		final T type = typeForZarrDataType( arr.metadata().dataType().getMA2DataType() );
 		final CachedCellImg< T, ? > img = createCellImg( arr, type );
-		final AxisCalibration[] axes = AxisCalibration.fromAxisNames( names );
+		final AxisCalibration[] axes = AxisCalibration.createPlaceholderCalibration( names );
 		return PyramidContents.singleLevel( ZarrUtils.lastSegment( arrayUri ), type, new AffineTransform3D(), img, axes, null );
 	}
 
