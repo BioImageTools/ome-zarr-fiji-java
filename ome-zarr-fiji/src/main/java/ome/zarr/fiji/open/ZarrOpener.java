@@ -68,12 +68,16 @@ import ome.zarr.imglib2.exceptions.StoreAccessException;
  * one is narrow enough, asks the user for confirmation before opening it anyway.
  * {@link #openIJWithImage(int)} opens the level its caller named, and
  * BigDataViewer displays all levels and streams them lazily.
+ * <p>
+ * Independently of the width, every display path refuses to show an image whose
+ * calibration is a placeholder ({@link PyramidContents#hasPlaceholderCalibration})
+ * unless the user confirms.
  */
 public class ZarrOpener
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private static final String OVERSIZE_DIALOG_TITLE = "Image larger than preferred size";
+	private static final String CONFIRM_DIALOG_TITLE = "Open this OME-Zarr image anyway?";
 
 	private final URI inputUri;
 
@@ -85,7 +89,7 @@ public class ZarrOpener
 
 	private final Consumer< String > errorHandler;
 
-	private final Predicate< String > oversizeConfirmation;
+	private final Predicate< String > openAnywayConfirmation;
 
 	private PyramidContents< ? > cachedContents;
 
@@ -120,29 +124,27 @@ public class ZarrOpener
 
 	/**
 	 * Opener for {@code inputUri} with an explicit backend, preferred resolution,
-	 * error sink, and oversize confirmation.
+	 * error sink, and open-anyway confirmation.
 	 *
 	 * @param backend the backend used to read the dataset
 	 * @param preferredMaxWidth the highest-resolution level that is still no wider
 	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
 	 * @param errorHandler receives a user-facing message when opening fails
-	 * @param oversizeConfirmation asked whether to open the coarsest level after all
-	 *   when no level is as narrow as {@code preferredMaxWidth}; receives the
-	 *   user-facing message and returns whether to go ahead. Consulted by
-	 *   {@link #openIJWithImage()} only, and never when {@code preferredMaxWidth} is
-	 *   {@code null} or some level fits. Pass a non-interactive implementation for
-	 *   headless use — the default shows a modal (modified) {@link YesNoCancelDialog}.
+	 * @param openAnywayConfirmation asked whether to open an image that has something
+	 *   wrong with it after all.
+	 *   Pass a non-interactive implementation for headless use — the default shows a
+	 *   modal (modified) {@link YesNoCancelDialog}.
 	 */
 	public ZarrOpener( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth, final Consumer< String > errorHandler,
-			final Predicate< String > oversizeConfirmation )
+			final Predicate< String > openAnywayConfirmation )
 	{
 		this.inputUri = inputUri;
 		this.context = context;
 		this.backend = backend;
 		this.preferredMaxWidth = preferredMaxWidth;
 		this.errorHandler = errorHandler;
-		this.oversizeConfirmation = oversizeConfirmation;
+		this.openAnywayConfirmation = openAnywayConfirmation;
 	}
 
 	/**
@@ -203,6 +205,8 @@ public class ZarrOpener
 		openPyramidImage(
 				() -> {
 					final PyramidContents< ? > contents = getContents();
+					if ( !mayShowUncalibrated( contents ) )
+						return null;
 					final int suggestedLevel = contents.suggestResolutionLevel( preferredMaxWidth );
 					if ( suggestedLevel != PyramidContents.NO_MATCHING_LEVEL )
 						showAsDataset( contents, suggestedLevel );
@@ -213,6 +217,35 @@ public class ZarrOpener
 	}
 
 	/**
+	 * Whether an image may be shown: {@code true} unless its calibration is a
+	 * placeholder (see {@link PyramidContents#hasPlaceholderCalibration}).
+	 * <p>
+	 * Every display path asks this, because the invented scale and unit belong to
+	 * the dataset rather than to the resolution level or the viewer: they mislead in
+	 * BigDataViewer exactly as much as in ImageJ.
+	 */
+	private boolean mayShowUncalibrated( final PyramidContents< ? > contents )
+	{
+		if ( !contents.hasPlaceholderCalibration )
+			return true;
+		final boolean openAnyway = openAnywayConfirmation.test( uncalibratedMessage() );
+		logger.info( "{} has no scale or unit of its own. Opening it anyway: {}.", inputUri, openAnyway );
+		return openAnyway;
+	}
+
+	/** The confirmation text for an image whose scale and unit are placeholders. */
+	private String uncalibratedMessage()
+	{
+		return "This image has no calibration.\n\r\n"
+				+ "Location: " + inputUri + "\n\r\n"
+				+ "It is a single resolution level, and no parent OME-Zarr group states the size of a pixel or "
+				+ "the unit to measure it in. Every axis would be reported as 1.0 with no unit, which looks the "
+				+ "same as a genuinely unit-spaced image: measurements would be in pixels.\n\r\n"
+				+ "Open it anyway?\n\r\n"
+				+ "Opening the parent OME-Zarr group up in the hierarchy instead may give you the real calibration.";
+	}
+
+	/**
 	 * Asks the user whether to open the coarsest level even though it is wider than
 	 * the preferred width, which is the situation when
 	 * {@link PyramidContents#suggestResolutionLevel} finds no matching level.
@@ -220,7 +253,7 @@ public class ZarrOpener
 	private boolean confirmOpeningSmallestLevel( final PyramidContents< ? > contents )
 	{
 		final long width = contents.sizeAlongAxis( AxisCalibration.X, contents.smallestResolutionLevel() );
-		final boolean openAnyway = oversizeConfirmation.test( oversizeMessage( contents, width ) );
+		final boolean openAnyway = openAnywayConfirmation.test( oversizeMessage( contents, width ) );
 		logger.info( "No resolution level of {} is as narrow as the preferred maximum of {}, the coarsest one is {} "
 				+ "pixels wide. Opening it anyway: {}.", inputUri, preferredMaxWidth, width, openAnyway );
 		return openAnyway;
@@ -250,6 +283,8 @@ public class ZarrOpener
 						final PyramidContents< ? > contents = getContents();
 						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
 							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels() );
+						if ( !mayShowUncalibrated( contents ) )
+							return null;
 						showAsDataset( contents, resolutionLevel );
 						return null;
 					} );
@@ -303,7 +338,7 @@ public class ZarrOpener
 	 */
 	private static boolean confirmWithDialog( final String message )
 	{
-		return new YesNoCancelDialog( IJ.getInstance(), OVERSIZE_DIALOG_TITLE, message,
+		return new YesNoCancelDialog( IJ.getInstance(), CONFIRM_DIALOG_TITLE, message,
 				"Open anyway", "Don't open" ).yesPressed();
 	}
 
@@ -321,6 +356,8 @@ public class ZarrOpener
 	{
 		return openPyramidImage(
 				() -> {
+					if ( !mayShowUncalibrated( getContents() ) )
+						return null;
 					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, getContents() );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 					final Object result = BdvUtils.showBdvAndRegisterDataset( pyramidal, pyramidalService );
