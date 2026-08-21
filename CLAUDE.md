@@ -60,7 +60,21 @@ hooks for the reader-specific steps: `loadMultiscale`, `tryLoadLevelFromParent` 
 is fixed for every backend. It is extended by `N5PyramidBackend` (N5-universe, OME-NGFF v0.3–v0.5) and
 `ZarrJavaPyramidBackend` (`dev.zarr:zarr-java`, Zarr v2/v3). Both produce an immutable `PyramidContents<T>` holding the
 per-level `CachedCellImg`s, affine transforms, axis calibration, and optional OMERO metadata, plus an `asImg()`
-accessor. `ZarrOpener` picks a backend (`ZarrReaderBackend`: N5 or ZARR_JAVA), loads and caches the `PyramidContents`,
+accessor.
+
+Resolution levels are selected through `PyramidContents.suggestResolutionLevel(Integer preferredMaxWidth)`, which
+returns `NO_MATCHING_LEVEL` (`-1`) rather than silently falling back when no level is narrow enough; the caller decides
+(`ZarrOpener` offers `smallestResolutionLevel()` and asks). `asImg()`/`asLargestImg()`, `asSmallestImg()` and
+`asImg(int)` name the levels explicitly.
+
+The `tryLoadArrayNodeOnly` route can only invent a calibration – `AxisCalibration.createPlaceholderCalibration` builds
+axes with scale `1.0` and an empty unit, because a bare array names its axes (Zarr v3 `dimension_names`) but not their
+scale. Such contents are built through `PyramidContents.singleLevelWithPlaceholderCalibration(...)`, the only way to set
+the `hasPlaceholderCalibration` flag, so the guess always travels with the image; `AbstractPyramidBackend` also logs a
+warning. Every `ZarrOpener` display path refuses to show a flagged image unless the user confirms. An array whose axes
+cannot be named at all (Zarr v2 without a readable parent) remains a hard `SingleArrayAxesUnknownException`.
+
+`ZarrOpener` picks a backend (`ZarrReaderBackend`: N5 or ZARR_JAVA), loads and caches the `PyramidContents`,
 and wraps it into either a `PyramidalDataset` (extends `DefaultDataset`, for ImageJ) or a `PyramidalBdv` (per-channel
 BDV `SourceAndConverter` lists, volatile-wrapped per resolution level) – both implement the marker interface
 `Pyramidal`.
