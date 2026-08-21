@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
@@ -423,28 +424,54 @@ public interface PyramidBackendTestBase
 			assertSelectedLevelDimensions( contents, 64, 64, 16, is3D ); // equals the highest resolution
 			assertSelectedLevelDimensions( contents, 50, 32, 8, is3D ); // between the lowest and highest resolution
 			assertSelectedLevelDimensions( contents, 32, 32, 8, is3D ); // equals the lowest resolution
-			// less than the lowest resolution: falls back to the coarsest level
+			// less than the lowest resolution: no level matches, the caller falls back
+			// to the coarsest one
 			assertSelectedLevelDimensions( contents, 30, 32, 8, is3D );
-			assertEquals( contents.numResolutionLevels() - 1, contents.selectResolutionLevel( 30 ),
-					"Without a narrow enough level, the coarsest one must be selected" );
+			assertEquals( PyramidContents.NO_MATCHING_LEVEL, contents.suggestResolutionLevel( 30 ),
+					"Without a narrow enough level, no level must be suggested" );
 			assertSelectedLevelDimensions( contents, null, 64, 16, is3D ); // null preferred width results in the highest resolution
 		}
 	}
 
 	/**
-	 * Selects the resolution level for {@code preferredWidth} and asserts the x/y
-	 * (and, when {@code is3D}, z) dimensions of {@link PyramidContents#asImg(int)}
-	 * at that level. The imglib2 image is in F-order with x, y, z at indices 0, 1, 2.
+	 * Suggests the resolution level for {@code preferredWidth} — falling back to the
+	 * coarsest level when none matches, as the Fiji opener does — and asserts the
+	 * x/y (and, when {@code is3D}, z) dimensions of
+	 * {@link PyramidContents#asImg(int)} at that level. The imglib2 image is in
+	 * F-order with x, y, z at indices 0, 1, 2.
 	 */
 	static void assertSelectedLevelDimensions( final PyramidContents< ? > contents,
 			final Integer preferredWidth, final long expectedXY, final long expectedZ, final boolean is3D )
 	{
-		final int level = contents.selectResolutionLevel( preferredWidth );
+		final int suggested = contents.suggestResolutionLevel( preferredWidth );
+		final int level = suggested == PyramidContents.NO_MATCHING_LEVEL
+				? contents.smallestResolutionLevel()
+				: suggested;
 		final Img< ? > img = contents.asImg( level );
 		assertEquals( expectedXY, img.dimension( 0 ) );
 		assertEquals( expectedXY, img.dimension( 1 ) );
 		if ( is3D )
 			assertEquals( expectedZ, img.dimension( 2 ) );
+	}
+
+	@ParameterizedTest
+	@MethodSource( "ome.zarr.imglib2.PyramidBackendTestBase#omeZarrExamples" )
+	default void testLargestAndSmallestImg( final String resource ) throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			final PyramidContents< ? > contents = load( resource, context );
+			assertEquals( 0, contents.suggestResolutionLevel( null ),
+					"Without a preferred width, the highest resolution must be suggested" );
+			assertSame( contents.asImg( 0 ), contents.asLargestImg() );
+			assertSame( contents.asImg( 0 ), contents.asImg() );
+			assertEquals( contents.numResolutionLevels() - 1, contents.smallestResolutionLevel() );
+			assertSame( contents.asImg( contents.numResolutionLevels() - 1 ), contents.asSmallestImg() );
+			// the examples are 64 wide at level 0 and halve per level
+			assertEquals( 64, contents.asLargestImg().dimension( 0 ) );
+			assertTrue( contents.asSmallestImg().dimension( 0 ) <= contents.asLargestImg().dimension( 0 ),
+					"The smallest image must not be wider than the largest one" );
+		}
 	}
 
 	@ParameterizedTest

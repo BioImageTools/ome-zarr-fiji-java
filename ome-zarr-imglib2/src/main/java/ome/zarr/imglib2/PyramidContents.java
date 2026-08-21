@@ -70,6 +70,12 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	/**
+	 * Returned by {@link #suggestResolutionLevel} when no resolution level matches
+	 * the requested width.
+	 */
+	public static final int NO_MATCHING_LEVEL = -1;
+
 	public final String name;
 
 	public final T type;
@@ -123,7 +129,17 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
-	 * Full-resolution image (resolution level 0).
+	 * Index of the coarsest resolution level, i.e., the smallest image of the
+	 * pyramid: {@code numResolutionLevels() - 1}.
+	 */
+	public int smallestResolutionLevel()
+	{
+		return cachedCellImgs.length - 1;
+	}
+
+	/**
+	 * Full-resolution image (resolution level 0). Same as
+	 * {@link #asLargestImg()}.
 	 * <p>
 	 * The dimensions are in imglib2 F-order — a subset of (x, y, z, c, t) — so use
 	 * {@link #axisIndex} / {@link #hasAxis} together with {@link #axesPerLevel} to
@@ -135,8 +151,28 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
+	 * Largest image of the pyramid, i.e., the full-resolution level {@code 0}. See
+	 * {@link #asImg()} for the axis ordering.
+	 */
+	public Img< T > asLargestImg()
+	{
+		return asImg( 0 );
+	}
+
+	/**
+	 * Smallest image of the pyramid, i.e., the coarsest level
+	 * {@link #smallestResolutionLevel()}. For a single-level pyramid this is the
+	 * same image as {@link #asLargestImg()}. See {@link #asImg()} for the axis
+	 * ordering.
+	 */
+	public Img< T > asSmallestImg()
+	{
+		return asImg( smallestResolutionLevel() );
+	}
+
+	/**
 	 * Image at the given resolution level ({@code 0} = highest resolution). See
-	 * {@link #asImg()} for the axis ordering; {@link #selectResolutionLevel} can
+	 * {@link #asImg()} for the axis ordering; {@link #suggestResolutionLevel} can
 	 * pick a level by preferred width.
 	 *
 	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
@@ -274,17 +310,16 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	/**
 	 * Returns the index of the highest-resolution level that is still no wider
-	 * than {@code preferredMaxWidth}, or 0 when {@code preferredMaxWidth} is
-	 * {@code null}.
+	 * than {@code preferredMaxWidth}, or {@code 0} when {@code preferredMaxWidth}
+	 * is {@code null}.
 	 * <p>
-	 * When no level is narrow enough — including the trivial case of a
-	 * single-level pyramid that is already too wide — the coarsest level
-	 * ({@code numResolutionLevels() - 1}) is returned as the closest available
-	 * match. Callers for which an oversized image is a problem should therefore
-	 * compare the returned level's {@code sizeAlongAxis( AxisCalibration.X, level )}
-	 * against their own limit rather than assume the result fits.
+	 * When no level is narrow enough — including the trivial case of a single-level
+	 * pyramid that is already too wide — {@link #NO_MATCHING_LEVEL} is returned. It
+	 * is up to the caller to decide what to do then: offer
+	 * {@link #asSmallestImg()} as the closest available match, ask the user, or
+	 * open nothing at all.
 	 */
-	public int selectResolutionLevel( final Integer preferredMaxWidth )
+	public int suggestResolutionLevel( final Integer preferredMaxWidth )
 	{
 		if ( preferredMaxWidth == null )
 			return 0;
@@ -293,7 +328,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 			if ( sizeAlongAxis( AxisCalibration.X, level ) <= preferredMaxWidth )
 				return level;
 		}
-		return cachedCellImgs.length - 1;
+		return NO_MATCHING_LEVEL;
 	}
 
 	public static < T extends NativeType< T > & RealType< T > > Builder< T > builder()
