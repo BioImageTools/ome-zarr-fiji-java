@@ -67,4 +67,27 @@ public final class AxisCalibration
 		this.unit = unit;
 		this.scale = scale;
 	}
+
+	/**
+	 * Builds axes whose calibration is a <em>placeholder</em>: the names are real,
+	 * but the unit is empty and the scale is {@code 1.0} because nothing in the data
+	 * says what they are. Used when a single Zarr v3 array is opened without a parent
+	 * multiscales group to supply scale and unit information.
+	 * <p>
+	 * The names must already be in the imglib2 F-order expected by
+	 * {@link ome.zarr.imglib2.PyramidContents}; a reader whose library hands out
+	 * Zarr's {@code dimension_names} in storage (C) order has to reverse them
+	 * first, just as it does for the shape.
+	 *
+	 * @param axisNames axis names in imglib2 F-order
+	 * @return axis calibrations in the same order, each with a placeholder unit
+	 *   ({@code ""}) and scale ({@code 1.0})
+	 */
+	public static AxisCalibration[] createPlaceholderCalibration( final String[] axisNames )
+	{
+		final AxisCalibration[] result = new AxisCalibration[ axisNames.length ];
+		for ( int d = 0; d < axisNames.length; d++ )
+			result[ d ] = new AxisCalibration( axisNames[ d ], "", 1.0 );
+		return result;
+	}
 }

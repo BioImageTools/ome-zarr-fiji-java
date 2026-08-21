@@ -115,6 +115,11 @@
 			<groupId>org.janelia.saalfeldlab</groupId>
 			<artifactId>n5-universe</artifactId>
 		</dependency>
+		<!-- Zarr reader: used for the Zarr v3 dimension_names of a bare array -->
+		<dependency>
+			<groupId>org.janelia.saalfeldlab</groupId>
+			<artifactId>n5-zarr</artifactId>
+		</dependency>
 		<!-- S3 backend: N5Factory handles s3:// URIs via n5-aws-s3 -->
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>

@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -50,7 +51,6 @@ import net.imglib2.img.Img;
 import net.imglib2.util.Cast;
 import net.imglib2.util.Util;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -65,6 +65,7 @@ import org.scijava.ui.swing.script.TextEditor;
 import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -90,11 +91,10 @@ import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import javax.swing.SwingUtilities;
 
 import bdv.viewer.ViewerFrame;
-import bdv.util.BdvStackSource;
-import ij.ImagePlus;
 import ome.zarr.fijiui.settings.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.imglib2.PyramidBackend;
+import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fiji.PyramidalBdv;
@@ -133,24 +133,7 @@ class ZarrOpenActionsTest
 
 	static Stream< String > omeZarrExamples()
 	{
-		return Stream.of(
-				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyc/3d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyc/3d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyt/3d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyt/3d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyz/3d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/3d_testing/xyz/3d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyct/4d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyct/4d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyzc/4d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyzc/4d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyzt/4d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/4d_testing/xyzt/4d_dataset_v5.ome.zarr",
-				"ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr",
-				"ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr"
-		);
+		return ZarrTestUtils.omeZarrExamples();
 	}
 
 	static Stream< String > omeZarrSingleImages()
@@ -296,117 +279,29 @@ class ZarrOpenActionsTest
 		}
 	}
 
-	@ParameterizedTest
-	@MethodSource( "omeZarrExamples" )
-	void testOpenValidMultiScaleImagePath( String resource ) throws URISyntaxException
-	{
-		Path path = ZarrTestUtils.resourcePath( resource );
-		try (Context context = new Context())
-		{
-			assertNotNull( loadMultiscaleHeadless( path.toUri(), context, ZarrOpeningSettings.DEFAULT_READER_BACKEND ),
-					"Expected " + resource + " to open as a multiscale image" );
-		}
-	}
-
 	@Test
-	@SuppressWarnings( "java:S1612" )
-	void testOpenValidSingleScaleImagePath() throws URISyntaxException
+	void defaultOpenerReadsWithTheDefaultBackend() throws URISyntaxException, ReflectiveOperationException
 	{
-		String[] validPaths = {
-				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/0",
-				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr/0"
-		};
+		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			for ( String invalidPath : validPaths )
-			{
-				Path path = ZarrTestUtils.resourcePath( invalidPath );
-				AtomicReference< String > capturedError = new AtomicReference<>();
-				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, capturedError::set );
-				assertDoesNotThrow( () -> {
-					actions.openIJWithImage();
-				} );
-				assertNotNull( capturedError.get(),
-						"Single-scale path " + invalidPath + " should be reported as not (yet) supported" );
-			}
+			ZarrOpener opener = ZarrOpenActions.defaultOpener( path.toUri(), context );
+
+			assertEquals( ZarrReaderBackend.N5, ZarrOpeningSettings.DEFAULT_READER_BACKEND );
+			assertInstanceOf( N5PyramidBackend.class, backendOf( opener ) );
+
+			// The wired backend also has to be usable, not just of the right type.
+			PyramidContents< ? > contents = opener.getContents();
+			assertEquals( 2, contents.numResolutionLevels() );
+			assertEquals( 3, contents.numChannels() );
 		}
 	}
 
-	@Test
-	@SuppressWarnings( "java:S1612" )
-	void testOpenInvalidImagePaths() throws URISyntaxException
+	private static PyramidBackend backendOf( ZarrOpener opener ) throws ReflectiveOperationException
 	{
-		String[] invalidPaths = {
-				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/0/0",
-				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr/0/c/0"
-		};
-		try (Context context = new Context())
-		{
-			for ( String invalidPath : invalidPaths )
-			{
-				Path path = ZarrTestUtils.resourcePath( invalidPath );
-				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-				assertDoesNotThrow( () -> {
-					actions.openIJWithImage();
-				} );
-			}
-		}
-	}
-
-	@ParameterizedTest
-	@MethodSource( "readerBackends" )
-	@SuppressWarnings( "java:S1612" )
-	void testOpenBioformats2rawCollectionRootReportsMultiImage( ZarrReaderBackend backend ) throws URISyntaxException
-	{
-		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr" );
-		try (Context context = new Context())
-		{
-			AtomicReference< String > capturedError = new AtomicReference<>();
-			Consumer< String > errorHandler = capturedError::set;
-			ZarrOpeningSettings settings = new ZarrOpeningSettings();
-			settings.setReaderBackend( backend );
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, errorHandler );
-			assertDoesNotThrow( () -> {
-				actions.openIJWithImage();
-			} );
-			assertNotNull( capturedError.get(), "Error handler should have been called for backend " + backend );
-			assertTrue( capturedError.get().contains( "multiple images" ),
-					"Expected multi-image message from backend, got: " + capturedError.get() );
-		}
-	}
-
-	@ParameterizedTest
-	@MethodSource( "readerBackends" )
-	void testOpenBioformats2rawCollectionChildOpens( ZarrReaderBackend backend ) throws URISyntaxException
-	{
-		String[] childPaths = {
-				"ome/zarr/testdata/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr/0",
-				"ome/zarr/testdata/bioformats2raw_testing/bf2raw_dataset_v5.ome.zarr/1"
-		};
-		try (Context context = new Context())
-		{
-			for ( String childPath : childPaths )
-			{
-				Path path = ZarrTestUtils.resourcePath( childPath );
-				assertNotNull( loadMultiscaleHeadless( path.toUri(), context, backend ),
-						"Child image " + childPath + " should open as a multiscale image" );
-			}
-		}
-	}
-
-	@Test
-	@SuppressWarnings( "java:S1612" )
-	void testOpenNonMatchingResolution() throws URISyntaxException
-	{
-		try (Context context = new Context())
-		{
-			Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
-			ZarrOpeningSettings settings = new ZarrOpeningSettings( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, 10 );
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, settings, System.out::println );
-			assertDoesNotThrow( () -> {
-				actions.openIJWithImage();
-			} );
-		}
+		Field field = ZarrOpener.class.getDeclaredField( "backend" );
+		field.setAccessible( true );
+		return ( PyramidBackend ) field.get( opener );
 	}
 
 	@ParameterizedTest
@@ -425,7 +320,7 @@ class ZarrOpenActionsTest
 			assertNotNull( datasets );
 			assertEquals( 1, datasets.size() ); // The dataset service knows the dataset now
 			Dataset dataset = datasets.get( 0 );
-			PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
+			PyramidalDataset pyramidalDataset = assertInstanceOf( PyramidalDataset.class, dataset );
 			long[] dimensions = pyramidalDataset.getImgPlus().dimensionsAsLongArray();
 			if ( resource.contains( "2d_testing" ) )
 			{
@@ -477,90 +372,75 @@ class ZarrOpenActionsTest
 		}
 	}
 
-	@Disabled( "This test is currently failing, since full support for opening single scale images is not yet implemented." )
 	@ParameterizedTest
 	@MethodSource( "omeZarrSingleImages" )
-	void testOpenSingleScaleImageInImageJ( String resource ) throws URISyntaxException
+	void testOpenSingleScaleImageInImageJ( String resource ) throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-			ImagePlus imagePlus = Cast.unchecked( actions.openIJWithImage() );
-			assertNotNull( imagePlus );
-			int channels = imagePlus.getNChannels();
-			int frames = imagePlus.getNFrames();
-			int slices = imagePlus.getNSlices();
-			int[] dimensions = imagePlus.getDimensions();
+			actions.openIJWithImage();
+
+			DatasetService datasetService = context.getService( DatasetService.class );
+			assertNotNull( datasetService );
+			List< Dataset > datasets = datasetService.getDatasets();
+			assertNotNull( datasets );
+			// A single resolution level opens as a one-level PyramidalDataset, just like a multiscale image.
+			assertEquals( 1, datasets.size() );
+			Dataset dataset = datasets.get( 0 );
+			PyramidalDataset pyramidalDataset = assertInstanceOf( PyramidalDataset.class, dataset );
+			// An ImgPlus reports only the axes the dataset actually has, so the expected
+			// arrays below are as short as the image is dimensional.
+			long[] dimensions = pyramidalDataset.getImgPlus().dimensionsAsLongArray();
 			if ( resource.contains( "2d_testing" ) )
 			{
-				assertArrayEquals( new int[] { 64, 64, 1, 1, 1 }, dimensions );
-				assertEquals( 1, channels );
-				assertEquals( 1, frames );
-				assertEquals( 1, slices );
+				assertArrayEquals( new long[] { 64, 64 }, dimensions );
 			}
 			if ( resource.contains( "3d_testing" ) )
 			{
 				if ( resource.contains( "xyc" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 3, 1, 1 }, dimensions );
-					assertEquals( 3, channels );
-					assertEquals( 1, frames );
-					assertEquals( 1, slices );
+					assertArrayEquals( new long[] { 64, 64, 3 }, dimensions );
 				}
 				if ( resource.contains( "xyt" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 4, 1, 1 }, dimensions );
-					assertEquals( 1, channels );
-					assertEquals( 4, frames );
-					assertEquals( 1, slices );
+					assertArrayEquals( new long[] { 64, 64, 4 }, dimensions );
 				}
 				if ( resource.contains( "xyz" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 16, 1, 1 }, dimensions );
-					assertEquals( 1, channels );
-					assertEquals( 1, frames );
-					assertEquals( 16, slices );
+					assertArrayEquals( new long[] { 64, 64, 16 }, dimensions );
 				}
 			}
 			if ( resource.contains( "4d_testing" ) )
 			{
 				if ( resource.contains( "xyct" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 3, 4, 1 }, dimensions );
-					assertEquals( 3, channels );
-					assertEquals( 4, frames );
-					assertEquals( 1, slices );
+					assertArrayEquals( new long[] { 64, 64, 3, 4 }, dimensions );
 				}
 				if ( resource.contains( "xyzc" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 16, 3, 1 }, dimensions );
-					assertEquals( 3, channels );
-					assertEquals( 1, frames );
-					assertEquals( 16, slices );
+					assertArrayEquals( new long[] { 64, 64, 16, 3 }, dimensions );
 				}
 				if ( resource.contains( "xyzt" ) )
 				{
-					assertArrayEquals( new int[] { 64, 64, 16, 4, 1 }, dimensions );
-					assertEquals( 1, channels );
-					assertEquals( 4, frames );
-					assertEquals( 16, slices );
+					assertArrayEquals( new long[] { 64, 64, 16, 4 }, dimensions );
 				}
 			}
 			if ( resource.contains( "5d_testing" ) )
 			{
-				assertArrayEquals( new int[] { 64, 64, 16, 3, 4 }, dimensions );
-				assertEquals( 3, channels );
-				assertEquals( 4, frames );
-				assertEquals( 16, slices );
+				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, dimensions );
 			}
-
-			DatasetService datasetService = context.getService( DatasetService.class );
-			assertNotNull( datasetService );
-			List< Dataset > datasets = datasetService.getDatasets();
-			assertNotNull( datasets );
-			assertEquals( 0, datasets.size() ); // A single scale image is opened as image not as dataset
-			imagePlus.close();
+			// One level, so no "(R)" multi-resolution suffix is appended to the name.
+			assertEquals( IMAGE_NAME, dataset.getName() );
+			DisplayService displayService = context.getService( DisplayService.class );
+			assertNotNull( displayService );
+			SwingUtilities.invokeAndWait( () -> {} ); // wait until all Swing events are processed
+			Display< ? > activeDisplay = displayService.getActiveDisplay();
+			assertNotNull( activeDisplay );
+			activeDisplay.close();
+			assertTrue( displayService.getDisplays().isEmpty() );
+			assertEquals( 0, datasetService.getDatasets().size() ); // The dataset is dereferenced now
 		}
 	}
 
@@ -572,7 +452,7 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
-			BdvHandle bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
+			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertNotNull( pyramidalService );
@@ -591,66 +471,54 @@ class ZarrOpenActionsTest
 		}
 	}
 
-	@Disabled( "This test is currently failing, since full support for opening single scale images is not yet implemented." )
 	@ParameterizedTest
 	@MethodSource( "omeZarrSingleImages" )
-	void testOpenSingleScaleImageInBDV( String resource ) throws URISyntaxException
+	void testOpenSingleScaleImageInBDV( String resource ) throws URISyntaxException, InterruptedException, InvocationTargetException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-			BdvStackSource< ? > bdvStackSource = Cast.unchecked( actions.openBDVWithImage() );
-			DatasetService datasetService = context.getService( DatasetService.class );
-			assertNotNull( datasetService );
-			List< Dataset > datasets = datasetService.getDatasets();
-			assertNotNull( datasets );
-			assertEquals( 0, datasets.size() ); // A single scale image is opened in BDV as an image, not as a dataset
-			assertNotNull( bdvStackSource );
-			ConverterSetup converterSetup0 = bdvStackSource.getConverterSetups().get( 0 );
-			assertEquals( 0, converterSetup0.getDisplayRangeMin() ); // omero metadata is not supported for a single scale image
-			assertEquals( 255, converterSetup0.getDisplayRangeMax() );
-			assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup0.getColor().toString() );
-			assertEquals( 0, bdvStackSource.getBdvHandle().getViewerPanel().state().getCurrentTimepoint() );
-			if ( resource.contains( "2d_testing" ) )
+			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
+
+			PyramidalService pyramidalService = context.getService( PyramidalService.class );
+			assertNotNull( pyramidalService );
+			List< Pyramidal > pyramidals = pyramidalService.getPyramidals();
+			assertNotNull( pyramidals );
+			// A single resolution level opens in BDV as a one-level PyramidalBdv, tracked like a multiscale image.
+			assertEquals( 1, pyramidals.size() );
+
+			PyramidalBdv< ? > pyramidalBdv = assertInstanceOf( PyramidalBdv.class, pyramidals.get( 0 ) );
+			List< ConverterSetup > converterSetups = bdvHandle.getConverterSetups().getConverterSetups( pyramidalBdv.asSources() );
+			assertNotNull( converterSetups );
+			// One converter setup per channel; only the xyc, xyct, xyzc and 5d datasets have a c axis.
+			boolean threeChannels = resource.contains( "5d_testing" ) || resource.contains( "xyc" ) || resource.contains( "xyzc" );
+			assertEquals( threeChannels ? 3 : 1, converterSetups.size() );
+
+			if ( resource.contains( "2d_testing" ) ) // no OMERO metadata to recover, so BDV defaults apply
 			{
-				assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
-			}
-			if ( resource.contains( "3d_testing" ) )
-			{
-				if ( resource.contains( "xyc" ) )
-				{
-					assertEquals( 3, bdvStackSource.getConverterSetups().size() );
-				}
-				if ( resource.contains( "xyt" ) )
-				{
-					assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
-				}
-				if ( resource.contains( "xyz" ) )
-				{
-					assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
-				}
-			}
-			if ( resource.contains( "4d_testing" ) )
-			{
-				if ( resource.contains( "xyct" ) )
-				{
-					assertEquals( 3, bdvStackSource.getConverterSetups().size() );
-				}
-				if ( resource.contains( "xyzc" ) )
-				{
-					assertEquals( 3, bdvStackSource.getConverterSetups().size() );
-				}
-				if ( resource.contains( "xyzt" ) )
-				{
-					assertEquals( 1, bdvStackSource.getConverterSetups().size() ); // 1 channel
-				}
+				ConverterSetup converterSetup = converterSetups.get( 0 );
+				assertEquals( 0, converterSetup.getDisplayRangeMin() );
+				assertEquals( 255, converterSetup.getDisplayRangeMax() );
+				assertEquals( "(r=255,g=255,b=255,a=255)", converterSetup.getColor().toString() );
 			}
 			if ( resource.contains( "5d_testing" ) )
 			{
-				assertEquals( 3, bdvStackSource.getConverterSetups().size() );
+				// 5d carries OMERO channel settings and rdefs (defaultT=1), recovered from the parent group.
+				ConverterSetup converterSetup0 = converterSetups.get( 0 );
+				assertEquals( 3, converterSetup0.getDisplayRangeMin() );
+				assertEquals( 246, converterSetup0.getDisplayRangeMax() );
+				assertEquals( "(r=0,g=255,b=0,a=255)", converterSetup0.getColor().toString() );
+				ConverterSetup converterSetup1 = converterSetups.get( 1 );
+				assertEquals( 6, converterSetup1.getDisplayRangeMin() );
+				assertEquals( 133, converterSetup1.getDisplayRangeMax() );
+				assertEquals( "(r=255,g=0,b=0,a=255)", converterSetup1.getColor().toString() );
+				assertEquals( 1, bdvHandle.getViewerPanel().state().getCurrentTimepoint() );
 			}
-			bdvStackSource.close();
+			bdvHandle.close();
+			SwingUtilities.invokeAndWait( () -> {} ); // wait until all Swing events are processed
+			pyramidals = pyramidalService.getPyramidals();
+			assertEquals( 0, pyramidals.size() ); // The pyramidal service has correctly removed the dataset from the cache
 		}
 	}
 
@@ -777,25 +645,25 @@ class ZarrOpenActionsTest
 			BdvHandle bdvHandle2 = null;
 			try
 			{
-				bdvHandle1 = Cast.unchecked( actions.openBDVWithImage() );
+				bdvHandle1 = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 				assertEquals( 3, pyramidalService.getPyramidals().size() );
 
-				bdvHandle2 = Cast.unchecked( actions.openBDVWithImage() );
+				bdvHandle2 = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 				assertEquals( 4, pyramidalService.getPyramidals().size() );
 
 				assertSame( datasetService.getDatasets().get( 0 ), pyramidalService.getPyramidals().get( 0 ) );
 				assertSame( datasetService.getDatasets().get( 1 ), pyramidalService.getPyramidals().get( 1 ) );
 
-				PyramidalDataset ijLevel0 = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
-				PyramidalDataset ijLevel1 = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
+				PyramidalDataset ijLevel0 = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalDataset ijLevel1 = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 1 ) );
 
-				PyramidalBdv< ? > bdv1 = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
+				PyramidalBdv< ? > bdv1 = assertInstanceOf( PyramidalBdv.class, pyramidalService.getPyramidals().get( 2 ) );
 
 				// All 4 datasets (2 IJ + 2 BDV) must be backed by the exact same PyramidContents object
 				PyramidContents< ? > sharedPyramid = ijLevel0.getPyramidContents();
 				for ( Dataset dataset : datasetService.getDatasets() )
 				{
-					PyramidalDataset pyramidalDataset = Cast.unchecked( dataset );
+					PyramidalDataset pyramidalDataset = assertInstanceOf( PyramidalDataset.class, dataset );
 					assertSame( sharedPyramid, pyramidalDataset.getPyramidContents(),
 							"Every opened dataset must share the same PyramidContents instance" );
 				}
@@ -850,7 +718,7 @@ class ZarrOpenActionsTest
 			try
 			{
 				// BDV open covers all resolution levels and registers one dataset
-				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
+				bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 
 				PyramidalService pyramidalService = context.getService( PyramidalService.class );
 				DatasetService datasetService = context.getService( DatasetService.class );
@@ -863,8 +731,8 @@ class ZarrOpenActionsTest
 				assertEquals( 2, pyramidalService.getPyramidals().size() );
 				assertEquals( 1, datasetService.getDatasets().size() );
 
-				PyramidalBdv< ? > bdvDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
-				PyramidalDataset ijDataset = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
+				PyramidalBdv< ? > bdvDataset = assertInstanceOf( PyramidalBdv.class, pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalDataset ijDataset = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 1 ) );
 				assertSame( bdvDataset.getPyramidContents(), ijDataset.getPyramidContents(),
 						"BDV and IJ datasets must share the same PyramidContents instance" );
 				// BDV dataset
@@ -908,14 +776,14 @@ class ZarrOpenActionsTest
 			{
 				actions.openIJWithImage( 0 ); // first instance of level 0
 				actions.openIJWithImage( 0 ); // second instance of level 0
-				bdvHandle = Cast.unchecked( actions.openBDVWithImage() );
+				bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
 				actions.openIJWithImage( 1 );
 
 				PyramidalService pyramidalService = context.getService( PyramidalService.class );
-				PyramidalDataset ijLevel0First = Cast.unchecked( pyramidalService.getPyramidals().get( 0 ) );
-				PyramidalDataset ijLevel0Second = Cast.unchecked( pyramidalService.getPyramidals().get( 1 ) );
-				PyramidalBdv< ? > bdv = Cast.unchecked( pyramidalService.getPyramidals().get( 2 ) );
-				PyramidalDataset ijLevel1 = Cast.unchecked( pyramidalService.getPyramidals().get( 3 ) );
+				PyramidalDataset ijLevel0First = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 0 ) );
+				PyramidalDataset ijLevel0Second = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 1 ) );
+				PyramidalBdv< ? > bdv = assertInstanceOf( PyramidalBdv.class, pyramidalService.getPyramidals().get( 2 ) );
+				PyramidalDataset ijLevel1 = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 3 ) );
 
 				Img< ? > cellImgIj0First = ijLevel0First.getImgPlus().getImg();
 				Img< ? > cellImgIj0Second = ijLevel0Second.getImgPlus().getImg();
@@ -1003,8 +871,8 @@ class ZarrOpenActionsTest
 				actions.openIJWithImage( 1 );
 
 				DatasetService datasetService = context.getService( DatasetService.class );
-				PyramidalDataset ijLevel0 = Cast.unchecked( datasetService.getDatasets().get( 0 ) );
-				PyramidalDataset ifLevel1 = Cast.unchecked( datasetService.getDatasets().get( 1 ) );
+				PyramidalDataset ijLevel0 = assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 0 ) );
+				PyramidalDataset ifLevel1 = assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 1 ) );
 
 				assertFalse( Util.imagesEqual( Cast.unchecked( ijLevel0.getImgPlus().getImg() ), ifLevel1.getImgPlus().getImg() ) );
 				long[] expectedDims0 = new long[] { 64, 64, 16, 3, 4 };

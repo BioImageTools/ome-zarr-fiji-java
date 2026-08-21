@@ -35,11 +35,11 @@ import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Cast;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ome.zarr.imglib2.exceptions.NoMatchingResolutionException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
 
@@ -70,6 +70,12 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	/**
+	 * Returned by {@link #suggestResolutionLevel} when no resolution level matches
+	 * the requested width.
+	 */
+	public static final int NO_MATCHING_LEVEL = -1;
+
 	public final String name;
 
 	public final T type;
@@ -98,6 +104,16 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	/** OMERO rendering metadata, or {@code null} if unavailable. */
 	public final Omero omero;
 
+	/**
+	 * Whether the scale and unit in {@link #axesPerLevel} are placeholders that no
+	 * part of the dataset states, rather than real calibration (see
+	 * {@link AxisCalibration#createPlaceholderCalibration}).
+	 * <p>
+	 * {@code true} only for a single array opened from its own axis names alone,
+	 * with no parent multiscales group to supply a scale or unit.
+	 */
+	public final boolean hasPlaceholderCalibration;
+
 	private PyramidContents( final Builder< T > b )
 	{
 		this.name = b.name;
@@ -106,6 +122,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		this.cachedCellImgs = b.cachedCellImgs;
 		this.axesPerLevel = b.axesPerLevel;
 		this.omero = b.omero;
+		this.hasPlaceholderCalibration = b.hasPlaceholderCalibration;
 
 		final int numDimensions = cachedCellImgs[ 0 ].numDimensions();
 		if ( axesPerLevel[ 0 ].length != numDimensions )
@@ -123,7 +140,17 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
-	 * Full-resolution image (resolution level 0).
+	 * Index of the coarsest resolution level, i.e., the smallest image of the
+	 * pyramid: {@code numResolutionLevels() - 1}.
+	 */
+	public int smallestResolutionLevel()
+	{
+		return cachedCellImgs.length - 1;
+	}
+
+	/**
+	 * Full-resolution image (resolution level 0). Same as
+	 * {@link #asLargestImg()}.
 	 * <p>
 	 * The dimensions are in imglib2 F-order — a subset of (x, y, z, c, t) — so use
 	 * {@link #axisIndex} / {@link #hasAxis} together with {@link #axesPerLevel} to
@@ -135,8 +162,28 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
+	 * Largest image of the pyramid, i.e., the full-resolution level {@code 0}. See
+	 * {@link #asImg()} for the axis ordering.
+	 */
+	public Img< T > asLargestImg()
+	{
+		return asImg( 0 );
+	}
+
+	/**
+	 * Smallest image of the pyramid, i.e., the coarsest level
+	 * {@link #smallestResolutionLevel()}. For a single-level pyramid this is the
+	 * same image as {@link #asLargestImg()}. See {@link #asImg()} for the axis
+	 * ordering.
+	 */
+	public Img< T > asSmallestImg()
+	{
+		return asImg( smallestResolutionLevel() );
+	}
+
+	/**
 	 * Image at the given resolution level ({@code 0} = highest resolution). See
-	 * {@link #asImg()} for the axis ordering; {@link #selectResolutionLevel} can
+	 * {@link #asImg()} for the axis ordering; {@link #suggestResolutionLevel} can
 	 * pick a level by preferred width.
 	 *
 	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
@@ -171,7 +218,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 */
 	public int numChannels()
 	{
-		return sizeAlongAxis( AxisCalibration.C );
+		return ( int ) sizeAlongAxis( AxisCalibration.C );
 	}
 
 	/**
@@ -185,7 +232,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 */
 	public int numTimepoints()
 	{
-		return sizeAlongAxis( AxisCalibration.T );
+		return ( int ) sizeAlongAxis( AxisCalibration.T );
 	}
 
 	/**
@@ -245,41 +292,114 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
-	 * Size of the full-resolution image along the axis with the given OME-Zarr
-	 * name, or {@code 1} if no such axis is present.
+	 * Extent of the full-resolution image along the axis with the given OME-Zarr
+	 * name, or {@code 1} if no such axis is present. Shorthand for
+	 * {@code sizeAlongAxis( axisName, 0 )}.
 	 */
-	private int sizeAlongAxis( final String axisName )
+	public long sizeAlongAxis( final String axisName )
 	{
-		final int index = axisIndex( axisName );
-		return index < 0 ? 1 : ( int ) cachedCellImgs[ 0 ].dimension( index );
+		return sizeAlongAxis( axisName, 0 );
 	}
 
 	/**
-	 * Returns the index of the coarsest resolution level whose x-width (index 0
-	 * in imglib2 F-order) is &le; {@code preferredMaxWidth}, or 0 when
-	 * {@code preferredMaxWidth} is {@code null}.
+	 * Extent of the image at the given resolution level along the axis with the
+	 * given OME-Zarr name, or {@code 1} if no such axis is present.
+	 * <p>
+	 * The axis is located by name via {@link #axisIndex}, so callers never depend
+	 * on a fixed dimension position. The width of a level, for instance, is
+	 * {@code sizeAlongAxis( AxisCalibration.X, level )}.
 	 *
-	 * @throws NoMatchingResolutionException if {@code preferredMaxWidth} is
-	 *   smaller than the width of every resolution level
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
 	 */
-	public int selectResolutionLevel( final Integer preferredMaxWidth )
+	public long sizeAlongAxis( final String axisName, final int resolutionLevel )
+	{
+		final int index = axisIndex( axisName );
+		final Img< T > img = asImg( resolutionLevel );
+		return index < 0 ? 1 : img.dimension( index );
+	}
+
+	/**
+	 * Returns the index of the highest-resolution level that is still no wider
+	 * than {@code preferredMaxWidth}, or {@code 0} when {@code preferredMaxWidth}
+	 * is {@code null}.
+	 * <p>
+	 * When no level is narrow enough — including the trivial case of a single-level
+	 * pyramid that is already too wide — {@link #NO_MATCHING_LEVEL} is returned. It
+	 * is up to the caller to decide what to do then: offer
+	 * {@link #asSmallestImg()} as the closest available match, ask the user, or
+	 * open nothing at all.
+	 */
+	public int suggestResolutionLevel( final Integer preferredMaxWidth )
 	{
 		if ( preferredMaxWidth == null )
 			return 0;
-		int smallestWidth = Integer.MAX_VALUE;
 		for ( int level = 0; level < cachedCellImgs.length; level++ )
 		{
-			final int width = ( int ) cachedCellImgs[ level ].dimension( 0 );
-			if ( width <= preferredMaxWidth )
+			if ( sizeAlongAxis( AxisCalibration.X, level ) <= preferredMaxWidth )
 				return level;
-			smallestWidth = Math.min( smallestWidth, width );
 		}
-		throw new NoMatchingResolutionException( preferredMaxWidth, smallestWidth );
+		return NO_MATCHING_LEVEL;
 	}
 
 	public static < T extends NativeType< T > & RealType< T > > Builder< T > builder()
 	{
 		return new Builder<>();
+	}
+
+	/**
+	 * Convenience factory for a single-resolution-level pyramid: a
+	 * {@link PyramidContents} with exactly one level. Wraps the one image,
+	 * transform and axis list into the length-1 arrays the builder expects.
+	 * Used by {@link PyramidBackend} implementations when opening a bare array
+	 * node (a single resolution level) rather than a whole multiscale image.
+	 *
+	 * @param <T> pixel type
+	 * @param name dataset name
+	 * @param type pixel type instance
+	 * @param transform level-to-world transform for the single level
+	 * @param img the single-level cached cell image
+	 * @param axes per-axis calibration for the single level, in imglib2 F-order
+	 * @param omero OMERO rendering metadata, or {@code null} if unavailable
+	 */
+	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > singleLevel(
+			final String name, final T type, final AffineTransform3D transform,
+			final CachedCellImg< T, ? > img, final AxisCalibration[] axes, final Omero omero )
+	{
+		return PyramidContents.< T >builder()
+				.name( name )
+				.type( type )
+				.transforms( new AffineTransform3D[] { transform } )
+				.cachedCellImgs( Cast.unchecked( new CachedCellImg[] { img } ) )
+				.axesPerLevel( new AxisCalibration[][] { axes } )
+				.omero( omero )
+				.build();
+	}
+
+	/**
+	 * Factory for one case where a level's calibration has to be made up: a bare
+	 * array node opened from its own axis names alone, with no parent multiscales
+	 * group to state a scale or unit. The result has
+	 * {@link #hasPlaceholderCalibration} set.
+	 *
+	 * @param <T> pixel type
+	 * @param name dataset name
+	 * @param type pixel type instance
+	 * @param img the single-level cached cell image
+	 * @param axes per-axis calibration for the single level, in imglib2 F-order
+	 */
+	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > singleLevelWithPlaceholderCalibration(
+			final String name, final T type, final CachedCellImg< T, ? > img, final AxisCalibration[] axes )
+	{
+		return PyramidContents.< T >builder()
+				.name( name )
+				.type( type )
+				.transforms( new AffineTransform3D[] { new AffineTransform3D() } )
+				.cachedCellImgs( Cast.unchecked( new CachedCellImg[] { img } ) )
+				.axesPerLevel( new AxisCalibration[][] { axes } )
+				.omero( null )
+				.hasPlaceholderCalibration( true )
+				.build();
 	}
 
 	public static final class Builder< T extends NativeType< T > & RealType< T > >
@@ -295,6 +415,8 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		private AxisCalibration[][] axesPerLevel;
 
 		private Omero omero;
+
+		private boolean hasPlaceholderCalibration;
 
 		public Builder< T > name( final String name )
 		{
@@ -329,6 +451,13 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		public Builder< T > omero( final Omero o )
 		{
 			this.omero = o;
+			return this;
+		}
+
+		/** See {@link PyramidContents#hasPlaceholderCalibration}. Defaults to {@code false}. */
+		public Builder< T > hasPlaceholderCalibration( final boolean h )
+		{
+			this.hasPlaceholderCalibration = h;
 			return this;
 		}
 

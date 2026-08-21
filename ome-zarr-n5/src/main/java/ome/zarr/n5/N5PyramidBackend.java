@@ -35,6 +35,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
 
 import org.janelia.saalfeldlab.n5.DataType;
+import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Exception;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
@@ -49,6 +50,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.NgffSingleScaleAxes
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMultiScaleMetadata;
+import org.janelia.saalfeldlab.n5.zarr.v3.ZarrV3DatasetAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,9 +65,11 @@ import com.google.gson.JsonElement;
 
 import software.amazon.awssdk.regions.Region;
 
+import ome.zarr.imglib2.AbstractPyramidBackend;
 import ome.zarr.imglib2.Affine3DUtils;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.ZarrUtils;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
@@ -77,7 +81,7 @@ import ome.zarr.imglib2.metadata.Omero;
  * library. Supports OME-Zarr v0.3, v0.4, and v0.5 (N5 reads Zarr v2 and the
  * Zarr v3 variant used by v0.5).
  */
-public class N5PyramidBackend implements PyramidBackend
+public class N5PyramidBackend extends AbstractPyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -96,18 +100,14 @@ public class N5PyramidBackend implements PyramidBackend
 	}
 
 	@Override
-	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale( final URI inputUri )
 	{
 		final N5Reader reader;
 		final N5TreeNode treeNode = new N5TreeNode( "" );
 		final OmeNgffMetadata metadata;
 		try
 		{
-			final N5Factory factory = new N5Factory();
-			// The region default only matters for s3:// URIs.
-			if ( "s3".equalsIgnoreCase( inputUri.getScheme() ) )
-				factory.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) );
-			reader = factory.openReader( inputUri.toString() );
+			reader = openReader( inputUri );
 			metadata = readMetadata( reader, treeNode, inputUri );
 		}
 		catch ( N5Exception e )
@@ -150,18 +150,146 @@ public class N5PyramidBackend implements PyramidBackend
 				.build();
 	}
 
+	private static N5Reader openReader( final URI uri )
+	{
+		final N5Factory factory = new N5Factory();
+		// The region default only matters for s3:// URIs.
+		if ( "s3".equalsIgnoreCase( uri.getScheme() ) )
+			factory.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) );
+		return factory.openReader( uri.toString() );
+	}
+
 	private OmeNgffMetadata readMetadata( final N5Reader reader, final N5TreeNode node, final URI inputUri )
 	{
-		final List< N5MetadataParser< ? > > parsers = Collections.singletonList( new OmeNgffMetadataParser( reader ) );
-		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, parsers );
-		final N5Metadata n5Metadata = node.getMetadata();
-		if ( n5Metadata == null )
+		final OmeNgffMetadata metadata = readMetadataOrNull( reader, node );
+		if ( metadata == null )
 		{
 			if ( isBioformats2rawLayout( reader ) )
 				throw new MultiImageDatasetException( inputUri.toString() );
 			throw new NotAMultiscaleImageException( inputUri.toString() );
 		}
-		return Cast.unchecked( n5Metadata );
+		return metadata;
+	}
+
+	/**
+	 * Parses OME-NGFF multiscales metadata at {@code node}, or returns
+	 * {@code null} when the node carries none (a bare array, or a group that is
+	 * not a multiscales group). Unlike {@link #readMetadata}, this never throws
+	 * for a missing multiscale, so callers walking to a parent can fall back
+	 * cleanly.
+	 */
+	private OmeNgffMetadata readMetadataOrNull( final N5Reader reader, final N5TreeNode node )
+	{
+		final List< N5MetadataParser< ? > > parsers = Collections.singletonList( new OmeNgffMetadataParser( reader ) );
+		N5DatasetDiscoverer.parseMetadataShallow( reader, node, parsers, parsers );
+		final N5Metadata n5Metadata = node.getMetadata();
+		return n5Metadata == null ? null : Cast.unchecked( n5Metadata );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Parses the parent's OME-NGFF multiscales metadata and matches
+	 * {@code arrayUri} against the dataset path of each resolution level.
+	 */
+	@Override
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadLevelFromParent(
+			final URI parentUri, final URI arrayUri )
+	{
+		final OmeNgffMetadata parentMetadata;
+		final Multiscale multiscale;
+		final Omero omero;
+		// the reader that backs the returned image is opened separately below and must stay open.
+		try (N5Reader readerForParent = openReader( parentUri ))
+		{
+			final N5TreeNode node = new N5TreeNode( "" );
+			parentMetadata = readMetadataOrNull( readerForParent, node );
+			if ( parentMetadata == null )
+				return null;
+			multiscale = buildMultiscale( parentMetadata, 0 );
+			omero = readOmeroMetadata( readerForParent, node );
+		}
+		catch ( RuntimeException e )
+		{
+			logger.debug( "Parent of {} is not a usable multiscales group: {}", arrayUri, e.getMessage() );
+			return null;
+		}
+		final ResolutionLevel matched = levelForChild( multiscale, arrayUri );
+		if ( matched == null )
+		{
+			logger.debug( "Parent multiscales at {} does not list child array {}", parentUri, arrayUri );
+			return null;
+		}
+		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( parentMetadata );
+		final AffineTransform3D transform = spatialMetadata.spatialTransforms3d()[ matched.index ];
+		final T type = N5Utils.type( multiscale.getDataType() );
+		final CachedCellImg< T, ? > img = N5Utils.openVolatile( openReader( parentUri ), matched.datasetPath );
+		return PyramidContents.singleLevel( multiscale.getName(), type, transform, img, createAxisCalibrations( matched ), omero );
+	}
+
+	private static ResolutionLevel levelForChild( final Multiscale multiscale, final URI arrayUri )
+	{
+		for ( final ResolutionLevel level : multiscale.getLevels() )
+			if ( ZarrUtils.isChildPath( arrayUri, level.datasetPath ) )
+				return level;
+		return null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Takes the axis names from the array's {@code dimension_names} (see
+	 * {@link #readAxisNames}), which only a Zarr v3 array has; a Zarr v2 array
+	 * therefore declines.
+	 */
+	@Override
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( final URI arrayUri )
+	{
+		final String[] axisNames;
+		final DataType dataType;
+		// The reader that backs the returned image is opened separately below and must stay open.
+		try (N5Reader metadataReader = openReader( arrayUri ))
+		{
+			final DatasetAttributes attributes = metadataReader.getDatasetAttributes( "" );
+			if ( attributes == null )
+				return null; // not an array (e.g. a group, or a plain directory)
+			axisNames = readAxisNames( attributes );
+			if ( axisNames.length == 0 )
+				return null;
+			dataType = attributes.getDataType();
+		}
+		catch ( RuntimeException e )
+		{
+			logger.debug( "Could not open {} as a plain array: {}", arrayUri, e.getMessage() );
+			return null;
+		}
+		final T type = N5Utils.type( dataType );
+		final AxisCalibration[] axes = AxisCalibration.createPlaceholderCalibration( axisNames );
+		final CachedCellImg< T, ? > img = N5Utils.openVolatile( openReader( arrayUri ), "" );
+		return PyramidContents.singleLevelWithPlaceholderCalibration( ZarrUtils.lastSegment( arrayUri ), type, img, axes );
+	}
+
+	/**
+	 * Axis names of the array's Zarr v3 {@code dimension_names}, or an empty array
+	 * when it has none — a Zarr v2 array (which has no such field) or a v3 array
+	 * that omits it.
+	 * <p>
+	 * NB: {@code dimension_names} is part of the Zarr v3 array metadata, not of the
+	 * user attributes, so it is only reachable through the dataset attributes;
+	 * {@link N5Reader#getAttribute} does not see it. n5-zarr already reverses the
+	 * names into the imglib2 F-order that
+	 * {@link AxisCalibration#createPlaceholderCalibration}
+	 * expects, so no further reversal is needed here.
+	 */
+	private static String[] readAxisNames( final DatasetAttributes attributes )
+	{
+		if ( attributes instanceof ZarrV3DatasetAttributes )
+		{
+			final String[] names = ( ( ZarrV3DatasetAttributes ) attributes ).getDimensionNames();
+			if ( names != null )
+				return names;
+		}
+		return new String[ 0 ];
 	}
 
 	private static boolean isBioformats2rawLayout( final N5Reader reader )
