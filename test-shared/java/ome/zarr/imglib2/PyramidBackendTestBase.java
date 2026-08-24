@@ -30,16 +30,21 @@ package ome.zarr.imglib2;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.util.Cast;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
@@ -48,8 +53,9 @@ import java.net.URISyntaxException;
 import java.util.stream.Stream;
 
 import ome.zarr.ZarrTestUtils;
-import ome.zarr.imglib2.exceptions.NoMatchingResolutionException;
+import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.metadata.Omero;
 
 /**
  * Shared parameterized tests for the backend-agnostic {@link PyramidContents}
@@ -95,8 +101,178 @@ public interface PyramidBackendTestBase
 		);
 	}
 
+	/**
+	 * Resolution level of a multiscale image whose multiscales metadata sits two
+	 * levels up, so the array's immediate parent group carries none.
+	 */
+	String NESTED_LEVEL_V4 = "ome/zarr/testdata/single_resolution_testing/nested_multiscale_v4.ome.zarr/sub/0";
+
+	/** The Zarr v3 counterpart of {@link #NESTED_LEVEL_V4}. */
+	String NESTED_LEVEL_V5 = "ome/zarr/testdata/single_resolution_testing/nested_multiscale_v5.ome.zarr/sub/0";
+
+	/** Multiscale images whose dataset paths point into a subgroup ({@code sub/0}). */
+	static Stream< String > nestedMultiscales()
+	{
+		return Stream.of(
+				"ome/zarr/testdata/single_resolution_testing/nested_multiscale_v4.ome.zarr",
+				"ome/zarr/testdata/single_resolution_testing/nested_multiscale_v5.ome.zarr"
+		);
+	}
+
+	/**
+	 * The lower resolution level ({@code 1}) of the 5d datasets, whose immediate
+	 * parent group carries the multiscales metadata. A level (not level 0) so that
+	 * the per-level metadata lookup has to pick the right dataset entry.
+	 */
+	static Stream< String > levelsOfMultiscaleParent()
+	{
+		return Stream.of(
+				"ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr/1",
+				"ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr/1"
+		);
+	}
+
 	PyramidContents< ? > load( String resource, Context context )
 			throws URISyntaxException;
+
+	/**
+	 * A Zarr v3 array without a multiscales parent opens as an uncalibrated
+	 * one-level pyramid: the axis names come from its own
+	 * {@code dimension_names}, and nothing supplies scale, unit or OMERO metadata.
+	 */
+	@Test
+	default void testSingleArrayWithoutParentMultiscale() throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			PyramidContents< ? > contents = load( NESTED_LEVEL_V5, context );
+			assertNotNull( contents );
+			assertEquals( 1, contents.numResolutionLevels() );
+			assertEquals( 2, contents.numDimensions() );
+			assertEquals( "0", contents.name, "Without a multiscales name, the array node name is used" );
+			assertNull( contents.omero );
+			assertTrue( contents.hasPlaceholderCalibration,
+					"An array opened from its own axis names has no real scale or unit, and must say so" );
+
+			// dimension_names are y, x; the imglib2 image is in F-order, so x comes first.
+			assertEquals( 0, contents.axisIndex( AxisCalibration.X ) );
+			assertEquals( 1, contents.axisIndex( AxisCalibration.Y ) );
+			for ( final AxisCalibration axis : contents.axesPerLevel[ 0 ] )
+			{
+				assertEquals( 1.0, axis.scale, "An array without a parent multiscale opens uncalibrated" );
+				assertEquals( "", axis.unit );
+			}
+
+			Img< ? > img = contents.asImg();
+			assertEquals( 16, img.dimension( 0 ) );
+			assertEquals( 16, img.dimension( 1 ) );
+			// NB: the ramp written by create_nested_multiscale.py is value(y, x) == y * 16 + x
+			assertEquals( 3 * 16 + 4, valueAt( contents, 0, 4, 3 ) );
+		}
+	}
+
+	/**
+	 * A Zarr v2 array without a multiscales parent cannot be interpreted at all:
+	 * it has no {@code dimension_names} of its own (Zarr v2 has no such field) and
+	 * no parent multiscales metadata to take axes from.
+	 */
+	@Test
+	default void testSingleArrayWithoutAxesIsRejected()
+	{
+		try (Context context = new Context())
+		{
+			assertThrows( SingleArrayAxesUnknownException.class, () -> load( NESTED_LEVEL_V4, context ) );
+		}
+	}
+
+	/**
+	 * The intermediate group of a nested multiscale image is not openable either: it
+	 * carries no multiscales metadata of its own, and although its parent does, that
+	 * parent lists {@code sub/0} and {@code sub/1} - not {@code sub} itself - so it
+	 * cannot be interpreted as a resolution level.
+	 */
+	@ParameterizedTest
+	@MethodSource( "ome.zarr.imglib2.PyramidBackendTestBase#nestedMultiscales" )
+	default void testGroupNotListedByParentMultiscaleIsRejected( String resource )
+	{
+		try (Context context = new Context())
+		{
+			assertThrows( SingleArrayAxesUnknownException.class, () -> load( resource + "/sub", context ) );
+		}
+	}
+
+	/**
+	 * A resolution level whose immediate parent is the multiscales group opens as a
+	 * one-level pyramid that takes everything the array itself does not know from
+	 * that parent: the image name, the axis names, that level's scale and transform,
+	 * and the group's OMERO metadata.
+	 */
+	@ParameterizedTest
+	@MethodSource( "ome.zarr.imglib2.PyramidBackendTestBase#levelsOfMultiscaleParent" )
+	default void testSingleLevelFromParentMultiscale( String resource ) throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			PyramidContents< ? > contents = load( resource, context );
+			assertNotNull( contents );
+			assertEquals( 1, contents.numResolutionLevels(), "A single level is a one-level pyramid" );
+			assertEquals( 5, contents.numDimensions() );
+			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name, "The name comes from the parent multiscales entry" );
+
+			// Level 1 of the 5d dataset: zarr [t, c, z, y, x] = [4, 3, 8, 32, 32],
+			// reversed into imglib2 F-order.
+			Img< ? > img = contents.asImg();
+			assertArrayEquals( new long[] { 32, 32, 8, 3, 4 }, img.dimensionsAsLongArray() );
+
+			// Level 1 is downsampled by 2 in x, y and z only, so the scales of that
+			// dataset entry - not level 0's all-ones - must be the ones used.
+			assertScaleAtAxis( contents, AxisCalibration.X, 2.0 );
+			assertScaleAtAxis( contents, AxisCalibration.Y, 2.0 );
+			assertScaleAtAxis( contents, AxisCalibration.Z, 2.0 );
+			assertScaleAtAxis( contents, AxisCalibration.C, 1.0 );
+			assertScaleAtAxis( contents, AxisCalibration.T, 1.0 );
+
+			AffineTransform3D transform = contents.transforms[ 0 ];
+			assertArrayEquals( new double[] { 2.0, 2.0, 2.0 },
+					new double[] { transform.get( 0, 0 ), transform.get( 1, 1 ), transform.get( 2, 2 ) },
+					"The transform is the one of the opened level, not of level 0" );
+
+			assertFalse( contents.hasPlaceholderCalibration,
+					"The scale and unit come from the parent multiscales group, so they are real" );
+
+			Omero omero = contents.omero;
+			assertNotNull( omero, "OMERO metadata is inherited from the parent group" );
+			assertEquals( 3, omero.channels.size() );
+			assertEquals( "lynEGFP", omero.channels.get( 0 ).label );
+			assertEquals( "00FF00", omero.channels.get( 0 ).color );
+		}
+	}
+
+	/** Asserts the calibration scale of the named axis at the highest resolution level. */
+	static void assertScaleAtAxis( final PyramidContents< ? > contents, final String axisName, final double expectedScale )
+	{
+		final int index = contents.axisIndex( axisName );
+		assertNotEquals( -1, index, "Axis " + axisName + " is missing" );
+		assertEquals( expectedScale, contents.axesPerLevel[ 0 ][ index ].scale, axisName + " scale" );
+	}
+
+	/**
+	 * A multiscales group is opened as a whole pyramid even when its dataset paths
+	 * point into a subgroup rather than at direct children.
+	 */
+	@ParameterizedTest
+	@MethodSource( "ome.zarr.imglib2.PyramidBackendTestBase#nestedMultiscales" )
+	default void testNestedMultiscaleDatasetPaths( String resource ) throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			PyramidContents< ? > contents = load( resource, context );
+			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+			assertEquals( 2, contents.numResolutionLevels() );
+			assertEquals( 16, contents.asImg( 0 ).dimension( 0 ) );
+			assertEquals( 8, contents.asImg( 1 ).dimension( 0 ) );
+		}
+	}
 
 	@ParameterizedTest
 	@MethodSource( "ome.zarr.imglib2.PyramidBackendTestBase#omeZarrExamples" )
@@ -254,26 +430,54 @@ public interface PyramidBackendTestBase
 			assertSelectedLevelDimensions( contents, 64, 64, 16, is3D ); // equals the highest resolution
 			assertSelectedLevelDimensions( contents, 50, 32, 8, is3D ); // between the lowest and highest resolution
 			assertSelectedLevelDimensions( contents, 32, 32, 8, is3D ); // equals the lowest resolution
-			// less than the lowest resolution
-			assertThrows( NoMatchingResolutionException.class, () -> contents.selectResolutionLevel( 30 ) );
+			// less than the lowest resolution: no level matches, the caller falls back
+			// to the coarsest one
+			assertSelectedLevelDimensions( contents, 30, 32, 8, is3D );
+			assertEquals( PyramidContents.NO_MATCHING_LEVEL, contents.suggestResolutionLevel( 30 ),
+					"Without a narrow enough level, no level must be suggested" );
 			assertSelectedLevelDimensions( contents, null, 64, 16, is3D ); // null preferred width results in the highest resolution
 		}
 	}
 
 	/**
-	 * Selects the resolution level for {@code preferredWidth} and asserts the x/y
-	 * (and, when {@code is3D}, z) dimensions of {@link PyramidContents#asImg(int)}
-	 * at that level. The imglib2 image is in F-order with x, y, z at indices 0, 1, 2.
+	 * Suggests the resolution level for {@code preferredWidth} — falling back to the
+	 * coarsest level when none matches, as the Fiji opener does — and asserts the
+	 * x/y (and, when {@code is3D}, z) dimensions of
+	 * {@link PyramidContents#asImg(int)} at that level. The imglib2 image is in
+	 * F-order with x, y, z at indices 0, 1, 2.
 	 */
 	static void assertSelectedLevelDimensions( final PyramidContents< ? > contents,
 			final Integer preferredWidth, final long expectedXY, final long expectedZ, final boolean is3D )
 	{
-		final int level = contents.selectResolutionLevel( preferredWidth );
+		final int suggested = contents.suggestResolutionLevel( preferredWidth );
+		final int level = suggested == PyramidContents.NO_MATCHING_LEVEL
+				? contents.smallestResolutionLevel()
+				: suggested;
 		final Img< ? > img = contents.asImg( level );
 		assertEquals( expectedXY, img.dimension( 0 ) );
 		assertEquals( expectedXY, img.dimension( 1 ) );
 		if ( is3D )
 			assertEquals( expectedZ, img.dimension( 2 ) );
+	}
+
+	@ParameterizedTest
+	@MethodSource( "ome.zarr.imglib2.PyramidBackendTestBase#omeZarrExamples" )
+	default void testLargestAndSmallestImg( final String resource ) throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			final PyramidContents< ? > contents = load( resource, context );
+			assertEquals( 0, contents.suggestResolutionLevel( null ),
+					"Without a preferred width, the highest resolution must be suggested" );
+			assertSame( contents.asImg( 0 ), contents.asLargestImg() );
+			assertSame( contents.asImg( 0 ), contents.asImg() );
+			assertEquals( contents.numResolutionLevels() - 1, contents.smallestResolutionLevel() );
+			assertSame( contents.asImg( contents.numResolutionLevels() - 1 ), contents.asSmallestImg() );
+			// the examples are 64 wide at level 0 and halve per level
+			assertEquals( 64, contents.asLargestImg().dimension( 0 ) );
+			assertTrue( contents.asSmallestImg().dimension( 0 ) <= contents.asLargestImg().dimension( 0 ),
+					"The smallest image must not be wider than the largest one" );
+		}
 	}
 
 	@ParameterizedTest
@@ -357,7 +561,7 @@ public interface PyramidBackendTestBase
 	{
 		final RandomAccess< ? > randomAccess = contents.asImg( level ).randomAccess();
 		randomAccess.setPosition( position );
-		final UnsignedByteType value = Cast.unchecked( randomAccess.get() );
+		final UnsignedByteType value = assertInstanceOf( UnsignedByteType.class, randomAccess.get() );
 		return value.get();
 	}
 }

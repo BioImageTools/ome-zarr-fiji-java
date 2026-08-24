@@ -43,6 +43,7 @@ import dev.zarr.zarrjava.core.Attributes;
 import dev.zarr.zarrjava.core.Group;
 import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;
 import dev.zarr.zarrjava.experimental.ome.metadata.Axis;
+import dev.zarr.zarrjava.experimental.ome.metadata.Dataset;
 import dev.zarr.zarrjava.experimental.ome.metadata.MultiscalesEntry;
 import dev.zarr.zarrjava.experimental.ome.metadata.OmeroChannel;
 import dev.zarr.zarrjava.experimental.ome.metadata.OmeroMetadata;
@@ -90,8 +91,10 @@ import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.PyramidLevelAccessException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
+import ome.zarr.imglib2.AbstractPyramidBackend;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.ZarrUtils;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
 
@@ -99,14 +102,9 @@ import ome.zarr.imglib2.metadata.Omero;
  * {@link PyramidBackend} that reads OME-Zarr images with the zarr-java library.
  * Supports OME-Zarr v0.4 (Zarr v2) and v0.5 (Zarr v3).
  */
-public class ZarrJavaPyramidBackend implements PyramidBackend
+public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
-
-	/** Location of the image being read; set for the duration of a {@link #load(URI)} call. */
-	private URI inputUri;
-
-	private StoreHandle activeHandle = null;
 
 	/**
 	 * Convenience entry point for reading an OME-Zarr image with the zarr-java
@@ -123,15 +121,14 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 	}
 
 	@Override
-	public < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale( final URI inputUri )
 	{
-		this.inputUri = inputUri;
-		final MultiscaleImage multiscaleImage = openMultiscaleImage();
-		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage );
+		final MultiscaleImage multiscaleImage = openMultiscaleImage( inputUri );
+		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage, inputUri );
 
 		final int numResolutionLevels = countResolutionLevels( multiscaleImage );
 
-		final Array level0Array = openLevel( multiscaleImage, 0 );
+		final Array level0Array = openLevel( multiscaleImage, 0, inputUri );
 		final T type = typeForZarrDataType( level0Array.metadata().dataType().getMA2DataType() );
 
 		// zarr shape is C-order [t, c, z, y, x]; imglib2 uses F-order [x, y, z, c, t]
@@ -139,18 +136,13 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		final long[] dimensions = reverseToLong( zarrShape );
 		final int numDimensions = dimensions.length;
 
-		final String name = entry.name != null ? entry.name : defaultName();
+		final String name = entry.name != null ? entry.name : defaultName( inputUri );
 		final double[] level0Scales = getLevel0Scales( entry, numDimensions );
 
 		final CachedCellImg< T, ? >[] cachedCellImgs = Cast.unchecked( new CachedCellImg[ numResolutionLevels ] );
 		for ( int level = 0; level < numResolutionLevels; level++ )
 		{
-			final Array arr = openLevel( multiscaleImage, level );
-			final long[] imgShape = reverseToLong( arr.metadata().shape );
-			final int[] imgChunk = reverseToInt( arr.metadata().chunkShape() );
-			final ReadOnlyCachedCellImgOptions opts = ReadOnlyCachedCellImgOptions.options().cellDimensions( imgChunk );
-			cachedCellImgs[ level ] = new ReadOnlyCachedCellImgFactory()
-					.create( imgShape, type, new ZarrJavaCellLoader<>( arr ), opts );
+			cachedCellImgs[ level ] = createCellImg( openLevel( multiscaleImage, level, inputUri ), type );
 		}
 
 		final AxisCalibration[][] axesPerLevel = new AxisCalibration[ numResolutionLevels ][];
@@ -235,14 +227,27 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 	// Store / path helpers
 	// ---------------------------------------------------------------------
 
-	private MultiscaleImage openMultiscaleImage()
+	private static MultiscaleImage openMultiscaleImage( final URI uri )
 	{
-		final String scheme = inputUri.getScheme();
-		Store store;
+		try
+		{
+			return openMultiscaleImageFromHandle( resolveHandle( uri ), uri );
+		}
+		catch ( StoreException | SdkException e )
+		{
+			// Store-level failures. Wrap them in a backend-agnostic exception.
+			throw new StoreAccessException( uri.toString(), e );
+		}
+	}
+
+	private static StoreHandle resolveHandle( final URI uri )
+	{
+		final String scheme = uri.getScheme();
+		final Store store;
 		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
-			store = new FilesystemStore( Paths.get( inputUri ) );
+			store = new FilesystemStore( Paths.get( uri ) );
 		else if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
-			store = new HttpStore( inputUri.toString() );
+			store = new HttpStore( uri.toString() );
 		else if ( "s3".equalsIgnoreCase( scheme ) )
 		{
 			final S3Client s3 = S3Client.builder().region( Region.US_EAST_1 )
@@ -250,35 +255,26 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 							.credentialsProviders( DefaultCredentialsProvider.builder().build(), AnonymousCredentialsProvider.create() )
 							.build() )
 					.build();
-			final String bucket = inputUri.getHost();
-			final String rawPath = inputUri.getPath();
+			final String bucket = uri.getHost();
+			final String rawPath = uri.getPath();
 			final String keyPrefix = rawPath == null ? "" : rawPath.replaceFirst( "^/", "" );
 			store = new S3Store( s3, bucket, keyPrefix.isEmpty() ? null : keyPrefix );
 		}
 		else
-			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + inputUri );
-		try
-		{
-			return openMultiscaleImageFromHandle( store.resolve() );
-		}
-		catch ( StoreException | SdkException e )
-		{
-			// Store-level failures. Wrap them in a backend-agnostic exception.
-			throw new StoreAccessException( inputUri.toString(), e );
-		}
+			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + uri );
+		return store.resolve();
 	}
 
-	private MultiscaleImage openMultiscaleImageFromHandle( final StoreHandle handle )
+	private static MultiscaleImage openMultiscaleImageFromHandle( final StoreHandle handle, final URI uri )
 	{
 		try
 		{
-			activeHandle = handle;
 			return MultiscaleImage.open( handle );
 		}
 		catch ( ZarrException | IOException e )
 		{
-			checkForBioformats2rawLayout( handle );
-			throw new NotAMultiscaleImageException( inputUri.toString(), e );
+			checkForBioformats2rawLayout( handle, uri );
+			throw new NotAMultiscaleImageException( uri.toString(), e );
 		}
 	}
 
@@ -288,14 +284,14 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 	 * attribute. Called after {@link MultiscaleImage#open} fails so we never
 	 * make an extra network round-trip for datasets that open normally.
 	 */
-	private void checkForBioformats2rawLayout( final StoreHandle handle )
+	private static void checkForBioformats2rawLayout( final StoreHandle handle, final URI uri )
 	{
 		try
 		{
 			final Attributes attrs = Group.open( handle ).metadata().attributes();
 			final Object ome = attrs.get( "ome" );
 			if ( ome instanceof Map && ( ( Map< ?, ? > ) ome ).containsKey( "bioformats2raw.layout" ) )
-				throw new MultiImageDatasetException( inputUri.toString() );
+				throw new MultiImageDatasetException( uri.toString() );
 		}
 		catch ( MultiImageDatasetException e )
 		{
@@ -303,12 +299,12 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		}
 		catch ( Exception e )
 		{
-			logger.debug( "Could not read group attributes from {}: {}", inputUri, e.getMessage() );
+			logger.debug( "Could not read group attributes from {}: {}", uri, e.getMessage() );
 		}
 	}
 
 	/** Fallback dataset name when the multiscales entry has none. */
-	private String defaultName()
+	private static String defaultName( final URI inputUri )
 	{
 		if ( "file".equalsIgnoreCase( inputUri.getScheme() ) )
 			return Paths.get( inputUri ).getFileName().toString();
@@ -320,7 +316,7 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		return slash >= 0 ? trimmed.substring( slash + 1 ) : trimmed;
 	}
 
-	private MultiscalesEntry readMultiscalesEntry( final MultiscaleImage multiscaleImage )
+	private static MultiscalesEntry readMultiscalesEntry( final MultiscaleImage multiscaleImage, final URI inputUri )
 	{
 		try
 		{
@@ -333,10 +329,130 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 			// or an IndexOutOfBoundsException when the array is empty
 			// surface those as a missing-metadata error rather than letting them
 			// bubble up unhandled.
-			if ( activeHandle != null )
-				checkForBioformats2rawLayout( activeHandle );
+			final StoreHandle handle = multiscaleImage.getStoreHandle();
+			if ( handle != null )
+				checkForBioformats2rawLayout( handle, inputUri );
 			throw new NotAMultiscaleImageException( "No multiscale metadata at: " + inputUri, e );
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Reads the parent as a zarr-java {@link MultiscaleImage} and matches
+	 * {@code arrayUri} against the {@code path} of its multiscales datasets.
+	 */
+	@Override
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadLevelFromParent(
+			final URI parentUri, final URI arrayUri )
+	{
+		final MultiscaleImage parent;
+		final MultiscalesEntry entry;
+		try
+		{
+			parent = openMultiscaleImage( parentUri );
+			entry = parent.getMultiscaleNode( 0 );
+		}
+		catch ( ZarrException | RuntimeException e )
+		{
+			logger.debug( "Parent of {} is not a usable multiscales group: {}", arrayUri, e.getMessage() );
+			return null;
+		}
+		final int levelIndex = levelIndexForChild( entry, arrayUri );
+		if ( levelIndex < 0 )
+		{
+			logger.debug( "Parent multiscales at {} does not list child array {}", parentUri, arrayUri );
+			return null;
+		}
+		return buildSingleLevelFromParent( parent, entry, levelIndex, arrayUri );
+	}
+
+	private static int levelIndexForChild( final MultiscalesEntry entry, final URI arrayUri )
+	{
+		if ( entry == null || entry.datasets == null )
+			return -1;
+		for ( int i = 0; i < entry.datasets.size(); i++ )
+		{
+			final Dataset dataset = entry.datasets.get( i );
+			if ( dataset != null && ZarrUtils.isChildPath( arrayUri, dataset.path ) )
+				return i;
+		}
+		return -1;
+	}
+
+	private static < T extends NativeType< T > & RealType< T > > PyramidContents< T > buildSingleLevelFromParent(
+			final MultiscaleImage parent, final MultiscalesEntry entry, final int levelIndex, final URI arrayUri )
+	{
+		final Array arr = openLevel( parent, levelIndex, arrayUri );
+		final T type = typeForZarrDataType( arr.metadata().dataType().getMA2DataType() );
+		final CachedCellImg< T, ? > img = createCellImg( arr, type );
+
+		final int numDimensions = img.numDimensions();
+		final double[] level0Scales = getLevel0Scales( entry, numDimensions );
+		final double[] levelScales = findLevelScale( entry, levelIndex );
+		final double[] axisScales = levelScales != null ? levelScales : level0Scales;
+		final AxisCalibration[] axes = createAxisCalibrations( entry.axes, axisScales );
+
+		final AffineTransform3D transform =
+				createTransforms( entry, entry.datasets.size(), level0Scales )[ levelIndex ];
+		final Omero omero = convertOmero( parent.getOmeroMetadata() );
+		final String name = entry.name != null ? entry.name : defaultName( arrayUri );
+
+		return PyramidContents.singleLevel( name, type, transform, img, axes, omero );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Takes the axis names from {@link dev.zarr.zarrjava.v3.ArrayMetadata#dimensionNames},
+	 * which only a Zarr v3 array has; a Zarr v2 array therefore declines.
+	 */
+	@Override
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( final URI arrayUri )
+	{
+		final Array arr;
+		try
+		{
+			arr = Array.open( resolveHandle( arrayUri ) );
+		}
+		catch ( ZarrException | IOException | RuntimeException e )
+		{
+			logger.debug( "Could not open {} as a plain array: {}", arrayUri, e.getMessage() );
+			return null;
+		}
+		final String[] names = dimensionNames( arr );
+		if ( names.length == 0 )
+			return null;
+		final T type = typeForZarrDataType( arr.metadata().dataType().getMA2DataType() );
+		final CachedCellImg< T, ? > img = createCellImg( arr, type );
+		final AxisCalibration[] axes = AxisCalibration.createPlaceholderCalibration( names );
+		return PyramidContents.singleLevelWithPlaceholderCalibration( ZarrUtils.lastSegment( arrayUri ), type, img, axes );
+	}
+
+	/**
+	 * Zarr v3 {@code dimension_names} of {@code arr} reversed into imglib2 F-order
+	 * (as {@link #reverseToLong} does for the shape), or an empty array for a Zarr
+	 * v2 array (which has none).
+	 */
+	private static String[] dimensionNames( final Array arr )
+	{
+		final dev.zarr.zarrjava.core.ArrayMetadata metadata = arr.metadata();
+		if ( metadata instanceof dev.zarr.zarrjava.v3.ArrayMetadata )
+		{
+			final String[] names = ( ( dev.zarr.zarrjava.v3.ArrayMetadata ) metadata ).dimensionNames;
+			if ( names != null )
+				return reverse( names );
+		}
+		return new String[ 0 ];
+	}
+
+	private static < T extends NativeType< T > & RealType< T > > CachedCellImg< T, ? > createCellImg(
+			final Array arr, final T type )
+	{
+		final long[] imgShape = reverseToLong( arr.metadata().shape );
+		final int[] imgChunk = reverseToInt( arr.metadata().chunkShape() );
+		final ReadOnlyCachedCellImgOptions opts = ReadOnlyCachedCellImgOptions.options().cellDimensions( imgChunk );
+		return new ReadOnlyCachedCellImgFactory().create( imgShape, type, new ZarrJavaCellLoader<>( arr ), opts );
 	}
 
 	// ---------------------------------------------------------------------
@@ -355,7 +471,7 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 		}
 	}
 
-	private Array openLevel( final MultiscaleImage multiscaleImage, final int levelIndex )
+	private static Array openLevel( final MultiscaleImage multiscaleImage, final int levelIndex, final URI inputUri )
 	{
 		try
 		{
@@ -603,6 +719,14 @@ public class ZarrJavaPyramidBackend implements PyramidBackend
 	private static int[] reverseToInt( final int[] arr )
 	{
 		final int[] out = new int[ arr.length ];
+		for ( int i = 0; i < arr.length; i++ )
+			out[ i ] = arr[ arr.length - 1 - i ];
+		return out;
+	}
+
+	private static String[] reverse( final String[] arr )
+	{
+		final String[] out = new String[ arr.length ];
 		for ( int i = 0; i < arr.length; i++ )
 			out[ i ] = arr[ arr.length - 1 - i ];
 		return out;

@@ -34,6 +34,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 public class ZarrTestUtils
 {
@@ -44,5 +45,32 @@ public class ZarrTestUtils
 		URL url = ZarrTestUtils.class.getClassLoader().getResource( resource );
 		assertNotNull( url, "Resource folder not found: " + resource );
 		return Paths.get( url.toURI() );
+	}
+
+	/**
+	 * The multiscale example datasets, covering 2d to 5d in every axis order, each
+	 * in OME-Zarr v0.4 (Zarr v2) and v0.5 (Zarr v3). Suitable as a JUnit
+	 * {@code @MethodSource}.
+	 */
+	public static Stream< String > omeZarrExamples()
+	{
+		return Stream.of(
+				"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr",
+				"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr",
+				"ome/zarr/testdata/3d_testing/xyc/3d_dataset_v4.ome.zarr",
+				"ome/zarr/testdata/3d_testing/xyc/3d_dataset_v5.ome.zarr",
+				"ome/zarr/testdata/3d_testing/xyt/3d_dataset_v4.ome.zarr",
+				"ome/zarr/testdata/3d_testing/xyt/3d_dataset_v5.ome.zarr",
+				"ome/zarr/testdata/3d_testing/xyz/3d_dataset_v4.ome.zarr",
+				"ome/zarr/testdata/3d_testing/xyz/3d_dataset_v5.ome.zarr",
+				"ome/zarr/testdata/4d_testing/xyct/4d_dataset_v4.ome.zarr",
+				"ome/zarr/testdata/4d_testing/xyct/4d_dataset_v5.ome.zarr",
+				"ome/zarr/testdata/4d_testing/xyzc/4d_dataset_v4.ome.zarr",
+				"ome/zarr/testdata/4d_testing/xyzc/4d_dataset_v5.ome.zarr",
+				"ome/zarr/testdata/4d_testing/xyzt/4d_dataset_v4.ome.zarr",
+				"ome/zarr/testdata/4d_testing/xyzt/4d_dataset_v5.ome.zarr",
+				"ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr",
+				"ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr"
+		);
 	}
 }

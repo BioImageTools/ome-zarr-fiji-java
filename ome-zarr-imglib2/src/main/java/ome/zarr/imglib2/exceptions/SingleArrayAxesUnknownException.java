@@ -26,18 +26,37 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fiji.open.exceptions;
+package ome.zarr.imglib2.exceptions;
 
-public class NotASingleScaleImageException extends RuntimeException
+/**
+ * Thrown when an OME-Zarr array node is opened on its own, but its axis
+ * semantics cannot be determined.
+ * <p>
+ * A single resolution level (a bare Zarr array) only carries the information
+ * needed to interpret its dimensions when either it declares them itself
+ * (a Zarr v3 array's {@code dimension_names}) or a parent multiscales group
+ * that lists this array can be read to supply them. A lone Zarr v2
+ * ({@code .zarray}) array has neither: it exposes only a shape and data type,
+ * so a shape such as {@code [4, 64, 64]} is indistinguishable between x/y/t,
+ * x/y/z and x/y/c.
+ */
+public class SingleArrayAxesUnknownException extends RuntimeException
 {
 
-	public NotASingleScaleImageException( final String path )
+	public SingleArrayAxesUnknownException( final String path )
 	{
-		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image." );
+		super( message( path ) );
 	}
 
-	public NotASingleScaleImageException( final String path, final Throwable cause )
+	public SingleArrayAxesUnknownException( final String path, final Throwable cause )
 	{
-		super( "The dataset at path '" + path + "' is not a valid OME-Zarr single scale image. Cause: " + cause.getMessage(), cause );
+		super( message( path ), cause );
+	}
+
+	private static String message( final String path )
+	{
+		return "Cannot determine the axes of the OME-Zarr array at " + path
+				+ ": it declares no axis names of its own (Zarr v2 has no dimension_names) and no parent "
+				+ "multiscales metadata could be read to supply them. Open the parent OME-Zarr group instead.";
 	}
 }

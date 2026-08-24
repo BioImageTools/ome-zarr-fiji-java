@@ -36,7 +36,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.util.Cast;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -190,17 +189,17 @@ public interface PyramidalBdvTestBase
 			RandomAccessibleInterval< ? > resolutionLevel0 = spimSource.getSource( 0, 0 );
 			RandomAccess< ? > randomAccessLevel0 = resolutionLevel0.randomAccess();
 			randomAccessLevel0.setPosition( new long[] { 10, 10, 10 } );
-			UnsignedByteType value0 = Cast.unchecked( randomAccessLevel0.get() ); // NB: compare uint8 type in src/test/resources/ome/zarr/testdata/pyramid_testing/create_pyramid.py
+			UnsignedByteType value0 = assertInstanceOf( UnsignedByteType.class, randomAccessLevel0.get() ); // NB: compare uint8 type in src/test/resources/ome/zarr/testdata/pyramid_testing/create_pyramid.py
 
 			RandomAccessibleInterval< ? > resolutionLevel1 = spimSource.getSource( 0, 1 );
 			RandomAccess< ? > randomAccessLevel1 = resolutionLevel1.randomAccess();
 			randomAccessLevel1.setPosition( new long[] { 10, 10, 10 } );
-			UnsignedByteType value1 = Cast.unchecked( randomAccessLevel1.get() );
+			UnsignedByteType value1 = assertInstanceOf( UnsignedByteType.class, randomAccessLevel1.get() );
 
 			RandomAccessibleInterval< ? > resolutionLevel2 = spimSource.getSource( 0, 2 );
 			RandomAccess< ? > randomAccessLevel2 = resolutionLevel2.randomAccess();
 			randomAccessLevel2.setPosition( new long[] { 10, 10, 10 } );
-			UnsignedByteType value2 = Cast.unchecked( randomAccessLevel2.get() );
+			UnsignedByteType value2 = assertInstanceOf( UnsignedByteType.class, randomAccessLevel2.get() );
 
 			assertEquals( 3, contents.numResolutionLevels() );
 			assertEquals( 3, spimSource.getNumMipmapLevels() );

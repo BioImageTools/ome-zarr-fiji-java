@@ -28,9 +28,6 @@
  */
 package ome.zarr.fiji.open;
 
-import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
-import org.janelia.saalfeldlab.n5.universe.N5Factory;
 import org.scijava.Context;
 import org.scijava.ui.UIService;
 import org.slf4j.Logger;
@@ -39,27 +36,23 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.google.gson.JsonSyntaxException;
 
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.util.Cast;
-
 import ij.IJ;
+import ij.gui.YesNoCancelDialog;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
-import ome.zarr.imglib2.exceptions.NoMatchingResolutionException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
+import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.open.exceptions.NonExistingResolutionLevelException;
-import ome.zarr.fiji.open.exceptions.NotASingleScaleImageException;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 
@@ -69,10 +62,22 @@ import ome.zarr.imglib2.exceptions.StoreAccessException;
  * preferred resolution width, it loads a {@link PyramidContents} and
  * opens it in ImageJ (as a {@link PyramidalDataset}) or in BigDataViewer (as a
  * {@link PyramidalBdv}, registered in both cases with the {@link PyramidalService} lifecycle).
+ * <p>
+ * The preferred width applies to {@link #openIJWithImage()} only, which shows one
+ * resolution level at a time: it picks that level and, when not even the coarsest
+ * one is narrow enough, asks the user for confirmation before opening it anyway.
+ * {@link #openIJWithImage(int)} opens the level its caller named, and
+ * BigDataViewer displays all levels and streams them lazily.
+ * <p>
+ * Independently of the width, every display path refuses to show an image whose
+ * calibration is a placeholder ({@link PyramidContents#hasPlaceholderCalibration})
+ * unless the user confirms.
  */
 public class ZarrOpener
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	private static final String CONFIRM_DIALOG_TITLE = "Open this OME-Zarr image anyway?";
 
 	private final URI inputUri;
 
@@ -84,17 +89,17 @@ public class ZarrOpener
 
 	private final Consumer< String > errorHandler;
 
-	private PyramidContents< ? > cachedContents;
+	private final Predicate< String > openAnywayConfirmation;
 
-	private int preferredResolutionLevel;
+	private PyramidContents< ? > cachedContents;
 
 	/**
 	 * Opener for {@code inputUri} with an explicit backend and preferred
 	 * resolution, reporting failures via {@code IJ::error}.
 	 *
 	 * @param backend the backend used to read the dataset
-	 * @param preferredMaxWidth the coarsest level whose width is still &le; this is
-	 *   opened, or {@code null} for the highest resolution
+	 * @param preferredMaxWidth the highest-resolution level that is still no wider
+	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
 	 */
 	public ZarrOpener( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth )
@@ -107,24 +112,44 @@ public class ZarrOpener
 	 * resolution, and error sink.
 	 *
 	 * @param backend the backend used to read the dataset
-	 * @param preferredMaxWidth the coarsest level whose width is still &le; this is
-	 *   opened, or {@code null} for the highest resolution
+	 * @param preferredMaxWidth the highest-resolution level that is still no wider
+	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
 	 * @param errorHandler receives a user-facing message when opening fails
 	 */
 	public ZarrOpener( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth, final Consumer< String > errorHandler )
+	{
+		this( inputUri, context, backend, preferredMaxWidth, errorHandler, ZarrOpener::confirmWithDialog );
+	}
+
+	/**
+	 * Opener for {@code inputUri} with an explicit backend, preferred resolution,
+	 * error sink, and open-anyway confirmation.
+	 *
+	 * @param backend the backend used to read the dataset
+	 * @param preferredMaxWidth the highest-resolution level that is still no wider
+	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
+	 * @param errorHandler receives a user-facing message when opening fails
+	 * @param openAnywayConfirmation asked whether to open an image that has something
+	 *   wrong with it after all.
+	 *   Pass a non-interactive implementation for headless use — the default shows a
+	 *   modal (modified) {@link YesNoCancelDialog}.
+	 */
+	public ZarrOpener( final URI inputUri, final Context context, final PyramidBackend backend,
+			final Integer preferredMaxWidth, final Consumer< String > errorHandler,
+			final Predicate< String > openAnywayConfirmation )
 	{
 		this.inputUri = inputUri;
 		this.context = context;
 		this.backend = backend;
 		this.preferredMaxWidth = preferredMaxWidth;
 		this.errorHandler = errorHandler;
+		this.openAnywayConfirmation = openAnywayConfirmation;
 	}
 
 	/**
 	 * Loads (once, then caches) the {@link PyramidContents} for the configured
-	 * location using the configured {@link PyramidBackend}, and resolves the
-	 * resolution level matching the preferred width.
+	 * location using the configured {@link PyramidBackend}.
 	 */
 	// java:S1452: the wildcard is intentional. The pixel type is only known once
 	// the data is read, and callers use only type-independent members of the
@@ -136,7 +161,6 @@ public class ZarrOpener
 		if ( cachedContents == null )
 		{
 			final PyramidContents< ? > contents = backend.load( inputUri );
-			preferredResolutionLevel = contents.selectResolutionLevel( preferredMaxWidth );
 			cachedContents = contents;
 			logDimensions( contents );
 		}
@@ -164,36 +188,76 @@ public class ZarrOpener
 
 	private static String axisSize( final PyramidContents< ? > contents, final String axisName )
 	{
-		final int index = contents.axisIndex( axisName );
-		return index < 0 ? "absent" : Long.toString( contents.asImg().dimension( index ) );
+		return contents.hasAxis( axisName ) ? Long.toString( contents.sizeAlongAxis( axisName ) ) : "absent";
 	}
 
 	/**
 	 * Opens the dataset in ImageJ as a {@link PyramidalDataset} at the preferred
-	 * resolution level. Returns {@code null} for a multiscale image (it is shown
-	 * via the {@code UIService}); the return value is reserved for the future
-	 * single-scale path.
+	 * resolution level, shown via the {@code UIService}. A location pointing at a
+	 * single resolution level opens as a one-level dataset.
+	 * <p>
+	 * When no level is narrow enough for the preferred width — which is always the
+	 * case for a single-level location that is too wide — the coarsest level is
+	 * offered instead and opened only if the user confirms.
 	 */
-	public Object openIJWithImage()
+	public void openIJWithImage()
 	{
-		try
-		{
-			return openPyramidImage(
-					() -> {
-						final PyramidContents< ? > contents = getContents();
-						final PyramidalDataset dataset = new PyramidalDataset( context, contents, preferredResolutionLevel );
-						context.getService( UIService.class ).show( dataset );
-						context.getService( PyramidalService.class ).registerImageJDataset( dataset );
-						logger.info( "Opened dataset in ImageJ: {}", inputUri );
+		openPyramidImage(
+				() -> {
+					final PyramidContents< ? > contents = getContents();
+					if ( uncalibratedAndDeclined( contents ) )
 						return null;
-					},
-					singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ) );
-		}
-		catch ( NoMatchingResolutionException e )
-		{
-			showNonMatchingResolutionError( e );
-		}
-		return null;
+					final int suggestedLevel = contents.suggestResolutionLevel( preferredMaxWidth );
+					if ( suggestedLevel != PyramidContents.NO_MATCHING_LEVEL )
+						showAsDataset( contents, suggestedLevel );
+					else if ( confirmOpeningSmallestLevel( contents ) )
+						showAsDataset( contents, contents.smallestResolutionLevel() );
+					return null;
+				} );
+	}
+
+	/**
+	 * Whether the image must not be shown: {@code true} only when its calibration is
+	 * a placeholder (see {@link PyramidContents#hasPlaceholderCalibration}) and the
+	 * user declined to open it anyway.
+	 * <p>
+	 * Every display path asks this, because the invented scale and unit belong to
+	 * the dataset rather than to the resolution level or the viewer: they mislead in
+	 * BigDataViewer exactly as much as in ImageJ.
+	 */
+	private boolean uncalibratedAndDeclined( final PyramidContents< ? > contents )
+	{
+		if ( !contents.hasPlaceholderCalibration )
+			return false;
+		final boolean openAnyway = openAnywayConfirmation.test( uncalibratedMessage() );
+		logger.info( "{} has no scale or unit of its own. Opening it anyway: {}.", inputUri, openAnyway );
+		return !openAnyway;
+	}
+
+	/** The confirmation text for an image whose scale and unit are placeholders. */
+	private String uncalibratedMessage()
+	{
+		return "This image has no calibration.\n\r\n"
+				+ "Location: " + inputUri + "\n\r\n"
+				+ "It is a single resolution level, and no parent OME-Zarr group states the size of a pixel or "
+				+ "the unit to measure it in. Every axis would be reported as 1.0 with no unit, which looks the "
+				+ "same as a genuinely unit-spaced image: measurements would be in pixels.\n\r\n"
+				+ "Open it anyway?\n\r\n"
+				+ "Opening the parent OME-Zarr group up in the hierarchy instead may give you the real calibration.";
+	}
+
+	/**
+	 * Asks the user whether to open the coarsest level even though it is wider than
+	 * the preferred width, which is the situation when
+	 * {@link PyramidContents#suggestResolutionLevel} finds no matching level.
+	 */
+	private boolean confirmOpeningSmallestLevel( final PyramidContents< ? > contents )
+	{
+		final long width = contents.sizeAlongAxis( AxisCalibration.X, contents.smallestResolutionLevel() );
+		final boolean openAnyway = openAnywayConfirmation.test( oversizeMessage( contents, width ) );
+		logger.info( "No resolution level of {} is as narrow as the preferred maximum of {}, the coarsest one is {} "
+				+ "pixels wide. Opening it anyway: {}.", inputUri, preferredMaxWidth, width, openAnyway );
+		return openAnyway;
 	}
 
 	/**
@@ -205,6 +269,9 @@ public class ZarrOpener
 	 * {@link ome.zarr.imglib2.PyramidContents} object: the cached cell images
 	 * and volatile images are the single source of truth and are never loaded more than once
 	 * per resolution level.
+	 * <p>
+	 * No level is selected here — the caller has already chosen one — so the
+	 * preferred width does not apply and the named level is opened without asking.
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
 	 */
@@ -217,13 +284,11 @@ public class ZarrOpener
 						final PyramidContents< ? > contents = getContents();
 						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
 							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels() );
-						final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
-						context.getService( UIService.class ).show( dataset );
-						context.getService( PyramidalService.class ).registerImageJDataset( dataset );
-						logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
+						if ( uncalibratedAndDeclined( contents ) )
+							return null;
+						showAsDataset( contents, resolutionLevel );
 						return null;
-					},
-					singleScaleImage -> ImageJFunctions.show( Cast.unchecked( singleScaleImage ) ) );
+					} );
 		}
 		catch ( NonExistingResolutionLevelException e )
 		{
@@ -233,47 +298,92 @@ public class ZarrOpener
 	}
 
 	/**
-	 * Opens the dataset in BigDataViewer as a {@link PyramidalBdv} and registers
+	 * Shows {@code resolutionLevel} of {@code contents} as a new ImageJ dataset,
+	 * registered with the {@link PyramidalService} lifecycle.
+	 */
+	private void showAsDataset( final PyramidContents< ? > contents, final int resolutionLevel )
+	{
+		final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
+		context.getService( UIService.class ).show( dataset );
+		context.getService( PyramidalService.class ).registerImageJDataset( dataset );
+		logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
+	}
+
+	/**
+	 * The confirmation text for the coarsest level, which is {@code width} pixels
+	 * wide and thus wider than the preferred width. For a pyramid of several levels
+	 * the message spells out that none of them is narrow enough.
+	 */
+	private String oversizeMessage( final PyramidContents< ? > contents, final long width )
+	{
+		final int numLevels = contents.numResolutionLevels();
+		final StringBuilder message = new StringBuilder( "This image is wider than your preferred maximum width.\n\r\n" )
+				.append( "Location: " ).append( inputUri ).append( "\n" )
+				.append( "Width: " ).append( width )
+				.append( " pixels (preferred maximum: " ).append( preferredMaxWidth ).append( " pixels)\n\r\n" );
+		if ( numLevels > 1 )
+			message.append( "The dataset has " ).append( numLevels )
+					.append( " resolution levels, but even the smallest one is " )
+					.append( width ).append( " pixels wide.\n\r\n" );
+		return message.append( "Open it anyway?\n\r\n" )
+				.append( "Large images can be slow to display and may exceed available memory.\n" )
+				.append( "You can change the settings under:\n" )
+				.append( "Plugins > OME-Zarr > Settings > Opening Behavior Settings." )
+				.toString();
+	}
+
+	/**
+	 * Default oversize confirmation: a modal ImageJ dialog whose "Cancel" button is
+	 * a synonym for "Don't open", so only "Open anyway" opens the image. Requires a
+	 * display and therefore cannot be used headlessly.
+	 */
+	private static boolean confirmWithDialog( final String message )
+	{
+		return new YesNoCancelDialog( IJ.getInstance(), CONFIRM_DIALOG_TITLE, message,
+				"Open anyway", "Don't open" ).yesPressed();
+	}
+
+	/**
+	 * Opens the {@link ome.zarr.fiji.Pyramidal} in BigDataViewer as a {@link PyramidalBdv} and registers
 	 * it with the {@link PyramidalService} lifecycle.
+	 * <p>
+	 * BigDataViewer shows the whole pyramid and loads from the level that suits the
+	 * current zoom, so the preferred width — a limit on the single level an ImageJ
+	 * window would hold — does not apply and is not checked here.
 	 *
 	 * @return the resulting {@code BdvHandle}, or {@code null} if opening failed
 	 */
 	public Object openBDVWithImage()
 	{
-		try
-		{
-			return openPyramidImage(
-					() -> {
-						final PyramidalBdv< ? > dataset = new PyramidalBdv<>( context, getContents() );
-						final PyramidalService pyramidalService = context.getService( PyramidalService.class );
-						final Object result = BdvUtils.showBdvAndRegisterDataset( dataset, pyramidalService );
-						logger.info( "Opened dataset in BigDataViewer: {}", inputUri );
-						return result;
-					},
-					singleScaleImage -> null );
-		}
-		catch ( NoMatchingResolutionException e )
-		{
-			showNonMatchingResolutionError( e );
-		}
-		return null;
+		return openPyramidImage(
+				() -> {
+					if ( uncalibratedAndDeclined( getContents() ) )
+						return null;
+					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, getContents() );
+					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
+					final Object result = BdvUtils.showBdvAndRegisterDataset( pyramidal, pyramidalService );
+					logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );
+					return result;
+				} );
 	}
 
-	private Object openPyramidImage( final Supplier< Object > multiScaleOpener, final Function< Img< ? >, Object > singleScaleOpener )
+	private Object openPyramidImage( final Supplier< Object > imageOpener )
 	{
 		try
 		{
-			return multiScaleOpener.get();
+			return imageOpener.get();
 		}
 		catch ( MultiImageDatasetException e )
 		{
 			showMultiImageNotSupported( e );
 		}
+		catch ( SingleArrayAxesUnknownException e )
+		{
+			showSingleArrayAxesUnknown( e );
+		}
 		catch ( NotAMultiscaleImageException e )
 		{
-			logger.warn( "Not a multiscale image: {}", e.getMessage() );
-			showSingleScaleNotSupported();
-			// TODO: openSingleScaleImage( singleScaleOpener ) when single-scale support is added
+			showNotAMultiscaleError( e );
 		}
 		catch ( StoreAccessException e )
 		{
@@ -286,42 +396,25 @@ public class ZarrOpener
 		return null;
 	}
 
-	private Object openSingleScaleImage( final Function< Img< ? >, Object > singleScaleImageOpener ) throws NotASingleScaleImageException
-	{
-		N5Reader reader = new N5Factory().openReader( inputUri.toString() );
-		Img< ? > img;
-		try
-		{
-			img = N5Utils.open( reader, "" );
-		}
-		catch ( Exception e )
-		{
-			throw new NotASingleScaleImageException( inputUri.toString(), e );
-		}
-		Object result = singleScaleImageOpener.apply( img );
-		logger.info( "Opened single scale image: {}", inputUri );
-		return result;
-	}
-
 	private void showMultiImageNotSupported( final MultiImageDatasetException e )
 	{
 		errorHandler.accept( e.getMessage() );
 		logger.info( e.getMessage() );
 	}
 
-	private void showSingleScaleNotSupported()
+	private void showSingleArrayAxesUnknown( final SingleArrayAxesUnknownException e )
 	{
-		errorHandler.accept(
-				"Opening a single resolution OME-Zarr dataset, as was found in: " + inputUri + ", is currently not supported.\n\n"
-						+ "Consider opening one level higher in the hierarchy instead." );
-		logger.info( "Opening a single resolution OME-Zarr dataset, as was found in: {}, is currently not supported.", inputUri );
+		errorHandler.accept( "Could not determine the axes of the single OME-Zarr array at: " + inputUri + "\n\r\n"
+				+ "The array declares no axis names of its own and no parent multiscales metadata listing it could be read."
+				+ "\n\r\nConsider opening one level higher in the hierarchy instead." );
+		logger.info( "Cannot determine axes of single resolution level at {}: {}", inputUri, e.getMessage() );
 	}
 
-	private void showSingleScaleError( final Exception e )
+	private void showNotAMultiscaleError( final NotAMultiscaleImageException e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
-				+ "Consider opening one level higher or lower in the hierarchy instead." );
-		logger.warn( "Could not open dataset as single resolution image: {}. Error message: {}", inputUri, e.getMessage() );
+				+ "The location is not a readable OME-Zarr multiscale image and could not be opened as a single resolution level." );
+		logger.warn( "Not a multiscale image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
 	private void showStoreAccessError( final Exception e )
@@ -335,13 +428,6 @@ public class ZarrOpener
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
 				+ "The opener for OME-Zarr only supports locations that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
 		logger.warn( "Could not open dataset image: {}. Error message: {}", inputUri, e.getMessage() );
-	}
-
-	private void showNonMatchingResolutionError( final Exception e )
-	{
-		errorHandler.accept( "Safety check failed when opening dataset: " + inputUri + "\n\r\n" + e.getMessage() + "\n\r\n"
-				+ "If the image size is okay for this computer, please adjust the setting in\nPlugins > OME-Zarr > Settings > Opening Behavior Settings to still open the image." );
-		logger.warn( "Not opening dataset: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
 	private void showNonExistingResolutionLevelError( final NonExistingResolutionLevelException e )
