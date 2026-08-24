@@ -61,13 +61,19 @@
     <li>Auto-detecting the source type:<br>
         <a href="fiji://open/source?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/source?p=https://&hellip;/BR00109990_C2.zarr/0</a>
     </li>
+
+    <li><b>Expected to not be supported</b> an <code>s3://</code> target through <code>open/url</code>, kept here to
+        demonstrate the upstream limitation. It is silently caught upstream
+        <a href="fiji://open/url?p=s3://janelia-cosem-datasets/jrc_mus-choroid-plexus-3/jrc_mus-choroid-plexus-3.zarr/recon-1/em/fibsem-uint8">fiji://open/url?p=s3://janelia-cosem-datasets/&hellip;/em/fibsem-uint8</a>
+    </li>
 </ul>
 
 <p class="note">Opening honors the configured behavior under
     <em>Plugins &rarr; OME-Zarr &rarr; Settings &rarr; Opening Behavior Settings</em>
     (ImageJ, BigDataViewer, or the selection dialog).
-    <code>s3://</code> targets are not supported through links &mdash; use
-    <em>Plugins &rarr; OME-Zarr &rarr; Paste OME-Zarr URI</em> for those.</p>
+    <code>s3://</code> targets are not supported through links (see the failing link above) &mdash; use
+    <em>Plugins &rarr; OME-Zarr &rarr; Paste OME-Zarr URI</em> for those, which bypasses the
+    <code>Location</code> layer and opens the same URI fine.</p>
 
 </body>
 </html>
