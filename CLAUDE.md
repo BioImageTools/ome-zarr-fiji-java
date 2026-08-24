@@ -61,12 +61,29 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
   its `errorHandler`, and the `s3:` bypass below — none of which fit the `IOPlugin` contract. Nothing in this repo calls
   `IOService` itself.
 
-**`s3:` support is paste-only.** `ZarrUtils.isZarr` cannot probe `s3:` cheaply (see its javadoc), so
-`PasteToOpenAction` skips the check for that scheme and opens directly. `OmeZarrIOPlugin` therefore declines `s3:` (as
-it always has), and `fiji://…?p=s3://…` cannot be fixed from our side either: fiji-links' `open/url` branch dies in
-`new URL(p)` with `MalformedURLException: unknown protocol: s3`, and its `open/source` branch has
-`LocationService.resolve` fall back to a bogus *relative* `FileLocation` (`file:/<cwd>/s3:/bucket/…`). Giving links s3
-parity would need an s3 `Location`/`DataHandle` plugin on the classpath, not a change here.
+**`s3:` support is paste-only, deliberately.** `ZarrUtils.isZarr` cannot probe `s3:` (`ome-zarr-imglib2` has no AWS
+dependency at all, and an `s3://bucket/key` URI names neither region nor endpoint; see its javadoc), so
+`PasteToOpenAction` skips the check for that scheme and opens directly. That path never touches SciJava's `Location`
+layer – it passes a plain `java.net.URI` to `openWithSettings`, and the backend builds its own `S3Client`.
+
+`fiji://…?p=s3://…` fails one layer above us, in the string→`Location` conversion that `OpenLinkHandler` must do before
+it can call `IOService.open(Location)`:
+
+- `open/url` validates with `new URL(p)`, and `java.net.URL` (unlike `URI`) only accepts protocols it has a stream
+  handler for → `MalformedURLException: unknown protocol: s3`, caught and logged inside fiji-links. We are never
+  consulted. **Not fixable from here.**
+- `open/source` calls `LocationService.resolve(p)`. Resolution is one `LocationResolver` plugin per scheme
+  (`FileLocationResolver` for `file` in scijava-common, `HTTPLocationResolver` for `http(s)` in scijava-io-http) and
+  none claims `s3`, so `resolve(URI)` returns `null` and `resolve(String)` falls back to treating the whole string as a
+  *relative filename* → a bogus `file:/<cwd>/s3:/bucket/…`. `OmeZarrIOPlugin` is handed that, i.e. by then there is no
+  `s3:` URI left to accept — which is why relaxing `isZarr` for `s3` would not help links at all.
+
+This second one *is* fixable from here, contrary to what this file used to claim: we only ever use
+`Location.getURI()`, never a `DataHandle`, so a ~15-line `LocationResolver` for `s3` returning `URILocation` would do
+it — and both classes live in scijava-common, so no scijava-desktop and no Java-8 breakage. **We still won't**: it
+would fix `open/source` while `open/url` keeps failing, and half-working link support is worse for users than a clear
+"not supported". Revisit when fiji-links itself handles non-`java.net` schemes (e.g. falling back to
+`LocationService.resolve` when `new URL(p)` throws); links then get `s3:` for free, with no change here.
 
 **`fiji://` links need no code of ours.** Fiji-Latest ships `sc.fiji:fiji-links` (verified present in a Fiji-Latest
 `jars/` alongside `scijava-desktop` and `scijava-io-http`). Its `OpenLinkHandler` owns the
