@@ -62,11 +62,15 @@ import ome.zarr.imglib2.ZarrUtils;
  * {@code fiji://open/url?p=} to an {@code HTTPLocation} (or
  * {@code URLLocation}). Either way we only need {@link Location#getURI()}: it
  * yields the URI for anything that can be expressed as one, and {@code null}
- * otherwise (e.g. an in-memory {@code BytesLocation}), which we decline.</p>
+ * otherwise (e.g., an in-memory {@code BytesLocation}), which we decline.</p>
  * <p>
  * NB: for remote locations {@link #supportsOpen} costs a few HTTP HEAD requests, see
- * {@link ZarrUtils#isZarr(URI)}. {@code s3:} locations are declined, because
- * {@code isZarr} cannot probe them cheaply.
+ * {@link ZarrUtils#isZarr(URI)}.
+ * </p>
+ * <p>
+ * {@code s3:} URIs are out of reach here: {@code fiji-links} cannot resolve an
+ * {@code s3://} string to a {@link Location}, so no {@code s3:} URI ever
+ * arrives here currently.
  * </p>
  */
 @SuppressWarnings( "java:S110" ) // NB: deliberately extends AbstractIOPlugin, which is a long class hierarchy
