@@ -1,46 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>OME-Zarr fiji:// link demo</title>
-<style>
-  body { font: 15px/1.5 -apple-system, Helvetica, Arial, sans-serif; margin: 2rem auto; max-width: 46rem; padding: 0 1rem; }
-  li { margin: .6rem 0; }
-  code { background: #f4f4f4; padding: .1em .3em; border-radius: 3px; font-size: 90%; }
-  .note { color: #555; font-size: 90%; }
-</style>
+    <meta charset="utf-8">
+    <title>OME-Zarr fiji:// link demo</title>
+    <style>
+        body {
+            font: 15px/1.5 -apple-system, Helvetica, Arial, sans-serif;
+            margin: 2rem auto;
+            max-width: 46rem;
+            padding: 0 1rem;
+        }
+
+        li {
+            margin: .6rem 0;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: .1em .3em;
+            border-radius: 3px;
+            font-size: 90%;
+        }
+
+        .note {
+            color: #555;
+            font-size: 90%;
+        }
+    </style>
 </head>
 <body>
 
 <h1>OME-Zarr <code>fiji://</code> link demo</h1>
 
 <p>Test page for
-<a href="https://github.com/BioImageTools/ome-zarr-fiji-java/pull/102">ome-zarr-fiji-java#102</a>
-(issue <a href="https://github.com/BioImageTools/ome-zarr-fiji-java/issues/68">#68</a>).
-Requires Fiji-Latest, which ships <code>fiji-links</code> and <code>scijava-desktop</code>, plus the
-<code>ome-zarr-fiji-ui</code> jar from that PR. Register the scheme once via
-<em>Fiji &rarr; Edit &rarr; Options &rarr; Desktop&hellip;</em></p>
+    <a href="https://github.com/BioImageTools/ome-zarr-fiji-java/pull/102">ome-zarr-fiji-java#102</a>
+    (issue <a href="https://github.com/BioImageTools/ome-zarr-fiji-java/issues/68">#68</a>).
+    Requires Fiji-Latest, which ships <code>fiji-links</code> and <code>scijava-desktop</code>, plus the
+    <code>ome-zarr-fiji-ui</code> jar from that PR. Register the scheme once via
+    <em>Fiji &rarr; Edit &rarr; Options &rarr; Desktop&hellip;</em></p>
 
 <ul>
-  <li>A plain HTTP link to the dataset, for contrast &mdash; the browser downloads or shows it:<br>
-    <a href="https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">https://&hellip;/BR00109990_C2.zarr/0</a></li>
+    <li>A plain HTTP link to the dataset, for contrast &mdash; the browser downloads or shows it:<br>
+        <a href="https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">https://&hellip;/BR00109990_C2.zarr/0</a>
+    </li>
 
-  <li><b>The one this PR adds:</b> a remote OME-Zarr, opened in Fiji:<br>
-    <a href="fiji://open/url?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/url?p=https://&hellip;/BR00109990_C2.zarr/0</a></li>
+    <li><b>The one this PR adds:</b> a remote OME-Zarr, opened in Fiji:<br>
+        <a href="fiji://open/url?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/url?p=https://&hellip;/BR00109990_C2.zarr/0</a>
+    </li>
 
-  <li>A local OME-Zarr on disk (worked before this PR). The path below is an example and
-    will only resolve on the machine that has it &mdash; edit it to one of yours:<br>
-    <a href="fiji://open/file?p=/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0">fiji://open/file?p=/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0</a></li>
+    <li>A local OME-Zarr on disk (worked before this PR). The path below is an example and
+        will only resolve on the machine that has it &mdash; edit it to one of yours:<br>
+        <a href="fiji://open/file?p=/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0">fiji://open/file?p=/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0</a>
+    </li>
 
-  <li>Auto-detecting the source type:<br>
-    <a href="fiji://open/source?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/source?p=https://&hellip;/BR00109990_C2.zarr/0</a></li>
+    <li>The same local file, but through the <code>open/url</code> from route from fiji links as a
+        <code>file:</code> URL:<br>
+        <a href="fiji://open/url?p=file:/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0">fiji://open/url?p=file:/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0</a>
+    </li>
+
+    <li>Auto-detecting the source type:<br>
+        <a href="fiji://open/source?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/source?p=https://&hellip;/BR00109990_C2.zarr/0</a>
+    </li>
 </ul>
 
 <p class="note">Opening honors the configured behavior under
-<em>Plugins &rarr; OME-Zarr &rarr; Settings &rarr; Opening Behavior Settings</em>
-(ImageJ, BigDataViewer, or the selection dialog).
-<code>s3://</code> targets are not supported through links &mdash; use
-<em>Plugins &rarr; OME-Zarr &rarr; Paste OME-Zarr URI</em> for those.</p>
+    <em>Plugins &rarr; OME-Zarr &rarr; Settings &rarr; Opening Behavior Settings</em>
+    (ImageJ, BigDataViewer, or the selection dialog).
+    <code>s3://</code> targets are not supported through links &mdash; use
+    <em>Plugins &rarr; OME-Zarr &rarr; Paste OME-Zarr URI</em> for those.</p>
 
 </body>
 </html>
