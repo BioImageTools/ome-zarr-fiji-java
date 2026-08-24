@@ -240,7 +240,8 @@ public class ZarrOpener
 		return "This image has no calibration.\n\r\n"
 				+ "Location: " + inputUri + "\n\r\n"
 				+ "It is a single resolution level, and no parent OME-Zarr group states the size of a pixel or "
-				+ "the unit to measure it in. Every axis would be reported as 1.0 with no unit, which looks the "
+				+ "the unit to measure it in." + "\n\r\n"
+				+ "Every axis would be reported as 1.0 with no unit, which looks the "
 				+ "same as a genuinely unit-spaced image: measurements would be in pixels.\n\r\n"
 				+ "Open it anyway?\n\r\n"
 				+ "Opening the parent OME-Zarr group up in the hierarchy instead may give you the real calibration.";
