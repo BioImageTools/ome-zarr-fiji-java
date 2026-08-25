@@ -49,8 +49,52 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
 
 ## Architecture
 
-**Entry point:** `DnDHandlerPlugin` – a SciJava `IOPlugin` that intercepts drag-and-drop of filesystem paths, checks
-whether the path is a Zarr folder via `ZarrUtils.isZarr(URI)`, then delegates to `ZarrOpenActions.openWithSettings()`.
+**Two independent entry paths**, both ending in `ZarrOpenActions.openWithSettings()`:
+
+- **Via SciJava `IOService`** (drag-and-drop, `fiji://` links): `OmeZarrIOPlugin` – an `IOPlugin` that claims any
+  `Location` whose URI passes `ZarrUtils.isZarr(URI)`. It accepts both `FileLocation` (drag-and-drop) and remote
+  locations (`HTTPLocation`/`URLLocation`); `Location`s with no URI (`Location.getURI()` returns `null`, e.g.
+  `BytesLocation`) are declined.
+- **Directly, bypassing `IOService`** (clipboard paste – menu command, toolbar button, Ctrl/Cmd+Shift+V):
+  `PasteToOpenAction.pasteFromClipboard()` calls `openWithSettings()` itself. It does not route through
+  `OmeZarrIOPlugin`, and deliberately so: it adds clipboard reading (`ClipboardUtils`), user-facing error messages via
+  its `errorHandler`, and the `s3:` bypass below — none of which fit the `IOPlugin` contract. Nothing in this repo calls
+  `IOService` itself.
+
+**`s3:` support is paste-only, deliberately.** `ZarrUtils.isZarr` cannot probe `s3:` (`ome-zarr-imglib2` has no AWS
+dependency at all, and an `s3://bucket/key` URI names neither region nor endpoint; see its javadoc), so
+`PasteToOpenAction` skips the check for that scheme and opens directly. That path never touches SciJava's `Location`
+layer – it passes a plain `java.net.URI` to `openWithSettings`, and the backend builds its own `S3Client`.
+
+`fiji://…?p=s3://…` fails one layer above us, in the string→`Location` conversion that `OpenLinkHandler` must do before
+it can call `IOService.open(Location)`:
+
+- `open/url` validates with `new URL(p)`, and `java.net.URL` (unlike `URI`) only accepts protocols it has a stream
+  handler for → `MalformedURLException: unknown protocol: s3`, caught and logged inside fiji-links. We are never
+  consulted. **Not fixable from here.**
+- `open/source` calls `LocationService.resolve(p)`. Resolution is one `LocationResolver` plugin per scheme
+  (`FileLocationResolver` for `file` in scijava-common, `HTTPLocationResolver` for `http(s)` in scijava-io-http) and
+  none claims `s3`, so `resolve(URI)` returns `null` and `resolve(String)` falls back to treating the whole string as a
+  *relative filename* → a bogus `file:/<cwd>/s3:/bucket/…`. `OmeZarrIOPlugin` is handed that, i.e. by then there is no
+  `s3:` URI left to accept — which is why relaxing `isZarr` for `s3` would not help links at all.
+
+This second one *is* fixable from here, contrary to what this file used to claim: we only ever use
+`Location.getURI()`, never a `DataHandle`, so a ~15-line `LocationResolver` for `s3` returning `URILocation` would do
+it — and both classes live in scijava-common, so no scijava-desktop and no Java-8 breakage. **We still won't**: it
+would fix `open/source` while `open/url` keeps failing, and half-working link support is worse for users than a clear
+"not supported". Revisit when fiji-links itself handles non-`java.net` schemes (e.g. falling back to
+`LocationService.resolve` when `new URL(p)` throws); links then get `s3:` for free, with no change here.
+
+**`fiji://` links need no code of ours.** Fiji-Latest ships `sc.fiji:fiji-links` (verified present in a Fiji-Latest
+`jars/` alongside `scijava-desktop` and `scijava-io-http`). Its `OpenLinkHandler` owns the
+`fiji://open/{file,url,source}?p=…` syntax, the OS-level scheme registration, and the URI parsing, and finishes by
+calling `IOService.open(Location)` – which dispatches to whichever `IOPlugin` claims the location, i.e. to
+`OmeZarrIOPlugin`. So `fiji://` links honor the user's `ZarrOpenBehavior` for free. **Do not add a `LinkHandler` plugin
+of our own**: it would need `org.scijava:scijava-desktop` (Java 11 bytecode, breaking the Java-8/Fiji-Stable baseline,
+and its unresolvable plugin *type* string in the annotation index makes `DefaultPluginService` log `"1 exceptions
+occurred during plugin discovery."` on every Fiji-Stable start), and it would compete with `fiji-links` for the same
+URIs — `HandlerService.getHandler` returns the first match by priority, so which one wins would be arbitrary. See the
+abandoned `add-link-handler` branch and issue #68 / PR #101 for that dead end.
 
 **Core data model:** `PyramidBackend` is a single-method interface (`<T> PyramidContents<T> load(URI)`).
 `AbstractPyramidBackend` implements `load` as a template method – try the multiscales group, fall back to a single
@@ -125,8 +169,8 @@ SciJava provenance (required by the enforcer). Five published modules:
   all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrOpener` is gone, single arrays are
   loaded through the selected backend as one-level pyramids).
 - **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.settings`, `.dialog`, `.util`);
-  DnD handler, SciJava commands, dialogs, opening-behavior settings. Depends on all four other modules – the
-  batteries-included artifact.
+  the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links), SciJava commands, dialogs, opening-behavior settings.
+  Depends on all four other modules – the batteries-included artifact.
 
 Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`imglib2`, `n5`, `zarrjava`, `fiji`}. Backends
 are selected at runtime (`ZarrReaderBackend`), so `fiji` needs at least one backend on the classpath at runtime even

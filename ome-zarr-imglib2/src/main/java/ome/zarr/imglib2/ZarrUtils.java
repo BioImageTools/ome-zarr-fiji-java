@@ -43,9 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility methods for detecting Zarr datasets on the local filesystem and over
- * HTTP. See {@link #isZarr(URI)} for the schemes that can be probed and why
- * others (e.g. {@code s3:}) cannot.
+ * Utility methods for Zarr datasets.
  */
 public class ZarrUtils
 {
