@@ -54,13 +54,9 @@ import ome.zarr.imglib2.metadata.Omero;
  * <p>
  * The resolution-level count and the per-axis sizes are derived on demand from
  * the full-resolution image and its axis list ({@code cachedCellImgs[ 0 ]} and
- * {@code axesPerLevel[ 0 ]}), rather than stored. Because every count comes from
- * this single source, {@link #numDimensions()}, {@link #numChannels()},
- * {@link #numTimepoints()} and {@link #axisIndex} cannot disagree with one
- * another. Note that {@link #numChannels()}/{@link #numTimepoints()} are
- * independent per-axis extents that fall back to {@code 1} for an absent axis
- * and are <em>not</em> summands of {@link #numDimensions()} (which counts only
- * axes that are actually present). The constructor enforces the one cross-axis
+ * {@code axesPerLevel[ 0 ]}), rather than stored, so {@link #numDimensions()},
+ * {@link #numChannels()}, {@link #numTimepoints()} and {@link #axisIndex} cannot
+ * disagree with one another. The constructor enforces the one cross-axis
  * invariant they all rely on: the axis list and the image have the same number
  * of dimensions.
  *
@@ -223,12 +219,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	/**
 	 * Extent of the full-resolution image along the time axis, or {@code 1} if the
-	 * image has no time axis.
-	 * <p>
-	 * This is an independent per-axis extent, <em>not</em> a component of
-	 * {@link #numDimensions()}. The {@code 1} returned for an absent axis is a
-	 * virtual count, so {@code numTimepoints()} alone cannot distinguish "no time
-	 * axis" from "a time axis of size 1" — use {@link #hasAxis} for that.
+	 * image has no time axis. Same caveats as {@link #numChannels()}.
 	 */
 	public int numTimepoints()
 	{
@@ -261,15 +252,11 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * {@link AxisCalibration#Z}, {@link AxisCalibration#C} or
 	 * {@link AxisCalibration#T}), or {@code -1} if that axis is not present.
 	 * <p>
-	 * The axis is located <em>by name</em> rather than by a fixed position: even
-	 * though OME-Zarr fixes the axis order (C-order t, c, z, y, x, which the
-	 * backend reverses to imglib2 F-order x, y, z, c, t), axes may be absent, so
-	 * the index of any given axis shifts with the set of axes actually present
-	 * (e.g. in F-order {@code c} is at index 2 in {@code xyct} but at index 3 in
-	 * {@code xyzc}). A name lookup resolves the correct index for every such
-	 * combination from a single source of truth, {@link #axesPerLevel}, which is
-	 * in imglib2 F-order and thus aligned 1:1 with the dimensions of
-	 * {@code cachedCellImgs[ 0 ]}.
+	 * The axis is located <em>by name</em> rather than by a fixed position: axes
+	 * may be absent, so an axis' index shifts with the set of axes actually
+	 * present (in F-order, {@code c} is at index 2 in {@code xyct} but at index 3
+	 * in {@code xyzc}). The lookup goes through {@link #axesPerLevel}, which is
+	 * aligned 1:1 with the dimensions of {@code cachedCellImgs[ 0 ]}.
 	 */
 	public int axisIndex( final String axisName )
 	{

@@ -90,8 +90,6 @@ public class ZarrOpeningSettings
 
 	/**
 	 * Gets the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
-	 *
-	 * @return  the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
 	 */
 	public int getPreferredMaxWidth()
 	{
@@ -99,9 +97,7 @@ public class ZarrOpeningSettings
 	}
 
 	/**
-	 * Set the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
-	 *
-	 * @param preferredMaxWidth the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
+	 * Sets the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
 	 */
 	public void setPreferredMaxWidth( final int preferredMaxWidth )
 	{
