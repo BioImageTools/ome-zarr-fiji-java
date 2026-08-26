@@ -49,8 +49,8 @@ import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
  * <p>
  * {@link #load} and {@link #loadSingleArray} are {@code final} because that
  * order is the contract {@link PyramidBackend#load} documents to callers, not a
- * per-backend choice. Everything a backend does vary are {@code protected}
- * abstract methods:
+ * per-backend choice. Everything that does vary per backend sits behind a
+ * {@code protected} abstract method:
  * <ul>
  *   <li>{@link #loadMultiscale} – open the node as a multiscales group;</li>
  *   <li>{@link #tryLoadLevelFromParent} – open it as one level of its parent

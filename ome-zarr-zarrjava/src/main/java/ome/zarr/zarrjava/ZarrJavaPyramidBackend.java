@@ -324,11 +324,10 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		}
 		catch ( ZarrException | NullPointerException | IndexOutOfBoundsException e )
 		{
-			// NB: zarr-java declares only ZarrException on getMultiscaleNode, but in practice it leaks NullPointerException
-			// when no multi scales entry is present
-			// or an IndexOutOfBoundsException when the array is empty
-			// surface those as a missing-metadata error rather than letting them
-			// bubble up unhandled.
+			// NB: getMultiscaleNode declares only ZarrException, but in practice zarr-java
+			// leaks a NullPointerException when there is no multiscales entry and an
+			// IndexOutOfBoundsException when the entry array is empty. Surface both as a
+			// missing-metadata error rather than letting them bubble up unhandled.
 			final StoreHandle handle = multiscaleImage.getStoreHandle();
 			if ( handle != null )
 				checkForBioformats2rawLayout( handle, inputUri );
@@ -576,22 +575,16 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	}
 
 	/**
-	 * Returns the resolved scale array of the first
-	 * {@link ScaleCoordinateTransformation} at {@code level} whose
-	 * {@code scale} field is non-null. Returns {@code null} when the level
-	 * doesn't exist or has no usable scale transformation. Returning the
-	 * array directly (instead of the library type with a nullable
-	 * {@code scale} field) keeps null-tracking local to this method, so
-	 * callers don't have to repeat the {@code scaleCt.scale != null} check.
-	 * OME-Zarr datasets carry at most one scale transformation per level,
-	 * so "first usable one" is observably equivalent to "first scale ct,
-	 * null-check at the call site".
+	 * Scale array of the first {@link ScaleCoordinateTransformation} at
+	 * {@code level} whose {@code scale} field is non-null, or {@code null} when the
+	 * level doesn't exist or has no usable scale transformation. OME-Zarr datasets
+	 * carry at most one scale transformation per level, so "first usable one" is
+	 * observably the same as "the one".
 	 * <p>
-	 * Sonar's {@code S1168} ("return an empty array instead of null") does
-	 * not apply: callers branch on the absence of a scale transformation
-	 * (and build a length-correct fallback in that branch); an empty array
-	 * would silently take the "use it" path and produce a zero-extent
-	 * dataset.
+	 * Sonar's {@code S1168} ("return an empty array instead of null") does not
+	 * apply: callers branch on the absence of a scale transformation and build a
+	 * length-correct fallback in that branch; an empty array would silently take
+	 * the "use it" path and produce a zero-extent dataset.
 	 */
 	@SuppressWarnings( "java:S1168" )
 	private static double[] findLevelScale( final MultiscalesEntry entry, final int level )

@@ -108,9 +108,9 @@ public class ZarrUtils
 	 * report a clear error if the location turns out not to be OME-Zarr.
 	 *
 	 * @param uri location to probe; may be {@code null}
-	 * @return {@code true} if the URI points at the root of a Zarr dataset,
-	 *         {@code false} for unsupported schemes, {@code null}, or any error
-	 *         during probing
+	 * @return {@code true} if the URI points at the root of a Zarr dataset;
+	 *         {@code false} for an unsupported scheme, a {@code null} URI, or any
+	 *         error during probing
 	 */
 	public static boolean isZarr( final URI uri )
 	{
@@ -166,48 +166,28 @@ public class ZarrUtils
 	 * such as {@code mailto:someone@example.com}. Any query or fragment is
 	 * dropped from the parent before walking up.
 	 * <table border="1">
-	 *   <caption>Examples, as covered by {@code ZarrUtilsTest}</caption>
+	 *   <caption>Representative examples; {@code ZarrUtilsTest} covers the full set</caption>
 	 *   <tr><th>{@code uri}</th><th>result</th><th>note</th></tr>
 	 *   <tr><td>{@code file:///data/img.ome.zarr/0}</td>
 	 *       <td>{@code file:/data/img.ome.zarr/}</td>
-	 *       <td>a dropped resolution level</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr/0/}</td>
-	 *       <td>{@code file:/data/img.ome.zarr/}</td>
-	 *       <td>a trailing slash makes no difference</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr/sub/0}</td>
-	 *       <td>{@code file:/data/img.ome.zarr/sub/}</td>
-	 *       <td>the immediate parent, not the multiscales group above it</td></tr>
+	 *       <td>a dropped resolution level; a trailing slash on the input
+	 *           makes no difference</td></tr>
 	 *   <tr><td>{@code file:///data/my%20img.ome.zarr/0}</td>
 	 *       <td>{@code file:/data/my%20img.ome.zarr/}</td>
 	 *       <td>percent-encoded segments stay encoded</td></tr>
-	 *   <tr><td>{@code https://example.com/img.ome.zarr/0}</td>
-	 *       <td>{@code https://example.com/img.ome.zarr/}</td>
-	 *       <td>the same walk over HTTP, host and scheme untouched</td></tr>
 	 *   <tr><td>{@code s3://bucket/img.ome.zarr/0}</td>
 	 *       <td>{@code s3://bucket/img.ome.zarr/}</td>
-	 *       <td>and over S3, without contacting the store</td></tr>
+	 *       <td>the same walk on any scheme, without contacting the store</td></tr>
 	 *   <tr><td>{@code https://example.com/0}</td>
 	 *       <td>{@code https://example.com/}</td>
 	 *       <td>a single segment has the store root as its parent</td></tr>
-	 *   <tr><td>{@code s3://bucket/img.ome.zarr}</td>
-	 *       <td>{@code s3://bucket/}</td>
-	 *       <td>likewise, the bucket root</td></tr>
 	 *   <tr><td>{@code https://example.com/a/b?x=1}</td>
 	 *       <td>{@code https://example.com/a/}</td>
-	 *       <td>query dropped</td></tr>
-	 *   <tr><td>{@code https://example.com/a/b#f}</td>
-	 *       <td>{@code https://example.com/a/}</td>
-	 *       <td>fragment dropped</td></tr>
-	 *   <tr><td>{@code https://example.com}</td><td>{@code null}</td>
-	 *       <td>the host is not a path segment</td></tr>
+	 *       <td>query dropped, as is a fragment</td></tr>
 	 *   <tr><td>{@code https://example.com/}</td><td>{@code null}</td>
-	 *       <td>likewise, a trailing slash adds no segment</td></tr>
-	 *   <tr><td>{@code file:///}</td><td>{@code null}</td>
-	 *       <td>no path segment</td></tr>
+	 *       <td>the host is not a path segment, so there is nothing to remove</td></tr>
 	 *   <tr><td>{@code mailto:someone@example.com}</td><td>{@code null}</td>
 	 *       <td>opaque URI, no path at all</td></tr>
-	 *   <tr><td>{@code 0}</td><td>{@code null}</td>
-	 *       <td>a lone relative segment</td></tr>
 	 *   <tr><td>{@code null}</td><td>{@code null}</td>
 	 *       <td>never throws on a missing location</td></tr>
 	 * </table>
@@ -242,35 +222,23 @@ public class ZarrUtils
 	 * host or bucket instead ({@code s3://bucket} yields {@code "bucket"}); only
 	 * a location with neither, such as an opaque URI, yields {@code ""}.
 	 * <table border="1">
-	 *   <caption>Examples, as covered by {@code ZarrUtilsTest}</caption>
+	 *   <caption>Representative examples; {@code ZarrUtilsTest} covers the full set</caption>
 	 *   <tr><th>{@code uri}</th><th>result</th><th>note</th></tr>
 	 *   <tr><td>{@code file:///data/img.ome.zarr/0}</td><td>{@code "0"}</td>
-	 *       <td>the name of a dropped resolution level</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr/0/}</td><td>{@code "0"}</td>
-	 *       <td>a trailing slash is not a segment</td></tr>
-	 *   <tr><td>{@code s3://bucket/img.ome.zarr/1}</td><td>{@code "1"}</td>
-	 *       <td>the scheme plays no role</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr//0}</td><td>{@code "0"}</td>
-	 *       <td>a doubled slash adds no empty segment</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr/./0}</td><td>{@code "0"}</td>
-	 *       <td>{@code "."} segments are resolved away</td></tr>
+	 *       <td>the name of a dropped resolution level; the scheme plays no
+	 *           role</td></tr>
+	 *   <tr><td>{@code file:///data/img.ome.zarr/./0/}</td><td>{@code "0"}</td>
+	 *       <td>trailing, doubled and {@code "."} segments are resolved
+	 *           away</td></tr>
 	 *   <tr><td>{@code file:///data/my%20img.ome.zarr}</td>
 	 *       <td>{@code "my img.ome.zarr"}</td>
 	 *       <td>decoded, since this is a display name</td></tr>
 	 *   <tr><td>{@code https://example.com/img.zarr/0?x=1}</td><td>{@code "0"}</td>
-	 *       <td>a query is not part of the name</td></tr>
-	 *   <tr><td>{@code https://example.com/img.zarr/0#f}</td><td>{@code "0"}</td>
-	 *       <td>nor is a fragment</td></tr>
-	 *   <tr><td>{@code https://example.com}</td><td>{@code "example.com"}</td>
-	 *       <td>no path segment, so the host names the store root</td></tr>
-	 *   <tr><td>{@code https://example.com/}</td><td>{@code "example.com"}</td>
-	 *       <td>likewise</td></tr>
+	 *       <td>neither a query nor a fragment is part of the name</td></tr>
 	 *   <tr><td>{@code s3://bucket}</td><td>{@code "bucket"}</td>
-	 *       <td>and the bucket names an S3 store root</td></tr>
+	 *       <td>no path segment, so the authority names the store root</td></tr>
 	 *   <tr><td>{@code file:///}</td><td>{@code ""}</td>
 	 *       <td>neither a segment nor an authority to fall back on</td></tr>
-	 *   <tr><td>{@code mailto:someone@example.com}</td><td>{@code ""}</td>
-	 *       <td>opaque URI, no path at all</td></tr>
 	 *   <tr><td>{@code null}</td><td>{@code ""}</td>
 	 *       <td>never throws on a missing location</td></tr>
 	 * </table>
@@ -300,47 +268,30 @@ public class ZarrUtils
 	 * doubled slashes, percent-encoding in the child location, or a query or
 	 * fragment.
 	 * <table border="1">
-	 *   <caption>Examples, as covered by {@code ZarrUtilsTest}</caption>
+	 *   <caption>Representative examples; {@code ZarrUtilsTest} covers the full set</caption>
 	 *   <tr><th>{@code childUri}</th><th>{@code datasetPath}</th>
 	 *       <th>result</th><th>note</th></tr>
 	 *   <tr><td>{@code file:///data/img.ome.zarr/0}</td><td>{@code "0"}</td>
 	 *       <td>{@code true}</td><td>the common single-segment case</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr/0/}</td><td>{@code "0"}</td>
-	 *       <td>{@code true}</td><td>a trailing slash makes no difference</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr/1}</td><td>{@code "1"}</td>
-	 *       <td>{@code true}</td><td>any level, not just level 0</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr//0}</td><td>{@code "0"}</td>
-	 *       <td>{@code true}</td><td>a doubled slash adds no empty segment</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr/./0}</td><td>{@code "0"}</td>
-	 *       <td>{@code true}</td><td>{@code "."} segments are resolved away</td></tr>
 	 *   <tr><td>{@code file:///data/img.ome.zarr/sub/0}</td><td>{@code "sub/0"}</td>
 	 *       <td>{@code true}</td><td>a multi-segment dataset path</td></tr>
 	 *   <tr><td>{@code file:///data/my%20img.zarr/level%200}</td>
 	 *       <td>{@code "level 0"}</td><td>{@code true}</td>
 	 *       <td>the location is encoded, the metadata value is plain text</td></tr>
-	 *   <tr><td>{@code https://example.com/img.zarr/0?x=1}</td><td>{@code "0"}</td>
-	 *       <td>{@code true}</td><td>a query does not hide the segment</td></tr>
 	 *   <tr><td>{@code file:///data/img.ome.zarr/0}</td><td>{@code "/0"}</td>
 	 *       <td>{@code true}</td>
 	 *       <td>a dataset path is relative per the spec, but a stray leading
 	 *           slash still identifies the same segment</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr/1}</td><td>{@code "0"}</td>
-	 *       <td>{@code false}</td><td>a different level</td></tr>
 	 *   <tr><td>{@code file:///data/img.ome.zarr/x0}</td><td>{@code "0"}</td>
 	 *       <td>{@code false}</td>
 	 *       <td>whole segments only: {@code "0"} is not the tail of
 	 *           {@code "x0"}</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr/nosub/0}</td>
-	 *       <td>{@code "sub/0"}</td><td>{@code false}</td>
-	 *       <td>the dataset path must match at a segment boundary</td></tr>
 	 *   <tr><td>{@code file:///data/0}</td><td>{@code "img.ome.zarr/0"}</td>
 	 *       <td>{@code false}</td>
 	 *       <td>a dataset path longer than the child's path cannot identify
 	 *           it</td></tr>
 	 *   <tr><td>{@code https://example.com}</td><td>{@code "example.com"}</td>
 	 *       <td>{@code false}</td><td>the host is not a path segment</td></tr>
-	 *   <tr><td>{@code file:///data/img.ome.zarr/0}</td><td>{@code ""}</td>
-	 *       <td>{@code false}</td><td>nothing to compare against</td></tr>
 	 *   <tr><td>{@code null} or any</td><td>any or {@code null}</td>
 	 *       <td>{@code false}</td><td>never throws on missing arguments</td></tr>
 	 * </table>

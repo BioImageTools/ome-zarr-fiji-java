@@ -87,8 +87,10 @@ public class ScriptUtils
 	 * {@link ScriptUtils#getTemplate()}.
 	 *
 	 * @param ctx scijava context
-	 * @param inputUri URI or filesystem path string identifying the OME-Zarr
-	 *   dataset location; passed to the script module as the {@code "path"} input
+	 * @param inputUri OME-Zarr dataset location; its string form is passed to the
+	 *   script module as the {@code "path"} input
+	 * @param errorHandler receives a user-facing message when the script cannot be
+	 *   found or fails
 	 */
 	public static void executePresetScript( final Context ctx, final URI inputUri, final Consumer< String > errorHandler )
 	{
@@ -102,13 +104,11 @@ public class ScriptUtils
 			return;
 		}
 
-		//retrieve the path to the preset script
 		final String scriptPath = prefService.get( UserScriptSettings.class, "scriptPath", "--none--" );
 
 		if ( Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) )
 		{
 			logger.debug( "Script path is valid: {}. Attempting to run the script.", scriptPath );
-			//the filepath is viable, let's run the script
 			try
 			{
 				ScriptModule module = scriptService.getScript( new File( scriptPath ) ).createModule();

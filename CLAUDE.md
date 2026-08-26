@@ -140,7 +140,8 @@ the currently active one.
 **Key utility classes:**
 
 - `ZarrUtils` – consolidated Zarr-detection utility; `isZarr(URI)` handles both local filesystem (looks for `.zarray` /
-  `zarr.json`) and HTTP (HEAD-requests known metadata files); `isHttpAccessible` is package-private
+  `zarr.json`) and HTTP (HEAD-requests known metadata files). Also holds the pure-URI helpers `parentUri`,
+  `lastSegment` and `isChildPath` used to walk from a dropped resolution level up to its multiscales group
 - `ClipboardUtils` – reads the system clipboard (`readClipboard()`) and converts strings to URIs (
   `stringToUri(String, Consumer<String>)`); `readClipboardAsUri(Consumer<String>)` combines both
 - `BdvUtils` – shows a `PyramidalBdv` in a BDV window, applies OMERO channel colors/display-ranges, wires

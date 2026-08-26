@@ -77,8 +77,8 @@ public class BdvUtils
 	 * Displays the given pyramidal dataset in a BigDataViewer (BDV) window and registers
 	 * it with {@code pyramidalService} for focus tracking.<br>
 	 * Increments the dataset's reference count and decrements it when the window closes.
-	 * If {@code pyramidalService} is non-null, the dataset is immediately marked as active
-	 * and a {@code WindowFocusListener} keeps it up to date as focus moves between windows.
+	 * If {@code pyramidalService} is non-null, the dataset is immediately marked as active.
+	 * Later focus changes are picked up centrally by {@link PyramidalService}.
 	 *
 	 * @param pyramidalBdv the input {@link PyramidalBdv} to be displayed in BDV
 	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking

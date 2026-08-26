@@ -30,12 +30,11 @@ package ome.zarr.imglib2.exceptions;
 
 /**
  * Thrown when an OME-Zarr location points at a container of multiple images
- * (e.g. a {@code bioformats2raw.layout} collection — recognized by the
- * presence of a top-level {@code OME/} folder holding {@code METADATA.ome.xml}
- * — or, in future, a plate or well dataset) rather than at a single
- * multiscale image. Callers can catch this separately from
- * {@link NotAMultiscaleImageException} to offer a child-image picker instead
- * of just reporting "not a multiscale image".
+ * (a {@code bioformats2raw.layout} collection — recognized by that key in the
+ * group's {@code ome} attribute — or, in the future, a plate or well dataset)
+ * rather than at a single multiscale image. Callers can catch this separately
+ * from {@link NotAMultiscaleImageException} to offer a child-image picker
+ * instead of just reporting "not a multiscale image".
  */
 public class MultiImageDatasetException extends RuntimeException
 {

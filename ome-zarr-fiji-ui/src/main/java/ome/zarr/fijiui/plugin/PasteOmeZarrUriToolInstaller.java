@@ -219,7 +219,8 @@ public class PasteOmeZarrUriToolInstaller extends AbstractService implements Sci
 		 * arriving into the clipboard" idiom for a paste action:
 		 * <ul>
 		 *   <li>{@code C000} — drawing color black</li>
-		 *   <li>{@code R00ee} — icon outline. {@code Toolbar.drawIcon}</li>
+		 *   <li>{@code R00ee} — the clipboard outline, a rectangle covering the
+		 *       whole grid.</li>
 		 *   <li>{@code L7278} — vertical arrow stem at x=7 from y=2 to y=8.</li>
 		 *   <li>{@code L48a8} — horizontal top of the arrow head at y=8 from
 		 *       x=4 to x=a.</li>

@@ -50,8 +50,9 @@ public class CreateIcon
 	 * Loads an image from the classpath (e.g., in src/main/resources)
 	 * and scales it to 32x32 pixels.
 	 *
-	 * @param resourcePath path to the image relative to the classpath,
-	 *                     e.g. "/icons/myicon.png"
+	 * @param resourcePath path to the image, resolved against this class's
+	 *                     package unless it starts with {@code "/"},
+	 *                     e.g. "zarr_ij_icon.png"
 	 * @return a scaled ImageIcon, or an empty one if loading fails
 	 */
 	public static ImageIcon getAndResizeIcon( final String resourcePath )

@@ -81,21 +81,9 @@ public final class ClipboardUtils
 	}
 
 	/**
-	 * Resolve text read from clipboard to a URI suitable for opening an OME-Zarr dataset.
-	 * Handles four input forms:
-	 * <ul>
-	 *   <li>{@code http://} or {@code https://} URLs &ndash; used as-is</li>
-	 *   <li>{@code s3://} URIs &ndash; used as-is</li>
-	 *   <li>{@code file:} URIs &ndash; used as-is; both {@code file:/path/to/data.zarr} and
-	 *       {@code file:///path/to/data.zarr} are usable. A URI naming a host
-	 *       ({@code file://some-server/path/to/data.zarr}) is rejected by the backends,
-	 *       because {@link Paths#get(URI)} accepts no authority component.</li>
-	 *   <li>plain filesystem paths &ndash; converted with
-	 *       {@link Paths#get(String, String...)}{@code .toUri()}</li>
-	 * </ul>
-	 * Reports a user-facing error and returns {@code null} when the clipboard
-	 * is empty, the text is not a recognizable URI/path, or the location does
-	 * not appear to be an OME-Zarr dataset.
+	 * {@link #readClipboard()} followed by
+	 * {@link #stringToUri(String, Consumer)}, which documents the accepted input
+	 * forms and the failure reporting.
 	 */
 	public static URI readClipboardAsUri( final Consumer< String > errorHandler )
 	{
