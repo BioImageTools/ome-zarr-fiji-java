@@ -96,24 +96,29 @@ occurred during plugin discovery."` on every Fiji-Stable start), and it would co
 URIs — `HandlerService.getHandler` returns the first match by priority, so which one wins would be arbitrary. See the
 abandoned `add-link-handler` branch and issue #68 / PR #101 for that dead end.
 
-**Core data model:** `PyramidBackend` has one real method (`<T> PyramidContents<T> load(URI)`) plus a `getName()`
+**Core data model:** `PyramidBackend` has one real method (`<T> PyramidContents<T> read(URI)`) plus a `getName()`
 default that backends override with their library's display name (`"N5"`, `"zarr-java"`) for user-facing messages.
-`AbstractPyramidBackend` implements `load` as a template method – try the multiscales group, fall back to a single
+`AbstractPyramidBackend` implements `read` as a template method – try the multiscales group, fall back to a single
 array (parent multiscales group first, then the array's own `dimension_names`) – and leaves three `protected abstract`
-hooks for the reader-specific steps: `loadMultiscale`, `tryLoadLevelFromParent` and `tryLoadArrayNodeOnly` (the two
-`try*` hooks return `null` for "not applicable, try the next"). `load` and `loadSingleArray` are `final`, so the order
+hooks for the reader-specific steps: `readMultiscale`, `tryReadLevelFromParent` and `tryReadArrayNodeOnly` (the two
+`try*` hooks return `null` for "not applicable, try the next"). `read` and `readSingleArray` are `final`, so the order
 is fixed for every backend. It is extended by `N5PyramidBackend` (N5-universe, OME-NGFF v0.3–v0.5) and
 `ZarrJavaPyramidBackend` (`dev.zarr:zarr-java`, Zarr v2/v3). Both produce an immutable `PyramidContents<T>` holding the
 per-level `CachedCellImg`s, affine transforms, axis calibration, and optional OMERO metadata, plus an `asImg()`
 accessor.
 
+Both backends also expose a static `readPyramid(URI)` – `new N5PyramidBackend().read(uri)` in one call – as a
+convenience entry point for API users outside this project. It deliberately is *not* called `read`: Java forbids a
+static method hiding an inherited instance method of the same signature, so `static read(URI)` next to
+`PyramidBackend.read(URI)` is a compile error.
+
 **A too-old reader library is reported, not thrown at the console.** A Fiji-Stable installation whose N5 stack predates
 this plugin fails inside the backend with a `NoClassDefFoundError` (e.g. on `OmeNgffMetadataParser`), which is useless
-to a user. `load` therefore catches it and rethrows `ReaderLibraryUnavailableException` (extends `StoreAccessException`,
+to a user. `read` therefore catches it and rethrows `ReaderLibraryUnavailableException` (extends `StoreAccessException`,
 exposes the missing class through `getMissingClass()`); `ZarrOpener.showReaderLibraryUnavailable` names the backend and
 the missing class and points at Fiji-Latest. The multiscale/single-array fallback lives in a private
-`loadMultiscaleOrSingleArray` for exactly this reason: a `NoClassDefFoundError` from `loadSingleArray` inside the
-`catch ( NotAMultiscaleImageException )` block would not be caught by that same `try`. The guard only spans `load` —
+`readMultiscaleOrSingleArray` for exactly this reason: a `NoClassDefFoundError` from `readSingleArray` inside the
+`catch ( NotAMultiscaleImageException )` block would not be caught by that same `try`. The guard only spans `read` —
 cell images are lazy, so a class missing solely on the chunk-read path still surfaces later, on a viewer thread. The
 `s3:`-specific `S3SupportUnavailableException` below is thrown deeper and converted before it ever reaches this guard.
 
@@ -122,14 +127,14 @@ returns `NO_MATCHING_LEVEL` (`-1`) rather than silently falling back when no lev
 (`ZarrOpener` offers `smallestResolutionLevel()` and asks). `asImg()`/`asLargestImg()`, `asSmallestImg()` and
 `asImg(int)` name the levels explicitly.
 
-The `tryLoadArrayNodeOnly` route can only invent a calibration – `AxisCalibration.createPlaceholderCalibration` builds
+The `tryReadArrayNodeOnly` route can only invent a calibration – `AxisCalibration.createPlaceholderCalibration` builds
 axes with scale `1.0` and an empty unit, because a bare array names its axes (Zarr v3 `dimension_names`) but not their
 scale. Such contents are built through `PyramidContents.singleLevelWithPlaceholderCalibration(...)`, the only way to set
 the `hasPlaceholderCalibration` flag, so the guess always travels with the image; `AbstractPyramidBackend` also logs a
 warning. Every `ZarrOpener` display path refuses to show a flagged image unless the user confirms. An array whose axes
 cannot be named at all (Zarr v2 without a readable parent) remains a hard `SingleArrayAxesUnknownException`.
 
-`ZarrOpener` picks a backend (`ZarrReaderBackend`: N5 or ZARR_JAVA), loads and caches the `PyramidContents`,
+`ZarrOpener` picks a backend (`ZarrReaderBackend`: N5 or ZARR_JAVA), reads and caches the `PyramidContents`,
 and wraps it into either a `PyramidalDataset` (extends `DefaultDataset`, for ImageJ) or a `PyramidalBdv` (per-channel
 BDV `SourceAndConverter` lists, volatile-wrapped per resolution level) – both implement the marker interface
 `Pyramidal`.
@@ -191,7 +196,7 @@ SciJava provenance (required by the enforcer). Five published modules:
 - **`ome-zarr-fiji`** (+`.open`, `.plugins`, `.util`) – ImageJ/BDV integration (`ZarrOpener`, `PyramidalDataset`,
   `PyramidalBdv`, `PyramidalService`, `BdvUtils`). Depends on imglib2 only (no backend artifact, and no N5 library at
   all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrOpener` is gone, single arrays are
-  loaded through the selected backend as one-level pyramids).
+  read through the selected backend as one-level pyramids).
 - **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.settings`, `.dialog`, `.util`);
   the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links), SciJava commands, dialogs, opening-behavior settings.
   Depends on all four other modules – the batteries-included artifact.

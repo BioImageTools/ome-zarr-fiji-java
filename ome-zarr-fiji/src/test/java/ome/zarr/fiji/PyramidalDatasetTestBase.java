@@ -53,7 +53,7 @@ import ome.zarr.imglib2.PyramidContents;
  * Shared tests for the ImageJ Fiji wrapper {@link PyramidalDataset} around a
  * {@link PyramidContents}, covering {@link net.imagej.Dataset}/{@link ImgPlus}
  * exposure, legacy {@link ImagePlus} conversion and resolution-based naming.
- * A concrete class supplies {@link #load(String, Context)} for a specific
+ * A concrete class supplies {@link #read(String, Context)} for a specific
  * backend, so each backend is exercised through the dataset wrapper.
  * <p>
  * These tests intentionally live in the {@code ome.zarr.fiji} test package rather
@@ -64,7 +64,7 @@ import ome.zarr.imglib2.PyramidContents;
 public interface PyramidalDatasetTestBase
 {
 
-	PyramidContents< ? > load( String resource, Context context )
+	PyramidContents< ? > read( String resource, Context context )
 			throws URISyntaxException;
 
 	@ParameterizedTest
@@ -73,7 +73,7 @@ public interface PyramidalDatasetTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = read( resource, context );
 			PyramidalDataset pyramidalDataset = new PyramidalDataset( context, contents, 0 );
 			assertNotNull( pyramidalDataset );
 		}
@@ -85,7 +85,7 @@ public interface PyramidalDatasetTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = read( resource, context );
 			Dataset ijDataset = new PyramidalDataset( context, contents, 0 );
 			assertNotNull( ijDataset );
 			ImgPlus< ? > imgPlus = ijDataset.getImgPlus();
@@ -113,7 +113,7 @@ public interface PyramidalDatasetTestBase
 		try (Context context = new Context())
 		{
 			final PyramidContents< ? > contents =
-					load( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr", context );
+					read( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr", context );
 			final PyramidalDataset dataset = new PyramidalDataset( context, contents, 0 );
 			final ImagePlus imagePlus = dataset.asImagePlus();
 
@@ -130,7 +130,7 @@ public interface PyramidalDatasetTestBase
 		try (Context context = new Context())
 		{
 			final PyramidContents< ? > contents =
-					load( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr", context );
+					read( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr", context );
 			ImagePlus imagePlus = new PyramidalDataset( context, contents, 0 ).asImagePlus();
 
 			assertNotNull( imagePlus );
@@ -153,7 +153,7 @@ public interface PyramidalDatasetTestBase
 		try (Context context = new Context())
 		{
 			final PyramidContents< ? > contents =
-					load( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr", context );
+					read( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr", context );
 			assertTrue( new PyramidalDataset( context, contents, 0 ).getName().endsWith( " (R)" ) );
 			assertTrue( new PyramidalDataset( context, contents, 1 ).getName().endsWith( " (R)" ) );
 		}
@@ -167,7 +167,7 @@ public interface PyramidalDatasetTestBase
 	{
 		try (Context context = new Context())
 		{
-			final PyramidContents< ? > contents = load(
+			final PyramidContents< ? > contents = read(
 					"ome/zarr/testdata/single_resolution_testing/single_resolution_dataset_v5.ome.zarr", context );
 			final String name = new PyramidalDataset( context, contents, 0 ).getName();
 			assertFalse( name.contains( "(R)" ), "expected no '(R)' in name but was: " + name );

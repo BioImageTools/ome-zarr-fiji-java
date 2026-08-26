@@ -29,7 +29,7 @@
 package ome.zarr.imglib2.exceptions;
 
 /**
- * Thrown when an OME-Zarr array node is opened on its own, but its axis
+ * Thrown when an OME-Zarr array node is read on its own, but its axis
  * semantics cannot be determined.
  * <p>
  * A single resolution level (a bare Zarr array) only carries the information

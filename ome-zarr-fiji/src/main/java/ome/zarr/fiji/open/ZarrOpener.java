@@ -61,7 +61,7 @@ import ome.zarr.imglib2.exceptions.StoreAccessException;
 /**
  * Backend-reader-agnostic opener for OME-Zarr datasets.
  * Given a {@link URI} location, a {@link PyramidBackend} and an optional
- * preferred resolution width, it loads a {@link PyramidContents} and
+ * preferred resolution width, it reads a {@link PyramidContents} and
  * opens it in ImageJ (as a {@link PyramidalDataset}) or in BigDataViewer (as a
  * {@link PyramidalBdv}, registered in both cases with the {@link PyramidalService} lifecycle).
  * <p>
@@ -150,7 +150,7 @@ public class ZarrOpener
 	}
 
 	/**
-	 * Loads (once, then caches) the {@link PyramidContents} for the configured
+	 * Reads (once, then caches) the {@link PyramidContents} for the configured
 	 * location using the configured {@link PyramidBackend}.
 	 */
 	// java:S1452: the wildcard is intentional. The pixel type is only known once
@@ -162,7 +162,7 @@ public class ZarrOpener
 	{
 		if ( cachedContents == null )
 		{
-			final PyramidContents< ? > contents = backend.load( inputUri );
+			final PyramidContents< ? > contents = backend.read( inputUri );
 			cachedContents = contents;
 			logDimensions( contents );
 		}
@@ -270,7 +270,7 @@ public class ZarrOpener
 	 * Multiple calls — whether at the same or different level indices — each produce a separate
 	 * ImageJ {@code Dataset} (and a separate window), but all of them are backed by the same
 	 * {@link ome.zarr.imglib2.PyramidContents} object: the cached cell images
-	 * and volatile images are the single source of truth and are never loaded more than once
+	 * and volatile images are the single source of truth and are never read more than once
 	 * per resolution level.
 	 * <p>
 	 * No level is selected here — the caller has already chosen one — so the

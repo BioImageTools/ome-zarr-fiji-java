@@ -102,9 +102,9 @@ public class ZarrUtils
 	 * They are not probed because doing so cheaply is not possible: it would require
 	 * creating an (authenticated), scheme-specific client (such as an S3 client)
 	 * purely to look for metadata files, only to discard it and
-	 * build another client for the actual open later.<br>
+	 * build another client for the actual read later.<br>
 	 * Callers that accept such schemes should therefore bypass this method and
-	 * attempt to open the dataset directly, letting the open method
+	 * attempt to read the dataset directly, letting the backend
 	 * report a clear error if the location turns out not to be OME-Zarr.
 	 *
 	 * @param uri location to probe; may be {@code null}

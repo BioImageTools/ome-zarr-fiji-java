@@ -60,7 +60,7 @@ import ome.zarr.imglib2.metadata.Omero;
 /**
  * Shared parameterized tests for the backend-agnostic {@link PyramidContents}
  * produced by each {@link PyramidBackend} implementation, run by a concrete
- * class that implements this interface and supplies {@link #load(String, Context)}.
+ * class that implements this interface and supplies {@link #read(String, Context)}.
  * <p>
  * This base is deliberately free of any Fiji/BDV dependency: it exercises only
  * the {@code ome.zarr.imglib2} core API. Tests for the Fiji wrappers
@@ -132,11 +132,11 @@ public interface PyramidBackendTestBase
 		);
 	}
 
-	PyramidContents< ? > load( String resource, Context context )
+	PyramidContents< ? > read( String resource, Context context )
 			throws URISyntaxException;
 
 	/**
-	 * A Zarr v3 array without a multiscales parent opens as an uncalibrated
+	 * A Zarr v3 array without a multiscales parent reads as an uncalibrated
 	 * one-level pyramid: the axis names come from its own
 	 * {@code dimension_names}, and nothing supplies scale, unit or OMERO metadata.
 	 */
@@ -145,21 +145,21 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( NESTED_LEVEL_V5, context );
+			PyramidContents< ? > contents = this.read( NESTED_LEVEL_V5, context );
 			assertNotNull( contents );
 			assertEquals( 1, contents.numResolutionLevels() );
 			assertEquals( 2, contents.numDimensions() );
 			assertEquals( "0", contents.name, "Without a multiscales name, the array node name is used" );
 			assertNull( contents.omero );
 			assertTrue( contents.hasPlaceholderCalibration,
-					"An array opened from its own axis names has no real scale or unit, and must say so" );
+					"An array read from its own axis names has no real scale or unit, and must say so" );
 
 			// dimension_names are y, x; the imglib2 image is in F-order, so x comes first.
 			assertEquals( 0, contents.axisIndex( AxisCalibration.X ) );
 			assertEquals( 1, contents.axisIndex( AxisCalibration.Y ) );
 			for ( final AxisCalibration axis : contents.axesPerLevel[ 0 ] )
 			{
-				assertEquals( 1.0, axis.scale, "An array without a parent multiscale opens uncalibrated" );
+				assertEquals( 1.0, axis.scale, "An array without a parent multiscale reads uncalibrated" );
 				assertEquals( "", axis.unit );
 			}
 
@@ -181,12 +181,12 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			assertThrows( SingleArrayAxesUnknownException.class, () -> load( NESTED_LEVEL_V4, context ) );
+			assertThrows( SingleArrayAxesUnknownException.class, () -> this.read( NESTED_LEVEL_V4, context ) );
 		}
 	}
 
 	/**
-	 * The intermediate group of a nested multiscale image is not openable either: it
+	 * The intermediate group of a nested multiscale image is not readable either: it
 	 * carries no multiscales metadata of its own, and although its parent does, that
 	 * parent lists {@code sub/0} and {@code sub/1} - not {@code sub} itself - so it
 	 * cannot be interpreted as a resolution level.
@@ -197,12 +197,12 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			assertThrows( SingleArrayAxesUnknownException.class, () -> load( resource + "/sub", context ) );
+			assertThrows( SingleArrayAxesUnknownException.class, () -> this.read( resource + "/sub", context ) );
 		}
 	}
 
 	/**
-	 * A resolution level whose immediate parent is the multiscales group opens as a
+	 * A resolution level whose immediate parent is the multiscales group reads as a
 	 * one-level pyramid that takes everything the array itself does not know from
 	 * that parent: the image name, the axis names, that level's scale and transform,
 	 * and the group's OMERO metadata.
@@ -213,7 +213,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			assertNotNull( contents );
 			assertEquals( 1, contents.numResolutionLevels(), "A single level is a one-level pyramid" );
 			assertEquals( 5, contents.numDimensions() );
@@ -235,7 +235,7 @@ public interface PyramidBackendTestBase
 			AffineTransform3D transform = contents.transforms[ 0 ];
 			assertArrayEquals( new double[] { 2.0, 2.0, 2.0 },
 					new double[] { transform.get( 0, 0 ), transform.get( 1, 1 ), transform.get( 2, 2 ) },
-					"The transform is the one of the opened level, not of level 0" );
+					"The transform is the one of the level that was read, not of level 0" );
 
 			assertFalse( contents.hasPlaceholderCalibration,
 					"The scale and unit come from the parent multiscales group, so they are real" );
@@ -257,7 +257,7 @@ public interface PyramidBackendTestBase
 	}
 
 	/**
-	 * A multiscales group is opened as a whole pyramid even when its dataset paths
+	 * A multiscales group is read as a whole pyramid even when its dataset paths
 	 * point into a subgroup rather than at direct children.
 	 */
 	@ParameterizedTest
@@ -266,7 +266,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
 			assertEquals( 2, contents.numResolutionLevels() );
 			assertEquals( 16, contents.asImg( 0 ).dimension( 0 ) );
@@ -280,7 +280,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			assertNotNull( contents );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 5, contents.numDimensions() ); // NB: xyzct
@@ -300,7 +300,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 4, contents.numTimepoints() );
 			if ( resource.contains( "4d_testing" ) )
@@ -328,7 +328,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			if ( resource.contains( "5d_testing" ) )
 				assertEquals( 3, contents.numChannels() );
 			if ( resource.contains( "4d_testing" ) )
@@ -356,7 +356,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			assertEquals( 2, contents.numResolutionLevels() );
 		}
 	}
@@ -367,7 +367,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 
 			Img< ? > fullResolution = contents.asImg();
 			assertNotNull( fullResolution );
@@ -386,7 +386,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			Object type = contents.type;
 			assertInstanceOf( UnsignedByteType.class, type );
 		}
@@ -398,7 +398,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
 		}
 	}
@@ -409,7 +409,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			if ( resource.contains( "5d_testing" ) ) // dataset with omero properties
 				assertEquals( 1, contents.omero.rdefs.defaultT );
 		}
@@ -425,7 +425,7 @@ public interface PyramidBackendTestBase
 					( ( resource.contains( "4d_testing" ) && resource.contains( "xyzc" ) )
 							|| ( resource.contains( "4d_testing" ) && resource.contains( "xyzt" ) ) )
 					|| ( resource.contains( "3d_testing" ) && resource.contains( "xyz" ) );
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			assertSelectedLevelDimensions( contents, 100, 64, 16, is3D ); // greater than the highest resolution
 			assertSelectedLevelDimensions( contents, 64, 64, 16, is3D ); // equals the highest resolution
 			assertSelectedLevelDimensions( contents, 50, 32, 8, is3D ); // between the lowest and highest resolution
@@ -466,7 +466,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			final PyramidContents< ? > contents = load( resource, context );
+			final PyramidContents< ? > contents = this.read( resource, context );
 			assertEquals( 0, contents.suggestResolutionLevel( null ),
 					"Without a preferred width, the highest resolution must be suggested" );
 			assertSame( contents.asImg( 0 ), contents.asLargestImg() );
@@ -486,7 +486,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			double[] level0Extents = physicalExtents( contents, 0 );
 
 			for ( int level = 1; level < contents.numResolutionLevels(); level++ )
@@ -525,7 +525,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			// Full-resolution spatial calibration: unit spacing, empty unit string
 			// (the core counterpart of the BDV VoxelDimensions {1,1,1} / "" check).
 			for ( final String axisName : new String[] { AxisCalibration.X, AxisCalibration.Y, AxisCalibration.Z } )
@@ -546,7 +546,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = this.read( resource, context );
 			assertEquals( 3, contents.numResolutionLevels() );
 
 			// NB: compare uint8 values in

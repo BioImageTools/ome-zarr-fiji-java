@@ -45,7 +45,7 @@ import ome.zarr.imglib2.metadata.Omero;
 
 /**
  * Immutable snapshot of everything a {@link PyramidBackend} produces when
- * opening an OME-Zarr multi-resolution image.
+ * reading an OME-Zarr multi-resolution image.
  * <p>
  * Indices in {@code cachedCellImgs} and {@code transforms}
  * are in resolution-level order (index 0 is the highest resolution).
@@ -105,7 +105,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * part of the dataset states, rather than real calibration (see
 	 * {@link AxisCalibration#createPlaceholderCalibration}).
 	 * <p>
-	 * {@code true} only for a single array opened from its own axis names alone,
+	 * {@code true} only for a single array read from its own axis names alone,
 	 * with no parent multiscales group to supply a scale or unit.
 	 */
 	public final boolean hasPlaceholderCalibration;
@@ -338,7 +338,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * Convenience factory for a single-resolution-level pyramid: a
 	 * {@link PyramidContents} with exactly one level. Wraps the one image,
 	 * transform and axis list into the length-1 arrays the builder expects.
-	 * Used by {@link PyramidBackend} implementations when opening a bare array
+	 * Used by {@link PyramidBackend} implementations when reading a bare array
 	 * node (a single resolution level) rather than a whole multiscale image.
 	 *
 	 * @param <T> pixel type
@@ -365,7 +365,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	/**
 	 * Factory for one case where a level's calibration has to be made up: a bare
-	 * array node opened from its own axis names alone, with no parent multiscales
+	 * array node read from its own axis names alone, with no parent multiscales
 	 * group to state a scale or unit. The result has
 	 * {@link #hasPlaceholderCalibration} set.
 	 *

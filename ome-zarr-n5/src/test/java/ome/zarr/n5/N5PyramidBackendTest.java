@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -43,19 +43,18 @@ import ome.zarr.ZarrTestUtils;
 
 class N5PyramidBackendTest implements PyramidBackendTestBase
 {
-	@Override
-	public PyramidContents< ? > load( final String resource, final Context context )
+	public PyramidContents< ? > read( final String resource, final Context context )
 			throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new N5PyramidBackend().load( path.toUri() );
+		return new N5PyramidBackend().read( path.toUri() );
 	}
 
 	@Test
-	void testStaticOpen() throws URISyntaxException
+	void testStaticReadPyramid() throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
-		PyramidContents< ? > contents = N5PyramidBackend.open( path.toUri() );
+		PyramidContents< ? > contents = N5PyramidBackend.readPyramid( path.toUri() );
 		assertNotNull( contents );
 		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
 		assertEquals( 5, contents.numDimensions() );

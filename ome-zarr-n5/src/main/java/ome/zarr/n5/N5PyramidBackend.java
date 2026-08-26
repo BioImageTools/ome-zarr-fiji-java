@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -88,15 +88,18 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	/**
 	 * Convenience entry point for reading an OME-Zarr image with the N5 backend
 	 * without first constructing a backend instance. Equivalent to
-	 * {@code new N5PyramidBackend().load( inputUri )}.
+	 * {@code new N5PyramidBackend().read( inputUri )}.
 	 *
 	 * @param <T> pixel type of the image being read
 	 * @param inputUri location of the OME-Zarr root; either a {@code file:} URI
 	 *   for local datasets or an {@code http(s):} URI for remote datasets
+	 * @return the image as an immutable {@link PyramidContents} of one or more
+	 *   resolution levels
+	 * @see PyramidBackend#read(URI)
 	 */
-	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > open( final URI inputUri )
+	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > readPyramid( final URI inputUri )
 	{
-		return new N5PyramidBackend().load( inputUri );
+		return new N5PyramidBackend().read( inputUri );
 	}
 
 	@Override
@@ -106,7 +109,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	}
 
 	@Override
-	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale( final URI inputUri )
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > readMultiscale( final URI inputUri )
 	{
 		final N5Reader reader;
 		final N5TreeNode treeNode = new N5TreeNode( "" );
@@ -199,7 +202,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	 * {@code arrayUri} against the dataset path of each resolution level.
 	 */
 	@Override
-	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadLevelFromParent(
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadLevelFromParent(
 			final URI parentUri, final URI arrayUri )
 	{
 		final OmeNgffMetadata parentMetadata;
@@ -249,7 +252,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	 * therefore declines.
 	 */
 	@Override
-	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( final URI arrayUri )
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadArrayNodeOnly( final URI arrayUri )
 	{
 		final String[] axisNames;
 		final DataType dataType;
@@ -266,7 +269,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 		}
 		catch ( RuntimeException e )
 		{
-			logger.debug( "Could not open {} as a plain array: {}", arrayUri, e.getMessage() );
+			logger.debug( "Could not read {} as a plain array: {}", arrayUri, e.getMessage() );
 			return null;
 		}
 		final T type = N5Utils.type( dataType );

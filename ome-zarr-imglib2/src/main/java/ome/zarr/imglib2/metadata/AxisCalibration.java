@@ -71,7 +71,7 @@ public final class AxisCalibration
 	/**
 	 * Builds axes whose calibration is a <em>placeholder</em>: the names are real,
 	 * but the unit is empty and the scale is {@code 1.0} because nothing in the data
-	 * says what they are. Used when a single Zarr v3 array is opened without a parent
+	 * says what they are. Used when a single Zarr v3 array is read without a parent
 	 * multiscales group to supply scale and unit information.
 	 * <p>
 	 * The names must already be in the imglib2 F-order expected by

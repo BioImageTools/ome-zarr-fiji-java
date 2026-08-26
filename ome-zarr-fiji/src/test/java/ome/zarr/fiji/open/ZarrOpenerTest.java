@@ -61,7 +61,7 @@ import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 
 /**
- * Direct coverage of the fiji-layer {@link ZarrOpener}: it loads and opens a
+ * Direct coverage of the fiji-layer {@link ZarrOpener}: it reads and opens a
  * dataset in ImageJ and BigDataViewer for either backend implementation,
  * without going through any fiji-ui settings or dialogs.
  * <p>

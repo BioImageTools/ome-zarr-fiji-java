@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -116,14 +116,13 @@ class ZarrOpenActionsTest
 	}
 
 	/**
-	 * Loads the dataset headlessly through {@link ZarrOpener#getContents()} with
-	 * the given backend, without instantiating any UI. Returns the loaded
-	 * {@link PyramidContents}; throws the relevant domain exception (e.g.
+	 * Reads the dataset headlessly through {@link ZarrOpener#getContents()} with
+	 * the given backend, without instantiating any UI. Returns the
+	 * {@link PyramidContents} that was read; throws the relevant domain exception (e.g.
 	 * {@link ome.zarr.imglib2.exceptions.NotAMultiscaleImageException} or
 	 * {@link ome.zarr.imglib2.exceptions.MultiImageDatasetException}).
-	 * Lets tests assert that a dataset opens as a multiscale image without showing a window.
 	 */
-	private static PyramidContents< ? > loadMultiscaleHeadless( final URI uri, final Context context,
+	private static PyramidContents< ? > readMultiscaleHeadless( final URI uri, final Context context,
 			final ZarrReaderBackend backend )
 	{
 		final PyramidBackend pyramidBackend = backend.createBackend();
@@ -311,7 +310,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context ); // no settings object means that the highest resolution is loaded by default
+			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context ); // no settings object means that the highest resolution is opened by default
 			actions.openIJWithImage();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
@@ -533,8 +532,8 @@ class ZarrOpenActionsTest
 	{
 		try (Context context = new Context())
 		{
-			final PyramidContents< ? > contents = loadMultiscaleHeadless( S3_JANELIA_CHOROID_PLEXUS, context, backend );
-			assertNotNull( contents, "Expected the S3 dataset to open as a multiscale image for backend " + backend );
+			final PyramidContents< ? > contents = readMultiscaleHeadless( S3_JANELIA_CHOROID_PLEXUS, context, backend );
+			assertNotNull( contents, "Expected the S3 dataset to be read as a multiscale image for backend " + backend );
 		}
 	}
 

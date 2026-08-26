@@ -57,7 +57,7 @@ import ome.zarr.imglib2.PyramidBackend;
  * provides the UI-facing actions (N5 importer/viewer dialogs, preset script,
  * help) wired by the {@link DnDActionChooser}.
  * <p>
- * The actual loading and ImageJ/BigDataViewer opening lives in
+ * The actual reading and ImageJ/BigDataViewer opening lives in
  * {@link ZarrOpener}, so this class only adds the UI concerns on top.
  */
 public class ZarrOpenActions

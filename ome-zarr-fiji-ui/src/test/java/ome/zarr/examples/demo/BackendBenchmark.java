@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -155,13 +155,13 @@ public class BackendBenchmark
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	private static void benchN5Open( final String dataset )
 	{
-		new N5PyramidBackend().load( Paths.get( dataset ).toUri() );
+		new N5PyramidBackend().read( Paths.get( dataset ).toUri() );
 	}
 
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	private static void benchZarrJavaOpen( final String dataset )
 	{
-		new ZarrJavaPyramidBackend().load( Paths.get( dataset ).toUri() );
+		new ZarrJavaPyramidBackend().read( Paths.get( dataset ).toUri() );
 	}
 
 	private static void benchPureZarrJavaOpen( final String dataset ) throws IOException, ZarrException
@@ -209,14 +209,14 @@ public class BackendBenchmark
 	{
 		final Context n5Context = new Context();
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
-		final PyramidContents< ? > n5Wrapped = new N5PyramidBackend().load( Paths.get( dataset ).toUri() );
+		final PyramidContents< ? > n5Wrapped = new N5PyramidBackend().read( Paths.get( dataset ).toUri() );
 		final RandomAccessibleInterval< ? > n5WrappedLevel0 =
 				new PyramidalBdv<>( n5Context, n5Wrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 
 		final Context zjContext = new Context();
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
 		final PyramidContents< ? > zjWrapped =
-				new ZarrJavaPyramidBackend().load( Paths.get( dataset ).toUri() );
+				new ZarrJavaPyramidBackend().read( Paths.get( dataset ).toUri() );
 		final RandomAccessibleInterval< ? > zjWrappedLevel0 =
 				new PyramidalBdv<>( zjContext, zjWrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
 

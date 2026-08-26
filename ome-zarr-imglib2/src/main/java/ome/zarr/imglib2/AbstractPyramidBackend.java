@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -43,20 +43,20 @@ import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 
 /**
  * Base class for {@link PyramidBackend} implementations that owns the
- * backend-agnostic part of {@link #load}: which kind of OME-Zarr node to try, in
+ * backend-agnostic part of {@link #read}: which kind of OME-Zarr node to try, in
  * what order, and what to do when none of them fits. Subclasses supply only the
  * reader-specific steps, so all backends resolve a given location the same way
  * and report the same failure for it.
  * <p>
- * {@link #load} and {@link #loadSingleArray} are {@code final} because that
- * order is the contract {@link PyramidBackend#load} documents to callers, not a
+ * {@link #read} and {@link #readSingleArray} are {@code final} because that
+ * order is the contract {@link PyramidBackend#read} documents to callers, not a
  * per-backend choice. Everything that does vary per backend sits behind a
  * {@code protected} abstract method:
  * <ul>
- *   <li>{@link #loadMultiscale} – open the node as a multiscales group;</li>
- *   <li>{@link #tryLoadLevelFromParent} – open it as one level of its parent
+ *   <li>{@link #readMultiscale} – read the node as a multiscales group;</li>
+ *   <li>{@link #tryReadLevelFromParent} – read it as one level of its parent
  *       multiscales group;</li>
- *   <li>{@link #tryLoadArrayNodeOnly} – open it from its own metadata alone.</li>
+ *   <li>{@link #tryReadArrayNodeOnly} – read it from its own metadata alone.</li>
  * </ul>
  * The two {@code try*} hooks return {@code null} to mean "not applicable, try
  * the next thing" rather than throwing, so that declining is cheap and cannot be
@@ -69,16 +69,16 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	/**
 	 * {@inheritDoc}
 	 * <p>
-	 * Opens {@code inputUri} as a multiscales group via
-	 * {@link #loadMultiscale}, falling back to {@link #loadSingleArray} when that
+	 * Reads {@code inputUri} as a multiscales group via
+	 * {@link #readMultiscale}, falling back to {@link #readSingleArray} when that
 	 * reports the node carries no multiscales metadata.
 	 */
 	@Override
-	public final < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
+	public final < T extends NativeType< T > & RealType< T > > PyramidContents< T > read( final URI inputUri )
 	{
 		try
 		{
-			return loadMultiscaleOrSingleArray( inputUri );
+			return readMultiscaleOrSingleArray( inputUri );
 		}
 		catch ( NoClassDefFoundError e )
 		{
@@ -86,44 +86,44 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 		}
 	}
 
-	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscaleOrSingleArray(
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > readMultiscaleOrSingleArray(
 			final URI inputUri )
 	{
 		try
 		{
-			return loadMultiscale( inputUri );
+			return readMultiscale( inputUri );
 		}
 		catch ( NotAMultiscaleImageException e )
 		{
 			// The location is a bare array (a single resolution level), not a
-			// multiscales group. Open it as a one-level pyramid instead.
-			return loadSingleArray( inputUri );
+			// multiscales group. Read it as a one-level pyramid instead.
+			return readSingleArray( inputUri );
 		}
 	}
 
 	/**
-	 * Opens the multiscales group at {@code inputUri} as a pyramid with one level
+	 * Reads the multiscales group at {@code inputUri} as a pyramid with one level
 	 * per resolution described by its multiscales metadata.
 	 *
 	 * @param <T> pixel type
-	 * @param inputUri location of the OME-Zarr node to open
+	 * @param inputUri location of the OME-Zarr node to read
 	 * @return the group as a pyramid of one or more resolution levels
 	 * @throws NotAMultiscaleImageException if the node carries no multiscales
-	 *   metadata — this is what makes {@link #load} fall back to
-	 *   {@link #loadSingleArray}, so it must be thrown rather than reported some
+	 *   metadata — this is what makes {@link #read} fall back to
+	 *   {@link #readSingleArray}, so it must be thrown rather than reported some
 	 *   other way
 	 */
-	protected abstract < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale( URI inputUri );
+	protected abstract < T extends NativeType< T > & RealType< T > > PyramidContents< T > readMultiscale( URI inputUri );
 
 	/**
-	 * Opens the array at {@code arrayUri} as a one-level pyramid, trying in order:
+	 * Reads the array at {@code arrayUri} as a one-level pyramid, trying in order:
 	 * <ol>
-	 *   <li>{@link #tryLoadLevelFromParent} against the immediate parent (see
+	 *   <li>{@link #tryReadLevelFromParent} against the immediate parent (see
 	 *       {@link ZarrUtils#parentUri}), when a parent exists — this is the route
 	 *       that recovers axes, scale and OMERO from the parent multiscales group,
 	 *       and the only one that can interpret an OME-Zarr v0.4 / Zarr v2 level;</li>
-	 *   <li>{@link #tryLoadArrayNodeOnly} against the array itself — typically the
-	 *       Zarr v3 {@code dimension_names}, opened uncalibrated.</li>
+	 *   <li>{@link #tryReadArrayNodeOnly} against the array itself — typically the
+	 *       Zarr v3 {@code dimension_names}, read uncalibrated.</li>
 	 * </ol>
 	 * Taking the second route means the scale and unit are placeholders rather than
 	 * anything the dataset states (see
@@ -135,18 +135,18 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	 * @param <T> pixel type
 	 * @param arrayUri location of the array node (a single resolution level)
 	 * @return the level as a one-level {@link PyramidContents}
-	 * @throws SingleArrayAxesUnknownException if neither hook can open the array
+	 * @throws SingleArrayAxesUnknownException if neither hook can read the array
 	 */
-	protected final < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadSingleArray( final URI arrayUri )
+	protected final < T extends NativeType< T > & RealType< T > > PyramidContents< T > readSingleArray( final URI arrayUri )
 	{
 		final URI parentUri = ZarrUtils.parentUri( arrayUri );
 		if ( parentUri != null )
 		{
-			final PyramidContents< T > viaParent = tryLoadLevelFromParent( parentUri, arrayUri );
+			final PyramidContents< T > viaParent = tryReadLevelFromParent( parentUri, arrayUri );
 			if ( viaParent != null )
 				return viaParent;
 		}
-		final PyramidContents< T > nodeOnly = tryLoadArrayNodeOnly( arrayUri );
+		final PyramidContents< T > nodeOnly = tryReadArrayNodeOnly( arrayUri );
 		if ( nodeOnly != null )
 		{
 			logger.warn( "Opening {} with a placeholder calibration: its axis names are correct, but "
@@ -158,30 +158,30 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	}
 
 	/**
-	 * Attempts to open {@code arrayUri} as one level of the multiscales group at
+	 * Attempts to read {@code arrayUri} as one level of the multiscales group at
 	 * {@code parentUri}, returning a one-level pyramid carrying that level's axes,
 	 * scale and transform plus the group's OMERO metadata.
 	 *
 	 * @param <T> pixel type
 	 * @param parentUri location of the presumed parent multiscales group
-	 * @param arrayUri location of the array node being opened
+	 * @param arrayUri location of the array node being read
 	 * @return the level as a one-level pyramid, or {@code null} when the parent is
 	 *   not a readable multiscales group or does not list this array
 	 */
-	protected abstract < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadLevelFromParent(
+	protected abstract < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadLevelFromParent(
 			URI parentUri, URI arrayUri );
 
 	/**
-	 * Attempts to open {@code arrayUri} purely from its own metadata, without a
+	 * Attempts to read {@code arrayUri} purely from its own metadata, without a
 	 * parent multiscales group: typically from the Zarr v3
-	 * {@code dimension_names}, opened uncalibrated (unit scale, no units, no
+	 * {@code dimension_names}, read uncalibrated (unit scale, no units, no
 	 * OMERO).
 	 *
 	 * @param <T> pixel type
-	 * @param arrayUri location of the array node being opened
+	 * @param arrayUri location of the array node being read
 	 * @return the array as a one-level pyramid, or {@code null} when it cannot be
-	 *   opened as an array or declares no usable axis names of its own (e.g. a
+	 *   read as an array or declares no usable axis names of its own (e.g. a
 	 *   Zarr v2 array)
 	 */
-	protected abstract < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( URI arrayUri );
+	protected abstract < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadArrayNodeOnly( URI arrayUri );
 }
