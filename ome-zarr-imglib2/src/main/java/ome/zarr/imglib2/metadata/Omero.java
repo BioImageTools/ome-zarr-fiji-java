@@ -38,7 +38,6 @@ import com.google.gson.Gson;
 @SuppressWarnings( "all" )
 public class Omero
 {
-	// Top-level Omero class
 	public int id;
 
 	public String name;

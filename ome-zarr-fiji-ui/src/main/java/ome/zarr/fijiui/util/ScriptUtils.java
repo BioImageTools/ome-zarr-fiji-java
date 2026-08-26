@@ -104,13 +104,11 @@ public class ScriptUtils
 			return;
 		}
 
-		//retrieve the path to the preset script
 		final String scriptPath = prefService.get( UserScriptSettings.class, "scriptPath", "--none--" );
 
 		if ( Files.exists( Paths.get( scriptPath ).toAbsolutePath() ) )
 		{
 			logger.debug( "Script path is valid: {}. Attempting to run the script.", scriptPath );
-			//the filepath is viable, let's run the script
 			try
 			{
 				ScriptModule module = scriptService.getScript( new File( scriptPath ) ).createModule();

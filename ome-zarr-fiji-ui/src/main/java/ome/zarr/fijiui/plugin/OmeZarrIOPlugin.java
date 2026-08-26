@@ -85,7 +85,6 @@ public class OmeZarrIOPlugin extends AbstractIOPlugin< Object >
 	@Parameter
 	private PrefService prefService;
 
-	// ========================= IOPlugin stuff =========================
 	@Override
 	public boolean supportsOpen( final Location source )
 	{
@@ -106,11 +105,10 @@ public class OmeZarrIOPlugin extends AbstractIOPlugin< Object >
 
 		ZarrOpenActions.openWithSettings( inputUri, context() );
 
-		// Returning such an object makes Scijava's IO handler subsystem believe that the dropped object
-		// has been already fully loaded. Scijava (Fiji) will attempt to display it now (and
-		// will realize that it doesn't know how to display it and will silently not display, which
-		// is exactly what is desired now). The processing of this IO event will then finish finally.
-		// (While our Action Chooser window will still be up there...)
+		// Returning a non-null object tells SciJava's IO subsystem the drop was fully
+		// handled. It then tries to display the result, finds it cannot, and silently
+		// gives up — which is what we want, since openWithSettings has already done
+		// the displaying (or put the action chooser on screen).
 		return FAKE_INPUT;
 	}
 

@@ -324,11 +324,10 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		}
 		catch ( ZarrException | NullPointerException | IndexOutOfBoundsException e )
 		{
-			// NB: zarr-java declares only ZarrException on getMultiscaleNode, but in practice it leaks NullPointerException
-			// when no multi scales entry is present
-			// or an IndexOutOfBoundsException when the array is empty
-			// surface those as a missing-metadata error rather than letting them
-			// bubble up unhandled.
+			// NB: getMultiscaleNode declares only ZarrException, but in practice zarr-java
+			// leaks a NullPointerException when there is no multiscales entry and an
+			// IndexOutOfBoundsException when the entry array is empty. Surface both as a
+			// missing-metadata error rather than letting them bubble up unhandled.
 			final StoreHandle handle = multiscaleImage.getStoreHandle();
 			if ( handle != null )
 				checkForBioformats2rawLayout( handle, inputUri );
