@@ -6,17 +6,17 @@
 
 # About
 
-This repo is currently primarily a Fiji Drag & Drop / Copy & Paste handler for OME-Zarrs.
+This repo is currently primarily a Fiji Drag & Drop / Copy & Paste / FIJI links handler for OME-Zarrs.
 
-If the dropped / pasted target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing.
+If the dropped / pasted / linked target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing.
 
 # Features
 
-## Drag & Drop of local OME-Zarr folders and Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)
+### Drag & Drop of local OME-Zarr folders and URIs
 
 There are several options for what Fiji can do after drag & drop / copy & paste:
 
-Users can select the **default drag & drop / copy & paste behavior** via
+Users can select the **default opening behavior** via
 `Plugins -> OME-Zarr -> Settings -> Opening behavior settings`
 
 The options are:
@@ -35,7 +35,7 @@ is an image(s) viewer especially designed for chunk-based, multiresolution data,
 loading only pixels that are needed for the current display of the image(s). It is thus suitable for OME-Zarr datasets
 and easily handles even the huge ones.
 
-### Copy & Paste:
+### Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)
 
 * Supports local paths, http(s) URLs, and `s3://` URIs
     * Public (anonymous) S3 buckets work out of the box, e.g.
@@ -47,6 +47,20 @@ and easily handles even the huge ones.
     * Paste with `CTRL` / `CMD` / `SHIFT` + `V` (requires FIJI latest)
     * Paste via menu: Plugins -> OME-Zarr -> Paste OME-Zarr URI
     * Paste via button in FIJI: ![fiji_paste_button.png](doc/fiji_paste_button.png)
+
+### FIJI links (`fiji://`)
+
+A `fiji://` link on a web page opens an OME-Zarr straight in a (running) Fiji, honoring the same opening behavior as drag
+& drop and paste. Register the scheme once via `Edit -> Options -> Desktop...`, then a link such as
+
+```
+fiji://open/url?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0
+```
+
+opens that IDR dataset. Use `open/file?p=` for a local path and `open/source?p=` to let Fiji detect the source type.
+`s3://` targets do **not** work through links — paste those instead (see above).
+
+See [doc/fiji-links-demo.html](doc/fiji-links-demo.html) for a page with clickable examples of each form.
 
 ### Dialog options
 
@@ -90,8 +104,7 @@ and easily handles even the huge ones.
 
 * Users can drag & drop / copy & paste a top-level OME-Zarr folder, which contains a multi-resolution dataset. It will
   be opened as multi-resolution data.
-* Drag & dropping / copy & pasting a subfolder of the top-level OME-Zarr folder (i.e. single-resolution data) is
-  currently not supported.
+* Users can also drag & drop / copy & paste a subfolder of the top-level OME-Zarr folder (i.e., single-resolution data).
 
 ## Read channel information from OME-Zarr metadata
 
@@ -125,6 +138,7 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 * With FIJI stable, OME-Zarrs that use Blosc compression cannot be opened on MacOS. Please use FIJI latest, if you
   encounter this issue. Cf. [FIJI downloads](https://imagej.net/software/fiji/downloads).
 * In FIJI stable, Pasting a URI via `CMD` / `SHIFT` / `CTRL` + `V` is not supported. Please use FIJI latest.
+* In FIJI stable, FIJI Links are not supported.
 
 # Example data
 
@@ -188,7 +202,8 @@ Beyond that, you need to copy these extra `.jar` files into the same folder:
 * [endpoints-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/endpoints-spi/2.46.15/endpoints-spi-2.46.15.jar)
 * [http-auth-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/http-auth-spi/2.46.15/http-auth-spi-2.46.15.jar)
 
-One more jar is needed, but it belongs in the `plugins` folder rather than in `jars`, because it is itself a Fiji plugin:
+One more jar is needed, but it belongs in the `plugins` folder rather than in `jars`, because it is itself a Fiji
+plugin:
 
 * [n5-viewer_fiji-6.2.0](https://maven.scijava.org/repository/releases/org/janelia/saalfeldlab/n5-viewer_fiji/6.2.0/n5-viewer_fiji-6.2.0.jar)
 
