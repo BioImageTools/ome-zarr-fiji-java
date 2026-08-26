@@ -50,7 +50,8 @@ and easily handles even the huge ones.
 
 ### FIJI links (`fiji://`)
 
-A `fiji://` link on a web page opens an OME-Zarr straight in a (running) Fiji, honoring the same opening behavior as drag
+A `fiji://` link on a web page opens an OME-Zarr straight in a (running) Fiji, honoring the same opening behavior as
+drag
 & drop and paste. Register the scheme once via `Edit -> Options -> Desktop...`, then a link such as
 
 ```
@@ -234,68 +235,3 @@ Without them, `ome-zarr-zarrjava` cannot be loaded and selecting the zarr-java b
   state is [here](https://github.com/BioImageTools/ome-zarr-fiji-java/releases/tag/2022-Prague-hackathon) and version
   with revived code demo
   is [here](https://github.com/BioImageTools/ome-zarr-fiji-java/releases/tag/revived-prague-code-demo).
-
-# Outlook
-
-This is a brief outline of what [@xulman](https://github.com/xulman/) would
-like to have in Fiji so that the usual Fiji pipelines (meaning the standard
-ImageJ macros, Jython scripts, and even GUI-operated plugins) could work with
-Zarrs and benefit from their chunk-based nature. It is greatly inspired by his
-[previous work on DataStore](https://github.com/fiji-hpc/hpc-datastore/), which is
-essentially [a suite of Fiji plugins](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md#clients)
-to manage (create, modify and delete full datasets, read and write images or
-even their
-chunks) [a http-servered N5 datasets](https://github.com/fiji-hpc/hpc-datastore/blob/master/doc/DESCRIPTION.md).
-
-So, we basically need a suite of Fiji (in fact scijava) plugins that (are
-“headless” and) all of them would take a URI to some NGFF data plus specific
-parameters depending on a particular function/purpose of a plugin. Examples are
-a query plugin, that tells how many time points are available at a given URI,
-or how many channels are available, or a plugin that can read a full image at a
-given time point and a given channel from URI etc. Using these, it is easy to
-construct e.g. a for-loop over all time points to process an image (at variable
-time point and fixed particular channel) one after another. To optimize the
-work with a particular URI, a scijava service (we could call it `NgffService`)
-should work in conjunction with these plugins. Note that a scijava service is a
-singleton object that lives uninterruptedly within Fiji; it is opened and
-closed automatically with Fiji. That way, the commands/plugins are “routed”
-through the `NgffService`, which could implement caching (with time-limited
-memory) so that e.q. repetitive queries will need not to inspect/talk to the
-URI-pointed place (e.g. folder, or remote resource); only the first query will
-be “expensive” in this way. At the heart should be a public Java API —
-interfaces. Currently, the first implementation is planned using the
-[n5 library](https://github.com/saalfeldlab/n5).
-The `NgffService` should wrap around these interfaces.
-
-The plugins would basically outsource their work to the `NgffService`,
-and they could look roughly like this:
-
-```
-@Plugin(type = Command.class, menuPath = "Plugins>OME-Zarr>Read Image")
-public class OmeZarrReadImage implements Command {
-	@Parameter
-	NgffService ngff;
-
-	@Parameter
-	String URI;
-
-	/* More params specifying which image to read in particular */
-
-	@Parameter(type = ItemIO.OUTPUT)
-	Dataset ds;
-
-	@Override
-	public void run() {
-		Img<?> img = ngff.read(URI, /* params */);
-		//create 'ds' around the obtained 'img'
-		//plus the usual 'try-catch', you know ;-)
-	}
-}
-```
-
-Such plugins are directly available via Fiji menus, are (or can be made)
-macro recordable, accessible in the standard ImageJ macros and Jython scripts;
-the `NgffService` can be also directly accessible in the Jython scripts. In
-fact, these are cheap “side-effects” of the great [scijava universe](https://github.com/scijava).
-
-The first version is expected to be delivered in 2025.
