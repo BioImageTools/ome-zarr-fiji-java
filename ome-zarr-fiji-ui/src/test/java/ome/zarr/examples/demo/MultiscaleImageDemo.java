@@ -32,7 +32,7 @@ import java.nio.file.Paths;
 
 import net.imagej.ImageJ;
 
-import ome.zarr.fijiui.plugin.OpenInBDVCommand;
+import ome.zarr.fijiui.plugin.command.OpenInBDVCommand;
 import ome.zarr.examples.legacy.MultiscaleImage;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.imglib2.PyramidContents;

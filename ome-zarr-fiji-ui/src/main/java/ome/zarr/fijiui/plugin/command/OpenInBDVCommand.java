@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,30 +26,51 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.plugin;
+package ome.zarr.fijiui.plugin.command;
 
-import org.scijava.Context;
+import java.lang.invoke.MethodHandles;
+
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 
-import ij.IJ;
-import ome.zarr.fijiui.open.PasteToOpenAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Reads a URI from the system clipboard and opens it as an OME-Zarr
- * dataset, using the same backend, resolution, and open-behavior settings as
- * the drag-and-drop pipeline. Mirrors napari's "paste URI to open" UX.
- */
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Paste OME-Zarr URI" )
-public class PasteOmeZarrUrlCommand implements Command
+import ome.zarr.fiji.Pyramidal;
+import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fiji.util.BdvUtils;
+
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
+public class OpenInBDVCommand implements Command
 {
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
 	@Parameter
-	private Context context;
+	private UIService uiService;
+
+	@Parameter( required = false )
+	private PyramidalService pyramidalService;
+
+	@Parameter( required = false )
+	private Pyramidal pyramidal;
 
 	@Override
 	public void run()
 	{
-		PasteToOpenAction.pasteFromClipboard( context, IJ::error );
+		logger.trace( "Running OpenInBDVCommand. pyramidal={}", pyramidal );
+		if ( pyramidal == null )
+		{
+			final String message = "The active image is not an OME-Zarr dataset.";
+			if ( uiService.isVisible() )
+				uiService.showDialog( message, "Open in BigDataViewer" );
+			else
+				logger.warn( message );
+			return;
+		}
+		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getContext(), pyramidal.getPyramidContents() );
+		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
 	}
 }

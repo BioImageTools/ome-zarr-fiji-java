@@ -92,7 +92,7 @@ import javax.swing.SwingUtilities;
 
 import bdv.viewer.ViewerFrame;
 import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
-import ome.zarr.fijiui.plugin.UserScriptSettings;
+import ome.zarr.fijiui.plugin.command.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
