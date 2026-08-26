@@ -189,19 +189,19 @@ are present):
 
 Beyond that, you need to copy these extra `.jar` files into the same folder:
 
-* [s3-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.46.15/s3-2.46.15.jar)
-* [auth-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/auth/2.46.15/auth-2.46.15.jar)
 * [annotations-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/annotations/2.46.15/annotations-2.46.15.jar)
+* [auth-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/auth/2.46.15/auth-2.46.15.jar)
 * [aws-core-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/aws-core/2.46.15/aws-core-2.46.15.jar)
-* [identity-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/identity-spi/2.46.15/identity-spi-2.46.15.jar)
-* [sdk-core-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/sdk-core/2.46.15/sdk-core-2.46.15.jar)
-* [utils-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/utils/2.46.15/utils-2.46.15.jar)
-* [regions-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/regions/2.46.15/regions-2.46.15.jar)
-* [http-client-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/http-client-spi/2.46.15/http-client-spi-2.46.15.jar)
-* [profiles-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/profiles/2.46.15/profiles-2.46.15.jar)
-* [retries-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/retries-spi/2.46.15/retries-spi-2.46.15.jar)
 * [endpoints-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/endpoints-spi/2.46.15/endpoints-spi-2.46.15.jar)
 * [http-auth-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/http-auth-spi/2.46.15/http-auth-spi-2.46.15.jar)
+* [http-client-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/http-client-spi/2.46.15/http-client-spi-2.46.15.jar)
+* [identity-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/identity-spi/2.46.15/identity-spi-2.46.15.jar)
+* [profiles-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/profiles/2.46.15/profiles-2.46.15.jar)
+* [regions-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/regions/2.46.15/regions-2.46.15.jar)
+* [retries-spi-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/retries-spi/2.46.15/retries-spi-2.46.15.jar)
+* [s3-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.46.15/s3-2.46.15.jar)
+* [sdk-core-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/sdk-core/2.46.15/sdk-core-2.46.15.jar)
+* [utils-2.46.15](https://repo1.maven.org/maven2/software/amazon/awssdk/utils/2.46.15/utils-2.46.15.jar)
 
 One more jar is needed, but it belongs in the `plugins` folder rather than in `jars`, because it is itself a Fiji
 plugin:
