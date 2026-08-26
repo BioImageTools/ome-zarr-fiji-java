@@ -44,11 +44,11 @@
         <a href="https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">https://&hellip;/BR00109990_C2.zarr/0</a>
     </li>
 
-    <li><b>The one this PR adds:</b> a remote OME-Zarr, opened in Fiji:<br>
+    <li><b>A remote OME-Zarr, opened in Fiji:</b><br>
         <a href="fiji://open/url?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/url?p=https://&hellip;/BR00109990_C2.zarr/0</a>
     </li>
 
-    <li>A local OME-Zarr on disk (worked before this PR). The path below is an example and
+    <li>A local OME-Zarr on disk. The path below is an example and
         will only resolve on the machine that has it &mdash; edit it to one of yours:<br>
         <a href="fiji://open/file?p=/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0">fiji://open/file?p=/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0</a>
     </li>
@@ -58,22 +58,19 @@
         <a href="fiji://open/url?p=file:/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0">fiji://open/url?p=file:/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0</a>
     </li>
 
-    <li>Auto-detecting the source type:<br>
+    <li>Fiji auto-detecting the source type:<br>
         <a href="fiji://open/source?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/source?p=https://&hellip;/BR00109990_C2.zarr/0</a>
     </li>
 
-    <li><b>Expected to not be supported</b> an <code>s3://</code> target through <code>open/url</code>, kept here to
-        demonstrate the upstream limitation. It is silently caught upstream
+    <li>Not currently an <code>s3://</code> target through <code>open/url</code>, kept here to
+        demonstrate the upstream limitation. It is silently caught upstream by Fiji.<br>
         <a href="fiji://open/url?p=s3://janelia-cosem-datasets/jrc_mus-choroid-plexus-3/jrc_mus-choroid-plexus-3.zarr/recon-1/em/fibsem-uint8">fiji://open/url?p=s3://janelia-cosem-datasets/&hellip;/em/fibsem-uint8</a>
     </li>
 </ul>
 
 <p class="note">Opening honors the configured behavior under
     <em>Plugins &rarr; OME-Zarr &rarr; Settings &rarr; Opening Behavior Settings</em>
-    (ImageJ, BigDataViewer, or the selection dialog).
-    <code>s3://</code> targets are not supported through links (see the failing link above) &mdash; use
-    <em>Plugins &rarr; OME-Zarr &rarr; Paste OME-Zarr URI</em> for those, which bypasses the
-    <code>Location</code> layer and opens the same URI fine.</p>
+    (ImageJ, BigDataViewer, or the selection dialog).</p>
 
 </body>
 </html>
