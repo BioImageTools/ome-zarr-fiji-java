@@ -96,7 +96,7 @@ import ome.zarr.fiji.Pyramidal;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.fiji.open.ZarrOpener;
+import ome.zarr.fiji.open.ZarrReader;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
@@ -116,7 +116,7 @@ class ZarrOpenActionsTest
 	}
 
 	/**
-	 * Reads the dataset headlessly through {@link ZarrOpener#getContents()} with
+	 * Reads the dataset headlessly through {@link ZarrReader#getContents()} with
 	 * the given backend, without instantiating any UI. Returns the
 	 * {@link PyramidContents} that was read; throws the relevant domain exception (e.g.
 	 * {@link ome.zarr.imglib2.exceptions.NotAMultiscaleImageException} or
@@ -126,7 +126,7 @@ class ZarrOpenActionsTest
 			final ZarrReaderBackend backend )
 	{
 		final PyramidBackend pyramidBackend = backend.createBackend();
-		final ZarrOpener opener = new ZarrOpener( uri, context, pyramidBackend, null, error -> {} );
+		final ZarrReader opener = new ZarrReader( uri, context, pyramidBackend, null, error -> {} );
 		return opener.getContents();
 	}
 
@@ -284,7 +284,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			ZarrOpener opener = ZarrOpenActions.defaultOpener( path.toUri(), context );
+			ZarrReader opener = ZarrOpenActions.defaultOpener( path.toUri(), context );
 
 			assertEquals( ZarrReaderBackend.ZARR_JAVA, ZarrOpeningSettings.DEFAULT_READER_BACKEND );
 			assertInstanceOf( ZarrJavaPyramidBackend.class, backendOf( opener ) );
@@ -296,9 +296,9 @@ class ZarrOpenActionsTest
 		}
 	}
 
-	private static PyramidBackend backendOf( ZarrOpener opener ) throws ReflectiveOperationException
+	private static PyramidBackend backendOf( ZarrReader opener ) throws ReflectiveOperationException
 	{
-		Field field = ZarrOpener.class.getDeclaredField( "backend" );
+		Field field = ZarrReader.class.getDeclaredField( "backend" );
 		field.setAccessible( true );
 		return ( PyramidBackend ) field.get( opener );
 	}

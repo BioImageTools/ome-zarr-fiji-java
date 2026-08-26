@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -61,12 +61,12 @@ import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 
 /**
- * Direct coverage of the fiji-layer {@link ZarrOpener}: it reads and opens a
+ * Direct coverage of the fiji-layer {@link ZarrReader}: it reads and opens a
  * dataset in ImageJ and BigDataViewer for either backend implementation,
  * without going through any fiji-ui settings or dialogs.
  * <p>
  */
-class ZarrOpenerTest
+class ZarrReaderTest
 {
 	private static final String DATASET = "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr";
 
@@ -87,7 +87,7 @@ class ZarrOpenerTest
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
-			ZarrOpener opener = new ZarrOpener( path.toUri(), context, backend, null );
+			ZarrReader opener = new ZarrReader( path.toUri(), context, backend, null );
 			PyramidContents< ? > contents = opener.getContents();
 			assertNotNull( contents );
 			assertEquals( 2, contents.numResolutionLevels() );
@@ -102,7 +102,7 @@ class ZarrOpenerTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null ).openIJWithImage();
+			new ZarrReader( path.toUri(), context, new N5PyramidBackend(), null ).openIJWithImage();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertEquals( 1, datasetService.getDatasets().size() );
@@ -120,7 +120,7 @@ class ZarrOpenerTest
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
-			final ZarrOpener opener = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), null );
+			final ZarrReader opener = new ZarrReader( path.toUri(), context, new N5PyramidBackend(), null );
 			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, opener.openBDVWithImage() );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
@@ -148,7 +148,7 @@ class ZarrOpenerTest
 			{
 				Path path = ZarrTestUtils.resourcePath( levelPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				new ZarrOpener( path.toUri(), context, backend, null, capturedError::set ).openIJWithImage();
+				new ZarrReader( path.toUri(), context, backend, null, capturedError::set ).openIJWithImage();
 
 				assertEquals( 1, datasetService.getDatasets().size(),
 						"Single resolution level should open as a one-level dataset: " + levelPath );
@@ -182,7 +182,7 @@ class ZarrOpenerTest
 			AtomicReference< String > capturedError = new AtomicReference<>();
 			AtomicReference< String > shownMessage = new AtomicReference<>();
 
-			ZarrOpener declining = new ZarrOpener( path.toUri(), context, backend, null, capturedError::set,
+			ZarrReader declining = new ZarrReader( path.toUri(), context, backend, null, capturedError::set,
 					message -> {
 						shownMessage.set( message );
 						return false;
@@ -196,7 +196,7 @@ class ZarrOpenerTest
 			assertTrue( shownMessage.get().contains( "no calibration" ),
 					"Unexpected confirmation message: " + shownMessage.get() );
 
-			new ZarrOpener( path.toUri(), context, backend, null, capturedError::set, message -> true )
+			new ZarrReader( path.toUri(), context, backend, null, capturedError::set, message -> true )
 					.openIJWithImage();
 
 			assertEquals( 1, datasetService.getDatasets().size(), "Accepting must open the image" );
@@ -227,7 +227,7 @@ class ZarrOpenerTest
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				ZarrOpener opener = new ZarrOpener( path.toUri(), context, backend, null, capturedError::set );
+				ZarrReader opener = new ZarrReader( path.toUri(), context, backend, null, capturedError::set );
 
 				assertDoesNotThrow( () -> opener.openIJWithImage(), "Opening " + invalidPath + " should not throw" );
 				assertNotNull( capturedError.get(), "Error handler should have been called for " + invalidPath );
@@ -246,7 +246,7 @@ class ZarrOpenerTest
 		try (Context context = new Context())
 		{
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			ZarrOpener opener = new ZarrOpener( path.toUri(), context, backend, null, capturedError::set );
+			ZarrReader opener = new ZarrReader( path.toUri(), context, backend, null, capturedError::set );
 
 			assertDoesNotThrow( () -> opener.openIJWithImage() );
 			assertTrue( context.getService( DatasetService.class ).getDatasets().isEmpty(),
@@ -274,7 +274,7 @@ class ZarrOpenerTest
 			{
 				Path path = ZarrTestUtils.resourcePath( childPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				ZarrOpener opener = new ZarrOpener( path.toUri(), context, backend, null, capturedError::set );
+				ZarrReader opener = new ZarrReader( path.toUri(), context, backend, null, capturedError::set );
 
 				assertDoesNotThrow( () -> opener.openIJWithImage(), "Opening child image " + childPath + " should not throw" );
 				assertEquals( 1, datasetService.getDatasets().size(),
@@ -306,7 +306,7 @@ class ZarrOpenerTest
 			AtomicReference< String > capturedError = new AtomicReference<>();
 			AtomicReference< String > shownMessage = new AtomicReference<>();
 
-			ZarrOpener declining = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
+			ZarrReader declining = new ZarrReader( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
 					message -> {
 						shownMessage.set( message );
 						return false;
@@ -322,7 +322,7 @@ class ZarrOpenerTest
 			assertTrue( shownMessage.get().contains( "2 resolution levels" ),
 					"A multi-level dataset should say that no level is narrow enough: " + shownMessage.get() );
 
-			ZarrOpener accepting = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
+			ZarrReader accepting = new ZarrReader( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
 					message -> true );
 			accepting.openIJWithImage();
 
@@ -348,7 +348,7 @@ class ZarrOpenerTest
 		try (Context context = new Context())
 		{
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			ZarrOpener opener = new ZarrOpener( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
+			ZarrReader opener = new ZarrReader( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
 					message -> {
 						throw new AssertionError( "BDV must not ask about the preferred width: " + message );
 					} );

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -46,7 +46,7 @@ import ij.IJ;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrReaderBackend;
-import ome.zarr.fiji.open.ZarrOpener;
+import ome.zarr.fiji.open.ZarrReader;
 import ome.zarr.fijiui.dialog.DnDActionChooser;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.imglib2.PyramidBackend;
@@ -58,7 +58,7 @@ import ome.zarr.imglib2.PyramidBackend;
  * help) wired by the {@link DnDActionChooser}.
  * <p>
  * The actual reading and ImageJ/BigDataViewer opening lives in
- * {@link ZarrOpener}, so this class only adds the UI concerns on top.
+ * {@link ZarrReader}, so this class only adds the UI concerns on top.
  */
 public class ZarrOpenActions
 {
@@ -72,7 +72,7 @@ public class ZarrOpenActions
 
 	private final Consumer< String > errorHandler;
 
-	private final ZarrOpener opener;
+	private final ZarrReader opener;
 
 	/**
 	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
@@ -103,19 +103,19 @@ public class ZarrOpenActions
 	}
 
 	/**
-	 * Convenience factory for a backend-agnostic {@link ZarrOpener} that uses the
+	 * Convenience factory for a backend-agnostic {@link ZarrReader} that uses the
 	 * default reader backend ({@link ZarrOpeningSettings#DEFAULT_READER_BACKEND})
 	 * at the highest resolution, reporting failures via {@code IJ::error}.
 	 * <p>
 	 * This lives in the fiji-ui layer because picking a concrete backend is a
-	 * fiji-ui concern: {@link ZarrOpener} itself only knows {@link PyramidBackend}
+	 * fiji-ui concern: {@link ZarrReader} itself only knows {@link PyramidBackend}
 	 * and the fiji layer therefore depends on no concrete backend. It restores the
 	 * one-liner ergonomics of the former no-backend {@code ZarrOpener}
 	 * constructor.
 	 */
-	public static ZarrOpener defaultOpener( final URI inputUri, final Context context )
+	public static ZarrReader defaultOpener( final URI inputUri, final Context context )
 	{
-		return new ZarrOpener( inputUri, context, ZarrOpeningSettings.DEFAULT_READER_BACKEND.createBackend(), null );
+		return new ZarrReader( inputUri, context, ZarrOpeningSettings.DEFAULT_READER_BACKEND.createBackend(), null );
 	}
 
 	/**
@@ -150,7 +150,7 @@ public class ZarrOpenActions
 		this.context = context;
 		this.errorHandler = errorHandler;
 		PyramidBackend pyramidBackend = readerBackend( settings ).createBackend();
-		this.opener = new ZarrOpener( inputUri, context, pyramidBackend, preferredMaxWidth( settings ), errorHandler );
+		this.opener = new ZarrReader( inputUri, context, pyramidBackend, preferredMaxWidth( settings ), errorHandler );
 	}
 
 	/**
@@ -209,7 +209,7 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the dataset in ImageJ at the resolution selected by the settings.
-	 * Delegates to {@link ZarrOpener#openIJWithImage()}.
+	 * Delegates to {@link ZarrReader#openIJWithImage()}.
 	 */
 	public void openIJWithImage()
 	{
@@ -218,7 +218,7 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the given resolution level of the dataset in ImageJ (0 = highest
-	 * resolution). Delegates to {@link ZarrOpener#openIJWithImage(int)}.
+	 * resolution). Delegates to {@link ZarrReader#openIJWithImage(int)}.
 	 */
 	public Object openIJWithImage( final int resolutionLevel )
 	{
@@ -227,7 +227,7 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the dataset in BigDataViewer. Delegates to
-	 * {@link ZarrOpener#openBDVWithImage()}.
+	 * {@link ZarrReader#openBDVWithImage()}.
 	 */
 	public Object openBDVWithImage()
 	{
