@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -9,14 +10,13 @@
 	</parent>
 
 	<groupId>ome.zarr</groupId>
-	<artifactId>ome-zarr-parent</artifactId>
+	<artifactId>ome-zarr-java</artifactId>
 	<version>0.6.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>OME-Zarr additional interfaces for Fiji (parent)</name>
+	<name>OME-Zarr support for Java and FIJI</name>
 	<description>Aggregator for the OME-Zarr imglib2 core, N5/zarr-java backends,
-		and Fiji integration artifacts. Provides drag-and-drop support for opening
-		OME-Zarr image datasets in Fiji/ImageJ and BigDataViewer.
+		and Fiji integration artifacts.
 	</description>
 	<url>https://github.com/BioImageTools/ome-zarr-fiji-java</url>
 
