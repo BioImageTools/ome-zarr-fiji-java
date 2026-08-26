@@ -108,9 +108,9 @@ public class ZarrUtils
 	 * report a clear error if the location turns out not to be OME-Zarr.
 	 *
 	 * @param uri location to probe; may be {@code null}
-	 * @return {@code true} if the URI points at the root of a Zarr dataset,
-	 *         {@code false} for unsupported schemes, {@code null}, or any error
-	 *         during probing
+	 * @return {@code true} if the URI points at the root of a Zarr dataset;
+	 *         {@code false} for an unsupported scheme, a {@code null} URI, or any
+	 *         error during probing
 	 */
 	public static boolean isZarr( final URI uri )
 	{

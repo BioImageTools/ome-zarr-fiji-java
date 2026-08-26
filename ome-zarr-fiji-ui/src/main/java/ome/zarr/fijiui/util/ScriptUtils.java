@@ -87,8 +87,10 @@ public class ScriptUtils
 	 * {@link ScriptUtils#getTemplate()}.
 	 *
 	 * @param ctx scijava context
-	 * @param inputUri URI or filesystem path string identifying the OME-Zarr
-	 *   dataset location; passed to the script module as the {@code "path"} input
+	 * @param inputUri OME-Zarr dataset location; its string form is passed to the
+	 *   script module as the {@code "path"} input
+	 * @param errorHandler receives a user-facing message when the script cannot be
+	 *   found or fails
 	 */
 	public static void executePresetScript( final Context ctx, final URI inputUri, final Consumer< String > errorHandler )
 	{
