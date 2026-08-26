@@ -1,6 +1,6 @@
 /*-
  * #%L
- * OME-Zarr extras for Fiji
+ * OME-Zarr reader based on zarr-java
  * %%
  * Copyright (C) 2022 - 2026 SciJava developers
  * %%
