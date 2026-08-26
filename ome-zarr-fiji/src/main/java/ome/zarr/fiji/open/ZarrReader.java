@@ -317,13 +317,13 @@ public class ZarrReader
 
 	/**
 	 * Shows {@code resolutionLevel} of {@code contents} as a new ImageJ dataset,
-	 * registered with the {@link PyramidalService} lifecycle.
+	 * and makes it the active pyramidal of the {@link PyramidalService}.
 	 */
 	private void showAsDataset( final PyramidContents< ? > contents, final int resolutionLevel )
 	{
 		final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
 		context.getService( UIService.class ).show( dataset );
-		context.getService( PyramidalService.class ).registerImageJDataset( dataset );
+		context.getService( PyramidalService.class ).setActivePyramidal( dataset );
 		logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
 	}
 

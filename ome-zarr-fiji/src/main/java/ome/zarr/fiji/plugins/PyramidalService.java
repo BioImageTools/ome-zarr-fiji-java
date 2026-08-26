@@ -186,12 +186,11 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	/**
 	 * Records the given {@code pyramidal} as the active pyramidal immediately when it is opened in an
 	 * ImageJ window, without waiting for the asynchronous AWT {@code "activeWindow"} focus
-	 * event to arrive at the new {@link ImageWindow}. This mirrors the synchronous registration
-	 * that {@link #registerBdvWindow} performs for BDV windows. So a freshly opened pyramidal is
-	 * the active pyramidal as soon as the open call returns rather than only once the native
-	 * windowing system delivers focus (which may be delayed or never happen under load).
+	 * event to arrive at the new {@link ImageWindow}. So a freshly opened pyramidal is the active
+	 * pyramidal as soon as the open call returns rather than only once the native windowing system
+	 * delivers focus (which may be delayed or never happen under load).
 	 */
-	public void registerImageJDataset( final Pyramidal pyramidal )
+	public void setActivePyramidal( final Pyramidal pyramidal )
 	{
 		logger.trace( "ImageJ dataset opened: {}", pyramidal );
 		activePyramidal.set( pyramidal );
