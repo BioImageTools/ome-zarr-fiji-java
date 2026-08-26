@@ -37,6 +37,22 @@
 
 	<developers>
 		<developer>
+			<id>stefanhahmann</id>
+			<name>Stefan Hahmann</name>
+			<email>hahmann@mpi-cbg.de</email>
+			<url>https://imagej.net/people/stefanhahmann</url>
+			<organization>MPI CBG</organization>
+			<organizationUrl>https://www.mpi-cbg.de/</organizationUrl>
+			<roles>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+		<developer>
 			<id>xulman</id>
 			<name>Vladimir Ulman</name>
 			<url>https://imagej.net/people/xulman</url>
@@ -47,41 +63,6 @@
 				<role>debugger</role>
 				<role>reviewer</role>
 				<role>support</role>
-				<role>maintainer</role>
-			</roles>
-		</developer>
-		<developer>
-			<id>ksugar</id>
-			<name>Ko Sugawara</name>
-			<url>https://imagej.net/people/ksugar</url>
-			<roles>
-				<role>developer</role>
-				<role>debugger</role>
-				<role>reviewer</role>
-				<role>maintainer</role>
-			</roles>
-		</developer>
-		<developer>
-			<id>bogovicj</id>
-			<name>John Bogovic</name>
-			<url>https://imagej.net/people/bogovicj</url>
-			<roles>
-				<role>developer</role>
-				<role>debugger</role>
-				<role>reviewer</role>
-				<role>maintainer</role>
-			</roles>
-		</developer>
-		<developer>
-			<id>stefanhahmann</id>
-			<name>Stefan Hahmann</name>
-			<email>stefan.hahmann@tu-dresden.de</email>
-			<organization>MPI CBG</organization>
-			<organizationUrl>https://www.mpi-cbg.de/</organizationUrl>
-			<roles>
-				<role>lead</role>
-				<role>developer</role>
-				<role>reviewer</role>
 				<role>maintainer</role>
 			</roles>
 		</developer>
@@ -100,11 +81,7 @@
 			<name>Christian Tischer</name>
 			<roles>
 				<role>lead</role>
-				<role>developer</role>
-				<role>debugger</role>
-				<role>reviewer</role>
 				<role>support</role>
-				<role>maintainer</role>
 			</roles>
 		</developer>
 	</developers>
