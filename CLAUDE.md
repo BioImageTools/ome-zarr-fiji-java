@@ -115,7 +115,7 @@ static method hiding an inherited instance method of the same signature, so `sta
 **A too-old reader library is reported, not thrown at the console.** A Fiji-Stable installation whose N5 stack predates
 this plugin fails inside the backend with a `NoClassDefFoundError` (e.g. on `OmeNgffMetadataParser`), which is useless
 to a user. `read` therefore catches it and rethrows `ReaderLibraryUnavailableException` (extends `StoreAccessException`,
-exposes the missing class through `getMissingClass()`); `ZarrOpener.showReaderLibraryUnavailable` names the backend and
+exposes the missing class through `getMissingClass()`); `ZarrReader.showReaderLibraryUnavailable` names the backend and
 the missing class and points at Fiji-Latest. The multiscale/single-array fallback lives in a private
 `readMultiscaleOrSingleArray` for exactly this reason: a `NoClassDefFoundError` from `readSingleArray` inside the
 `catch ( NotAMultiscaleImageException )` block would not be caught by that same `try`. The guard only spans `read` —
@@ -124,17 +124,17 @@ cell images are lazy, so a class missing solely on the chunk-read path still sur
 
 Resolution levels are selected through `PyramidContents.suggestResolutionLevel(Integer preferredMaxWidth)`, which
 returns `NO_MATCHING_LEVEL` (`-1`) rather than silently falling back when no level is narrow enough; the caller decides
-(`ZarrOpener` offers `smallestResolutionLevel()` and asks). `asImg()`/`asLargestImg()`, `asSmallestImg()` and
+(`ZarrReader` offers `smallestResolutionLevel()` and asks). `asImg()`/`asLargestImg()`, `asSmallestImg()` and
 `asImg(int)` name the levels explicitly.
 
 The `tryReadArrayNodeOnly` route can only invent a calibration – `AxisCalibration.createPlaceholderCalibration` builds
 axes with scale `1.0` and an empty unit, because a bare array names its axes (Zarr v3 `dimension_names`) but not their
 scale. Such contents are built through `PyramidContents.singleLevelWithPlaceholderCalibration(...)`, the only way to set
 the `hasPlaceholderCalibration` flag, so the guess always travels with the image; `AbstractPyramidBackend` also logs a
-warning. Every `ZarrOpener` display path refuses to show a flagged image unless the user confirms. An array whose axes
+warning. Every `ZarrReader` display path refuses to show a flagged image unless the user confirms. An array whose axes
 cannot be named at all (Zarr v2 without a readable parent) remains a hard `SingleArrayAxesUnknownException`.
 
-`ZarrOpener` picks a backend (`ZarrReaderBackend`: N5 or ZARR_JAVA), reads and caches the `PyramidContents`,
+`ZarrReader` picks a backend (`ZarrBackend`: N5 or ZARR_JAVA), reads and caches the `PyramidContents`,
 and wraps it into either a `PyramidalDataset` (extends `DefaultDataset`, for ImageJ) or a `PyramidalBdv` (per-channel
 BDV `SourceAndConverter` lists, volatile-wrapped per resolution level) – both implement the marker interface
 `Pyramidal`.
@@ -146,7 +146,8 @@ BDV `SourceAndConverter` lists, volatile-wrapped per resolution level) – both 
 - `SHOW_SELECTION_DIALOG` → `ZarrOpenActionChooser` Swing dialog with icon buttons
 
 **Settings** are persisted across Fiji sessions via SciJava `PrefService`, read/written through `ZarrOpeningSettings` (
-open-behavior, preferred width, reader backend) and surfaced via the `OpeningBehaviorSettings` command.
+open-behavior, preferred width, reader backend – the backend defaults to `ZarrBackend.ZARR_JAVA`) and surfaced via the
+`OpeningBehaviorSettings` command.
 `UserScriptSettings` currently only logs the chosen script path – it does not persist it.
 
 **Active-window tracking:** `PyramidalService` (a SciJava service) tracks the most-recently-focused `Pyramidal` window (
@@ -190,19 +191,21 @@ SciJava provenance (required by the enforcer). Five published modules:
   resolving that call. The flip side of lazy loading is that an installation without the AWS SDK on the classpath
   (Fiji-Stable) only notices when the first `s3:` URI is opened: linking `S3StoreFactory` then throws
   `NoClassDefFoundError`. `createS3Store` catches that and throws `S3SupportUnavailableException` (in `ome-zarr-imglib2`,
-  extends `StoreAccessException`), which `ZarrOpener` turns into a "get Fiji-Latest" message plus a one-line warning
+  extends `StoreAccessException`), which `ZarrReader` turns into a "get Fiji-Latest" message plus a one-line warning
   instead of a linkage stack trace. That exception must be re-thrown ahead of the `catch ( RuntimeException e )` above,
   or its `isSdkException` call would fail to link too — on exactly the installation the message is about.
-- **`ome-zarr-fiji`** (+`.open`, `.plugins`, `.util`) – ImageJ/BDV integration (`ZarrOpener`, `PyramidalDataset`,
-  `PyramidalBdv`, `PyramidalService`, `BdvUtils`). Depends on imglib2 only (no backend artifact, and no N5 library at
-  all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrOpener` is gone, single arrays are
-  read through the selected backend as one-level pyramids).
-- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.settings`, `.dialog`, `.util`);
-  the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links), SciJava commands, dialogs, opening-behavior settings.
+- **`ome-zarr-fiji`** (+`.read`, `.read.exceptions`, `.plugins`, `.util`) – ImageJ/BDV integration (`ZarrReader`,
+  `PyramidalDataset`, `PyramidalBdv`, `PyramidalService`, `BdvUtils`). Depends on imglib2 only (no backend artifact, and
+  no N5 library at all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrReader` is gone,
+  single arrays are read through the selected backend as one-level pyramids).
+- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.plugin.command`, `.dialog`,
+  `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`, the SciJava commands (the Fiji
+  dialogs, including `OpeningBehaviorSettings` and `UserScriptSettings`) in `.plugin.command`, Swing dialogs in
+  `.dialog`.
   Depends on all four other modules – the batteries-included artifact.
 
 Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`imglib2`, `n5`, `zarrjava`, `fiji`}. Backends
-are selected at runtime (`ZarrReaderBackend`), so `fiji` needs at least one backend on the classpath at runtime even
+are selected at runtime (`ZarrBackend`), so `fiji` needs at least one backend on the classpath at runtime even
 though it doesn't depend on one.
 
 A sixth, non-published module **`ome-zarr-coverage-report`** only runs `jacoco:report-aggregate` to produce a
