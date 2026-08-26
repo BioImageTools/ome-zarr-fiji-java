@@ -155,7 +155,7 @@ of the shipped plugin.
 
 ## Modules
 
-Multi-module reactor. The root `pom.xml` is the aggregator (`ome.zarr:ome-zarr-parent`, packaging `pom`) and inherits
+Multi-module reactor. The root `pom.xml` is the aggregator (`ome.zarr:ome-zarr-java`, packaging `pom`) and inherits
 `pom-scijava`. Each module lives in its own directory `ome-zarr-<name>/` with its own `pom.xml` and carries its own
 SciJava provenance (required by the enforcer). Five published modules:
 
