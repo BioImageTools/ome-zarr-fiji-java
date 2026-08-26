@@ -46,7 +46,7 @@ import ij.IJ;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrReaderBackend;
-import ome.zarr.fiji.open.ZarrReader;
+import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fijiui.dialog.DnDActionChooser;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.imglib2.PyramidBackend;

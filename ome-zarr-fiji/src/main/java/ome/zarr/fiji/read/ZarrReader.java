@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fiji.open;
+package ome.zarr.fiji.read;
 
 import org.scijava.Context;
 import org.scijava.ui.UIService;
@@ -52,7 +52,7 @@ import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
-import ome.zarr.fiji.open.exceptions.NonExistingResolutionLevelException;
+import ome.zarr.fiji.read.exceptions.NonExistingResolutionLevelException;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.exceptions.ReaderLibraryUnavailableException;
 import ome.zarr.imglib2.exceptions.S3SupportUnavailableException;

@@ -49,7 +49,7 @@ import ij.gui.ImageWindow;
 import javax.swing.SwingUtilities;
 
 import ome.zarr.fiji.Pyramidal;
-import ome.zarr.fiji.open.ZarrReader;
+import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.ZarrTestUtils;
 
