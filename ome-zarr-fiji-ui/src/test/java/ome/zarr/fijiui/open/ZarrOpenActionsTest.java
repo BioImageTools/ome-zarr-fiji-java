@@ -91,6 +91,7 @@ import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import javax.swing.SwingUtilities;
 
 import bdv.viewer.ViewerFrame;
+import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
 import ome.zarr.fijiui.settings.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.imglib2.PyramidBackend;
@@ -102,7 +103,6 @@ import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrReaderBackend;
-import ome.zarr.fijiui.dialog.DnDActionChooser;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.ZarrTestUtils;
@@ -168,8 +168,8 @@ class ZarrOpenActionsTest
 
 			try (MockedConstruction< ZarrOpenActions > actionsConstruction =
 					mockConstruction( ZarrOpenActions.class );
-					MockedConstruction< DnDActionChooser > chooserConstruction =
-							mockConstruction( DnDActionChooser.class ))
+					MockedConstruction< ZarrOpenActionChooser > chooserConstruction =
+							mockConstruction( ZarrOpenActionChooser.class ))
 			{
 				settings.setCurrentChoice( ZarrOpenBehavior.BDV_MULTI_RESOLUTION );
 				settings.saveSettingsToPreferences( prefService );
@@ -193,7 +193,7 @@ class ZarrOpenActionsTest
 				verify( actionsInstances.get( 1 ), times( 1 ) ).openIJWithImage();
 				verify( actionsInstances.get( 2 ), times( 1 ) ).openIJWithImage();
 
-				final List< DnDActionChooser > chooserInstances = chooserConstruction.constructed();
+				final List< ZarrOpenActionChooser > chooserInstances = chooserConstruction.constructed();
 				assertEquals( 1, chooserInstances.size() );
 				verify( chooserInstances.get( 0 ), times( 1 ) ).showDialog();
 			}

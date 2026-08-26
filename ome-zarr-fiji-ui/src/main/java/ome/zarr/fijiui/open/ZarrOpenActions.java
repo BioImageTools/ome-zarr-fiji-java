@@ -43,11 +43,11 @@ import java.util.Collections;
 import java.util.function.Consumer;
 
 import ij.IJ;
+import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrReaderBackend;
 import ome.zarr.fiji.read.ZarrReader;
-import ome.zarr.fijiui.dialog.DnDActionChooser;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.imglib2.PyramidBackend;
 
@@ -55,7 +55,7 @@ import ome.zarr.imglib2.PyramidBackend;
  * Fiji-ui orchestration of the OME-Zarr opening pipeline: it reads the user's
  * {@link ZarrOpeningSettings}, dispatches to the chosen open behavior, and
  * provides the UI-facing actions (N5 importer/viewer dialogs, preset script,
- * help) wired by the {@link DnDActionChooser}.
+ * help) wired by the {@link ZarrOpenActionChooser}.
  * <p>
  * The actual reading and ImageJ/BigDataViewer opening lives in
  * {@link ZarrReader}, so this class only adds the UI concerns on top.
@@ -78,8 +78,7 @@ public class ZarrOpenActions
 	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
 	 * {@code inputUri} via the action selected by the user's configured
 	 * {@link ZarrOpenBehavior}: ImageJ display, BigDataViewer display, or the
-	 * {@link DnDActionChooser} selection dialog. Shared entry point for the
-	 * drag-and-drop handler and the "paste URL" command.
+	 * {@link ZarrOpenActionChooser} selection dialog.
 	 */
 	public static void openWithSettings( final URI inputUri, final Context context )
 	{
@@ -97,7 +96,7 @@ public class ZarrOpenActions
 			break;
 		case SHOW_SELECTION_DIALOG:
 		default:
-			new DnDActionChooser( context, actions ).showDialog();
+			new ZarrOpenActionChooser( context, actions ).showDialog();
 			break;
 		}
 	}

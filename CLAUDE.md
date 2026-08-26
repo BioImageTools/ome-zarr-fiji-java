@@ -143,7 +143,7 @@ BDV `SourceAndConverter` lists, volatile-wrapped per resolution level) – both 
 
 - `IMAGEJ_HIGHEST_RESOLUTION` / `IMAGEJ_CUSTOM_RESOLUTION` → `ZarrOpenActions.openIJWithImage()`
 - `BDV_MULTI_RESOLUTION` → `ZarrOpenActions.openBDVWithImage()`
-- `SHOW_SELECTION_DIALOG` → `DnDActionChooser` Swing dialog with icon buttons
+- `SHOW_SELECTION_DIALOG` → `ZarrOpenActionChooser` Swing dialog with icon buttons
 
 **Settings** are persisted across Fiji sessions via SciJava `PrefService`, read/written through `ZarrOpeningSettings` (
 open-behavior, preferred width, reader backend) and surfaced via the `OpeningBehaviorSettings` command.

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,13 +32,13 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-import ome.zarr.fijiui.dialog.DnDActionChooser;
+import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
 
 @SuppressWarnings( "all" )
-public class DnDActionChooserDemo
+public class ZarrOpenActionChooserDemo
 {
 
-	private static void setupFrame( JFrame frame, DnDActionChooser menu )
+	private static void setupFrame( JFrame frame, ZarrOpenActionChooser menu )
 	{
 		frame.setTitle( "Keyboard Submenu Example" );
 		frame.setSize( 600, 400 );
@@ -83,7 +83,7 @@ public class DnDActionChooserDemo
 	{
 		SwingUtilities.invokeLater( () -> {
 			final JFrame mainFrame = new JFrame();
-			final DnDActionChooser menu = new DnDActionChooser( null, null );
+			final ZarrOpenActionChooser menu = new ZarrOpenActionChooser( null, null );
 			setupFrame( mainFrame, menu );
 		} );
 	}
