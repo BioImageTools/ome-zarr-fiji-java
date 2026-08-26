@@ -102,7 +102,7 @@ import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
-import ome.zarr.fijiui.open.options.ZarrReaderBackend;
+import ome.zarr.fijiui.open.options.ZarrBackend;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.ZarrTestUtils;
@@ -110,9 +110,9 @@ import ome.zarr.ZarrTestUtils;
 class ZarrOpenActionsTest
 {
 
-	static Stream< ZarrReaderBackend > readerBackends()
+	static Stream< ZarrBackend > backendChoices()
 	{
-		return Stream.of( ZarrReaderBackend.N5, ZarrReaderBackend.ZARR_JAVA );
+		return Stream.of( ZarrBackend.N5, ZarrBackend.ZARR_JAVA );
 	}
 
 	/**
@@ -123,7 +123,7 @@ class ZarrOpenActionsTest
 	 * {@link ome.zarr.imglib2.exceptions.MultiImageDatasetException}).
 	 */
 	private static PyramidContents< ? > readMultiscaleHeadless( final URI uri, final Context context,
-			final ZarrReaderBackend backend )
+			final ZarrBackend backend )
 	{
 		final PyramidBackend pyramidBackend = backend.createBackend();
 		final ZarrReader opener = new ZarrReader( uri, context, pyramidBackend, null, error -> {} );
@@ -201,8 +201,8 @@ class ZarrOpenActionsTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "readerBackends" )
-	void openWithSettingsOpensV5DatasetFromHttpUri( ZarrReaderBackend backend )
+	@MethodSource( "backendChoices" )
+	void openWithSettingsOpensV5DatasetFromHttpUri( ZarrBackend backend )
 			throws URISyntaxException, IOException, InterruptedException, InvocationTargetException
 	{
 		Path datasetRoot = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr" );
@@ -235,7 +235,7 @@ class ZarrOpenActionsTest
 				PrefService prefService = context.getService( PrefService.class );
 				ZarrOpeningSettings settings = new ZarrOpeningSettings();
 				settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION );
-				settings.setReaderBackend( backend );
+				settings.setBackend( backend );
 				settings.saveSettingsToPreferences( prefService );
 
 				ZarrOpenActions.openWithSettings( httpUri, context );
@@ -286,7 +286,7 @@ class ZarrOpenActionsTest
 		{
 			ZarrReader opener = ZarrOpenActions.defaultOpener( path.toUri(), context );
 
-			assertEquals( ZarrReaderBackend.ZARR_JAVA, ZarrOpeningSettings.DEFAULT_READER_BACKEND );
+			assertEquals( ZarrBackend.ZARR_JAVA, ZarrOpeningSettings.DEFAULT_BACKEND );
 			assertInstanceOf( ZarrJavaPyramidBackend.class, backendOf( opener ) );
 
 			// The wired backend also has to be usable, not just of the right type.
@@ -527,8 +527,8 @@ class ZarrOpenActionsTest
 			URI.create( "s3://janelia-cosem-datasets/jrc_mus-choroid-plexus-3/jrc_mus-choroid-plexus-3.zarr/recon-1/em/fibsem-uint8" );
 
 	@ParameterizedTest
-	@MethodSource( "readerBackends" )
-	void openImageFromS3( final ZarrReaderBackend backend )
+	@MethodSource( "backendChoices" )
+	void openImageFromS3( final ZarrBackend backend )
 	{
 		try (Context context = new Context())
 		{
@@ -538,16 +538,16 @@ class ZarrOpenActionsTest
 	}
 
 	@ParameterizedTest
-	@MethodSource( "readerBackends" )
+	@MethodSource( "backendChoices" )
 	@SuppressWarnings( "java:S1612" )
-	void storeAccessErrorIsReportedToErrorHandler( final ZarrReaderBackend backend )
+	void storeAccessErrorIsReportedToErrorHandler( final ZarrBackend backend )
 	{
 		try (Context context = new Context())
 		{
 			final URI uri = URI.create( "s3://nonexistent-bucket/some/path" );
 			final AtomicReference< String > capturedError = new AtomicReference<>();
 			final ZarrOpeningSettings settings = new ZarrOpeningSettings();
-			settings.setReaderBackend( backend );
+			settings.setBackend( backend );
 
 			final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings, capturedError::set );
 			assertDoesNotThrow( () -> {

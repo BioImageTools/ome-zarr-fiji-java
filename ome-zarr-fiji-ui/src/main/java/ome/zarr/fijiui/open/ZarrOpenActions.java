@@ -46,7 +46,7 @@ import ij.IJ;
 import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
-import ome.zarr.fijiui.open.options.ZarrReaderBackend;
+import ome.zarr.fijiui.open.options.ZarrBackend;
 import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.imglib2.PyramidBackend;
@@ -103,18 +103,18 @@ public class ZarrOpenActions
 
 	/**
 	 * Convenience factory for a backend-agnostic {@link ZarrReader} that uses the
-	 * default reader backend ({@link ZarrOpeningSettings#DEFAULT_READER_BACKEND})
+	 * default backend ({@link ZarrOpeningSettings#DEFAULT_BACKEND})
 	 * at the highest resolution, reporting failures via {@code IJ::error}.
 	 * <p>
 	 * This lives in the fiji-ui layer because picking a concrete backend is a
 	 * fiji-ui concern: {@link ZarrReader} itself only knows {@link PyramidBackend}
 	 * and the fiji layer therefore depends on no concrete backend. It restores the
-	 * one-liner ergonomics of the former no-backend {@code ZarrOpener}
+	 * one-liner ergonomics of the former no-backend {@code ZarrReader}
 	 * constructor.
 	 */
 	public static ZarrReader defaultOpener( final URI inputUri, final Context context )
 	{
-		return new ZarrReader( inputUri, context, ZarrOpeningSettings.DEFAULT_READER_BACKEND.createBackend(), null );
+		return new ZarrReader( inputUri, context, ZarrOpeningSettings.DEFAULT_BACKEND.createBackend(), null );
 	}
 
 	/**
@@ -148,16 +148,16 @@ public class ZarrOpenActions
 		this.inputUri = inputUri;
 		this.context = context;
 		this.errorHandler = errorHandler;
-		PyramidBackend pyramidBackend = readerBackend( settings ).createBackend();
+		PyramidBackend pyramidBackend = backend( settings ).createBackend();
 		this.opener = new ZarrReader( inputUri, context, pyramidBackend, preferredMaxWidth( settings ), errorHandler );
 	}
 
 	/**
-	 * Reader backend from the settings, or the default when no settings are given.
+	 * Backend from the settings, or the default when no settings are given.
 	 */
-	private static ZarrReaderBackend readerBackend( final ZarrOpeningSettings settings )
+	private static ZarrBackend backend( final ZarrOpeningSettings settings )
 	{
-		return settings == null ? ZarrOpeningSettings.DEFAULT_READER_BACKEND : settings.getReaderBackend();
+		return settings == null ? ZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
 	}
 
 	/**

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,38 +35,38 @@ import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 
 /**
- * Selects the library used to read OME-Zarr datasets.
+ * The library to be used to read (write) OME-Zarr datasets.
  */
-public enum ZarrReaderBackend
+public enum ZarrBackend
 {
 	/**
-	 * Read via the N5 library (supports Zarr v2 and v3 through n5-zarr).
+	 * Backend supported via the N5 library (supports Zarr v2 and v3 through n5-zarr).
 	 */
 	N5( "N5" ),
 
 	/**
-	 * Read via the zarr-java library (supports Zarr v2 and v3).
+	 * Backend supported via the zarr-java library (supports Zarr v2 and v3).
 	 */
 	ZARR_JAVA( "zarr-java" );
 
 	private final String description;
 
-	ZarrReaderBackend( final String description )
+	ZarrBackend( final String description )
 	{
 		this.description = description;
 	}
 
-	public static ZarrReaderBackend getByName( final String name )
+	public static ZarrBackend getByName( final String name )
 	{
-		for ( final ZarrReaderBackend option : values() )
+		for ( final ZarrBackend option : values() )
 			if ( option.name().equals( name ) )
 				return option;
 		throw new NoSuchElementException( name );
 	}
 
-	public static ZarrReaderBackend getByDescription( final String description )
+	public static ZarrBackend getByDescription( final String description )
 	{
-		for ( final ZarrReaderBackend option : values() )
+		for ( final ZarrBackend option : values() )
 			if ( option.description.equals( description ) )
 				return option;
 		return null;
@@ -78,7 +78,7 @@ public enum ZarrReaderBackend
 	}
 
 	/**
-	 * Creates a fresh {@link PyramidBackend} for the reader library this constant
+	 * Creates a fresh {@link PyramidBackend} for the backend library this constant
 	 * represents.
 	 */
 	public PyramidBackend createBackend()

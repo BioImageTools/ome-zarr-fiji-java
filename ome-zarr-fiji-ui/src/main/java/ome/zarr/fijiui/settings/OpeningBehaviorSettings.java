@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
-import ome.zarr.fijiui.open.options.ZarrReaderBackend;
+import ome.zarr.fijiui.open.options.ZarrBackend;
 
 /**
  * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.
@@ -88,8 +88,8 @@ public class OpeningBehaviorSettings extends DynamicCommand
 			+ "</html>";
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Reader backend", description = "Choose which library is used to read OME-Zarr datasets", initializer = "initZarrReaderBackends" )
-	private String readerBackendChoice;
+	@Parameter( label = "Reader backend", description = "Choose which library is used to read OME-Zarr datasets", initializer = "initZarrBackendChoices" )
+	private String readerBackend;
 
 	@SuppressWarnings( "all" )
 	@Parameter( visibility = ItemVisibility.MESSAGE, required = false, persist = false )
@@ -107,9 +107,9 @@ public class OpeningBehaviorSettings extends DynamicCommand
 	{
 		settings.setCurrentChoice( ZarrOpenBehavior.getByDescription( defaultZarrOpenBehavior ) );
 		settings.setPreferredMaxWidth( preferredWidth );
-		settings.setReaderBackend( ZarrReaderBackend.getByDescription( readerBackendChoice ) );
+		settings.setBackend( ZarrBackend.getByDescription( readerBackend ) );
 		logger.debug( "Now saving OME-Zarr settings to user preferences. Behavior: {}, preferredWidth: {}, readerBackend: {}",
-				settings.getOpenBehavior(), preferredWidth, settings.getReaderBackend() );
+				settings.getOpenBehavior(), preferredWidth, settings.getBackend() );
 		settings.saveSettingsToPreferences( prefService );
 	}
 
@@ -119,7 +119,7 @@ public class OpeningBehaviorSettings extends DynamicCommand
 		settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 		defaultZarrOpenBehavior = settings.getOpenBehavior().getDescription();
 		preferredWidth = settings.getPreferredMaxWidth();
-		readerBackendChoice = settings.getReaderBackend().getDescription();
+		readerBackend = settings.getBackend().getDescription();
 	}
 
 	@SuppressWarnings( "unused" )
@@ -129,10 +129,10 @@ public class OpeningBehaviorSettings extends DynamicCommand
 	}
 
 	@SuppressWarnings( "unused" )
-	private void initZarrReaderBackends()
+	private void initZarrBackends()
 	{
-		getInfo().getMutableInput( "readerBackendChoice", String.class )
-				.setChoices( readerBackendDescriptions( ZarrReaderBackend.values() ) );
+		getInfo().getMutableInput( "readerBackends", String.class )
+				.setChoices( backendDescriptions( ZarrBackend.values() ) );
 	}
 
 	static List< String > enumNamesAsList( final ZarrOpenBehavior[] values )
@@ -140,8 +140,8 @@ public class OpeningBehaviorSettings extends DynamicCommand
 		return Arrays.stream( values ).map( ZarrOpenBehavior::getDescription ).collect( Collectors.toList() );
 	}
 
-	static List< String > readerBackendDescriptions( final ZarrReaderBackend[] values )
+	static List< String > backendDescriptions( final ZarrBackend[] values )
 	{
-		return Arrays.stream( values ).map( ZarrReaderBackend::getDescription ).collect( Collectors.toList() );
+		return Arrays.stream( values ).map( ZarrBackend::getDescription ).collect( Collectors.toList() );
 	}
 }
