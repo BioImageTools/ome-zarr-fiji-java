@@ -96,7 +96,8 @@ occurred during plugin discovery."` on every Fiji-Stable start), and it would co
 URIs — `HandlerService.getHandler` returns the first match by priority, so which one wins would be arbitrary. See the
 abandoned `add-link-handler` branch and issue #68 / PR #101 for that dead end.
 
-**Core data model:** `PyramidBackend` is a single-method interface (`<T> PyramidContents<T> load(URI)`).
+**Core data model:** `PyramidBackend` has one real method (`<T> PyramidContents<T> load(URI)`) plus a `getName()`
+default that backends override with their library's display name (`"N5"`, `"zarr-java"`) for user-facing messages.
 `AbstractPyramidBackend` implements `load` as a template method – try the multiscales group, fall back to a single
 array (parent multiscales group first, then the array's own `dimension_names`) – and leaves three `protected abstract`
 hooks for the reader-specific steps: `loadMultiscale`, `tryLoadLevelFromParent` and `tryLoadArrayNodeOnly` (the two
@@ -105,6 +106,16 @@ is fixed for every backend. It is extended by `N5PyramidBackend` (N5-universe, O
 `ZarrJavaPyramidBackend` (`dev.zarr:zarr-java`, Zarr v2/v3). Both produce an immutable `PyramidContents<T>` holding the
 per-level `CachedCellImg`s, affine transforms, axis calibration, and optional OMERO metadata, plus an `asImg()`
 accessor.
+
+**A too-old reader library is reported, not thrown at the console.** A Fiji-Stable installation whose N5 stack predates
+this plugin fails inside the backend with a `NoClassDefFoundError` (e.g. on `OmeNgffMetadataParser`), which is useless
+to a user. `load` therefore catches it and rethrows `ReaderLibraryUnavailableException` (extends `StoreAccessException`,
+exposes the missing class through `getMissingClass()`); `ZarrOpener.showReaderLibraryUnavailable` names the backend and
+the missing class and points at Fiji-Latest. The multiscale/single-array fallback lives in a private
+`loadMultiscaleOrSingleArray` for exactly this reason: a `NoClassDefFoundError` from `loadSingleArray` inside the
+`catch ( NotAMultiscaleImageException )` block would not be caught by that same `try`. The guard only spans `load` —
+cell images are lazy, so a class missing solely on the chunk-read path still surfaces later, on a viewer thread. The
+`s3:`-specific `S3SupportUnavailableException` below is thrown deeper and converted before it ever reaches this guard.
 
 Resolution levels are selected through `PyramidContents.suggestResolutionLevel(Integer preferredMaxWidth)`, which
 returns `NO_MATCHING_LEVEL` (`-1`) rather than silently falling back when no level is narrow enough; the caller decides
@@ -171,7 +182,12 @@ SciJava provenance (required by the enforcer). Five published modules:
   the class is *verified*, not when the handler runs, so `catch ( SdkException e )` there would load AWS classes on
   every open. Hence `openMultiscaleImage` catches `RuntimeException` and delegates the `instanceof SdkException` test
   to `S3StoreFactory.isSdkException`, guarded by an `isS3( uri ) &&` short-circuit that keeps every other scheme from
-  resolving that call.
+  resolving that call. The flip side of lazy loading is that an installation without the AWS SDK on the classpath
+  (Fiji-Stable) only notices when the first `s3:` URI is opened: linking `S3StoreFactory` then throws
+  `NoClassDefFoundError`. `createS3Store` catches that and throws `S3SupportUnavailableException` (in `ome-zarr-imglib2`,
+  extends `StoreAccessException`), which `ZarrOpener` turns into a "get Fiji-Latest" message plus a one-line warning
+  instead of a linkage stack trace. That exception must be re-thrown ahead of the `catch ( RuntimeException e )` above,
+  or its `isSdkException` call would fail to link too — on exactly the installation the message is about.
 - **`ome-zarr-fiji`** (+`.open`, `.plugins`, `.util`) – ImageJ/BDV integration (`ZarrOpener`, `PyramidalDataset`,
   `PyramidalBdv`, `PyramidalService`, `BdvUtils`). Depends on imglib2 only (no backend artifact, and no N5 library at
   all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrOpener` is gone, single arrays are
