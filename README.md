@@ -122,10 +122,11 @@ for a page with clickable examples of each form.
 We support two backends for reading OME-Zarrs. Users can choose between the two via the
 `Plugins -> OME-Zarr -> Settings -> Open Behavior settings` menu.
 
-* [N5 library](https://github.com/saalfeldlab/n5) (default)
-* [Zarr-java](https://github.com/zarr-developers/zarr-java)
-    * alternative, may be a bit quicker when opening remote resources.
+* [Zarr-java](https://github.com/zarr-developers/zarr-java) (default)
+    * may be a bit quicker when opening remote resources.
     * only supports OME-Zarr v0.4 and v0.5, not v0.3.
+* [N5 library](https://github.com/saalfeldlab/n5)
+    * alternative, and the only one that reads OME-Zarr v0.3.
 
 ## Scriplet support
 
@@ -179,15 +180,15 @@ The build is a multi-module reactor and produces five jars — one per module. C
 On top of those five, a number of third-party `.jar` files are needed. Which ones depends on the
 [reader backend](#reader-backend) you want to use:
 
-* **N5 backend** (the default) needs the N5 library stack (`n5`, `n5-universe`, `n5-zarr`) plus the Fiji
+* **N5 backend** needs the N5 library stack (`n5`, `n5-universe`, `n5-zarr`) plus the Fiji
   plugin `n5-viewer_fiji`.
     * **Fiji-Latest** ships these artifacts, so there is usually nothing to do.
     * **Fiji-Stable** ships older versions that have to be updated to the ones listed below. Be aware that other Fiji
       plugins depend on N5 as well, e.g. **BigStitcher** — so updating the N5 jars in a Fiji-Stable installation may
       break them. If you can, use Fiji-Latest, or keep a separate Fiji installation for OME-Zarr work.
-* **zarr-java backend** needs `zarr-java` 0.1.3 and two of its dependencies (the Blosc codec and a Jackson module),
-  none of which Fiji ships. Without them, `ome-zarr-zarrjava` cannot be loaded and selecting the zarr-java backend in
-  `Plugins -> OME-Zarr -> Settings -> Open Behavior settings` fails.
+* **zarr-java backend** (the default) needs `zarr-java` 0.1.3 and two of its dependencies (the Blosc codec and a
+  Jackson module), none of which Fiji ships. Without them, `ome-zarr-zarrjava` cannot be loaded and selecting the
+  zarr-java backend in `Plugins -> OME-Zarr -> Settings -> Open Behavior settings` fails.
 
 #### N5 backend
 

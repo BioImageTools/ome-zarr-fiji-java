@@ -46,7 +46,7 @@ public class ZarrOpeningSettings
 	 */
 	public static final int DEFAULT_PREFERRED_WIDTH = 1000;
 
-	public static final ZarrReaderBackend DEFAULT_READER_BACKEND = ZarrReaderBackend.N5;
+	public static final ZarrReaderBackend DEFAULT_READER_BACKEND = ZarrReaderBackend.ZARR_JAVA;
 
 	private ZarrOpenBehavior zarrOpenBehavior;
 
