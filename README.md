@@ -138,6 +138,11 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 
 * Reading of OME-Zarrs version <= 0.2 is not supported. With the zarr-java backend, only OME-Zarr v0.4 and v0.5 are
   supported, not v0.3.
+* In FIJI stable, the [N5 backend](#reader-backend) does not work: the N5 jars shipped there are older than this plugin
+  needs. Updating those jars by hand is possible (see [manual installation](#n5-backend)) but breaks other plugins
+  that depend on N5, e.g. **BigStitcher**. Use the default zarr-java backend, which also means no OME-Zarr v0.3 on FIJI
+  stable.
+* In FIJI stable, there is no support for s3 stores. Please use FIJI latest.
 * With FIJI stable, OME-Zarrs that use Blosc compression cannot be opened on MacOS. Please use FIJI latest, if you
   encounter this issue. Cf. [FIJI downloads](https://imagej.net/software/fiji/downloads).
 * In FIJI stable, Pasting a URI via `CMD` / `SHIFT` / `CTRL` + `V` is not supported. Please use FIJI latest.
