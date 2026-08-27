@@ -61,7 +61,8 @@ fiji://open/url?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109
 opens that IDR dataset. Use `open/file?p=` for a local path and `open/source?p=` to let Fiji detect the source type.
 `s3://` targets do **not** work through links — paste those instead (see above).
 
-See [doc/fiji-links-demo.html](doc/fiji-links-demo.html) for a page with clickable examples of each form.
+See [doc/fiji-links-demo.html](https://htmlpreview.github.io/?https://raw.githubusercontent.com/BioImageTools/ome-zarr-fiji-java/main/doc/fiji-links-demo.html)
+for a page with clickable examples of each form.
 
 ### Dialog options
 
