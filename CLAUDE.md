@@ -165,6 +165,13 @@ SciJava provenance (required by the enforcer). Five published modules:
 - **`ome-zarr-n5`** – `ome.zarr.n5` (`N5PyramidBackend`); depends on imglib2 + external N5-universe (codecs `n5-zarr`/
   `n5-blosc`/zstd arrive transitively via `n5-universe`).
 - **`ome-zarr-zarrjava`** – `ome.zarr.zarrjava` (`ZarrJavaPyramidBackend`); depends on imglib2 + `dev.zarr:zarr-java`.
+  Every AWS SDK reference lives in the package-private `S3StoreFactory` (the AWS SDK arrives transitively via
+  zarr-java), so the SDK is loaded only when an `s3:` URI is actually opened; `file:`/`http(s):` datasets never touch
+  it. Keep `ZarrJavaPyramidBackend` AWS-free — `catch` clauses included: a handler's exception type is resolved when
+  the class is *verified*, not when the handler runs, so `catch ( SdkException e )` there would load AWS classes on
+  every open. Hence `openMultiscaleImage` catches `RuntimeException` and delegates the `instanceof SdkException` test
+  to `S3StoreFactory.isSdkException`, guarded by an `isS3( uri ) &&` short-circuit that keeps every other scheme from
+  resolving that call.
 - **`ome-zarr-fiji`** (+`.open`, `.plugins`, `.util`) – ImageJ/BDV integration (`ZarrOpener`, `PyramidalDataset`,
   `PyramidalBdv`, `PyramidalService`, `BdvUtils`). Depends on imglib2 only (no backend artifact, and no N5 library at
   all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrOpener` is gone, single arrays are
