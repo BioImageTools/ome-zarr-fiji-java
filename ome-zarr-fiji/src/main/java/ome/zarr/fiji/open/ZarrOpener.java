@@ -433,7 +433,7 @@ public class ZarrOpener
 		errorHandler.accept( "Could not open the dataset at: " + inputUri + "\n\r\n"
 				+ "Reading from s3:// stores needs the AWS SDK, which is not installed here. "
 				+ "It currently ships with Fiji-Latest only.\n\r\n"
-				+ "Please download Fiji-latest here: https://imagej.net/software/fiji/downloads" );
+				+ "Please download Fiji-latest here: https://fiji.sc/" );
 		final String cause = String.valueOf( e.getCause() );
 		logger.warn( "Cannot open {}: the AWS SDK is not on the classpath ({})", inputUri, cause );
 	}
@@ -444,7 +444,7 @@ public class ZarrOpener
 				+ "The selected backend (" + backend.getName() + ") needs a class that its library "
 				+ "does not provide here:\n"
 				+ e.getMissingClass() + "\n\r\n"
-				+ "Please try using Fiji-latest instead. Download here: https://imagej.net/software/fiji/downloads" );
+				+ "Please try using Fiji-latest instead. Download here: https://fiji.sc/" );
 		logger.warn( "Cannot open {} with the {} backend: reader library class missing ({})",
 				inputUri, backend.getName(), e.getMissingClass() );
 	}
