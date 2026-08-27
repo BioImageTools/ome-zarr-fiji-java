@@ -82,6 +82,7 @@ import org.slf4j.LoggerFactory;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.PyramidLevelAccessException;
+import ome.zarr.imglib2.exceptions.S3SupportUnavailableException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.AbstractPyramidBackend;
 import ome.zarr.imglib2.PyramidBackend;
@@ -230,6 +231,10 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 			// Store-level failures. Wrap them in a backend-agnostic exception.
 			throw new StoreAccessException( uri.toString(), e );
 		}
+		catch ( S3SupportUnavailableException e )
+		{
+			throw e;
+		}
 		catch ( RuntimeException e )
 		{
 			if ( isS3( uri ) && S3StoreFactory.isSdkException( e ) )
@@ -247,10 +252,22 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		else if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
 			store = new HttpStore( uri.toString() );
 		else if ( isS3( uri ) )
-			store = S3StoreFactory.create( uri );
+			store = createS3Store( uri );
 		else
 			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + uri );
 		return store.resolve();
+	}
+
+	private static Store createS3Store( final URI uri )
+	{
+		try
+		{
+			return S3StoreFactory.create( uri );
+		}
+		catch ( NoClassDefFoundError e )
+		{
+			throw new S3SupportUnavailableException( uri.toString(), e );
+		}
 	}
 
 	private static boolean isS3( final URI uri )

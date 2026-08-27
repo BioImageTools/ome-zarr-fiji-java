@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -54,6 +54,7 @@ import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.open.exceptions.NonExistingResolutionLevelException;
 import ome.zarr.fiji.util.BdvUtils;
+import ome.zarr.imglib2.exceptions.S3SupportUnavailableException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 
 /**
@@ -386,6 +387,10 @@ public class ZarrOpener
 		{
 			showNotAMultiscaleError( e );
 		}
+		catch ( S3SupportUnavailableException e )
+		{
+			showS3SupportUnavailable( e );
+		}
 		catch ( StoreAccessException e )
 		{
 			showStoreAccessError( e );
@@ -416,6 +421,16 @@ public class ZarrOpener
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
 				+ "The location is not a readable OME-Zarr multiscale image and could not be opened as a single resolution level." );
 		logger.warn( "Not a multiscale image: {}. Error message: {}", inputUri, e.getMessage() );
+	}
+
+	private void showS3SupportUnavailable( final S3SupportUnavailableException e )
+	{
+		errorHandler.accept( "Could not open the dataset at: " + inputUri + "\n\r\n"
+				+ "Reading from s3:// stores needs the AWS SDK, which is not installed here. "
+				+ "It currently ships with Fiji-Latest only.\n\r\n"
+				+ "Please download Fiji-latest here: https://imagej.net/software/fiji/downloads" );
+		final String cause = String.valueOf( e.getCause() );
+		logger.warn( "Cannot open {}: the AWS SDK is not on the classpath ({})", inputUri, cause );
 	}
 
 	private void showStoreAccessError( final Exception e )
