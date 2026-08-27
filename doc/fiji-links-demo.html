@@ -26,6 +26,13 @@
             color: #555;
             font-size: 90%;
         }
+
+        .fiji-logo {
+            width: 24px;
+            height: 24px;
+            vertical-align: middle;
+            margin-right: .4em;
+        }
     </style>
 </head>
 <body>
@@ -43,7 +50,15 @@
     </li>
 
     <li><b>A remote OME-Zarr, opened in Fiji:</b><br>
-        <a href="fiji://open/url?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/url?p=https://&hellip;/BR00109990_C2.zarr/0</a>
+        <a href="fiji://open/url?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0"><img
+                class="fiji-logo" src="fiji_logo.png" alt="Open in Fiji"></a><a
+            href="fiji://open/url?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/url?p=https://&hellip;/BR00109990_C2.zarr/0</a>
+    </li>
+
+    <li><b>Fiji auto-detecting the source type:</b><br>
+        <a href="fiji://open/source?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0"><img
+                class="fiji-logo" src="fiji_logo.png" alt="Open in Fiji"></a><a
+            href="fiji://open/source?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/source?p=https://&hellip;/BR00109990_C2.zarr/0</a>
     </li>
 
     <li>A local OME-Zarr on disk. The path below is an example and
@@ -54,10 +69,6 @@
     <li>The same local file, but through the <code>open/url</code> from route from fiji links as a
         <code>file:</code> URL:<br>
         <a href="fiji://open/url?p=file:/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0">fiji://open/url?p=file:/Users/hahmann/Data/omev5/BR00109990_C2.zarr/0</a>
-    </li>
-
-    <li><b>Fiji auto-detecting the source type:</b><br>
-        <a href="fiji://open/source?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">fiji://open/source?p=https://&hellip;/BR00109990_C2.zarr/0</a>
     </li>
 
     <li>Currently not supported: an <code>s3://</code> target through <code>open/url</code>, kept here to
