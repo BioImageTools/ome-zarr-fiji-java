@@ -100,6 +100,12 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	}
 
 	@Override
+	public String getName()
+	{
+		return "N5";
+	}
+
+	@Override
 	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale( final URI inputUri )
 	{
 		final N5Reader reader;

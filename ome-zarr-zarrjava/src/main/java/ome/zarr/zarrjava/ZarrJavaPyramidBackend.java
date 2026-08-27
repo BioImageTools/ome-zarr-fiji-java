@@ -114,6 +114,12 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	}
 
 	@Override
+	public String getName()
+	{
+		return "zarr-java";
+	}
+
+	@Override
 	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale( final URI inputUri )
 	{
 		final MultiscaleImage multiscaleImage = openMultiscaleImage( inputUri );

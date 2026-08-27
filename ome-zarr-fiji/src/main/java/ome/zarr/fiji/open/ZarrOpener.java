@@ -54,6 +54,7 @@ import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.open.exceptions.NonExistingResolutionLevelException;
 import ome.zarr.fiji.util.BdvUtils;
+import ome.zarr.imglib2.exceptions.ReaderLibraryUnavailableException;
 import ome.zarr.imglib2.exceptions.S3SupportUnavailableException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 
@@ -391,6 +392,10 @@ public class ZarrOpener
 		{
 			showS3SupportUnavailable( e );
 		}
+		catch ( ReaderLibraryUnavailableException e )
+		{
+			showReaderLibraryUnavailable( e );
+		}
 		catch ( StoreAccessException e )
 		{
 			showStoreAccessError( e );
@@ -431,6 +436,17 @@ public class ZarrOpener
 				+ "Please download Fiji-latest here: https://imagej.net/software/fiji/downloads" );
 		final String cause = String.valueOf( e.getCause() );
 		logger.warn( "Cannot open {}: the AWS SDK is not on the classpath ({})", inputUri, cause );
+	}
+
+	private void showReaderLibraryUnavailable( final ReaderLibraryUnavailableException e )
+	{
+		errorHandler.accept( "Could not open the dataset at: " + inputUri + "\n\r\n"
+				+ "The selected backend (" + backend.getName() + ") needs a class that its library "
+				+ "does not provide here:\n"
+				+ e.getMissingClass() + "\n\r\n"
+				+ "Please try using Fiji-latest instead. Download here: https://imagej.net/software/fiji/downloads" );
+		logger.warn( "Cannot open {} with the {} backend: reader library class missing ({})",
+				inputUri, backend.getName(), e.getMissingClass() );
 	}
 
 	private void showStoreAccessError( final Exception e )
