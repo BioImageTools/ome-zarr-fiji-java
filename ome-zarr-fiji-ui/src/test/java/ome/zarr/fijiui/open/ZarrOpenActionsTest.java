@@ -94,7 +94,7 @@ import bdv.viewer.ViewerFrame;
 import ome.zarr.fijiui.settings.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.imglib2.PyramidBackend;
-import ome.zarr.n5.N5PyramidBackend;
+import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fiji.PyramidalBdv;
@@ -287,8 +287,8 @@ class ZarrOpenActionsTest
 		{
 			ZarrOpener opener = ZarrOpenActions.defaultOpener( path.toUri(), context );
 
-			assertEquals( ZarrReaderBackend.N5, ZarrOpeningSettings.DEFAULT_READER_BACKEND );
-			assertInstanceOf( N5PyramidBackend.class, backendOf( opener ) );
+			assertEquals( ZarrReaderBackend.ZARR_JAVA, ZarrOpeningSettings.DEFAULT_READER_BACKEND );
+			assertInstanceOf( ZarrJavaPyramidBackend.class, backendOf( opener ) );
 
 			// The wired backend also has to be usable, not just of the right type.
 			PyramidContents< ? > contents = opener.getContents();

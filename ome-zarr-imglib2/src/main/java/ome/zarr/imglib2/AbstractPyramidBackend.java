@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
+import ome.zarr.imglib2.exceptions.ReaderLibraryUnavailableException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 
 /**
@@ -74,6 +75,19 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	 */
 	@Override
 	public final < T extends NativeType< T > & RealType< T > > PyramidContents< T > load( final URI inputUri )
+	{
+		try
+		{
+			return loadMultiscaleOrSingleArray( inputUri );
+		}
+		catch ( NoClassDefFoundError e )
+		{
+			throw new ReaderLibraryUnavailableException( inputUri.toString(), e );
+		}
+	}
+
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscaleOrSingleArray(
+			final URI inputUri )
 	{
 		try
 		{
