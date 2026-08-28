@@ -165,6 +165,39 @@
 			<id>scijava.public</id>
 			<url>https://maven.scijava.org/content/groups/public</url>
 		</repository>
+		<!-- NB: Temporary (2026-08-28). The `public` group 404s artifacts since the maven.scijava.org downtime, so the -->
+		<!-- two hosted repos behind it are listed directly: `releases` (SciJava/ImgLib2/N5) and `thirdparty` -->
+		<!-- (cisd:jhdf5, via n5-universe -> n5-hdf5). Additive - keep the group, it also aggregates proxies. Drop -->
+		<!-- both once the group serves imglib2-cache-1.0.0-beta-20.pom and jhdf5-19.04.1.pom again. -->
+		<repository>
+			<id>scijava.releases</id>
+			<url>https://maven.scijava.org/repository/releases</url>
+		</repository>
+		<repository>
+			<id>scijava.thirdparty</id>
+			<url>https://maven.scijava.org/repository/thirdparty</url>
+		</repository>
+		<!-- NB: The repos below replace proxies that scijava.public no longer has: its Nexus now exposes only the three -->
+		<!-- hosted repos above (`/service/rest/v1/repositories` lists no proxy and no group), so every artifact that -->
+		<!-- used to arrive through the group's proxies has to be fetched from its own upstream. Unidata serves -->
+		<!-- edu.ucar:cdm-core (via dev.zarr:zarr-java), OME serves ome:formats-gpl / ome:turbojpeg and BeDataDriven -->
+		<!-- serves org.renjin:* (both via sc.fiji:fiji, test scope). Keep these even after the group recovers - they -->
+		<!-- are the canonical sources. -->
+		<repository>
+			<id>unidata-all</id>
+			<name>Unidata All</name>
+			<url>https://artifacts.unidata.ucar.edu/repository/unidata-all/</url>
+		</repository>
+		<repository>
+			<id>ome</id>
+			<name>OME Artifactory</name>
+			<url>https://artifacts.openmicroscopy.org/artifactory/maven</url>
+		</repository>
+		<repository>
+			<id>bedatadriven</id>
+			<name>BeDataDriven Public Repository</name>
+			<url>https://nexus.bedatadriven.com/content/groups/public/</url>
+		</repository>
 	</repositories>
 
 	<!-- ====================================== -->
