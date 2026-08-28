@@ -22,7 +22,7 @@ have **no resolution pyramid** — in particular that the window title suffix is
 The `nested_multiscale_*` datasets put the multiscales metadata *two* levels
 above the arrays, so that the **immediate parent group of an array carries no
 multiscales metadata**. That is what reaches the last fallback in
-`AbstractPyramidBackend.loadSingleArray`, where the array has to be interpreted
+`AbstractPyramidBackend.readSingleArray`, where the array has to be interpreted
 from its own metadata alone:
 
 * `nested_multiscale_v5.ome.zarr/sub/0` opens from the Zarr v3

@@ -26,34 +26,72 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.examples.demo;
+package ome.zarr.fijiui.open.options;
 
-import java.nio.file.Paths;
+import java.util.NoSuchElementException;
 
-import net.imagej.ImageJ;
-
-import ome.zarr.fijiui.plugin.command.OpenInBDVCommand;
-import ome.zarr.fiji.PyramidalDataset;
-import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.n5.N5PyramidBackend;
+import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 
-@SuppressWarnings( "all" )
-public class PyramidalDatasetDemo
+/**
+ * The library to be used to read (write) OME-Zarr datasets.
+ */
+public enum ZarrBackend
 {
-	public static void main( String[] args )
+	/**
+	 * Backend supported via the N5 library (supports Zarr v2 and v3 through n5-zarr).
+	 */
+	N5( "N5" ),
+
+	/**
+	 * Backend supported via the zarr-java library (supports Zarr v2 and v3).
+	 */
+	ZARR_JAVA( "zarr-java" );
+
+	private final String description;
+
+	ZarrBackend( final String description )
 	{
-		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
-		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
+		this.description = description;
+	}
 
-		// Show as imagePlus
-		final ImageJ imageJ = new ImageJ();
-		imageJ.ui().showUI();
-		final PyramidContents< ? > contents =
-				new N5PyramidBackend().read( Paths.get( multiscalePath ).toUri() );
-		PyramidalDataset pyramidalDataset = new PyramidalDataset( imageJ.context(), contents, 0 );
-		imageJ.ui().show( pyramidalDataset );
+	public static ZarrBackend getByName( final String name )
+	{
+		for ( final ZarrBackend option : values() )
+			if ( option.name().equals( name ) )
+				return option;
+		throw new NoSuchElementException( name );
+	}
 
-		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true );
+	public static ZarrBackend getByDescription( final String description )
+	{
+		for ( final ZarrBackend option : values() )
+			if ( option.description.equals( description ) )
+				return option;
+		return null;
+	}
+
+	public String getDescription()
+	{
+		return description;
+	}
+
+	/**
+	 * Creates a fresh {@link PyramidBackend} for the backend library this constant
+	 * represents.
+	 *
+	 * @return a new backend instance, never {@code null}
+	 */
+	public PyramidBackend createBackend()
+	{
+		switch ( this )
+		{
+		case ZARR_JAVA:
+			return new ZarrJavaPyramidBackend();
+		case N5:
+		default:
+			return new N5PyramidBackend();
+		}
 	}
 }

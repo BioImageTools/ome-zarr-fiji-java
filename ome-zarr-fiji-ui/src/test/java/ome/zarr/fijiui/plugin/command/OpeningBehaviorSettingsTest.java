@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.settings;
+package ome.zarr.fijiui.plugin.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -44,7 +44,7 @@ import org.scijava.prefs.PrefService;
 
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
-import ome.zarr.fijiui.open.options.ZarrReaderBackend;
+import ome.zarr.fijiui.open.options.ZarrBackend;
 
 /**
  * Unit tests for the {@link OpeningBehaviorSettings#run()} method.
@@ -110,11 +110,11 @@ class OpeningBehaviorSettingsTest
 	}
 
 	@Test
-	void testReaderBackendDescriptionsReturnsAllDescriptionsInDeclarationOrder()
+	void testBackendDescriptionsReturnsAllDescriptionsInDeclarationOrder()
 	{
 		final List< String > expected =
-				Arrays.stream( ZarrReaderBackend.values() ).map( ZarrReaderBackend::getDescription ).collect( Collectors.toList() );
-		final List< String > actual = OpeningBehaviorSettings.readerBackendDescriptions( ZarrReaderBackend.values() );
+				Arrays.stream( ZarrBackend.values() ).map( ZarrBackend::getDescription ).collect( Collectors.toList() );
+		final List< String > actual = OpeningBehaviorSettings.backendDescriptions( ZarrBackend.values() );
 		assertEquals( expected, actual );
 		// Anchored explicit values: these are the strings the settings dialog
 		// presents to the user, so a stealth rename should fail this test.
@@ -122,8 +122,8 @@ class OpeningBehaviorSettingsTest
 	}
 
 	@Test
-	void testReaderBackendDescriptionsIsEmptyForEmptyInput()
+	void testBackendDescriptionsIsEmptyForEmptyInput()
 	{
-		assertEquals( Collections.emptyList(), OpeningBehaviorSettings.readerBackendDescriptions( new ZarrReaderBackend[ 0 ] ) );
+		assertEquals( Collections.emptyList(), OpeningBehaviorSettings.backendDescriptions( new ZarrBackend[ 0 ] ) );
 	}
 }

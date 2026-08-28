@@ -55,7 +55,7 @@ import ome.zarr.imglib2.PyramidContents;
 /**
  * Shared parameterized tests for the BigDataViewer Fiji wrapper
  * {@link PyramidalBdv} around a {@link PyramidContents}. A concrete class
- * supplies {@link #load(String, Context)} for a specific backend, so each
+ * supplies {@link #read(String, Context)} for a specific backend, so each
  * backend is exercised through the BDV wrapper.
  * <p>
  * These tests intentionally live in the {@code ome.zarr.fiji} test package rather
@@ -66,7 +66,7 @@ import ome.zarr.imglib2.PyramidContents;
 public interface PyramidalBdvTestBase
 {
 
-	PyramidContents< ? > load( String resource, Context context )
+	PyramidContents< ? > read( String resource, Context context )
 			throws URISyntaxException;
 
 	@ParameterizedTest
@@ -75,7 +75,7 @@ public interface PyramidalBdvTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = read( resource, context );
 			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
 			assertNotNull( pyramidalBdv.asSources() );
 			Source< ? > channel0 = pyramidalBdv.asSources().get( 0 ).getSpimSource();
@@ -155,7 +155,7 @@ public interface PyramidalBdvTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = read( resource, context );
 			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
 			assertEquals( 2, pyramidalBdv.asSources().get( 0 ).getSpimSource().getNumMipmapLevels() );
 		}
@@ -167,7 +167,7 @@ public interface PyramidalBdvTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = read( resource, context );
 			VoxelDimensions voxelDimensions =
 					new PyramidalBdv<>( context, contents ).asSources().get( 0 ).getSpimSource().getVoxelDimensions();
 			assertNotNull( voxelDimensions );
@@ -182,7 +182,7 @@ public interface PyramidalBdvTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = read( resource, context );
 			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
 			Source< ? > spimSource = pyramidalBdv.asSources().get( 0 ).getSpimSource();
 
@@ -215,7 +215,7 @@ public interface PyramidalBdvTestBase
 	{
 		try (Context context = new Context())
 		{
-			PyramidContents< ? > contents = load( resource, context );
+			PyramidContents< ? > contents = read( resource, context );
 			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
 			BdvHandle bdvHandle = BdvUtils.showBdvAndRegisterDataset( pyramidalBdv );
 			List< ConverterSetup > converterSetups =

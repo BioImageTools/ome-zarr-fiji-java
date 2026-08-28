@@ -1,18 +1,18 @@
 /*-
  * #%L
- * OME-Zarr extras for Fiji
+ * OME-Zarr integration into FIJI
  * %%
  * Copyright (C) 2022 - 2026 SciJava developers
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,24 +26,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fiji.open.exceptions;
+package ome.zarr.fijiui.dialog;
 
-public class NonExistingResolutionLevelException extends RuntimeException
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+
+import java.awt.GraphicsEnvironment;
+
+import javax.swing.JDialog;
+import javax.swing.SwingUtilities;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+class ZarrOpenActionChooserTest
 {
-	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels )
+	@BeforeEach
+	void requireDisplay()
 	{
-		super( message( resolutionLevel, numResolutionLevels ) );
+		assumeFalse( GraphicsEnvironment.isHeadless(), "Skipped in headless environment" );
 	}
 
-	public NonExistingResolutionLevelException( final int resolutionLevel, final int numResolutionLevels, final Throwable cause )
+	@Test
+	void showDialogDoesNotThrow()
 	{
-		super( message( resolutionLevel, numResolutionLevels ), cause );
+		assertDoesNotThrow( () -> new ZarrOpenActionChooser( null, null ) );
 	}
 
-	private static String message( final int resolutionLevel, final int numResolutionLevels )
+	@Test
+	void showDialogCreatesVisibleDialog() throws Exception
 	{
-		return "Resolution level " + resolutionLevel + " does not exist. "
-				+ "The pyramid has " + numResolutionLevels + " level"
-				+ ( numResolutionLevels == 1 ? "" : "s" ) + " (0–" + ( numResolutionLevels - 1 ) + ").";
+		ZarrOpenActionChooser chooser = new ZarrOpenActionChooser( null, null );
+		SwingUtilities.invokeAndWait( chooser::showDialog );
+
+		JDialog dialog = chooser.currentDialog;
+		assertNotNull( dialog, "showDialog should have created a JDialog" );
+		assertTrue( dialog.isShowing() );
+
+		SwingUtilities.invokeAndWait( chooser::dispose );
+		assertFalse( dialog.isShowing() );
 	}
 }

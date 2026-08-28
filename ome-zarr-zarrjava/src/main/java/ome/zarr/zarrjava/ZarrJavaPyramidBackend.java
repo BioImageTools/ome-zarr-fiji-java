@@ -102,15 +102,18 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	/**
 	 * Convenience entry point for reading an OME-Zarr image with the zarr-java
 	 * backend without first constructing a backend instance. Equivalent to
-	 * {@code new ZarrJavaPyramidBackend().load( inputUri )}.
+	 * {@code new ZarrJavaPyramidBackend().read( inputUri )}.
 	 *
 	 * @param <T> pixel type of the image being read
 	 * @param inputUri location of the OME-Zarr root; either a {@code file:} URI
 	 *   for local datasets or an {@code http(s):} URI for remote datasets
+	 * @return the image as an immutable {@link PyramidContents} of one or more
+	 *   resolution levels
+	 * @see PyramidBackend#read(URI)
 	 */
-	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > open( final URI inputUri )
+	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > readPyramid( final URI inputUri )
 	{
-		return new ZarrJavaPyramidBackend().load( inputUri );
+		return new ZarrJavaPyramidBackend().read( inputUri );
 	}
 
 	@Override
@@ -120,7 +123,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	}
 
 	@Override
-	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > loadMultiscale( final URI inputUri )
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > readMultiscale( final URI inputUri )
 	{
 		final MultiscaleImage multiscaleImage = openMultiscaleImage( inputUri );
 		final MultiscalesEntry entry = readMultiscalesEntry( multiscaleImage, inputUri );
@@ -358,7 +361,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	 * {@code arrayUri} against the {@code path} of its multiscales datasets.
 	 */
 	@Override
-	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadLevelFromParent(
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadLevelFromParent(
 			final URI parentUri, final URI arrayUri )
 	{
 		final MultiscaleImage parent;
@@ -423,7 +426,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	 * which only a Zarr v3 array has; a Zarr v2 array therefore declines.
 	 */
 	@Override
-	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryLoadArrayNodeOnly( final URI arrayUri )
+	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadArrayNodeOnly( final URI arrayUri )
 	{
 		final Array arr;
 		try
@@ -432,7 +435,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		}
 		catch ( ZarrException | IOException | RuntimeException e )
 		{
-			logger.debug( "Could not open {} as a plain array: {}", arrayUri, e.getMessage() );
+			logger.debug( "Could not read {} as a plain array: {}", arrayUri, e.getMessage() );
 			return null;
 		}
 		final String[] names = dimensionNames( arr );

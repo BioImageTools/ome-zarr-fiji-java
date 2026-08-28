@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,30 +26,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.plugin;
+package ome.zarr.fijiui.plugin.command;
 
-import org.scijava.Context;
 import org.scijava.command.Command;
+import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.widget.FileWidget;
 
-import ij.IJ;
-import ome.zarr.fijiui.open.PasteToOpenAction;
+import java.io.File;
 
-/**
- * Reads a URI from the system clipboard and opens it as an OME-Zarr
- * dataset, using the same backend, resolution, and open-behavior settings as
- * the drag-and-drop pipeline. Mirrors napari's "paste URI to open" UX.
- */
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Paste OME-Zarr URI" )
-public class PasteOmeZarrUrlCommand implements Command
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Settings > User Script Settings", name = "OMEZarrUserScript", headless = true )
+public class UserScriptSettings implements Command
 {
+
+	@Parameter( label = "Tooltip text:" )
+	String scriptTitle;
+
+	@Parameter( label = "Script to be executed:", style = FileWidget.OPEN_STYLE )
+	File scriptPath;
+
 	@Parameter
-	private Context context;
+	LogService log;
 
 	@Override
 	public void run()
 	{
-		PasteToOpenAction.pasteFromClipboard( context, IJ::error );
+		log.info( "Thanks, memorizing the path: " + scriptPath );
 	}
 }

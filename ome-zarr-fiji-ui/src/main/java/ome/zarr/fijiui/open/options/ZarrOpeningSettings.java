@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -46,36 +46,35 @@ public class ZarrOpeningSettings
 	 */
 	public static final int DEFAULT_PREFERRED_WIDTH = 1000;
 
-	public static final ZarrReaderBackend DEFAULT_READER_BACKEND = ZarrReaderBackend.ZARR_JAVA;
+	public static final ZarrBackend DEFAULT_BACKEND = ZarrBackend.ZARR_JAVA;
 
 	private ZarrOpenBehavior zarrOpenBehavior;
 
 	private int preferredMaxWidth;
 
-	private ZarrReaderBackend readerBackend;
+	private ZarrBackend backend;
 
 	private static final String ZARR_OPEN_BEHAVIOR_SETTING_NAME = "ZarrOpenBehavior";
 
 	private static final String ZARR_PREFERRED_WIDTH_SETTING_NAME = "ZarrPreferredWidth";
 
-	private static final String ZARR_READER_BACKEND_SETTING_NAME = "ZarrReaderBackend";
+	private static final String ZARR_BACKEND_SETTING_NAME = "ZarrBackend";
 
 	public ZarrOpeningSettings()
 	{
-		this( DEFAULT_OPEN_BEHAVIOR, DEFAULT_PREFERRED_WIDTH, DEFAULT_READER_BACKEND );
+		this( DEFAULT_OPEN_BEHAVIOR, DEFAULT_PREFERRED_WIDTH, DEFAULT_BACKEND );
 	}
 
 	public ZarrOpeningSettings( final ZarrOpenBehavior zarrOpenBehavior, final int preferredMaxWidth )
 	{
-		this( zarrOpenBehavior, preferredMaxWidth, DEFAULT_READER_BACKEND );
+		this( zarrOpenBehavior, preferredMaxWidth, DEFAULT_BACKEND );
 	}
 
-	public ZarrOpeningSettings( final ZarrOpenBehavior zarrOpenBehavior, final int preferredMaxWidth,
-			final ZarrReaderBackend readerBackend )
+	public ZarrOpeningSettings( final ZarrOpenBehavior zarrOpenBehavior, final int preferredMaxWidth, final ZarrBackend backend )
 	{
 		this.zarrOpenBehavior = zarrOpenBehavior;
 		this.preferredMaxWidth = preferredMaxWidth;
-		this.readerBackend = readerBackend;
+		this.backend = backend;
 	}
 
 	public ZarrOpenBehavior getOpenBehavior()
@@ -90,6 +89,8 @@ public class ZarrOpeningSettings
 
 	/**
 	 * Gets the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
+	 *
+	 * @return the preferred maximum width in pixels
 	 */
 	public int getPreferredMaxWidth()
 	{
@@ -98,6 +99,8 @@ public class ZarrOpeningSettings
 
 	/**
 	 * Sets the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
+	 *
+	 * @param preferredMaxWidth the preferred maximum width in pixels
 	 */
 	public void setPreferredMaxWidth( final int preferredMaxWidth )
 	{
@@ -105,19 +108,23 @@ public class ZarrOpeningSettings
 	}
 
 	/**
-	 * Gets the Zarr reader backend used to decode datasets.
+	 * Gets the Zarr backend used to decode (encode) datasets.
+	 *
+	 * @return the configured backend
 	 */
-	public ZarrReaderBackend getReaderBackend()
+	public ZarrBackend getBackend()
 	{
-		return readerBackend;
+		return backend;
 	}
 
 	/**
-	 * Sets the Zarr reader backend used to decode datasets.
+	 * Sets the Zarr backend used to decode (encode) datasets.
+	 *
+	 * @param backend the backend to use
 	 */
-	public void setReaderBackend( final ZarrReaderBackend readerBackend )
+	public void setBackend( final ZarrBackend backend )
 	{
-		this.readerBackend = readerBackend;
+		this.backend = backend;
 	}
 
 	/**
@@ -140,19 +147,19 @@ public class ZarrOpeningSettings
 		}
 		int preferredWidth = prefs == null ? DEFAULT_PREFERRED_WIDTH
 				: prefs.getInt( ZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, DEFAULT_PREFERRED_WIDTH );
-		ZarrReaderBackend backend;
+		ZarrBackend backend;
 		try
 		{
-			backend = prefs == null ? DEFAULT_READER_BACKEND : ZarrReaderBackend.getByName(
-					prefs.get( ZarrOpeningSettings.class, ZARR_READER_BACKEND_SETTING_NAME, DEFAULT_READER_BACKEND.name() ) );
+			backend = prefs == null ? DEFAULT_BACKEND : ZarrBackend.getByName(
+					prefs.get( ZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, DEFAULT_BACKEND.name() ) );
 		}
 		catch ( NoSuchElementException e )
 		{
-			backend = DEFAULT_READER_BACKEND;
+			backend = DEFAULT_BACKEND;
 		}
 		logger.debug( "Loaded OME-Zarr default opening behavior: {}", behavior );
 		logger.debug( "Loaded OME-Zarr preferred width: {}", preferredWidth );
-		logger.debug( "Loaded OME-Zarr reader backend: {}", backend );
+		logger.debug( "Loaded OME-Zarr default backend: {}", backend );
 		return new ZarrOpeningSettings( behavior, preferredWidth, backend );
 	}
 
@@ -167,10 +174,10 @@ public class ZarrOpeningSettings
 			return;
 		prefs.put( ZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, getOpenBehavior().name() );
 		prefs.put( ZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
-		prefs.put( ZarrOpeningSettings.class, ZARR_READER_BACKEND_SETTING_NAME, getReaderBackend().name() );
+		prefs.put( ZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, getBackend().name() );
 		logger.debug( "Saved OME-Zarr default opening behavior to preferences: {}", getOpenBehavior() );
 		logger.debug( "Saved OME-Zarr preferred width to preferences: {}", getPreferredMaxWidth() );
-		logger.debug( "Saved OME-Zarr reader backend to preferences: {}", getReaderBackend() );
+		logger.debug( "Saved OME-Zarr backend to preferences: {}", getBackend() );
 	}
 
 	@Override
@@ -178,6 +185,6 @@ public class ZarrOpeningSettings
 	{
 		return "ZarrDefaultOpenSetting{zarrOpenBehavior=" + zarrOpenBehavior
 				+ ", preferredMaxWidth=" + preferredMaxWidth
-				+ ", readerBackend=" + readerBackend + "}";
+				+ ", backend=" + backend + "}";
 	}
 }

@@ -39,19 +39,19 @@ import net.imglib2.type.numeric.RealType;
  * An implementation encapsulates everything specific to one reader library
  * (N5, zarr-java, ...): discovering metadata, selecting resolution levels,
  * opening cached cell images, and assembling axis information. Callers invoke
- * {@link #load(URI)} and consume the returned {@link PyramidContents}, which is
+ * {@link #read(URI)} and consume the returned {@link PyramidContents}, which is
  * always a pyramid of one or more resolution levels regardless of whether the
  * location pointed at a whole multiscale image or a single level.
  * <p>
  * The pixel type is a property of the data being read, not of the backend, so
- * it is a type parameter of {@link #load(URI)} rather than of the backend
+ * it is a type parameter of {@link #read(URI)} rather than of the backend
  * itself: a single (untyped) backend instance can read images of any pixel
- * type, and callers never have to choose {@code T} before the data is opened.
+ * type, and callers never have to choose {@code T} before the data is read.
  */
 public interface PyramidBackend
 {
 	/**
-	 * Open the OME-Zarr image at {@code inputUri} and return all of its state as
+	 * Read the OME-Zarr image at {@code inputUri} and return all of its state as
 	 * an immutable {@link PyramidContents}.
 	 * <p>
 	 * The location may point at either kind of OME-Zarr node:
@@ -64,22 +64,22 @@ public interface PyramidBackend
 	 *       backend recovers axis calibration and OMERO metadata from the
 	 *       <em>parent</em> multiscales group when that group can be read and
 	 *       lists this array (this is what allows a single OME-Zarr v0.4 / Zarr v2
-	 *       level, which has no metadata of its own, to open correctly). If the
+	 *       level, which has no metadata of its own, to be read correctly). If the
 	 *       parent cannot supply them, the backend falls back to the array's own
-	 *       {@code dimension_names} (Zarr v3 only), opening the level uncalibrated
+	 *       {@code dimension_names} (Zarr v3 only), reading the level uncalibrated
 	 *       (unit scale, no units, no OMERO). The parent is only consulted once,
 	 *       lazily, and only for the single-array case, so the extra cost on
 	 *       remote stores is at most one small metadata request.</li>
 	 * </ul>
 	 *
 	 * @param <T> pixel type of the image being read
-	 * @param inputUri location of the OME-Zarr node to open — a {@code file:} URI
+	 * @param inputUri location of the OME-Zarr node to read — a {@code file:} URI
 	 *   for local datasets, or an {@code http(s):} / {@code s3:} URI for remote
 	 *   datasets (which remote schemes are supported depends on the concrete
 	 *   backend's underlying store)
 	 * @return the image as an immutable pyramid of one or more resolution levels
 	 * @throws ome.zarr.imglib2.exceptions.NotAMultiscaleImageException if the
-	 *   location is neither a readable multiscales group nor an openable array
+	 *   location is neither a readable multiscales group nor a readable array
 	 * @throws ome.zarr.imglib2.exceptions.MultiImageDatasetException if the
 	 *   location is a container of multiple images (e.g. a
 	 *   {@code bioformats2raw.layout} group) rather than a single image
@@ -88,7 +88,7 @@ public interface PyramidBackend
 	 *   no {@code dimension_names} and no parent multiscales metadata listing it
 	 *   could be read (e.g. a lone Zarr v2 level)
 	 */
-	< T extends NativeType< T > & RealType< T > > PyramidContents< T > load( URI inputUri );
+	< T extends NativeType< T > & RealType< T > > PyramidContents< T > read( URI inputUri );
 
 	/**
 	 * Name of the library behind this backend.

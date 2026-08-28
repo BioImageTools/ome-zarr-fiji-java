@@ -84,6 +84,10 @@ public final class ClipboardUtils
 	 * {@link #readClipboard()} followed by
 	 * {@link #stringToUri(String, Consumer)}, which documents the accepted input
 	 * forms and the failure reporting.
+	 *
+	 * @param errorHandler receives a user-facing message when the clipboard is
+	 *   empty or its contents cannot be turned into a URI
+	 * @return the URI, or {@code null} if the clipboard held nothing usable
 	 */
 	public static URI readClipboardAsUri( final Consumer< String > errorHandler )
 	{

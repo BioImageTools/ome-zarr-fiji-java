@@ -57,9 +57,13 @@ public class PasteToOpenAction
 	 * as the drag-and-drop pipeline. Reused by both the menu command and the
 	 * toolbar button.
 	 *
+	 * @param context the SciJava context used to open the dataset
 	 * @param errorHandler called with a user-facing message when the clipboard
 	 *   is empty, the contents can't be parsed, or the location does not point
 	 *   at an OME-Zarr dataset
+	 * @return {@code true} if a location was read from the clipboard and handed
+	 *   to the opening pipeline, {@code false} if {@code errorHandler} was
+	 *   invoked instead
 	 */
 	public static boolean pasteFromClipboard( final Context context, final Consumer< String > errorHandler )
 	{

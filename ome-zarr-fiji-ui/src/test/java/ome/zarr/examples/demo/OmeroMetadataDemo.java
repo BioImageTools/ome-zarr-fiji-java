@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,7 +36,7 @@ import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.imglib2.metadata.Omero;
 
 /**
- * Demonstrates loading a remote OME-Zarr dataset via the {@link N5PyramidBackend}
+ * Demonstrates reading a remote OME-Zarr dataset via the {@link N5PyramidBackend}
  * and {@link ZarrJavaPyramidBackend} backends and printing the OMERO metadata.
  * Dataset: IDR idr0033A BR00109990_C2
  * URI: <a href="https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0">https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0</a>
@@ -50,16 +50,16 @@ public class OmeroMetadataDemo
 	{
 		final URI uri = new URI( ZARR_URI );
 
-		System.out.println( "Opening OME-Zarr: " + uri );
+		System.out.println( "Reading OME-Zarr: " + uri );
 		System.out.println();
 
-		// --- open with N5 backend ---
+		// --- read with N5 backend ---
 		System.out.println( "=== N5 backend ===" );
-		printInfo( new N5PyramidBackend().load( uri ) );
+		printInfo( new N5PyramidBackend().read( uri ) );
 
-		// --- open with zarr-java backend ---
+		// --- read with zarr-java backend ---
 		System.out.println( "=== zarr-java backend ===" );
-		printInfo( new ZarrJavaPyramidBackend().load( uri ) );
+		printInfo( new ZarrJavaPyramidBackend().read( uri ) );
 	}
 
 	private static void printInfo( final PyramidContents< ? > contents )

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -43,11 +43,11 @@ import java.util.Collections;
 import java.util.function.Consumer;
 
 import ij.IJ;
+import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
-import ome.zarr.fijiui.open.options.ZarrReaderBackend;
-import ome.zarr.fiji.open.ZarrOpener;
-import ome.zarr.fijiui.dialog.DnDActionChooser;
+import ome.zarr.fijiui.open.options.ZarrBackend;
+import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.imglib2.PyramidBackend;
 
@@ -55,10 +55,10 @@ import ome.zarr.imglib2.PyramidBackend;
  * Fiji-ui orchestration of the OME-Zarr opening pipeline: it reads the user's
  * {@link ZarrOpeningSettings}, dispatches to the chosen open behavior, and
  * provides the UI-facing actions (N5 importer/viewer dialogs, preset script,
- * help) wired by the {@link DnDActionChooser}.
+ * help) wired by the {@link ZarrOpenActionChooser}.
  * <p>
- * The actual loading and ImageJ/BigDataViewer opening lives in
- * {@link ZarrOpener}, so this class only adds the UI concerns on top.
+ * The actual reading and ImageJ/BigDataViewer opening lives in
+ * {@link ZarrReader}, so this class only adds the UI concerns on top.
  */
 public class ZarrOpenActions
 {
@@ -72,14 +72,16 @@ public class ZarrOpenActions
 
 	private final Consumer< String > errorHandler;
 
-	private final ZarrOpener opener;
+	private final ZarrReader opener;
 
 	/**
 	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
 	 * {@code inputUri} via the action selected by the user's configured
 	 * {@link ZarrOpenBehavior}: ImageJ display, BigDataViewer display, or the
-	 * {@link DnDActionChooser} selection dialog. Shared entry point for the
-	 * drag-and-drop handler and the "paste URL" command.
+	 * {@link ZarrOpenActionChooser} selection dialog.
+	 *
+	 * @param inputUri the OME-Zarr location to open
+	 * @param context the SciJava context the settings are read from
 	 */
 	public static void openWithSettings( final URI inputUri, final Context context )
 	{
@@ -97,30 +99,37 @@ public class ZarrOpenActions
 			break;
 		case SHOW_SELECTION_DIALOG:
 		default:
-			new DnDActionChooser( context, actions ).showDialog();
+			new ZarrOpenActionChooser( context, actions ).showDialog();
 			break;
 		}
 	}
 
 	/**
-	 * Convenience factory for a backend-agnostic {@link ZarrOpener} that uses the
-	 * default reader backend ({@link ZarrOpeningSettings#DEFAULT_READER_BACKEND})
+	 * Convenience factory for a backend-agnostic {@link ZarrReader} that uses the
+	 * default backend ({@link ZarrOpeningSettings#DEFAULT_BACKEND})
 	 * at the highest resolution, reporting failures via {@code IJ::error}.
 	 * <p>
 	 * This lives in the fiji-ui layer because picking a concrete backend is a
-	 * fiji-ui concern: {@link ZarrOpener} itself only knows {@link PyramidBackend}
+	 * fiji-ui concern: {@link ZarrReader} itself only knows {@link PyramidBackend}
 	 * and the fiji layer therefore depends on no concrete backend. It restores the
-	 * one-liner ergonomics of the former no-backend {@code ZarrOpener}
+	 * one-liner ergonomics of the former no-backend {@code ZarrReader}
 	 * constructor.
+	 *
+	 * @param inputUri the OME-Zarr location to read
+	 * @param context the SciJava context used for display and services
+	 * @return a reader for {@code inputUri} using the default backend
 	 */
-	public static ZarrOpener defaultOpener( final URI inputUri, final Context context )
+	public static ZarrReader defaultOpener( final URI inputUri, final Context context )
 	{
-		return new ZarrOpener( inputUri, context, ZarrOpeningSettings.DEFAULT_READER_BACKEND.createBackend(), null );
+		return new ZarrReader( inputUri, context, ZarrOpeningSettings.DEFAULT_BACKEND.createBackend(), null );
 	}
 
 	/**
 	 * Actions for {@code inputUri} with default opening settings, reporting
 	 * failures via {@code IJ::error}.
+	 *
+	 * @param inputUri the OME-Zarr location the actions operate on
+	 * @param context the SciJava context used for display and services
 	 */
 	public ZarrOpenActions( final URI inputUri, final Context context )
 	{
@@ -131,6 +140,10 @@ public class ZarrOpenActions
 	 * Actions for {@code inputUri} using the given opening {@code settings}
 	 * (reader backend and preferred resolution), reporting failures via
 	 * {@code IJ::error}. Pass {@code null} settings to use the defaults.
+	 *
+	 * @param inputUri the OME-Zarr location the actions operate on
+	 * @param context the SciJava context used for display and services
+	 * @param settings the opening settings, or {@code null} for the defaults
 	 */
 	public ZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings )
 	{
@@ -149,16 +162,16 @@ public class ZarrOpenActions
 		this.inputUri = inputUri;
 		this.context = context;
 		this.errorHandler = errorHandler;
-		PyramidBackend pyramidBackend = readerBackend( settings ).createBackend();
-		this.opener = new ZarrOpener( inputUri, context, pyramidBackend, preferredMaxWidth( settings ), errorHandler );
+		PyramidBackend pyramidBackend = backend( settings ).createBackend();
+		this.opener = new ZarrReader( inputUri, context, pyramidBackend, preferredMaxWidth( settings ), errorHandler );
 	}
 
 	/**
-	 * Reader backend from the settings, or the default when no settings are given.
+	 * Backend from the settings, or the default when no settings are given.
 	 */
-	private static ZarrReaderBackend readerBackend( final ZarrOpeningSettings settings )
+	private static ZarrBackend backend( final ZarrOpeningSettings settings )
 	{
-		return settings == null ? ZarrOpeningSettings.DEFAULT_READER_BACKEND : settings.getReaderBackend();
+		return settings == null ? ZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
 	}
 
 	/**
@@ -209,7 +222,7 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the dataset in ImageJ at the resolution selected by the settings.
-	 * Delegates to {@link ZarrOpener#openIJWithImage()}.
+	 * Delegates to {@link ZarrReader#openIJWithImage()}.
 	 */
 	public void openIJWithImage()
 	{
@@ -218,7 +231,11 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the given resolution level of the dataset in ImageJ (0 = highest
-	 * resolution). Delegates to {@link ZarrOpener#openIJWithImage(int)}.
+	 * resolution). Delegates to {@link ZarrReader#openIJWithImage(int)}.
+	 *
+	 * @param resolutionLevel 0-based index into the resolution pyramid
+	 * @return always {@code null} &ndash; the dataset is handed to ImageJ for
+	 *   display rather than returned
 	 */
 	public Object openIJWithImage( final int resolutionLevel )
 	{
@@ -227,7 +244,9 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the dataset in BigDataViewer. Delegates to
-	 * {@link ZarrOpener#openBDVWithImage()}.
+	 * {@link ZarrReader#openBDVWithImage()}.
+	 *
+	 * @return the resulting {@code BdvHandle}, or {@code null} if opening failed
 	 */
 	public Object openBDVWithImage()
 	{

@@ -241,6 +241,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 
 	public void incrementReferences()
 	{
+		logger.debug( "incrementReferences" );
 		refs++;
 		if ( refs == 1 )
 			register();
@@ -255,7 +256,16 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		}
 		refs--;
 		if ( refs == 0 )
-			delete();
+			unregister();
+	}
+
+	/**
+	 * Client code can monitor how many BDVs are showing this PyramidContents.
+	 * @return Internal references count.
+	 */
+	public int getReferencesCount()
+	{
+		return refs;
 	}
 
 	/**
@@ -270,7 +280,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	/**
 	 * Called when the reference count is decremented to zero.
 	 */
-	private void delete()
+	private void unregister()
 	{
 		if ( objectService != null )
 			objectService.removeObject( this );

@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -55,7 +55,20 @@ import javax.swing.Timer;
 import ome.zarr.fijiui.open.ZarrOpenActions;
 import ome.zarr.fijiui.util.ScriptUtils;
 
-public class DnDActionChooser
+/**
+ * Asks the user what to do with an OME-Zarr location that is already known:
+ * an undecorated, non-modal popup at the mouse pointer offering one icon
+ * button per {@link ZarrOpenActions} action (ImageJ and BigDataViewer at the
+ * highest resolution, the N5 importer/viewer dialogs, the preset script, and
+ * help). It closes on ESC or fades out once the pointer leaves it.
+ * <p>
+ * It is shown whenever the user configured
+ * {@link ome.zarr.fijiui.open.options.ZarrOpenBehavior#SHOW_SELECTION_DIALOG},
+ * independently of how the location arrived — drag-and-drop, a
+ * {@code fiji://} link, or clipboard paste all reach it through
+ * {@link ZarrOpenActions#openWithSettings(java.net.URI, Context)}.
+ */
+public class ZarrOpenActionChooser
 {
 
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
@@ -80,7 +93,7 @@ public class DnDActionChooser
 
 	JDialog currentDialog;
 
-	public DnDActionChooser( final Context context, final ZarrOpenActions actions )
+	public ZarrOpenActionChooser( final Context context, final ZarrOpenActions actions )
 	{
 		this.actions = actions;
 		this.context = context;

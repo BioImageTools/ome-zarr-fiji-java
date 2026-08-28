@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,70 +26,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.open.options;
+package ome.zarr.fijiui.plugin.command;
 
-import java.util.NoSuchElementException;
+import org.scijava.Context;
+import org.scijava.command.Command;
+import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
 
-import ome.zarr.imglib2.PyramidBackend;
-import ome.zarr.n5.N5PyramidBackend;
-import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
+import ij.IJ;
+import ome.zarr.fijiui.open.PasteToOpenAction;
 
 /**
- * Selects the library used to read OME-Zarr datasets.
+ * Reads a URI from the system clipboard and opens it as an OME-Zarr
+ * dataset, using the same backend, resolution, and open-behavior settings as
+ * the drag-and-drop pipeline. Mirrors napari's "paste URI to open" UX.
  */
-public enum ZarrReaderBackend
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Paste OME-Zarr URI" )
+public class PasteOmeZarrUrlCommand implements Command
 {
-	/**
-	 * Read via the N5 library (supports Zarr v2 and v3 through n5-zarr).
-	 */
-	N5( "N5" ),
+	@Parameter
+	private Context context;
 
-	/**
-	 * Read via the zarr-java library (supports Zarr v2 and v3).
-	 */
-	ZARR_JAVA( "zarr-java" );
-
-	private final String description;
-
-	ZarrReaderBackend( final String description )
+	@Override
+	public void run()
 	{
-		this.description = description;
-	}
-
-	public static ZarrReaderBackend getByName( final String name )
-	{
-		for ( final ZarrReaderBackend option : values() )
-			if ( option.name().equals( name ) )
-				return option;
-		throw new NoSuchElementException( name );
-	}
-
-	public static ZarrReaderBackend getByDescription( final String description )
-	{
-		for ( final ZarrReaderBackend option : values() )
-			if ( option.description.equals( description ) )
-				return option;
-		return null;
-	}
-
-	public String getDescription()
-	{
-		return description;
-	}
-
-	/**
-	 * Creates a fresh {@link PyramidBackend} for the reader library this constant
-	 * represents.
-	 */
-	public PyramidBackend createBackend()
-	{
-		switch ( this )
-		{
-		case ZARR_JAVA:
-			return new ZarrJavaPyramidBackend();
-		case N5:
-		default:
-			return new N5PyramidBackend();
-		}
+		PasteToOpenAction.pasteFromClipboard( context, IJ::error );
 	}
 }
