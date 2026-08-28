@@ -293,11 +293,11 @@ public class ZarrReader
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
 	 */
-	public Object openIJWithImage( final int resolutionLevel )
+	public void openIJWithImage( final int resolutionLevel )
 	{
 		try
 		{
-			return openPyramidImage(
+			openPyramidImage(
 					() -> {
 						final PyramidContents< ? > contents = getContents();
 						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
@@ -312,7 +312,6 @@ public class ZarrReader
 		{
 			showNonExistingResolutionLevelError( e );
 		}
-		return null;
 	}
 
 	/**

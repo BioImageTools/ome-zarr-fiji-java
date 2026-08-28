@@ -234,12 +234,10 @@ public class ZarrOpenActions
 	 * resolution). Delegates to {@link ZarrReader#openIJWithImage(int)}.
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
-	 * @return always {@code null} &ndash; the dataset is handed to ImageJ for
-	 *   display rather than returned
 	 */
-	public Object openIJWithImage( final int resolutionLevel )
+	public void openIJWithImage( final int resolutionLevel )
 	{
-		return opener.openIJWithImage( resolutionLevel );
+		opener.openIJWithImage( resolutionLevel );
 	}
 
 	/**
