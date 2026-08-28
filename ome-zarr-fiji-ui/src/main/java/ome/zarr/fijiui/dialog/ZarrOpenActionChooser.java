@@ -67,7 +67,6 @@ import ome.zarr.fijiui.util.ScriptUtils;
  * independently of how the location arrived — drag-and-drop, a
  * {@code fiji://} link, or clipboard paste all reach it through
  * {@link ZarrOpenActions#openWithSettings(java.net.URI, Context)}.
- * <p>
  */
 public class ZarrOpenActionChooser
 {

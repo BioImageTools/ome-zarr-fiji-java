@@ -79,6 +79,9 @@ public class ZarrOpenActions
 	 * {@code inputUri} via the action selected by the user's configured
 	 * {@link ZarrOpenBehavior}: ImageJ display, BigDataViewer display, or the
 	 * {@link ZarrOpenActionChooser} selection dialog.
+	 *
+	 * @param inputUri the OME-Zarr location to open
+	 * @param context the SciJava context the settings are read from
 	 */
 	public static void openWithSettings( final URI inputUri, final Context context )
 	{
@@ -111,6 +114,10 @@ public class ZarrOpenActions
 	 * and the fiji layer therefore depends on no concrete backend. It restores the
 	 * one-liner ergonomics of the former no-backend {@code ZarrReader}
 	 * constructor.
+	 *
+	 * @param inputUri the OME-Zarr location to read
+	 * @param context the SciJava context used for display and services
+	 * @return a reader for {@code inputUri} using the default backend
 	 */
 	public static ZarrReader defaultOpener( final URI inputUri, final Context context )
 	{
@@ -120,6 +127,9 @@ public class ZarrOpenActions
 	/**
 	 * Actions for {@code inputUri} with default opening settings, reporting
 	 * failures via {@code IJ::error}.
+	 *
+	 * @param inputUri the OME-Zarr location the actions operate on
+	 * @param context the SciJava context used for display and services
 	 */
 	public ZarrOpenActions( final URI inputUri, final Context context )
 	{
@@ -130,6 +140,10 @@ public class ZarrOpenActions
 	 * Actions for {@code inputUri} using the given opening {@code settings}
 	 * (reader backend and preferred resolution), reporting failures via
 	 * {@code IJ::error}. Pass {@code null} settings to use the defaults.
+	 *
+	 * @param inputUri the OME-Zarr location the actions operate on
+	 * @param context the SciJava context used for display and services
+	 * @param settings the opening settings, or {@code null} for the defaults
 	 */
 	public ZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings )
 	{
@@ -218,6 +232,10 @@ public class ZarrOpenActions
 	/**
 	 * Opens the given resolution level of the dataset in ImageJ (0 = highest
 	 * resolution). Delegates to {@link ZarrReader#openIJWithImage(int)}.
+	 *
+	 * @param resolutionLevel 0-based index into the resolution pyramid
+	 * @return always {@code null} &ndash; the dataset is handed to ImageJ for
+	 *   display rather than returned
 	 */
 	public Object openIJWithImage( final int resolutionLevel )
 	{
@@ -227,6 +245,8 @@ public class ZarrOpenActions
 	/**
 	 * Opens the dataset in BigDataViewer. Delegates to
 	 * {@link ZarrReader#openBDVWithImage()}.
+	 *
+	 * @return the resulting {@code BdvHandle}, or {@code null} if opening failed
 	 */
 	public Object openBDVWithImage()
 	{

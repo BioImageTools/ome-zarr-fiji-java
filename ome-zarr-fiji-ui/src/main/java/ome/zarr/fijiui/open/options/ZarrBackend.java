@@ -80,6 +80,8 @@ public enum ZarrBackend
 	/**
 	 * Creates a fresh {@link PyramidBackend} for the backend library this constant
 	 * represents.
+	 *
+	 * @return a new backend instance, never {@code null}
 	 */
 	public PyramidBackend createBackend()
 	{

@@ -89,6 +89,8 @@ public class ZarrOpeningSettings
 
 	/**
 	 * Gets the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
+	 *
+	 * @return the preferred maximum width in pixels
 	 */
 	public int getPreferredMaxWidth()
 	{
@@ -97,6 +99,8 @@ public class ZarrOpeningSettings
 
 	/**
 	 * Sets the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
+	 *
+	 * @param preferredMaxWidth the preferred maximum width in pixels
 	 */
 	public void setPreferredMaxWidth( final int preferredMaxWidth )
 	{
@@ -105,6 +109,8 @@ public class ZarrOpeningSettings
 
 	/**
 	 * Gets the Zarr backend used to decode (encode) datasets.
+	 *
+	 * @return the configured backend
 	 */
 	public ZarrBackend getBackend()
 	{
@@ -113,6 +119,8 @@ public class ZarrOpeningSettings
 
 	/**
 	 * Sets the Zarr backend used to decode (encode) datasets.
+	 *
+	 * @param backend the backend to use
 	 */
 	public void setBackend( final ZarrBackend backend )
 	{
