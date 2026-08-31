@@ -192,8 +192,7 @@ On top of those five, a number of third-party `.jar` files are needed. Which one
       plugins depend on N5 as well, e.g. **BigStitcher** — so updating the N5 jars in a Fiji-Stable installation may
       break them. If you can, use Fiji-Latest, or keep a separate Fiji installation for OME-Zarr work.
 * **zarr-java backend** (the default) needs `zarr-java` 0.1.3 and two of its dependencies (the Blosc codec and a
-  Jackson module), none of which Fiji ships. Without them, `ome-zarr-zarrjava` cannot be loaded and selecting the
-  zarr-java backend in `Plugins -> OME-Zarr -> Settings -> Open Behavior settings` fails.
+  Jackson module), none of which Fiji ships.
 
 #### N5 backend
 
