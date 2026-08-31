@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>ome.zarr</groupId>
 		<artifactId>ome-zarr-java</artifactId>
-		<version>0.6.1-SNAPSHOT</version>
+		<version>0.7.0</version>
 	</parent>
 
 	<artifactId>ome-zarr-fiji</artifactId>
@@ -78,7 +78,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/BioImageTools/ome-zarr-fiji-java</connection>
 		<developerConnection>scm:git:git@github.com:BioImageTools/ome-zarr-fiji-java</developerConnection>
-		<tag>HEAD</tag>
+		<tag>ome-zarr-java-0.7.0</tag>
 		<url>https://github.com/BioImageTools/ome-zarr-fiji-java</url>
 	</scm>
 	<issueManagement>
