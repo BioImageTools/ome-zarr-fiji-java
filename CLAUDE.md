@@ -172,9 +172,17 @@ of the shipped plugin.
 
 ## Modules
 
-Multi-module reactor. The root `pom.xml` is the aggregator (`ome.zarr:ome-zarr-java`, packaging `pom`) and inherits
+Multi-module reactor. The root `pom.xml` is the aggregator (`sc.fiji:ome-zarr-java`, packaging `pom`) and inherits
 `pom-scijava`. Each module lives in its own directory `ome-zarr-<name>/` with its own `pom.xml` and carries its own
 SciJava provenance (required by the enforcer). Five published modules:
+
+**groupId is `sc.fiji`, packages stay `ome.zarr.*`** – deliberately. Maven Central only accepts a deployment whose
+groupId sits in a namespace verified for the publishing account; `sc.fiji` is verified for the SciJava account whose
+token the CI uses (that is how `sc.fiji:ome-zarr-fiji:0.3.x` reached Central), while `ome.zarr` is verified for nobody
+and cannot be – its reversed domain `zarr.ome` has no TLD to prove ownership of. A 0.7.x release under `ome.zarr`
+therefore failed with `Namespace 'ome.zarr' is not allowed`. Java package names are unaffected by any of this. Moving
+to an org-owned namespace later (`io.github.bioimagetools`, or `org.bioimagetools` if the domain is ever registered)
+means re-verifying and changing every `<groupId>` again, so it is a one-time decision, not a routine bump.
 
 - **`ome-zarr-imglib2`** – package `ome.zarr.imglib2` (+`.metadata`, `.exceptions`); backend-agnostic core (
   `PyramidBackend`, `AbstractPyramidBackend`, `PyramidContents`, `ZarrUtils`, `Affine3DUtils`). No Fiji or backend

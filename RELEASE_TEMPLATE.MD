@@ -20,19 +20,19 @@
     * [ ] Confirm version number
     * [ ] The release script pushes to master on github.com
         * This triggers a *github Action* which copies the version to be released to maven central.
-        * https://repo1.maven.org/maven2/ome/zarr/ome-zarr-fiji/
-        * https://repo1.maven.org/maven2/ome/zarr/ome-zarr-fiji-ui/
-        * https://repo1.maven.org/maven2/ome/zarr/ome-zarr-imglib2/
-        * https://repo1.maven.org/maven2/ome/zarr/ome-zarr-n5/
-        * https://repo1.maven.org/maven2/ome/zarr/ome-zarr-zarrjava/
+        * https://repo1.maven.org/maven2/sc/fiji/ome-zarr-fiji/
+        * https://repo1.maven.org/maven2/sc/fiji/ome-zarr-fiji-ui/
+        * https://repo1.maven.org/maven2/sc/fiji/ome-zarr-imglib2/
+        * https://repo1.maven.org/maven2/sc/fiji/ome-zarr-n5/
+        * https://repo1.maven.org/maven2/sc/fiji/ome-zarr-zarrjava/
 * [ ] Download the created artifacts from maven
   central
     * The build releases five artifacts: [
-      `ome-zarr-imglib2`](https://repo1.maven.org/maven2/ome/zarr/ome-zarr-imglib2/), [
-      `ome-zarr-n5`](https://repo1.maven.org/maven2/ome/zarr/ome-zarr-n5/), [
-      `ome-zarr-zarrjava`](https://repo1.maven.org/maven2/ome/zarr/ome-zarr-zarrjava/),
-      [`ome-zarr-fiji`](https://repo1.maven.org/maven2/ome/zarr/ome-zarr-fiji/), [
-      `ome-zarr-fiji-ui`](https://repo1.maven.org/maven2/ome/zarr/ome-zarr-fiji-ui/) (plus the `ome-zarr-java` POM).
+      `ome-zarr-imglib2`](https://repo1.maven.org/maven2/sc/fiji/ome-zarr-imglib2/), [
+      `ome-zarr-n5`](https://repo1.maven.org/maven2/sc/fiji/ome-zarr-n5/), [
+      `ome-zarr-zarrjava`](https://repo1.maven.org/maven2/sc/fiji/ome-zarr-zarrjava/),
+      [`ome-zarr-fiji`](https://repo1.maven.org/maven2/sc/fiji/ome-zarr-fiji/), [
+      `ome-zarr-fiji-ui`](https://repo1.maven.org/maven2/sc/fiji/ome-zarr-fiji-ui/) (plus the `ome-zarr-java` POM).
     * [ ] Delete the jar-files from the last release version from the local Fiji installation path (if any)
     * [ ] Copy the five new module jars to the local Fiji installation path
     * [ ] Copy new dependencies, if any

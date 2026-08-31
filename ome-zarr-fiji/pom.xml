@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>ome.zarr</groupId>
+		<groupId>sc.fiji</groupId>
 		<artifactId>ome-zarr-java</artifactId>
 		<version>0.7.2-SNAPSHOT</version>
 	</parent>
@@ -99,7 +99,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>ome.zarr</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>ome-zarr-imglib2</artifactId>
 		</dependency>
 
@@ -144,12 +144,12 @@
 		<!-- ====================================== -->
 		<!-- Tests exercise both concrete backends and the full Fiji runtime. -->
 		<dependency>
-			<groupId>ome.zarr</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>ome-zarr-n5</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>ome.zarr</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>ome-zarr-zarrjava</artifactId>
 			<scope>test</scope>
 		</dependency>

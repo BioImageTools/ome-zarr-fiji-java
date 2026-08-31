@@ -8,7 +8,7 @@
 		<version>45.1.0</version>
 	</parent>
 
-	<groupId>ome.zarr</groupId>
+	<groupId>sc.fiji</groupId>
 	<artifactId>ome-zarr-java</artifactId>
 	<version>0.7.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
@@ -203,22 +203,22 @@
 		<dependencies>
 			<!-- Internal modules: single source of truth for the shared reactor version. -->
 			<dependency>
-				<groupId>ome.zarr</groupId>
+				<groupId>sc.fiji</groupId>
 				<artifactId>ome-zarr-imglib2</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>ome.zarr</groupId>
+				<groupId>sc.fiji</groupId>
 				<artifactId>ome-zarr-n5</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>ome.zarr</groupId>
+				<groupId>sc.fiji</groupId>
 				<artifactId>ome-zarr-zarrjava</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>ome.zarr</groupId>
+				<groupId>sc.fiji</groupId>
 				<artifactId>ome-zarr-fiji</artifactId>
 				<version>${project.version}</version>
 			</dependency>

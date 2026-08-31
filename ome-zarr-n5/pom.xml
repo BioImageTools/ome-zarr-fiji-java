@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>ome.zarr</groupId>
+		<groupId>sc.fiji</groupId>
 		<artifactId>ome-zarr-java</artifactId>
 		<version>0.7.2-SNAPSHOT</version>
 	</parent>
@@ -98,7 +98,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>ome.zarr</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>ome-zarr-imglib2</artifactId>
 		</dependency>
 

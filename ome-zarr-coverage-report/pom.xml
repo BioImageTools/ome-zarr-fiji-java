@@ -3,9 +3,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>ome.zarr</groupId>
+		<groupId>sc.fiji</groupId>
 		<artifactId>ome-zarr-java</artifactId>
-		<version>0.6.1-SNAPSHOT</version>
+		<version>0.7.2-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>ome-zarr-coverage-report</artifactId>
@@ -27,27 +27,27 @@
 	<!-- report-aggregate collects jacoco.exec + classes from these reactor modules -->
 	<dependencies>
 		<dependency>
-			<groupId>ome.zarr</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>ome-zarr-imglib2</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>ome.zarr</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>ome-zarr-n5</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>ome.zarr</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>ome-zarr-zarrjava</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>ome.zarr</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>ome-zarr-fiji</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>ome.zarr</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>ome-zarr-fiji-ui</artifactId>
 			<version>${project.version}</version>
 		</dependency>
