@@ -16,6 +16,7 @@ import hashlib
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlsplit, unquote
+import random
 
 import numpy as np
 from ngff_zarr import from_ngff_zarr
@@ -95,6 +96,59 @@ def _open_multiscales(url, multiscales_path, storage_options):
 # --------------------------------------------------------------------------
 # native-chunk access (via ngff-zarr's dask array only)
 # --------------------------------------------------------------------------
+def _random_chunk_index(image, *, include_partial=True, rng=None):
+    """Pick a random valid chunk index from `image.data.chunks`.
+
+    Parameters
+    ----------
+    image : NgffImage
+        Base-level image; `image.data.chunks` is the per-axis tuple of block
+        sizes on the native chunk grid, and `image.dims` the storage-order axes.
+    include_partial : bool, default True
+        If True, the last block along an axis may be chosen even when it is a
+        partial (incomplete) chunk. If False, a partial last block is excluded
+        from the choice on that axis — only full-size blocks can be picked.
+    rng : random.Random | int | None
+        Source of randomness. An int seeds a local Random; None uses the module
+        default. Pass a Random instance for reproducibility without global state.
+
+    Returns
+    -------
+    list[int]
+        Chunk index in (t, c, z, y, x) order; axes not present in the image are 0.
+
+    Raises
+    ------
+    ValueError
+        If `include_partial=False` leaves an axis with no full-size block.
+    """
+    r = rng if isinstance(rng, random.Random) else random.Random(rng)
+
+    dims = list(image.dims)
+    grid = image.data.chunks            # e.g. ((1,1,1),(1,1),(2,2,1),(32,32),(32,16))
+    nominal = image.data.chunksize      # full-block size per axis
+
+    idx_by_dim = {}
+    for d, dim in enumerate(dims):
+        blocks = grid[d]
+        n = len(blocks)
+        if include_partial:
+            # last usable (inclusive) index for the random choosing...
+            hi = n - 1
+        else:
+            # a trailing block is "partial" iff smaller than the nominal size;
+            # only the last block can ever be partial on a regular Zarr grid.
+            hi = n - 1 if blocks[-1] == nominal[d] else n - 2
+            if hi < 0:
+                raise ValueError(
+                    f"axis '{dim}' has no full-size chunk "
+                    f"(single partial block of size {blocks[-1]}, nominal {nominal[d]})"
+                )
+        idx_by_dim[dim] = r.randint(0, hi)
+
+    return [idx_by_dim.get(a, 0) for a in _CHUNKCOORD_ORDER]
+
+
 def _chunk_block(image, coord_tczyx):
     """Return the ndarray of one native OME-Zarr chunk.
 
