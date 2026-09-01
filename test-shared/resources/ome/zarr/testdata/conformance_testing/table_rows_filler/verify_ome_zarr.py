@@ -20,6 +20,8 @@ import random
 
 import numpy as np
 from ngff_zarr import from_ngff_zarr
+from ngff_zarr.from_ngff_zarr import _open_root_node
+from ngff_zarr.parse_metadata import _detect_version
 
 # Axis order in which the caller supplies ChunkCoord: the OME-Zarr/NGFF
 # canonical order (t, c, z, y, x). Always 5 elements, in this order.
@@ -188,6 +190,47 @@ def _hash_block(block: np.ndarray, algo: str) -> str:
     h.update(repr(tuple(block.shape)).encode())
     h.update(np.ascontiguousarray(block).tobytes())
     return h.hexdigest()
+
+
+def _create_expected(url, multiscales_path, *,
+                     hash_algo="sha256", storage_options=None) -> dict:
+
+    ms = _open_multiscales(url, multiscales_path, storage_options)
+    base = ms.images[0]                        # full-resolution level
+    dims = list(base.dims)                     # storage order
+    size = dict(zip(dims, base.data.shape))
+    scale = dict(base.scale or {})
+
+    benchdata: dict[str, Any] = {
+        "PixelType": str(base.data.dtype),
+        "AxesNames": ";".join(dims),
+        "SizeX": size.get("x"),
+        "SizeY": size.get("y"),
+        "SizeZ": size.get("z", 1),
+        "SizeC": size.get("c", 1),
+        "SizeT": size.get("t", 1),
+        "ScaleX": scale.get("x"),
+        "ScaleY": scale.get("y"),
+        "ScaleZ": scale.get("z"),
+        "NumberOfResLevels": len(ms.images),
+    }
+
+    chunk_coord = _random_chunk_index(base, include_partial=False)
+    chunkhash = _hash_block(_chunk_block(base, chunk_coord), hash_algo)
+    benchdata['ChunkCoord'] = chunk_coord
+    benchdata['ChunkHash'] = chunkhash
+
+
+    # general stuff
+    ngff_version = str(_detect_version(
+        _open_root_node(_full_store(url, multiscales_path), None).attrs.asdict() ))
+    benchdata['OmeZarrVersion'] = ngff_version
+    benchdata['StudyName'] = 'TBA'
+    benchdata['SrcUrl'] = url
+    benchdata['License'] = 'TBA'
+
+    # this makes it specific for a 'plain' multiscales (non-scene, non-hcs, etc.) benchmark
+    benchdata['PathToImageMultiscales'] = multiscales_path
 
 
 # --------------------------------------------------------------------------
