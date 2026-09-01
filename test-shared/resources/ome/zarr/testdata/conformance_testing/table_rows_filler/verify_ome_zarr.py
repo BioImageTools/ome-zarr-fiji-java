@@ -202,40 +202,41 @@ def _fetch_version(url, multiscales_path, storage_options=None):
 def _create_expected(url, multiscales_path, *,
                      hash_algo="sha256", storage_options=None) -> dict:
 
+    benchdata_row: dict[str, Any] = dict()
+
+    # general stuff
+    benchdata_row['OmeZarrVersion'] = _fetch_version(url, multiscales_path, storage_options)
+    benchdata_row['StudyName'] = 'TBA'
+    benchdata_row['SrcUrl'] = url
+    benchdata_row['License'] = 'TBA'
+
+    # this makes it specific for a 'plain' multiscales (non-scene, non-hcs, etc.) benchmark
+    benchdata_row['PathToImageMultiscales'] = multiscales_path
+
     ms = _open_multiscales(url, multiscales_path, storage_options)
     base = ms.images[0]                        # full-resolution level
     dims = list(base.dims)                     # storage order
     size = dict(zip(dims, base.data.shape))
     scale = dict(base.scale or {})
 
-    benchdata: dict[str, Any] = {
-        "PixelType": str(base.data.dtype),
-        "AxesNames": ";".join(dims),
-        "SizeX": size.get("x"),
-        "SizeY": size.get("y"),
-        "SizeZ": size.get("z", 1),
-        "SizeC": size.get("c", 1),
-        "SizeT": size.get("t", 1),
-        "ScaleX": scale.get("x"),
-        "ScaleY": scale.get("y"),
-        "ScaleZ": scale.get("z"),
-        "NumberOfResLevels": len(ms.images),
-    }
+    benchdata_row["PixelType"] = str(base.data.dtype)
+    benchdata_row["AxesNames"] = ";".join(dims)
+    benchdata_row["SizeX"] = size.get("x")
+    benchdata_row["SizeY"] = size.get("y")
+    benchdata_row["SizeZ"] = size.get("z", 1)
+    benchdata_row["SizeC"] = size.get("c", 1)
+    benchdata_row["SizeT"] = size.get("t", 1)
+    benchdata_row["ScaleX"] = scale.get("x")
+    benchdata_row["ScaleY"] = scale.get("y")
+    benchdata_row["ScaleZ"] = scale.get("z")
+    benchdata_row["NumberOfResLevels"] = len(ms.images)
 
     chunk_coord = _random_chunk_index(base, include_partial=False)
     chunkhash = _hash_block(_chunk_block(base, chunk_coord), hash_algo)
-    benchdata['ChunkCoord'] = chunk_coord
-    benchdata['ChunkHash'] = chunkhash
+    benchdata_row['ChunkCoord'] = chunk_coord
+    benchdata_row['ChunkHash'] = chunkhash
 
-
-    # general stuff
-    benchdata['OmeZarrVersion'] = _fetch_version(url, multiscales, storage_options)
-    benchdata['StudyName'] = 'TBA'
-    benchdata['SrcUrl'] = url
-    benchdata['License'] = 'TBA'
-
-    # this makes it specific for a 'plain' multiscales (non-scene, non-hcs, etc.) benchmark
-    benchdata['PathToImageMultiscales'] = multiscales_path
+    return benchdata_row
 
 
 # --------------------------------------------------------------------------
