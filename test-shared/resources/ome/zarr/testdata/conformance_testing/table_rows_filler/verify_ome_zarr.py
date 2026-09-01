@@ -20,7 +20,7 @@ import random
 
 import numpy as np
 from ngff_zarr import from_ngff_zarr
-from ngff_zarr.from_ngff_zarr import _open_root_node
+from ngff_zarr.from_ngff_zarr import ( _open_root_node, RemoteZarrStore, REMOTE_URL_SCHEMES )
 from ngff_zarr.parse_metadata import _detect_version
 
 # Axis order in which the caller supplies ChunkCoord: the OME-Zarr/NGFF
@@ -192,6 +192,13 @@ def _hash_block(block: np.ndarray, algo: str) -> str:
     return h.hexdigest()
 
 
+def _fetch_version(url, multiscales_path, storage_options=None):
+    loc = _full_store(url, multiscales_path)
+    if isinstance(loc, str) and loc.startswith(REMOTE_URL_SCHEMES):
+        loc = RemoteZarrStore(loc, storage_options=storage_options)
+    return str(_detect_version( _open_root_node(loc, None).attrs.asdict() ))
+
+
 def _create_expected(url, multiscales_path, *,
                      hash_algo="sha256", storage_options=None) -> dict:
 
@@ -222,9 +229,7 @@ def _create_expected(url, multiscales_path, *,
 
 
     # general stuff
-    ngff_version = str(_detect_version(
-        _open_root_node(_full_store(url, multiscales_path), None).attrs.asdict() ))
-    benchdata['OmeZarrVersion'] = ngff_version
+    benchdata['OmeZarrVersion'] = _fetch_version(url, multiscales, storage_options)
     benchdata['StudyName'] = 'TBA'
     benchdata['SrcUrl'] = url
     benchdata['License'] = 'TBA'
