@@ -2,6 +2,10 @@
 Verify selected OME-Zarr *multiscales* parameters against expected values,
 using only the ngff-zarr library (no direct zarr / numpy-chunk assumptions).
 
+Chunk access uses the native OME-Zarr chunk grid as exposed by ngff-zarr:
+``NgffImage.data`` is a Dask array whose blocks map 1:1 onto the on-disk
+Zarr chunks (for sharded arrays, onto the inner sub-chunks). We therefore
+slice exactly one such block — no re-tiling, no numpy/dask-invented chunking.
 
 Tested with: ngff-zarr 0.45.0, zarr 3.3.0, dask 2026.8.0
 """
@@ -14,17 +18,18 @@ from typing import Any
 from urllib.parse import urlsplit, unquote
 
 import numpy as np
-import zarr
 from ngff_zarr import from_ngff_zarr
 
-# Axis order in which the caller supplies ChunkCoord.
-_CHUNKCOORD_ORDER = ("c", "t", "z", "y", "x")
+# Axis order in which the caller supplies ChunkCoord: the OME-Zarr/NGFF
+# canonical order (t, c, z, y, x). Always 5 elements, in this order.
+_CHUNKCOORD_ORDER = ("t", "c", "z", "y", "x")
 
 _SCALAR_KEYS = (
-    "AxesNames", "PixelType",
-    "SizeX", "SizeY", "SizeZ", "SizeT", "SizeC",
+    "PixelType", "AxesNames",
+    "SizeX", "SizeY", "SizeZ", "SizeC", "SizeT",
     "ScaleX", "ScaleY", "ScaleZ",
     "NumberOfResLevels",
+    # ChunkCoord, ChunkHash
 )
 
 
@@ -88,41 +93,42 @@ def _open_multiscales(url, multiscales_path, storage_options):
 
 
 # --------------------------------------------------------------------------
-# chunk access — authoritative on-disk zarr chunk grid
+# native-chunk access (via ngff-zarr's dask array only)
 # --------------------------------------------------------------------------
-def _open_base_zarr_array(url, array_path, ms, storage_options):
-    """Open the underlying zarr Array of the base level, honoring its true chunk grid."""
-    grp_store = _full_store(url, array_path)
-    ds_path = _base_dataset_path(ms)
-    kwargs = {"storage_options": storage_options} if storage_options else {}
-    # ds_path may itself be nested (e.g. 'scale0/image'); open relative to the group.
-    z = zarr.open_group(grp_store, mode="r", **kwargs)
-    return z[ds_path]
+def _chunk_block(image, coord_tczyx):
+    """Return the ndarray of one native OME-Zarr chunk.
 
+    `image` is the base-level NgffImage. `image.data.chunks` is the per-axis
+    tuple of block sizes on the native chunk grid. `coord_tczyx` is the chunk
+    index in canonical (t, c, z, y, x) order; the index for each axis present
+    in this image's `dims` is taken from that position.
+    """
+    if len(coord_tczyx) != len(_CHUNKCOORD_ORDER):
+        raise ValueError(
+            f"ChunkCoord must have {len(_CHUNKCOORD_ORDER)} elements in "
+            f"{_CHUNKCOORD_ORDER} order; got {coord_tczyx!r}"
+        )
+    dims = list(image.dims)
+    arr = image.data                       # dask array on the native chunk grid
+    grid = arr.chunks                      # e.g. ((1,1,1),(2,2,1),(32,32),(32,16))
+    coord_by_dim = dict(zip(_CHUNKCOORD_ORDER, coord_tczyx))
 
-def _chunk_block_from_zarr(zarr_arr, dims, coord_cxtzyx):
-    """Slice exactly one on-disk chunk, given a (c,t,z,y,x) chunk index."""
-    coord_by_dim = dict(zip(_CHUNKCOORD_ORDER, coord_cxtzyx))
-    cshape = zarr_arr.chunks           # on-disk chunk shape, storage order
-    shape = zarr_arr.shape
-    sl = []
-    resolved_by_dim = {}
+    slices = []
     for d, dim in enumerate(dims):
-        idx = int(coord_by_dim.get(dim, 0))
-        nblocks = -(-shape[d] // cshape[d])           # ceil division
+        idx = int(coord_by_dim[dim])
+        nblocks = len(grid[d])
         if not (0 <= idx < nblocks):
-            raise IndexError(f"chunk index {idx} out of range for axis '{dim}' ({nblocks} chunks)")
-        start = idx * cshape[d]
-        stop = min(start + cshape[d], shape[d])       # last chunk may be partial
-        sl.append(slice(start, stop))
-        resolved_by_dim[dim] = idx
-    # echo back in caller's (c,t,z,y,x) order, using 0 for axes absent from storage
-    resolved = [resolved_by_dim.get(a, 0) for a in _CHUNKCOORD_ORDER]
-    return zarr_arr[tuple(sl)], resolved
+            raise IndexError(
+                f"chunk index {idx} out of range for axis '{dim}' ({nblocks} chunks)"
+            )
+        offsets = np.cumsum((0,) + tuple(grid[d]))
+        slices.append(slice(int(offsets[idx]), int(offsets[idx + 1])))
+
+    return np.asarray(arr[tuple(slices)].compute())
 
 
 def _hash_block(block: np.ndarray, algo: str) -> str:
-    """Hash raw bytes plus dtype+shape, so identical bytes under different dtype/shape differ."""
+    """Hash dtype + shape + C-contiguous raw bytes of one chunk block."""
     h = hashlib.new(algo)
     h.update(block.dtype.str.encode())
     h.update(repr(tuple(block.shape)).encode())
@@ -133,40 +139,46 @@ def _hash_block(block: np.ndarray, algo: str) -> str:
 # --------------------------------------------------------------------------
 # public API
 # --------------------------------------------------------------------------
-def compute_chunk_hash(url, array_path, chunk_coord, *,
+def compute_chunk_hash(url, multiscales_path, chunk_coord, *,
                        hash_algo="sha256", storage_options=None) -> str:
-    """Compute ChunkHash for a (c,t,z,y,x) chunk index — use it to build benchmark dicts."""
-    ms = _open_multiscales(url, array_path, storage_options)
-    dims = list(ms.images[0].dims)
-    zarr_arr = _open_base_zarr_array(url, array_path, ms, storage_options)
-    block, _ = _chunk_block_from_zarr(zarr_arr, dims, list(chunk_coord))
-    return _hash_block(np.asarray(block), hash_algo)
+    """Compute ChunkHash for a (t,c,z,y,x) native chunk index — use to build benchmarks."""
+    ms = _open_multiscales(url, multiscales_path, storage_options)
+    block = _chunk_block(ms.images[0], list(chunk_coord))
+    return _hash_block(block, hash_algo)
 
 
-def verify_multiscales(url, array_path, expected, *,
+def verify_multiscales(url, multiscales_path, expected, *,
                        hash_algo="sha256", storage_options=None,
                        strict_unknown_keys=True) -> CheckResult:
     """
-    Open an OME-Zarr multiscales group and check its parameters against `expected`.
+    Open one OME-Zarr multiscales group and check its parameters against `expected`.
 
-    Recognized keys: AxesNames, PixelType, SizeX/Y/Z/T/C, ScaleX/Y/Z,
-    NumberOfResLevels, ChunkCoord (+ ChunkHash).
-    ChunkCoord is a list of on-disk chunk indices in (c,t,z,y,x) order.
+    Parameters
+    ----------
+    url : str
+        Dataset location: bare path, 'file:' URL, http(s), s3://, gs://, ...
+    multiscales_path : str | None
+        In-store group path selecting which 'multiscales' to inspect
+        (None/'' = root group).
+    expected : dict
+        Recognized keys: PixelType, AxesNames, SizeX/Y/Z/C/T, ScaleX/Y/Z,
+        NumberOfResLevels, ChunkCoord (+ ChunkHash).
+        ChunkCoord is a list of native chunk indices in (t,c,z,y,x) order.
     """
-    ms = _open_multiscales(url, array_path, storage_options)
+    ms = _open_multiscales(url, multiscales_path, storage_options)
     base = ms.images[0]                        # full-resolution level
-    dims = list(base.dims)                      # storage order
+    dims = list(base.dims)                     # storage order
     size = dict(zip(dims, base.data.shape))
     scale = dict(base.scale or {})
 
     actual: dict[str, Any] = {
-        "AxesNames": ";".join(dims),
         "PixelType": str(base.data.dtype),
+        "AxesNames": ";".join(dims),
         "SizeX": size.get("x"),
         "SizeY": size.get("y"),
         "SizeZ": size.get("z", 1),
-        "SizeT": size.get("t", 1),
         "SizeC": size.get("c", 1),
+        "SizeT": size.get("t", 1),
         "ScaleX": scale.get("x"),
         "ScaleY": scale.get("y"),
         "ScaleZ": scale.get("z"),
@@ -194,11 +206,9 @@ def verify_multiscales(url, array_path, expected, *,
             res.notes.append("ChunkCoord and ChunkHash must be provided together.")
             res.passed = False
         else:
-            zarr_arr = _open_base_zarr_array(url, array_path, ms, storage_options)
-            block, resolved = _chunk_block_from_zarr(zarr_arr, dims, list(expected["ChunkCoord"]))
-            actual_hash = _hash_block(np.asarray(block), hash_algo)
+            block = _chunk_block(base, list(expected["ChunkCoord"]))
+            actual_hash = _hash_block(block, hash_algo)
             ok = actual_hash == expected["ChunkHash"]
-            res.checked["ChunkCoord"] = (list(expected["ChunkCoord"]), resolved, True)
             res.checked["ChunkHash"] = (expected["ChunkHash"], actual_hash, ok)
             res.passed &= ok
 
