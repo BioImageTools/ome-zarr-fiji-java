@@ -1,6 +1,7 @@
 """
 Verify selected OME-Zarr *multiscales* parameters against expected values,
-using the ngff-zarr library.
+using only the ngff-zarr library (no direct zarr / numpy-chunk assumptions).
+
 
 Tested with: ngff-zarr 0.45.0, zarr 3.3.0, dask 2026.8.0
 """
@@ -10,6 +11,7 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import urlsplit, unquote
 
 import numpy as np
 import zarr
@@ -48,29 +50,41 @@ class CheckResult:
 
 
 # --------------------------------------------------------------------------
-# opening / model helpers
+# opening helpers
 # --------------------------------------------------------------------------
-def _full_store(url: str, array_path: str | None) -> str:
-    return url if not array_path else f"{url.rstrip('/')}/{array_path.lstrip('/')}"
+def _normalize_store(url: str) -> str:
+    """Turn a 'file:' URL into a bare local path; pass everything else through.
+
+    ngff-zarr reads local paths, http(s), s3, gs, ... natively, but its local
+    reader expects a filesystem path rather than a 'file:' scheme, so we strip
+    that one case here. http/s3/gs/bare-path are returned unchanged.
+    """
+    parts = urlsplit(url)
+    if parts.scheme == "file":
+        path = unquote(parts.path)
+        if parts.netloc and parts.netloc not in ("", "localhost"):
+            # tolerate malformed 'file://tmp/x' where 'tmp' lands in netloc
+            path = "/" + parts.netloc + path
+        return path
+    return url
 
 
-def _open_multiscales(url: str, array_path: str | None, storage_options: dict | None):
-    return from_ngff_zarr(_full_store(url, array_path), validate=False,
+def _full_store(url: str, multiscales_path: str | None) -> str:
+    """Join the dataset URL with the in-store path of the desired multiscales group.
+
+    An OME-Zarr may hold several 'multiscales' groups; `multiscales_path`
+    selects one by its group path inside the store (e.g. 'B', 'nucleus/raw').
+    None / '' means the root group is itself the multiscales group.
+    """
+    base = _normalize_store(url)
+    if not multiscales_path:
+        return base
+    return f"{base.rstrip('/')}/{multiscales_path.lstrip('/')}"
+
+
+def _open_multiscales(url, multiscales_path, storage_options):
+    return from_ngff_zarr(_full_store(url, multiscales_path), validate=False,
                           storage_options=storage_options)
-
-
-def _axes(metadata) -> list:
-    """v0.4/v0.5 expose metadata.axes; v0.6 (RFC-5) nests them in coordinateSystems."""
-    ax = getattr(metadata, "axes", None)
-    if ax:
-        return list(ax)
-    cs = getattr(metadata, "coordinateSystems", None)
-    return list(cs[0].axes) if cs else []
-
-
-def _base_dataset_path(ms) -> str:
-    """Path (relative to the multiscales group) of the full-resolution dataset."""
-    return ms.metadata.datasets[0].path
 
 
 # --------------------------------------------------------------------------
