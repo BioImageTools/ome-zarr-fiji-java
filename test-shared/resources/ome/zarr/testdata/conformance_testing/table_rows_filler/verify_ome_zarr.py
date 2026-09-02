@@ -192,11 +192,20 @@ def _hash_block(block: np.ndarray, algo: str) -> str:
     return h.hexdigest()
 
 
+# --------------------------------------------------------------------------
+# less-public :) API to generate rows into the benchmark table
+# --------------------------------------------------------------------------
 def _fetch_version(url, multiscales_path, storage_options=None):
     loc = _full_store(url, multiscales_path)
     if isinstance(loc, str) and loc.startswith(REMOTE_URL_SCHEMES):
         loc = RemoteZarrStore(loc, storage_options=storage_options)
     return str(_detect_version( _open_root_node(loc, None).attrs.asdict() ))
+
+def _print_create_example():
+    print("import verify_ome_zarr as V")
+    print("V._create_expected('https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0157/Asterella gracilis SWE/IMG_1033-1112 Asterella gracilis (Mannia gracilis) stature.ome.zarr','')")
+    print("V._create_expected('/home/ulman/STEFAN/FIJI/BR00109990_C2.zarr','2')")
+    print("V._create_expected('/home/ulman/STEFAN/FIJI/BR00109990_C2.zarr','6')")
 
 
 def _create_expected(url, multiscales_path, *,
