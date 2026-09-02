@@ -1,0 +1,84 @@
+OME-NGFF version -> OmeZarrVersion
+File Path -> SrcUrl
+License
+Study -> StudyName
+#
+SizeX (geometry at base res level)
+SizeY
+SizeZ
+SizeC
+SizeT
+DataType -> PixelType
+#
+ome-zarr is any of the following:
+Axes -> AxesNames: str;str;str
+Wells
+Fields
+
+  Scene - 0.6+ only! probably in some next time...
+  Well
+  Plate
+    Ome??? for metadata, as an array of items, according to the OME metadata model
+    Ome??? mandatory to hold NGFF, it's presence distinguishes a plain Zarr from OME-Zarr
+    0.6+ list of images
+  Labels
+  Image section? -> Multiscales - must be always present for Image!
+  Bf2Raw
+#
+ScaleX (possible anisotropy fix at base res level)
+ScaleY
+ScaleZ
+NumberOfResLevels
+
+================================
+
+- OmeZarrVersion
+- StudyName
+- SrcUrl             [ <- input to the benchmark ]
+- License
+
+Input parameter for: [ <- input to the benchmark ]
+- pure multiscale (Images) at "subpath" (in the case that bf2r specs is used for a "series" of images)
+- Labels -> subpath again
+- HCS - plates
+- Scene (0.6+)
+- Bf2Raw ?? special kind of test, as only this one doesn't lead to 'multiscales'
+==> This leads to four (4) different testbed datasets [five datasets? if Bf2Raw] <==
+
+Obtains basic pixel/display oriented (image) parameters, with their semantics!!:
+- PixelType
+- AxesNames (semicolon-separated names of axes in storage order!!; to check if, at least, this has been picked up well)
+- SizeX (geometry at base res level, reader must understand which one is the x-axis!)
+- SizeY
+- SizeZ
+- SizeC - or any other mean to iterate over xyzt images/arrays/tensors
+- SizeT
+- ScaleX (possible anisotropy fix at base res level)
+- ScaleY
+- ScaleZ
+- NumberOfResLevels
+- ChunkCoord (input!, index of a chunk on which the hash was computed)
+- ChunkHash  (output)
+
+================================
+
+Images:
+- PathToImageMultiscales, "plain OME-Zarrs" are typically with this set to ''
+
+Bioformats2raw
+- PathToImageMultiscales with an actual path, typically '/0'
+
+Labels:
+- PathToImageMultiscales
+- LabelName           (intentionally not a path, to make reader understand and _find_, and report for benchmark verification)
+
+HCS:
+- NumberOfColumns    [ -> this is tested as well, not an input ]
+- NumberOfRows       [ -> this is tested as well, not an input ]
+- ColumnIndex
+- RowIndex
+- WellImageIndex - well has Images, an ordered list, this is an index to it
+
+Scene:
+- TODO
+
