@@ -4,11 +4,15 @@ import verify_ome_zarr as V
 def convert_from_table(old_table):
     new_table = pd.DataFrame([])
     for _, row in old_table.iterrows():
-        print("Inspecting path:", row['File Path'])
-        new_content = V._create_expected(row['File Path'],'')
-        new_content['StudyName'] = row['Study']
-        new_content['License'] = row['License']
-        new_table = pd.concat([new_table, pd.DataFrame([new_content])], ignore_index=True)
+        print("Inspecting path:", row['File Path'], end="")
+        try:
+            new_content = V._create_expected(row['File Path'],'')
+            new_content['StudyName'] = row['Study']
+            new_content['License'] = row['License']
+            new_table = pd.concat([new_table, pd.DataFrame([new_content])], ignore_index=True)
+            print("  done")
+        except Exception as e:
+            print("  Error! ",e)
     return new_table
 
 
