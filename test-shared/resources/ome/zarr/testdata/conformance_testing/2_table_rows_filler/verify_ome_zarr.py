@@ -249,7 +249,7 @@ def _create_expected(url, multiscales_path, *,
 
 
 # --------------------------------------------------------------------------
-# public API
+# public API - multiscales
 # --------------------------------------------------------------------------
 def compute_chunk_hash(url, multiscales_path, chunk_coord, *,
                        hash_algo="sha256", storage_options=None) -> str:
@@ -331,3 +331,35 @@ def verify_multiscales(url, multiscales_path, expected, *,
                 res.passed = False
 
     return res
+
+
+# --------------------------------------------------------------------------
+# public API - benchmarking
+# --------------------------------------------------------------------------
+def read_benchmark_table_v1(csv_path: str) -> dict:
+    import pandas as pd
+    table = pd.read_csv(csv_path)
+
+    list_of_expected = []
+    for _,row in table.iterrows():
+        r = row.to_dict()
+        if pd.isna(r['PathToImageMultiscales']):
+            r['PathToImageMultiscales'] = ''
+        if pd.isna(r['ScaleZ']):
+            r['ScaleZ'] = None
+        list_of_expected.append(r)
+    return list_of_expected
+
+
+def ngff_zarr_benchmark_on_table_v1(csv_path):
+    expected_results = read_benchmark_table_v1(csv_path)
+    for expected in expected_results:
+        print("Testing", expected['StudyName'], ":  ", end='')
+        res = verify_multiscales(expected['SrcUrl'],
+                                 expected['PathToImageMultiscales'],
+                                 expected)
+        if res.passed:
+            print('PASSED')
+        else:
+            print(res.report())
+
