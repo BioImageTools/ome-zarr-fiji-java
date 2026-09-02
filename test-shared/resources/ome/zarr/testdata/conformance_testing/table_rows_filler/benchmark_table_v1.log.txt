@@ -1,0 +1,33 @@
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0073A/9798462.zarr  Error!  data type >u1 is not supported
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0083A/9822152.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001247.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0044A/4007801.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0054A/5025551.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0054A/5025552.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0054A/5025553.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0076A/10501752.zarr  done
+Ignoring unknown fields {'units'} in axis 'z'. These fields are not part of the OME-NGFF v0.4 specification.
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0047A/4496763.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001240.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0052A/5514375.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457227.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457537.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0101A/13457539.zarr  Error!  'dict' object has no attribute 'type'
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0048A/9846151.zarr/  Error!  Could not detect NGFF version from root attributes. Available keys: ['bioformats2raw.layout']. Expected one of: (1) 'ome' key with 'multiscales' for v0.5+ format, (2) 'multiscales' key at root for v0.4 format, or (3) 'plate' key for HCS plate format. This may be a malformed OME-Zarr file or created by a tool that doesn't follow the NGFF specification.
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0048A/9846152.zarr/  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0138A/TimEmbryos-120919/HybCycle_29/MMStack_Pos9.ome.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0066/ExpD_chicken_embryo_MIP.ome.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0066/ExpA_VIP_ASLM_on.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0062A/6001240_labels.zarr  done
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0157/Asterella gracilis SWE/IMG_1033-1112 Asterella gracilis (Mannia gracilis) stature.ome.zarr  done
+/home/ulman/devel/Zurich_hack/ome-zarr-fiji-java__BioImageTools/test-shared/resources/ome/zarr/testdata/conformance_testing/table_rows_filler/.pixi/envs/default/lib/python3.14/site-packages/ngff_zarr/parse_metadata.py:298: UserWarning: Listing children of the remote store 'https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0051/180712_H2B_22ss_Courtney1_20180712-163837_p00_c00_preview.zarr' failed (Generic HTTP error: Error performing PROPFIND https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0051/180712_H2B_22ss_Courtney1_20180712-163837_p00_c00_preview.zarr in 66.574976ms - Server returned non-2xx status code: 405 Method Not Allowed: Not allowed (PROPFIND /idr/zarr/v0.5/idr0051/180712_H2B_22ss_Courtney1_20180712-163837_p00_c00_preview.zarr on S3 API)); the store may not support listing (plain HTTP).
+for key in root.keys():
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0051/180712_H2B_22ss_Courtney1_20180712-163837_p00_c00_preview.zarr  Error!  The input is a bioformats2raw container but no image subgroups were found. The container may be empty or malformed.
+/home/ulman/devel/Zurich_hack/ome-zarr-fiji-java__BioImageTools/test-shared/resources/ome/zarr/testdata/conformance_testing/table_rows_filler/.pixi/envs/default/lib/python3.14/site-packages/ngff_zarr/parse_metadata.py:298: UserWarning: Listing children of the remote store 'https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0026/3.66.9-6.141020_15-41-29.00.ome.zarr' failed (Generic HTTP error: Error performing PROPFIND https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0026/3.66.9-6.141020_15-41-29.00.ome.zarr in 52.351576ms - Server returned non-2xx status code:405 Method Not Allowed: Not allowed (PROPFIND /idr/zarr/v0.5/idr0026/3.66.9-6.141020_15-41-29.00.ome.zarr on S3 API)); the store may not support listing (plain HTTP).
+for key in root.keys():
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0026/3.66.9-6.141020_15-41-29.00.ome.zarr  Error!  The input is a bioformats2raw container but no image subgroups were found. The container may be empty or malformed.
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0083/9822152.zarr  done
+/home/ulman/devel/Zurich_hack/ome-zarr-fiji-java__BioImageTools/test-shared/resources/ome/zarr/testdata/conformance_testing/table_rows_filler/.pixi/envs/default/lib/python3.14/site-packages/ngff_zarr/parse_metadata.py:298: UserWarning: Listing children of the remote store 'https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr' failed (Generic HTTP error:Error performing PROPFIND https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr in 50.778104ms - Server returned non-2xx status code: 405 Method Not Allowed: Not allowed (PROPFIND /idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr on S3 API)); the store may not support listing (plain HTTP).
+for key in root.keys():
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr  Error!  The input is a bioformats2raw container but no image subgroups were found. The containermay be empty or malformed.
+Inspecting path: https://livingobjects.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr  Error!  Could not detect NGFF version from root attributes. Available keys: ['bioformats2raw.layout']. Expected one of: (1) 'ome' key with 'multiscales' for v0.5+ format, (2) 'multiscales' key at root for v0.4 format, or (3) 'plate' key for HCS plate format. This may be a malformed OME-Zarr file or created by a tool that doesn't follow the NGFF specification.

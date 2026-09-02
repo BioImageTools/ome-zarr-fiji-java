@@ -91,7 +91,7 @@ def _full_store(url: str, multiscales_path: str | None) -> str:
 
 
 def _open_multiscales(url, multiscales_path, storage_options):
-    return from_ngff_zarr(_full_store(url, multiscales_path), validate=False,
+    return from_ngff_zarr(_full_store(url, multiscales_path), validate=True,
                           storage_options=storage_options)
 
 
@@ -242,7 +242,7 @@ def _create_expected(url, multiscales_path, *,
 
     chunk_coord = _random_chunk_index(base, include_partial=False)
     chunkhash = _hash_block(_chunk_block(base, chunk_coord), hash_algo)
-    benchdata_row['ChunkCoord'] = chunk_coord
+    benchdata_row['ChunkCoord'] = ",".join([str(c) for c in chunk_coord])
     benchdata_row['ChunkHash'] = chunkhash
 
     return benchdata_row

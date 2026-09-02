@@ -63,10 +63,13 @@ Obtains basic pixel/display oriented (image) parameters, with their semantics!!:
 ================================
 
 Images:
-- PathToImageMultiscales (or Path, ImagePath, ImageGroupPath, ZarrInnerPath ??)
+- PathToImageMultiscales, "plain OME-Zarrs" are typically with this set to ''
+
+Bioformats2raw
+- PathToImageMultiscales with an actual path, typically '/0'
 
 Labels:
-- PathToImageMultiscales (or Path, ImagePath, ImageGroupPath, ZarrInnerPath ??)
+- PathToImageMultiscales
 - LabelName           (intentionally not a path, to make reader understand and _find_, and report for benchmark verification)
 
 HCS:
@@ -79,5 +82,3 @@ HCS:
 Scene:
 - TODO
 
-
-0.1,https://livingobjects.ebi.ac.uk/idr/zarr/v0.1/12689244.zarr,4992.0,4255.0,401.0,3.0,1.0,XYZCT,,,CC BY 4.0,idr0106,,-1.0,-1.0,-1.0,-1
