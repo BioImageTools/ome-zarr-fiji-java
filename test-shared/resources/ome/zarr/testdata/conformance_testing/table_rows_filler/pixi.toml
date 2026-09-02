@@ -1,0 +1,14 @@
+[workspace]
+authors = ["Vladimír Ulman <ulman@fi.muni.cz>"]
+channels = ["conda-forge"]
+name = "zarr-tools-ngff-zarr"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = ">=3.14.7,<3.15"
+
+[pypi-dependencies]
+ngff-zarr = { version = ">=0.45.0", extras = ["remote"] }
