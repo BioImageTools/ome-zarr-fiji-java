@@ -48,6 +48,18 @@ and easily handles even the huge ones.
     * Paste via menu: Plugins -> OME-Zarr -> Paste OME-Zarr URI
     * Paste via button in FIJI: ![fiji_paste_button.png](doc/fiji_paste_button.png)
 
+### Open via menu (local folders)
+
+`File -> Import -> OME-Zarr...` opens a folder chooser. The selected folder is checked for Zarr metadata and then opened
+with the same opening behavior, resolution and reader backend as drag & drop and paste. Being a single-parameter SciJava
+command, it is macro-recordable:
+
+```
+run("OME-Zarr...", "directory=/path/to/image.ome.zarr");
+```
+
+Only local folders can be chosen here; for http(s) and `s3://` locations use copy & paste.
+
 ### FIJI links (`fiji://`)
 
 A `fiji://` link on a web page opens an OME-Zarr straight in a (running) Fiji, honoring the same opening behavior as

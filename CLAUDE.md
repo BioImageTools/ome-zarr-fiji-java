@@ -56,7 +56,8 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
   locations (`HTTPLocation`/`URLLocation`); `Location`s with no URI (`Location.getURI()` returns `null`, e.g.
   `BytesLocation`) are declined.
 - **Directly, bypassing `IOService`** (clipboard paste – menu command, toolbar button, Ctrl/Cmd+Shift+V):
-  `PasteToOpenAction.pasteFromClipboard()` calls `openWithSettings()` itself. It does not route through
+  `PasteToOpenAction.pasteFromClipboard()` calls `openWithSettings()` itself, as does `OpenOmeZarrCommand`
+  (`File > Import > OME-Zarr...`, a folder chooser for local datasets — issue #40). Paste does not route through
   `OmeZarrIOPlugin`, and deliberately so: it adds clipboard reading (`ClipboardUtils`), user-facing error messages via
   its `errorHandler`, and the `s3:` bypass below — none of which fit the `IOPlugin` contract. Nothing in this repo calls
   `IOService` itself.
