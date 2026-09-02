@@ -16,7 +16,7 @@ def convert_from_table(old_table):
     return new_table
 
 
-def convert_from_v1_table():
+def convert_from_v0_table():
     old_table = pd.read_csv('../testbed_datasets.csv')
     table = old_table[  (old_table['OME-NGFF version'] >= 0.4)
                       & (old_table['OME-NGFF version'] <= 0.5)                        # version restriction
