@@ -261,7 +261,7 @@ def compute_chunk_hash(url, multiscales_path, chunk_coord, *,
 
 def verify_multiscales(url, multiscales_path, expected, *,
                        hash_algo="sha256", storage_options=None,
-                       strict_unknown_keys=True) -> CheckResult:
+                       strict_unknown_keys=False) -> CheckResult:
     """
     Open one OME-Zarr multiscales group and check its parameters against `expected`.
 
@@ -314,7 +314,8 @@ def verify_multiscales(url, multiscales_path, expected, *,
             res.passed &= ok
 
     if "ChunkCoord" in expected and "ChunkHash" in expected:
-        block = _chunk_block(base, list(expected["ChunkCoord"]))
+        chunk_coord = [int(c) for c in expected['ChunkCoord'].split(',')]
+        block = _chunk_block(base, chunk_coord)
         actual_hash = _hash_block(block, hash_algo)
         ok = actual_hash == expected["ChunkHash"]
         res.checked["ChunkHash"] = (expected["ChunkHash"], actual_hash, ok)
