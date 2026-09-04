@@ -60,6 +60,19 @@ run("OME-Zarr...", "directory=/path/to/image.ome.zarr");
 
 Only local folders can be chosen here; for http(s) and `s3://` locations use copy & paste.
 
+### Open as `Dataset` (scripting)
+
+`Plugins -> OME-Zarr -> Open OME-Zarr as Dataset` takes the location as a single line of text and hands the image back
+as a `Dataset` output, so a macro or script can keep working with it:
+
+```
+run("Open OME-Zarr as Dataset", "uri=/path/to/image.ome.zarr");
+```
+
+Unlike the `File -> Import` entry it accepts local paths, `file:` and `http(s):` URIs, and it always produces a
+`Dataset` instead of following the configured open behavior. The reader backend still comes from the
+settings. `s3://` is not supported here. The command opens no dialog of its own.
+
 ### FIJI links (`fiji://`)
 
 A `fiji://` link on a web page opens an OME-Zarr straight in a (running) Fiji, honoring the same opening behavior as
