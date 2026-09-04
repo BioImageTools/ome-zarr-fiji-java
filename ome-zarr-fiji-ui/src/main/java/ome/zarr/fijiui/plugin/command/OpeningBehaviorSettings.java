@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -88,7 +88,7 @@ public class OpeningBehaviorSettings extends DynamicCommand
 			+ "</html>";
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Reader backend", description = "Choose which library is used to read OME-Zarr datasets", initializer = "initZarrBackendChoices" )
+	@Parameter( label = "Reader backend", description = "Choose which library is used to read OME-Zarr datasets", initializer = "initZarrBackends" )
 	private String readerBackend;
 
 	@SuppressWarnings( "all" )
@@ -131,7 +131,7 @@ public class OpeningBehaviorSettings extends DynamicCommand
 	@SuppressWarnings( "unused" )
 	private void initZarrBackends()
 	{
-		getInfo().getMutableInput( "readerBackends", String.class )
+		getInfo().getMutableInput( "readerBackend", String.class )
 				.setChoices( backendDescriptions( ZarrBackend.values() ) );
 	}
 
