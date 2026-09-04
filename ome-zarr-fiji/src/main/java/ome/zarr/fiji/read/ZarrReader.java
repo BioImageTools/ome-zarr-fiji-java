@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -41,6 +41,7 @@ import java.util.function.Supplier;
 
 import com.google.gson.JsonSyntaxException;
 
+import bdv.util.BdvHandle;
 import ij.IJ;
 import ij.gui.YesNoCancelDialog;
 import ome.zarr.imglib2.PyramidBackend;
@@ -216,19 +217,23 @@ public class ZarrReader
 	 * When no level is narrow enough for the preferred width — which is always the
 	 * case for a single-level location that is too wide — the coarsest level is
 	 * offered instead and opened only if the user confirms.
+	 *
+	 * @return the opened {@link PyramidalDataset}, or {@code null} if reading
+	 *   failed or the user declined to open the image
 	 */
-	public void openIJWithImage()
+	// NB: the return value is for API and script users
+	public PyramidalDataset openIJWithImage()
 	{
-		openPyramidImage(
+		return openPyramidImage(
 				() -> {
 					final PyramidContents< ? > contents = getContents();
 					if ( uncalibratedAndDeclined( contents ) )
 						return null;
 					final int suggestedLevel = contents.suggestResolutionLevel( preferredMaxWidth );
 					if ( suggestedLevel != PyramidContents.NO_MATCHING_LEVEL )
-						showAsDataset( contents, suggestedLevel );
-					else if ( confirmOpeningSmallestLevel( contents ) )
-						showAsDataset( contents, contents.smallestResolutionLevel() );
+						return showAsDataset( contents, suggestedLevel );
+					if ( confirmOpeningSmallestLevel( contents ) )
+						return showAsDataset( contents, contents.smallestResolutionLevel() );
 					return null;
 				} );
 	}
@@ -292,25 +297,28 @@ public class ZarrReader
 	 * preferred width does not apply and the named level is opened without asking.
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
+	 * @return the opened {@link PyramidalDataset}, or {@code null} if reading
+	 *   failed, the level does not exist, or the user declined to open the image
 	 */
-	public void openIJWithImage( final int resolutionLevel )
+	// NB: the return value is for API and script users
+	public PyramidalDataset openIJWithImage( final int resolutionLevel )
 	{
 		try
 		{
-			openPyramidImage(
+			return openPyramidImage(
 					() -> {
 						final PyramidContents< ? > contents = getContents();
 						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
 							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels() );
 						if ( uncalibratedAndDeclined( contents ) )
 							return null;
-						showAsDataset( contents, resolutionLevel );
-						return null;
+						return showAsDataset( contents, resolutionLevel );
 					} );
 		}
 		catch ( NonExistingResolutionLevelException e )
 		{
 			showNonExistingResolutionLevelError( e );
+			return null;
 		}
 	}
 
@@ -318,12 +326,13 @@ public class ZarrReader
 	 * Shows {@code resolutionLevel} of {@code contents} as a new ImageJ dataset,
 	 * and makes it the active pyramidal of the {@link PyramidalService}.
 	 */
-	private void showAsDataset( final PyramidContents< ? > contents, final int resolutionLevel )
+	private PyramidalDataset showAsDataset( final PyramidContents< ? > contents, final int resolutionLevel )
 	{
 		final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
 		context.getService( UIService.class ).show( dataset );
 		context.getService( PyramidalService.class ).setActivePyramidal( dataset );
 		logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
+		return dataset;
 	}
 
 	/**
@@ -368,9 +377,11 @@ public class ZarrReader
 	 * current zoom, so the preferred width — a limit on the single level an ImageJ
 	 * window would hold — does not apply and is not checked here.
 	 *
-	 * @return the resulting {@code BdvHandle}, or {@code null} if opening failed
+	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed or
+	 *   the user declined to open the image
 	 */
-	public Object openBDVWithImage()
+	// NB: the return value is for API and script users
+	public BdvHandle openBDVWithImage()
 	{
 		return openPyramidImage(
 				() -> {
@@ -378,13 +389,17 @@ public class ZarrReader
 						return null;
 					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, getContents() );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
-					final Object result = BdvUtils.showBdvAndRegisterDataset( pyramidal, pyramidalService );
+					final BdvHandle result = BdvUtils.showBdvAndRegisterDataset( pyramidal, pyramidalService );
 					logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );
 					return result;
 				} );
 	}
 
-	private Object openPyramidImage( final Supplier< Object > imageOpener )
+	/**
+	 * Runs {@code imageOpener} and turns every expected reading failure into a
+	 * user-facing message plus a log entry, returning {@code null} in that case.
+	 */
+	private < T > T openPyramidImage( final Supplier< T > imageOpener )
 	{
 		try
 		{

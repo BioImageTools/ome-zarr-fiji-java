@@ -451,7 +451,8 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
-			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
+			BdvHandle bdvHandle = actions.openBDVWithImage();
+			assertNotNull( bdvHandle, "BDV should have opened" );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertNotNull( pyramidalService );
@@ -478,7 +479,8 @@ class ZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
-			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
+			BdvHandle bdvHandle = actions.openBDVWithImage();
+			assertNotNull( bdvHandle, "BDV should have opened" );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertNotNull( pyramidalService );
@@ -644,10 +646,12 @@ class ZarrOpenActionsTest
 			BdvHandle bdvHandle2 = null;
 			try
 			{
-				bdvHandle1 = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
+				bdvHandle1 = actions.openBDVWithImage();
+				assertNotNull( bdvHandle1, "BDV should have opened" );
 				assertEquals( 3, pyramidalService.getPyramidals().size() );
 
-				bdvHandle2 = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
+				bdvHandle2 = actions.openBDVWithImage();
+				assertNotNull( bdvHandle2, "BDV should have opened" );
 				assertEquals( 4, pyramidalService.getPyramidals().size() );
 
 				assertSame( datasetService.getDatasets().get( 0 ), pyramidalService.getPyramidals().get( 0 ) );
@@ -717,7 +721,8 @@ class ZarrOpenActionsTest
 			try
 			{
 				// BDV open covers all resolution levels and registers one dataset
-				bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
+				bdvHandle = actions.openBDVWithImage();
+				assertNotNull( bdvHandle, "BDV should have opened" );
 
 				PyramidalService pyramidalService = context.getService( PyramidalService.class );
 				DatasetService datasetService = context.getService( DatasetService.class );
@@ -775,7 +780,8 @@ class ZarrOpenActionsTest
 			{
 				actions.openIJWithImage( 0 ); // first instance of level 0
 				actions.openIJWithImage( 0 ); // second instance of level 0
-				bdvHandle = assertInstanceOf( BdvHandle.class, actions.openBDVWithImage() );
+				bdvHandle = actions.openBDVWithImage();
+				assertNotNull( bdvHandle, "BDV should have opened" );
 				actions.openIJWithImage( 1 );
 
 				PyramidalService pyramidalService = context.getService( PyramidalService.class );

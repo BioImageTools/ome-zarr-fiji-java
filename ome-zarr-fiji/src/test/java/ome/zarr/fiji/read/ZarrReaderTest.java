@@ -121,7 +121,8 @@ class ZarrReaderTest
 		try (Context context = new Context())
 		{
 			final ZarrReader opener = new ZarrReader( path.toUri(), context, new N5PyramidBackend(), null );
-			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, opener.openBDVWithImage() );
+			BdvHandle bdvHandle = opener.openBDVWithImage();
+			assertNotNull( bdvHandle, "BDV should have opened" );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			assertEquals( 1, pyramidalService.getPyramidals().size() );
@@ -352,10 +353,10 @@ class ZarrReaderTest
 					message -> {
 						throw new AssertionError( "BDV must not ask about the preferred width: " + message );
 					} );
-			Object opened = opener.openBDVWithImage();
+			BdvHandle bdvHandle = opener.openBDVWithImage();
 
 			assertNull( capturedError.get(), "Opening should not have failed, got: " + capturedError.get() );
-			BdvHandle bdvHandle = assertInstanceOf( BdvHandle.class, opened, "BDV should open regardless of the preferred width" );
+			assertNotNull( bdvHandle, "BDV should open regardless of the preferred width" );
 			bdvHandle.close();
 			SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the close
 		}
