@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>ome.zarr</groupId>
 		<artifactId>ome-zarr-java</artifactId>
-		<version>0.7.3-SNAPSHOT</version>
+		<version>0.7.4-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>ome-zarr-n5</artifactId>
