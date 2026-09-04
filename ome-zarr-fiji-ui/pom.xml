@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>sc.fiji</groupId>
+		<groupId>ome.zarr</groupId>
 		<artifactId>ome-zarr-java</artifactId>
 		<version>0.7.3-SNAPSHOT</version>
 	</parent>
@@ -100,15 +100,15 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>sc.fiji</groupId>
+			<groupId>ome.zarr</groupId>
 			<artifactId>ome-zarr-n5</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>sc.fiji</groupId>
+			<groupId>ome.zarr</groupId>
 			<artifactId>ome-zarr-zarrjava</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>sc.fiji</groupId>
+			<groupId>ome.zarr</groupId>
 			<artifactId>ome-zarr-fiji</artifactId>
 		</dependency>
 
