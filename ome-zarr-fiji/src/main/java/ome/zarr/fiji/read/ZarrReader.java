@@ -323,6 +323,32 @@ public class ZarrReader
 	}
 
 	/**
+	 * Reads the dataset and wraps it into a {@link PyramidalDataset} <em>without</em>
+	 * displaying it: no ImageJ window is opened and the {@link PyramidalService}
+	 * active pyramidal is left alone, so the caller decides what to do with the
+	 * result. This is the entry point for scripts and for commands that declare a
+	 * {@code Dataset} output.
+	 * <p>
+	 * The resolution level is the one the preferred width selects.
+	 *
+	 * @return the dataset, or {@code null} if reading failed
+	 */
+	public PyramidalDataset getPyramidalDataset()
+	{
+		return openPyramidImage(
+				() -> {
+					final PyramidContents< ? > contents = getContents();
+					final int suggestedLevel = contents.suggestResolutionLevel( preferredMaxWidth );
+					if ( suggestedLevel != PyramidContents.NO_MATCHING_LEVEL )
+						return new PyramidalDataset( context, contents, suggestedLevel );
+					final int smallestLevel = contents.smallestResolutionLevel();
+					logger.warn( "No resolution level of {} is as narrow as the preferred maximum of {}; returning the "
+							+ "coarsest level {} instead.", inputUri, preferredMaxWidth, smallestLevel );
+					return new PyramidalDataset( context, contents, smallestLevel );
+				} );
+	}
+
+	/**
 	 * Shows {@code resolutionLevel} of {@code contents} as a new ImageJ dataset,
 	 * and makes it the active pyramidal of the {@link PyramidalService}.
 	 */
