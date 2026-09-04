@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -42,7 +42,9 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.function.Consumer;
 
+import bdv.util.BdvHandle;
 import ij.IJ;
+import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
@@ -223,10 +225,14 @@ public class ZarrOpenActions
 	/**
 	 * Opens the dataset in ImageJ at the resolution selected by the settings.
 	 * Delegates to {@link ZarrReader#openIJWithImage()}.
+	 *
+	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
 	 */
-	public void openIJWithImage()
+	// UnusedReturnValue: the dataset is returned for API and script users
+	@SuppressWarnings( "UnusedReturnValue" )
+	public PyramidalDataset openIJWithImage()
 	{
-		opener.openIJWithImage();
+		return opener.openIJWithImage();
 	}
 
 	/**
@@ -234,19 +240,24 @@ public class ZarrOpenActions
 	 * resolution). Delegates to {@link ZarrReader#openIJWithImage(int)}.
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
+	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
 	 */
-	public void openIJWithImage( final int resolutionLevel )
+	// UnusedReturnValue: the dataset is returned for API and script users
+	@SuppressWarnings( "UnusedReturnValue" )
+	public PyramidalDataset openIJWithImage( final int resolutionLevel )
 	{
-		opener.openIJWithImage( resolutionLevel );
+		return opener.openIJWithImage( resolutionLevel );
 	}
 
 	/**
 	 * Opens the dataset in BigDataViewer. Delegates to
 	 * {@link ZarrReader#openBDVWithImage()}.
 	 *
-	 * @return the resulting {@code BdvHandle}, or {@code null} if opening failed
+	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
 	 */
-	public Object openBDVWithImage()
+	// UnusedReturnValue: the dataset is returned for API and script users
+	@SuppressWarnings( "UnusedReturnValue" )
+	public BdvHandle openBDVWithImage()
 	{
 		return opener.openBDVWithImage();
 	}
