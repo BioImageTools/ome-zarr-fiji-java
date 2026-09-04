@@ -62,6 +62,19 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
   its `errorHandler`, and the `s3:` bypass below — none of which fit the `IOPlugin` contract. Nothing in this repo calls
   `IOService` itself.
 
+One entry point deliberately does **not** end in `openWithSettings()`: `OpenOmeZarrAsDatasetCommand`
+(`Plugins > OME-Zarr > Open OME-Zarr as Dataset`, issue #40) takes the location as a single `String` input and declares
+a `PyramidalDataset` output, so scripts can capture the image. It cannot honor `ZarrOpenBehavior` — BDV and the
+selection dialog produce no `Dataset` — so it always reads one, via `ZarrReader.getPyramidalDataset()` with the
+persisted backend and preferred width, which displays nothing. Being plain text
+rather than a chooser, it accepts `http(s):` too, but *not* `s3:` — it validates with `ZarrUtils.isZarr`, which cannot
+probe `s3:`, and it does not take paste's bypass.
+
+`ZarrReader.openIJWithImage()`/`openIJWithImage(int)` return the `PyramidalDataset` they showed and
+`openBDVWithImage()` returns the `BdvHandle` (both `null` on failure or when the user declined); `ZarrOpenActions`
+mirrors that. The plugin's own call sites want only the side effect, hence the `@SuppressWarnings( "UnusedReturnValue" )`
+on those methods — the values exist for API and script users.
+
 **`s3:` support is paste-only, deliberately.** `ZarrUtils.isZarr` cannot probe `s3:` (`ome-zarr-imglib2` has no AWS
 dependency at all, and an `s3://bucket/key` URI names neither region nor endpoint; see its javadoc), so
 `PasteToOpenAction` skips the check for that scheme and opens directly. That path never touches SciJava's `Location`
@@ -173,17 +186,24 @@ of the shipped plugin.
 
 ## Modules
 
-Multi-module reactor. The root `pom.xml` is the aggregator (`sc.fiji:ome-zarr-java`, packaging `pom`) and inherits
+Multi-module reactor. The root `pom.xml` is the aggregator (`ome.zarr:ome-zarr-java`, packaging `pom`) and inherits
 `pom-scijava`. Each module lives in its own directory `ome-zarr-<name>/` with its own `pom.xml` and carries its own
 SciJava provenance (required by the enforcer). Five published modules:
 
-**groupId is `sc.fiji`, packages stay `ome.zarr.*`** – deliberately. Maven Central only accepts a deployment whose
-groupId sits in a namespace verified for the publishing account; `sc.fiji` is verified for the SciJava account whose
-token the CI uses (that is how `sc.fiji:ome-zarr-fiji:0.3.x` reached Central), while `ome.zarr` is verified for nobody
-and cannot be – its reversed domain `zarr.ome` has no TLD to prove ownership of. A 0.7.x release under `ome.zarr`
-therefore failed with `Namespace 'ome.zarr' is not allowed`. Java package names are unaffected by any of this. Moving
-to an org-owned namespace later (`io.github.bioimagetools`, or `org.bioimagetools` if the domain is ever registered)
-means re-verifying and changing every `<groupId>` again, so it is a one-time decision, not a routine bump.
+**groupId is `ome.zarr`, matching the Java packages, and deployment goes to maven.scijava.org** – the two decisions are
+one. The SciJava Nexus hosts any groupId, so `ome.zarr` needs no verification there; that is where 0.6.x and earlier
+live (`https://maven.scijava.org/repository/releases/ome/zarr/…`) and where releases go again. What routes a release is
+the root pom's `<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>`: SciJava's `ci-build.sh` reads that property
+and picks the target from it (`*deploy-to-scijava*` needs the `MAVEN_*` secrets, `*sonatype-oss-release*` the
+`CENTRAL_*` ones – `.github/workflows/build.yml` passes both sets, so the unused ones are inert).
+
+**Maven Central is not an option under this groupId** and that is the whole reason the project briefly published as
+`sc.fiji:ome-zarr-fiji:0.3.x`: Central only accepts a deployment whose groupId sits in a namespace verified for the
+publishing account. `sc.fiji` is verified for the SciJava account whose token the CI uses; `ome.zarr` is verified for
+nobody and cannot be, since its reversed domain `zarr.ome` has no TLD to prove ownership of – a 0.7.x attempt failed
+with `Namespace 'ome.zarr' is not allowed`. So going back to Central means switching every `<groupId>` again *and*
+`releaseProfiles`; an org-owned namespace (`io.github.bioimagetools`, or `org.bioimagetools` if the domain is ever
+registered) would be the alternative. Java package names stay `ome.zarr.*` through all of this.
 
 - **`ome-zarr-imglib2`** – package `ome.zarr.imglib2` (+`.metadata`, `.exceptions`); backend-agnostic core (
   `PyramidBackend`, `AbstractPyramidBackend`, `PyramidContents`, `ZarrUtils`, `Affine3DUtils`). No Fiji or backend
