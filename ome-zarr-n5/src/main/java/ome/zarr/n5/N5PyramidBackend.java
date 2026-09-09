@@ -73,6 +73,7 @@ import ome.zarr.imglib2.ZarrUtils;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
+import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
 
@@ -84,6 +85,9 @@ import ome.zarr.imglib2.metadata.Omero;
 public class N5PyramidBackend extends AbstractPyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	/** Display name of this backend, used in user-facing messages. */
+	private static final String NAME = "N5";
 
 	/**
 	 * Convenience entry point for reading an OME-Zarr image with the N5 backend
@@ -105,7 +109,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	@Override
 	public String getName()
 	{
-		return "N5";
+		return NAME;
 	}
 
 	@Override
@@ -161,6 +165,11 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 
 	private static N5Reader openReader( final URI uri )
 	{
+		// N5-universe has no ZIP store, and its format detection would call the
+		// archive "not OME-Zarr", so refuse it up front with the real cause.
+		if ( ZarrUtils.isOzxArchive( uri ) )
+			throw new ZipArchiveUnsupportedException( uri.toString(), NAME );
+
 		final N5Factory factory = new N5Factory();
 		// The region default only matters for s3:// URIs.
 		if ( "s3".equalsIgnoreCase( uri.getScheme() ) )

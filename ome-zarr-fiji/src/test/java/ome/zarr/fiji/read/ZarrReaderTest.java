@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import net.imagej.DatasetService;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
@@ -359,6 +360,46 @@ class ZarrReaderTest
 			assertNotNull( bdvHandle, "BDV should open regardless of the preferred width" );
 			bdvHandle.close();
 			SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the close
+		}
+	}
+
+	/**
+	 * With the N5 backend selected, the user is told the reader cannot read
+	 * {@code .ozx} and where to switch it.
+	 */
+	@Test
+	void openIJWithImageReportsZippedArchiveUnsupportedByN5( @TempDir Path tempDir ) throws Exception
+	{
+		Path archive = ZarrTestUtils.zipDataset( DATASET, tempDir.resolve( "5d.ozx" ) );
+		try (Context context = new Context())
+		{
+			AtomicReference< String > capturedError = new AtomicReference<>();
+			ZarrReader opener = new ZarrReader( archive.toUri(), context, new N5PyramidBackend(), null,
+					capturedError::set );
+
+			assertNull( opener.openIJWithImage() );
+			assertTrue( context.getService( DatasetService.class ).getDatasets().isEmpty(),
+					"Nothing must be opened for an archive the backend cannot read" );
+			assertNotNull( capturedError.get() );
+			assertTrue( capturedError.get().contains( ".ozx" ), capturedError.get() );
+			assertTrue( capturedError.get().contains( "zarr-java" ), capturedError.get() );
+		}
+	}
+
+	/** The same archive opens with the zarr-java backend. */
+	@Test
+	void openIJWithImageOpensZippedArchiveWithZarrJava( @TempDir Path tempDir ) throws Exception
+	{
+		Path archive = ZarrTestUtils.zipDataset( DATASET, tempDir.resolve( "5d.ozx" ) );
+		try (Context context = new Context())
+		{
+			AtomicReference< String > capturedError = new AtomicReference<>();
+			PyramidalDataset dataset = new ZarrReader( archive.toUri(), context, new ZarrJavaPyramidBackend(), null,
+					capturedError::set ).openIJWithImage();
+
+			assertNull( capturedError.get() );
+			assertNotNull( dataset );
+			SwingUtilities.invokeAndWait( () -> context.getService( DisplayService.class ).getActiveDisplay().close() );
 		}
 	}
 }

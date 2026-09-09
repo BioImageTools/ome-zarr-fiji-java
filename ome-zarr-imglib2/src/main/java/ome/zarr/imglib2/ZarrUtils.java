@@ -38,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,9 @@ public class ZarrUtils
 	 * Ordered v3-first so newer datasets are recognised on the first probe.
 	 */
 	static final String[] METADATA_FILES = { "zarr.json", ".zgroup", ".zarray", ".zattrs" };
+
+	/** Extension of a zipped OME-Zarr archive: one ZIP file holding the whole dataset. */
+	public static final String OZX_EXTENSION = ".ozx";
 
 	private ZarrUtils()
 	{
@@ -98,6 +102,9 @@ public class ZarrUtils
 	 *   <li>{@code http:} / {@code https:} – sends HTTP HEAD requests for
 	 *       well-known Zarr metadata files</li>
 	 * </ul>
+	 * A zipped archive ({@link #OZX_EXTENSION}) is judged by the archive file
+	 * alone – present as a regular file, or reachable over HTTP – since looking
+	 * inside it would mean reading the whole ZIP index.
 	 * Other schemes (e.g. {@code s3:}) always return {@code false}.<br>
 	 * They are not probed because doing so cheaply is not possible: it would require
 	 * creating an (authenticated), scheme-specific client (such as an S3 client)
@@ -116,6 +123,8 @@ public class ZarrUtils
 	{
 		if ( uri == null )
 			return false;
+		if ( isOzxArchive( uri ) )
+			return isOzxArchiveAccessible( uri );
 		final String scheme = uri.getScheme();
 		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
 		{
@@ -142,6 +151,47 @@ public class ZarrUtils
 				return true;
 		}
 		return false;
+	}
+
+	private static boolean isOzxArchiveAccessible( final URI archiveUri )
+	{
+		final String scheme = archiveUri.getScheme();
+		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
+		{
+			try
+			{
+				return Files.isRegularFile( Paths.get( archiveUri ) );
+			}
+			catch ( RuntimeException e )
+			{
+				return false;
+			}
+		}
+		if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
+			return isHttpAccessible( archiveUri );
+		return false;
+	}
+
+	/**
+	 * Whether {@code uri} names a zipped OME-Zarr archive ({@link #OZX_EXTENSION}),
+	 * i.e. whether its last path segment carries that extension
+	 * (case-insensitively; a trailing slash makes no difference).
+	 * <p>
+	 * Pure URI arithmetic, so it costs no I/O and behaves the same for every
+	 * scheme.
+	 *
+	 * @param uri location to inspect; may be {@code null}
+	 * @return {@code true} if {@code uri} names a {@code .ozx} archive
+	 */
+	public static boolean isOzxArchive( final URI uri )
+	{
+		if ( uri == null )
+			return false;
+		final String path = uri.getPath();
+		if ( path == null )
+			return false;
+		final String withoutTrailingSlash = path.endsWith( "/" ) ? path.substring( 0, path.length() - 1 ) : path;
+		return withoutTrailingSlash.toLowerCase( Locale.ROOT ).endsWith( OZX_EXTENSION );
 	}
 
 	private static URI ensureTrailingSlash( final URI uri )

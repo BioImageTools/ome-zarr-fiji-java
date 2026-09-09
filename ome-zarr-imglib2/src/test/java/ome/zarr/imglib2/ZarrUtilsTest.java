@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,6 +48,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -122,6 +124,58 @@ class ZarrUtilsTest
 		// jar: URIs throw FileSystemNotFoundException from Paths.get(URI); the
 		// dispatcher should catch that rather than propagate.
 		assertFalse( ZarrUtils.isZarr( URI.create( "jar:file:/tmp/foo.jar!/bar" ) ) );
+	}
+
+	// --- .ozx archives ---
+
+	@Test
+	void detectsLocalOzxArchive( @TempDir final Path tempDir ) throws IOException
+	{
+		final Path archive = Files.createFile( tempDir.resolve( "img.ozx" ) );
+		assertTrue( ZarrUtils.isZarr( archive.toUri() ) );
+	}
+
+	@Test
+	void rejectsMissingOzxArchive( @TempDir final Path tempDir )
+	{
+		assertFalse( ZarrUtils.isZarr( tempDir.resolve( "img.ozx" ).toUri() ) );
+	}
+
+	@Test
+	void rejectsOzxArchiveThatIsAFolder( @TempDir final Path tempDir ) throws IOException
+	{
+		final Path folder = Files.createDirectory( tempDir.resolve( "img.ozx" ) );
+		assertFalse( ZarrUtils.isZarr( folder.toUri() ) );
+	}
+
+	/** An existing archive says nothing about a path inside it. */
+	@Test
+	void rejectsPathInsideLocalOzxArchive( @TempDir final Path tempDir ) throws IOException
+	{
+		final Path archive = Files.createFile( tempDir.resolve( "img.ozx" ) );
+		assertFalse( ZarrUtils.isZarr( URI.create( archive.toUri() + "/0" ) ) );
+	}
+
+	@ParameterizedTest
+	@CsvSource( {
+			"file:///data/img.ozx, true",
+			"file:///data/img.ozx/, true",
+			"file:///data/img.OZX, true",
+			"s3://bucket/data/img.ozx, true",
+			"https://example.com/img.ozx, true",
+			"file:///data/img.ozx/0, false",
+			"file:///data/img.ozxy, false",
+			"file:///data/img.ome.zarr, false",
+			"mailto:someone@example.com, false" } )
+	void recognisesOzxArchiveLocations( final String uri, final boolean expected )
+	{
+		assertEquals( expected, ZarrUtils.isOzxArchive( URI.create( uri ) ) );
+	}
+
+	@Test
+	void nullIsNotAnOzxArchive()
+	{
+		assertFalse( ZarrUtils.isOzxArchive( null ) );
 	}
 
 	// --- isZarr(URI) — http: URI tests ---

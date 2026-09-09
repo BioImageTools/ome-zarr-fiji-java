@@ -30,11 +30,16 @@ package ome.zarr;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class ZarrTestUtils
 {
@@ -45,6 +50,32 @@ public class ZarrTestUtils
 		URL url = ZarrTestUtils.class.getClassLoader().getResource( resource );
 		assertNotNull( url, "Resource folder not found: " + resource );
 		return Paths.get( url.toURI() );
+	}
+
+	/**
+	 * Zips an example dataset into {@code archive}, with entries relative to the
+	 * dataset root, so the archive holds the dataset itself.
+	 *
+	 * @param resource resource path of the dataset folder to zip
+	 * @param archive the archive file to write, e.g. a file in a {@code @TempDir}
+	 * @return {@code archive}, for chaining
+	 */
+	public static Path zipDataset( final String resource, final Path archive )
+			throws URISyntaxException, IOException
+	{
+		final Path root = resourcePath( resource );
+		try (OutputStream out = Files.newOutputStream( archive );
+				ZipOutputStream zip = new ZipOutputStream( out );
+				Stream< Path > files = Files.walk( root ))
+		{
+			for ( final Path file : ( Iterable< Path > ) files.filter( Files::isRegularFile )::iterator )
+			{
+				zip.putNextEntry( new ZipEntry( root.relativize( file ).toString().replace( '\\', '/' ) ) );
+				Files.copy( file, zip );
+				zip.closeEntry();
+			}
+		}
+		return archive;
 	}
 
 	/**

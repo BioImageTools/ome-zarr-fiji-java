@@ -30,7 +30,11 @@ package ome.zarr.n5;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
@@ -38,6 +42,8 @@ import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.ZarrUtils;
+import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
 import ome.zarr.imglib2.PyramidBackendTestBase;
 import ome.zarr.ZarrTestUtils;
 
@@ -59,5 +65,31 @@ class N5PyramidBackendTest implements PyramidBackendTestBase
 		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
 		assertEquals( 5, contents.numDimensions() );
 		assertEquals( 2, contents.numResolutionLevels() );
+	}
+
+	/**
+	 * The archive is refused up front, naming the backend, without touching the
+	 * file – so a non-existent one is refused just the same.
+	 */
+	@Test
+	void zippedArchiveIsRefusedWithATellingMessage()
+	{
+		final URI archive = URI.create( "file:/no/such/image.ozx" );
+		final ZipArchiveUnsupportedException e = assertThrows( ZipArchiveUnsupportedException.class,
+				() -> N5PyramidBackend.readPyramid( archive ) );
+		assertEquals( "N5", e.getBackendName() );
+		assertTrue( e.getMessage().contains( "zipped" ), e.getMessage() );
+	}
+
+	/** A path inside an archive is not an archive location and gets no special treatment. */
+	@Test
+	void pathInsideZippedArchiveIsNotTreatedAsAnArchive()
+	{
+		final URI inside = URI.create( "file:/no/such/image.ozx/0" );
+		assertFalse( ZarrUtils.isOzxArchive( inside ) );
+		// It still fails – the path does not exist – just not as an archive.
+		final RuntimeException e = assertThrows( RuntimeException.class,
+				() -> N5PyramidBackend.readPyramid( inside ) );
+		assertFalse( e instanceof ZipArchiveUnsupportedException, "Unexpected archive verdict: " + e );
 	}
 }
