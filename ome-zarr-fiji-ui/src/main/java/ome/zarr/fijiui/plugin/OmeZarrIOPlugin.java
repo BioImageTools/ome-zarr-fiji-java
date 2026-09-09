@@ -52,7 +52,7 @@ import ome.zarr.imglib2.ZarrUtils;
  * work. Fiji-Latest ships {@code fiji-links}, whose {@code OpenLinkHandler}
  * parses the link, resolves {@code ?p=} into a {@link Location} and then calls
  * {@code IOService.open(Location)} – which dispatches to whichever
- * {@code IOPlugin} claims that location, i.e. to this one.
+ * {@code IOPlugin} claims that location, i.e., to this one.
  * </p>
  * <p>
  * Both local and remote locations are accepted, because {@code fiji-links}
@@ -77,7 +77,7 @@ public class OmeZarrIOPlugin extends AbstractIOPlugin< Object >
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	//the "innocent" product of the (hypothetical) file reading... which Fiji will not display
+	// the "innocent" product of a (hypothetical) file reading, which Fiji will not display
 	private static final Object FAKE_INPUT = new ArrayList<>( 0 );
 
 	@Override
@@ -102,8 +102,7 @@ public class OmeZarrIOPlugin extends AbstractIOPlugin< Object >
 
 		// Returning a non-null object tells SciJava's IO subsystem the drop was fully
 		// handled. It then tries to display the result, finds it cannot, and silently
-		// gives up — which is what we want, since openWithSettings has already done
-		// the displaying (or put the action chooser on screen).
+		// gives up.
 		return FAKE_INPUT;
 	}
 
