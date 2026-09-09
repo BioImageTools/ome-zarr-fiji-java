@@ -79,10 +79,7 @@ class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
 		assertEquals( 5, contents.numDimensions() );
 		assertEquals( 2, contents.numResolutionLevels() );
 	}
-	/**
-	 * A zipped archive served over HTTP, which reaches the store through
-	 * {@code FullRangeStore}.
-	 */
+	/** A zipped archive served over HTTP. */
 	@Test
 	void testReadZippedArchiveOverHttp( @TempDir final Path tempDir ) throws Exception
 	{

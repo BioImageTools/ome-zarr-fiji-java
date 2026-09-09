@@ -218,10 +218,8 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   It is the only backend that reads **zipped OME-Zarr archives (`.ozx`)**. An archive *is* the multiscale image: only
   a URI whose last segment ends in `.ozx` is one (`ZarrUtils.isOzxArchive`), so `…/img.ozx/0` is not addressable and
   fails like any other bad path. `resolveHandle` wraps it in a `ReadOnlyZipStore`, addressing the archive as a named
-  entry of its parent store, not a store root — `HttpStore` appends a slash to a root and `GET /img.ozx/` is a 404 —
-  and reads it through `FullRangeStore`, a workaround for
-  [zarr-java#100](https://github.com/zarr-developers/zarr-java/issues/100) to delete once a fixed zarr-java is pinned
-  (see its javadoc). `ZarrUtils.isZarr` judges an archive by the file alone, since looking inside means reading the
+  entry of its parent store, not a store root — `HttpStore` appends a slash to a root and `GET /img.ozx/` is a 404.
+  `ZarrUtils.isZarr` judges an archive by the file alone, since looking inside means reading the
   whole ZIP index. Other backends refuse archives up front: `N5PyramidBackend.openReader` throws
   `ZipArchiveUnsupportedException`, which `ZarrReader` turns into "switch the reader backend to zarr-java".
   Every AWS SDK reference lives in the package-private `S3StoreFactory` (the AWS SDK arrives transitively via

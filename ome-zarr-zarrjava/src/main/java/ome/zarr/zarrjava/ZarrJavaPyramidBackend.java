@@ -275,7 +275,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		final String name = ZarrUtils.lastSegment( uri );
 		if ( parent == null || name.isEmpty() )
 			throw new IllegalArgumentException( "Zipped OME-Zarr archive has no parent location: " + uri );
-		return new FullRangeStore( storeFor( stripTrailingSlash( parent ) ) ).resolve( name );
+		return storeFor( stripTrailingSlash( parent ) ).resolve( name );
 	}
 
 	/**
