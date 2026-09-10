@@ -29,26 +29,55 @@
 package ome.zarr.fijiui.open.options;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ome.zarr.fijiui.open.openers.BdvMultiResolutionOpener;
+import ome.zarr.fijiui.open.openers.ImageJHighestResolutionOpener;
+import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
+import ome.zarr.fiji.open.ZarrOpener;
+import ome.zarr.fiji.open.ZarrOpenerService;
+
+/**
+ * The user's OME-Zarr opening preferences: which {@link ZarrOpener} to use, up
+ * to which width to open in ImageJ, and which library to read with.
+ * <p>
+ * The opener is stored as its plugin name rather than as a fixed set of
+ * choices, so a plugin that registers its own {@link ZarrOpener} can be selected
+ * here like the built-in ones.
+ */
 public class ZarrOpeningSettings
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	public static final ZarrOpenBehavior DEFAULT_OPEN_BEHAVIOR = ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION;
-
 	/**
-	 * The default max width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} option. This is used if the user has not set a custom width in the preferences.
+	 * The default max width (in Pixels) for the
+	 * {@link ImageJPreferredResolutionOpener}. This is used if the user has not set
+	 * a custom width in the preferences.
 	 */
 	public static final int DEFAULT_PREFERRED_WIDTH = 1000;
 
 	public static final ZarrBackend DEFAULT_BACKEND = ZarrBackend.ZARR_JAVA;
 
-	private ZarrOpenBehavior zarrOpenBehavior;
+	/**
+	 * The names the opening behavior was persisted under before openers were
+	 * plugins, mapped to the opener that replaced each of them. Preferences
+	 * written by version 0.7 and earlier are read through this; it can go once
+	 * those are no longer in the field.
+	 */
+	private static final Map< String, String > LEGACY_NAMES = legacyNames();
+
+	/**
+	 * The chosen opener's plugin name, {@link ZarrOpenerService#ASK}, or
+	 * {@code null} when the user never made a choice.
+	 */
+	private String openerName;
 
 	private int preferredMaxWidth;
 
@@ -62,33 +91,47 @@ public class ZarrOpeningSettings
 
 	public ZarrOpeningSettings()
 	{
-		this( DEFAULT_OPEN_BEHAVIOR, DEFAULT_PREFERRED_WIDTH, DEFAULT_BACKEND );
+		this( null, DEFAULT_PREFERRED_WIDTH, DEFAULT_BACKEND );
 	}
 
-	public ZarrOpeningSettings( final ZarrOpenBehavior zarrOpenBehavior, final int preferredMaxWidth )
+	public ZarrOpeningSettings( final String openerName, final int preferredMaxWidth )
 	{
-		this( zarrOpenBehavior, preferredMaxWidth, DEFAULT_BACKEND );
+		this( openerName, preferredMaxWidth, DEFAULT_BACKEND );
 	}
 
-	public ZarrOpeningSettings( final ZarrOpenBehavior zarrOpenBehavior, final int preferredMaxWidth, final ZarrBackend backend )
+	public ZarrOpeningSettings( final String openerName, final int preferredMaxWidth, final ZarrBackend backend )
 	{
-		this.zarrOpenBehavior = zarrOpenBehavior;
+		this.openerName = openerName;
 		this.preferredMaxWidth = preferredMaxWidth;
 		this.backend = backend;
 	}
 
-	public ZarrOpenBehavior getOpenBehavior()
+	/**
+	 * The opener the user picked.
+	 *
+	 * @return the {@link ZarrOpener} plugin name, {@link ZarrOpenerService#ASK}, or
+	 *   {@code null} when nothing was ever configured — in which case
+	 *   {@link ZarrOpenerService#effectiveOpenerName(String)} decides
+	 */
+	public String getOpenerName()
 	{
-		return zarrOpenBehavior;
-	}
-
-	public void setCurrentChoice( final ZarrOpenBehavior zarrOpenBehavior )
-	{
-		this.zarrOpenBehavior = zarrOpenBehavior;
+		return openerName;
 	}
 
 	/**
-	 * Gets the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
+	 * Sets the opener to use.
+	 *
+	 * @param openerName a {@link ZarrOpener} plugin name, or
+	 *   {@link ZarrOpenerService#ASK} to be prompted every time
+	 */
+	public void setOpenerName( final String openerName )
+	{
+		this.openerName = openerName;
+	}
+
+	/**
+	 * Gets the preferred width (in Pixels) for the
+	 * {@link ImageJPreferredResolutionOpener}.
 	 *
 	 * @return the preferred maximum width in pixels
 	 */
@@ -98,7 +141,8 @@ public class ZarrOpeningSettings
 	}
 
 	/**
-	 * Sets the preferred width (in Pixels) for the {@link ZarrOpenBehavior#IMAGEJ_CUSTOM_RESOLUTION} behavior.
+	 * Sets the preferred width (in Pixels) for the
+	 * {@link ImageJPreferredResolutionOpener}.
 	 *
 	 * @param preferredMaxWidth the preferred maximum width in pixels
 	 */
@@ -135,16 +179,8 @@ public class ZarrOpeningSettings
 	 */
 	public static ZarrOpeningSettings loadSettingsFromPreferences( final PrefService prefs )
 	{
-		ZarrOpenBehavior behavior;
-		try
-		{
-			behavior = prefs == null ? DEFAULT_OPEN_BEHAVIOR : ZarrOpenBehavior.getByName(
-					prefs.get( ZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, DEFAULT_OPEN_BEHAVIOR.name() ) );
-		}
-		catch ( NoSuchElementException e )
-		{
-			behavior = DEFAULT_OPEN_BEHAVIOR;
-		}
+		final String openerName = prefs == null ? null
+				: migrateLegacyName( prefs.get( ZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, null ) );
 		int preferredWidth = prefs == null ? DEFAULT_PREFERRED_WIDTH
 				: prefs.getInt( ZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, DEFAULT_PREFERRED_WIDTH );
 		ZarrBackend backend;
@@ -157,10 +193,33 @@ public class ZarrOpeningSettings
 		{
 			backend = DEFAULT_BACKEND;
 		}
-		logger.debug( "Loaded OME-Zarr default opening behavior: {}", behavior );
+		logger.debug( "Loaded OME-Zarr opener: {}", openerName );
 		logger.debug( "Loaded OME-Zarr preferred width: {}", preferredWidth );
 		logger.debug( "Loaded OME-Zarr default backend: {}", backend );
-		return new ZarrOpeningSettings( behavior, preferredWidth, backend );
+		return new ZarrOpeningSettings( openerName, preferredWidth, backend );
+	}
+
+	/**
+	 * Translates a value written by an older version into the opener name that
+	 * replaced it; anything else is passed through unchanged.
+	 */
+	private static String migrateLegacyName( final String storedName )
+	{
+		final String migrated = LEGACY_NAMES.get( storedName );
+		if ( migrated == null )
+			return storedName;
+		logger.debug( "Migrated the stored opening behavior '{}' to the opener '{}'.", storedName, migrated );
+		return migrated;
+	}
+
+	private static Map< String, String > legacyNames()
+	{
+		final Map< String, String > names = new HashMap<>();
+		names.put( "IMAGEJ_HIGHEST_RESOLUTION", ImageJHighestResolutionOpener.NAME );
+		names.put( "IMAGEJ_CUSTOM_RESOLUTION", ImageJPreferredResolutionOpener.NAME );
+		names.put( "BDV_MULTI_RESOLUTION", BdvMultiResolutionOpener.NAME );
+		names.put( "SHOW_SELECTION_DIALOG", ZarrOpenerService.ASK );
+		return Collections.unmodifiableMap( names );
 	}
 
 	/**
@@ -172,10 +231,11 @@ public class ZarrOpeningSettings
 	{
 		if ( prefs == null )
 			return;
-		prefs.put( ZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, getOpenBehavior().name() );
+		if ( openerName != null )
+			prefs.put( ZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, openerName );
 		prefs.put( ZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
 		prefs.put( ZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, getBackend().name() );
-		logger.debug( "Saved OME-Zarr default opening behavior to preferences: {}", getOpenBehavior() );
+		logger.debug( "Saved OME-Zarr opener to preferences: {}", openerName );
 		logger.debug( "Saved OME-Zarr preferred width to preferences: {}", getPreferredMaxWidth() );
 		logger.debug( "Saved OME-Zarr backend to preferences: {}", getBackend() );
 	}
@@ -183,7 +243,7 @@ public class ZarrOpeningSettings
 	@Override
 	public String toString()
 	{
-		return "ZarrDefaultOpenSetting{zarrOpenBehavior=" + zarrOpenBehavior
+		return "ZarrOpeningSettings{openerName=" + openerName
 				+ ", preferredMaxWidth=" + preferredMaxWidth
 				+ ", backend=" + backend + "}";
 	}

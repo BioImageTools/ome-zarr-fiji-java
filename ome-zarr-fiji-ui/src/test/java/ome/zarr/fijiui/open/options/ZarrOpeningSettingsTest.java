@@ -29,41 +29,41 @@
 package ome.zarr.fijiui.open.options;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
+import ome.zarr.fijiui.open.openers.BdvMultiResolutionOpener;
+import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
+
 /**
- * Unit tests for the {@link ZarrOpeningSettings#getOpenBehavior()} method.
- * This method retrieves the current chosen open option for Zarr datasets.
+ * Unit tests for {@link ZarrOpeningSettings#getOpenerName()}, which reports
+ * which {@link ome.zarr.fiji.open.ZarrOpener} the user chose.
  */
 class ZarrOpeningSettingsTest
 {
 
 	@Test
-	void testGetOpenBehaviorSet()
+	void testGetOpenerNameIsUnsetByDefault()
 	{
-		// Instantiate ZarrDefaultOpenSettings without custom values
 		ZarrOpeningSettings settings = new ZarrOpeningSettings();
 
-		// Verify the default open option is returned
-		assertEquals( ZarrOpeningSettings.DEFAULT_OPEN_BEHAVIOR, settings.getOpenBehavior(),
-				"Default open option should be IMAGEJ_CUSTOM_RES" );
+		// Nothing configured: it is the opener service, not the settings, that
+		// decides what an unconfigured user gets.
+		assertNull( settings.getOpenerName(), "A fresh settings object should not name an opener" );
 	}
 
 	@Test
-	void testGetOpenBehavior()
+	void testGetOpenerName()
 	{
-		// Instantiate ZarrDefaultOpenSettings
 		ZarrOpeningSettings settings = new ZarrOpeningSettings();
 
-		// Set a new open option
-		settings.setCurrentChoice( ZarrOpenBehavior.BDV_MULTI_RESOLUTION );
+		settings.setOpenerName( BdvMultiResolutionOpener.NAME );
 
-		// Verify the set option is returned
-		assertEquals( ZarrOpenBehavior.BDV_MULTI_RESOLUTION, settings.getOpenBehavior(),
-				"Chosen open option should be BDV_MULTI_RESOLUTION after being set explicitly" );
+		assertEquals( BdvMultiResolutionOpener.NAME, settings.getOpenerName(),
+				"Chosen opener should be the BDV one after being set explicitly" );
 	}
 
 	@Test
@@ -75,17 +75,17 @@ class ZarrOpeningSettingsTest
 			prefService.clearAll();
 			// Load settings from preferences for the first time and verify default values
 			ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-			assertEquals( ZarrOpeningSettings.DEFAULT_OPEN_BEHAVIOR, settings.getOpenBehavior() );
+			assertNull( settings.getOpenerName() );
 			assertEquals( ZarrOpeningSettings.DEFAULT_PREFERRED_WIDTH, settings.getPreferredMaxWidth() );
 
 			// Set custom values and save them to preferences
-			settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION );
+			settings.setOpenerName( ImageJPreferredResolutionOpener.NAME );
 			settings.setPreferredMaxWidth( 500 );
 			settings.saveSettingsToPreferences( prefService );
 
 			// Load settings from preferences again and verify custom values
 			ZarrOpeningSettings settings2 = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-			assertEquals( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION, settings2.getOpenBehavior() );
+			assertEquals( ImageJPreferredResolutionOpener.NAME, settings2.getOpenerName() );
 			assertEquals( 500, settings2.getPreferredMaxWidth() );
 		}
 	}

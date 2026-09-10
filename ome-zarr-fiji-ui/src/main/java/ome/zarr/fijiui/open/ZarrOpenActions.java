@@ -46,7 +46,9 @@ import bdv.util.BdvHandle;
 import ij.IJ;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.open.ZarrOpenRequest;
-import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
+import ome.zarr.fiji.open.ZarrOpener;
+import ome.zarr.fiji.open.ZarrOpenerService;
+import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
 import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrBackend;
@@ -56,9 +58,10 @@ import ome.zarr.imglib2.PyramidBackend;
 
 /**
  * Fiji-ui orchestration of the OME-Zarr opening pipeline: it reads the user's
- * {@link ZarrOpeningSettings}, dispatches to the chosen open behavior, and
- * provides the UI-facing actions (N5 importer/viewer dialogs, preset script,
- * help) wired by the {@link ZarrOpenActionChooser}.
+ * {@link ZarrOpeningSettings}, hands the location to the {@link ZarrOpener} the
+ * user chose, and provides the UI-facing actions (N5 importer/viewer dialogs,
+ * preset script, help) that the {@link ZarrOpenActionChooser} and the openers in
+ * this package are built from.
  * <p>
  * The actual reading and ImageJ/BigDataViewer opening lives in
  * {@link ZarrReader}, so this class only adds the UI concerns on top.
@@ -73,32 +76,45 @@ public class ZarrOpenActions
 
 	/**
 	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
-	 * {@code inputUri} via the action selected by the user's configured
-	 * {@link ZarrOpenBehavior}: ImageJ display, BigDataViewer display, or the
-	 * {@link ZarrOpenActionChooser} selection dialog.
+	 * {@code inputUri} with the {@link ZarrOpener} the user configured — or, when
+	 * the user asked to be prompted, through the {@link ZarrOpenActionChooser}
+	 * selection dialog.
+	 * <p>
+	 * This is the single funnel every entry path ends in (drag-and-drop,
+	 * {@code fiji://} links, clipboard paste and the File &gt; Import commands), so
+	 * a registered opener is reachable from all of them.
 	 *
 	 * @param inputUri the OME-Zarr location to open
-	 * @param context the SciJava context the settings are read from
+	 * @param context the SciJava context the settings and openers are read from
 	 */
 	public static void openWithSettings( final URI inputUri, final Context context )
 	{
 		final PrefService prefService = context.getService( PrefService.class );
 		final ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 		final ZarrOpenRequest request = requestFor( inputUri, context, settings, IJ::error );
-		final ZarrOpenActions actions = new ZarrOpenActions( request );
-		switch ( settings.getOpenBehavior() )
+		final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
+		if ( openerService == null )
 		{
-		case IMAGEJ_HIGHEST_RESOLUTION:
-		case IMAGEJ_CUSTOM_RESOLUTION:
-			actions.openIJWithImage();
-			break;
-		case BDV_MULTI_RESOLUTION:
-			actions.openBDVWithImage();
-			break;
-		case SHOW_SELECTION_DIALOG:
-		default:
+			// A context without the service is a broken classpath, not a user choice.
+			logger.warn( "No ZarrOpenerService in the SciJava context. Opening {} with the built-in ImageJ opener.",
+					inputUri );
+			new ImageJPreferredResolutionOpener().open( request );
+			return;
+		}
+		final String openerName = openerService.effectiveOpenerName( settings.getOpenerName() );
+		if ( ZarrOpenerService.ASK.equals( openerName ) )
+		{
 			new ZarrOpenActionChooser( context, request ).showDialog();
-			break;
+			return;
+		}
+		if ( !openerService.open( openerName, request ) )
+		{
+			// The chosen opener came from a plugin that is no longer installed.
+			final String fallback = openerService.effectiveOpenerName( null );
+			logger.info( "The configured OME-Zarr opener '{}' is not installed, using '{}' instead.",
+					openerName, fallback );
+			if ( !openerService.open( fallback, request ) )
+				new ImageJPreferredResolutionOpener().open( request );
 		}
 	}
 
@@ -173,17 +189,13 @@ public class ZarrOpenActions
 
 	/**
 	 * Request for {@code inputUri} carrying the backend and preferred width from
-	 * {@code settings}, or the defaults when no settings are given. The preferred
-	 * width does not apply to {@link ZarrOpenBehavior#IMAGEJ_HIGHEST_RESOLUTION}.
+	 * {@code settings}, or the defaults when no settings are given.
 	 */
 	private static ZarrOpenRequest requestFor( final URI inputUri, final Context context,
 			final ZarrOpeningSettings settings, final Consumer< String > errorHandler )
 	{
 		final ZarrBackend backend = settings == null ? ZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
-		final Integer preferredMaxWidth =
-				settings == null || settings.getOpenBehavior() == ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION
-						? null
-						: settings.getPreferredMaxWidth();
+		final Integer preferredMaxWidth = settings == null ? null : settings.getPreferredMaxWidth();
 		return new ZarrOpenRequest( inputUri, context, backend.createBackend(), preferredMaxWidth, errorHandler );
 	}
 
