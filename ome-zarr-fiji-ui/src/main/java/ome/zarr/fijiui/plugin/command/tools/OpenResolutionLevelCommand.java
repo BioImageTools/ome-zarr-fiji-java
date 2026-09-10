@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.plugin.command;
+package ome.zarr.fijiui.plugin.command.tools;
 
 import java.util.ArrayList;
 import java.util.List;

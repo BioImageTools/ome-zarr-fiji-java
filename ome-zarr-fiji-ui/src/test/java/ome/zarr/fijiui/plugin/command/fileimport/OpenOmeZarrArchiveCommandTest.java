@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.plugin.command;
+package ome.zarr.fijiui.plugin.command.fileimport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -35,95 +35,89 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.io.TempDir;
 
 import ome.zarr.ZarrTestUtils;
 
 /**
- * Tests the folder-acceptance decision of the {@code File > Import > OME-Zarr...}
- * command. The actual opening is covered by {@code ZarrReader}'s tests; here
- * only {@link OpenOmeZarrCommand#validate} and the error wiring of
- * {@link OpenOmeZarrCommand#open} are exercised, so no window is ever shown.
+ * Tests the archive-acceptance decision of the
+ * {@code File > Import > OME-Zarr Archive (.ozx)...} command. The actual opening
+ * is covered by {@code ZarrReader}'s tests; here only
+ * {@link OpenOmeZarrArchiveCommand#validate} and the error wiring of
+ * {@link OpenOmeZarrArchiveCommand#open} are exercised, so no window is ever
+ * shown.
  */
-class OpenOmeZarrCommandTest
+class OpenOmeZarrArchiveCommandTest
 {
 	private final List< String > errors = new ArrayList<>();
 
 	private final Consumer< String > errorHandler = errors::add;
 
 	/**
-	 * A v0.4 (Zarr v2, {@code .zgroup}) and a v0.5 (Zarr v3, {@code zarr.json})
-	 * dataset root, i.e. both metadata layouts a user can pick in the chooser.
+	 * An archive is judged by the file itself, without reading the ZIP index, so
+	 * the backend reports it later if the contents are not OME-Zarr.
 	 */
-	@ParameterizedTest
-	@ValueSource( strings = {
-			"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr",
-			"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr" } )
-	void zarrFolderIsAccepted( final String resource ) throws URISyntaxException
+	@Test
+	void ozxArchiveIsAccepted( @TempDir final Path tempDir ) throws IOException
 	{
-		final File folder = ZarrTestUtils.resourcePath( resource ).toFile();
-		assertNull( OpenOmeZarrCommand.validate( folder ) );
+		final File archive = Files.createFile( tempDir.resolve( "image.ozx" ) ).toFile();
+		assertNull( OpenOmeZarrArchiveCommand.validate( archive ) );
+	}
+
+	@Test
+	void missingArchiveIsRejected( @TempDir final Path tempDir )
+	{
+		assertNotNull( OpenOmeZarrArchiveCommand.validate( tempDir.resolve( "image.ozx" ).toFile() ) );
+	}
+
+	/** A plain file that is not an archive is not openable. */
+	@Test
+	void nonZarrFileIsRejected( @TempDir final Path tempDir ) throws IOException
+	{
+		final File file = Files.createFile( tempDir.resolve( "image.tif" ) ).toFile();
+		assertNotNull( OpenOmeZarrArchiveCommand.validate( file ) );
+	}
+
+	/** A folder named like an archive is not one; only a real file is. */
+	@Test
+	void folderWithArchiveNameIsRejected( @TempDir final Path tempDir ) throws IOException
+	{
+		final File folder = Files.createDirectory( tempDir.resolve( "image.ozx" ) ).toFile();
+		assertNotNull( OpenOmeZarrArchiveCommand.validate( folder ) );
+	}
+
+	@Test
+	void nullArchiveIsRejected()
+	{
+		assertNotNull( OpenOmeZarrArchiveCommand.validate( null ) );
 	}
 
 	/**
-	 * A resolution level inside a dataset is itself a Zarr node and is accepted,
-	 * matching drag-and-drop, which lets a level be dropped and walks up to its
-	 * multiscales group.
-	 */
-	@Test
-	void resolutionLevelFolderIsAccepted() throws URISyntaxException
-	{
-		final File level = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/0" ).toFile();
-		assertNull( OpenOmeZarrCommand.validate( level ) );
-	}
-
-	/** The parent of the dataset roots holds no Zarr metadata of its own. */
-	@Test
-	void nonZarrFolderIsRejected() throws URISyntaxException
-	{
-		final File folder = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing" ).toFile();
-		final String error = OpenOmeZarrCommand.validate( folder );
-		assertNotNull( error );
-		assertTrue( error.contains( "OME-Zarr" ), error );
-		assertTrue( error.contains( folder.toString() ), error );
-	}
-
-	@Test
-	void missingFolderIsRejected()
-	{
-		assertNotNull( OpenOmeZarrCommand.validate( new File( "/no/such/folder.ome.zarr" ) ) );
-	}
-
-	@Test
-	void nullFolderIsRejected()
-	{
-		assertNotNull( OpenOmeZarrCommand.validate( null ) );
-	}
-
-	/**
-	 * A rejected folder reports through the error handler and never reaches the
+	 * A rejected archive reports through the error handler and never reaches the
 	 * opening pipeline – hence a {@code null} context is safe here.
 	 */
 	@Test
-	void rejectedFolderReportsErrorAndDoesNotOpen() throws URISyntaxException
+	void rejectedArchiveReportsErrorAndDoesNotOpen() throws URISyntaxException
 	{
 		final File folder = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing" ).toFile();
-		assertFalse( OpenOmeZarrCommand.open( folder, null, errorHandler ) );
+		assertFalse( OpenOmeZarrArchiveCommand.open( folder, null, errorHandler ) );
 		assertEquals( 1, errors.size() );
-		assertTrue( errors.get( 0 ).contains( "OME-Zarr" ) );
+		assertTrue( errors.get( 0 ).contains( "archive" ), errors.get( 0 ) );
 	}
 
 	/** A missing error handler must not turn a rejection into an exception. */
 	@Test
 	void rejectionWithoutErrorHandlerDoesNotThrow()
 	{
-		assertFalse( OpenOmeZarrCommand.open( null, null, null ) );
+		assertFalse( OpenOmeZarrArchiveCommand.open( null, null, null ) );
 	}
 }

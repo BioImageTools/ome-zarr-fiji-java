@@ -57,7 +57,11 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
   `BytesLocation`) are declined.
 - **Directly, bypassing `IOService`** (clipboard paste – menu command, toolbar button, Ctrl/Cmd+Shift+V):
   `PasteToOpenAction.pasteFromClipboard()` calls `openWithSettings()` itself, as does `OpenOmeZarrCommand`
-  (`File > Import > OME-Zarr...`, a folder chooser for local datasets — issue #40). Paste does not route through
+  (`File > Import > OME-Zarr...`, a folder chooser — issue #40) and `OpenOmeZarrArchiveCommand`
+  (`File > Import > OME-Zarr Archive (.ozx)...`, a file chooser), which share `OmeZarrOpener`. **Do not merge them
+  into one input**: a Swing file chooser is directories-only or files-only, never both (`FILE_AND_DIRECTORY_STYLE`
+  reaches `SwingFileWidget`'s drop filter but not its Browse button), and a custom `InputWidget` did not fix it.
+  Paste does not route through
   `OmeZarrIOPlugin`, and deliberately so: it adds clipboard reading (`ClipboardUtils`), user-facing error messages via
   its `errorHandler`, and the `s3:` bypass below — none of which fit the `IOPlugin` contract. Nothing in this repo calls
   `IOService` itself.
@@ -211,6 +215,13 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
 - **`ome-zarr-n5`** – `ome.zarr.n5` (`N5PyramidBackend`); depends on imglib2 + external N5-universe (codecs `n5-zarr`/
   `n5-blosc`/zstd arrive transitively via `n5-universe`).
 - **`ome-zarr-zarrjava`** – `ome.zarr.zarrjava` (`ZarrJavaPyramidBackend`); depends on imglib2 + `dev.zarr:zarr-java`.
+  It is the only backend that reads **zipped OME-Zarr archives (`.ozx`)**. An archive *is* the multiscale image: only
+  a URI whose last segment ends in `.ozx` is one (`ZarrUtils.isOzxArchive`), so `…/img.ozx/0` is not addressable and
+  fails like any other bad path. `resolveHandle` wraps it in a `ReadOnlyZipStore`, addressing the archive as a named
+  entry of its parent store, not a store root — `HttpStore` appends a slash to a root and `GET /img.ozx/` is a 404.
+  `ZarrUtils.isZarr` judges an archive by the file alone, since looking inside means reading the
+  whole ZIP index. Other backends refuse archives up front: `N5PyramidBackend.openReader` throws
+  `ZipArchiveUnsupportedException`, which `ZarrReader` turns into "switch the reader backend to zarr-java".
   Every AWS SDK reference lives in the package-private `S3StoreFactory` (the AWS SDK arrives transitively via
   zarr-java), so the SDK is loaded only when an `s3:` URI is actually opened; `file:`/`http(s):` datasets never touch
   it. Keep `ZarrJavaPyramidBackend` AWS-free — `catch` clauses included: a handler's exception type is resolved when
@@ -227,10 +238,14 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   `PyramidalDataset`, `PyramidalBdv`, `PyramidalService`, `BdvUtils`). Depends on imglib2 only (no backend artifact, and
   no N5 library at all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrReader` is gone,
   single arrays are read through the selected backend as one-level pyramids).
-- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.plugin.command`, `.dialog`,
-  `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`, the SciJava commands (the Fiji
-  dialogs, including `OpeningBehaviorSettings` and `UserScriptSettings`) in `.plugin.command`, Swing dialogs in
-  `.dialog`.
+- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.plugin.command.*`, `.dialog`,
+  `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`, Swing dialogs in `.dialog`.
+  The SciJava commands sit in three sibling packages under `.plugin.command`, one per menu location: `.fileimport`
+  for the two `File > Import` entries plus their shared `OmeZarrOpener` (package-private, so its tests live there
+  too), `.tools` for the `Plugins > OME-Zarr` entries, and `.settings` for `OpeningBehaviorSettings` and
+  `UserScriptSettings`. Commands are discovered through the `@Plugin` annotation index, not by package, so moving one
+  between these packages does not touch its menu path – but `PrefService` keys off the class's package, so moving a
+  class that is used as a preference key (as `ScriptUtils` uses `UserScriptSettings`) resets that stored setting.
   Depends on all four other modules – the batteries-included artifact.
 
 Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`imglib2`, `n5`, `zarrjava`, `fiji`}. Backends

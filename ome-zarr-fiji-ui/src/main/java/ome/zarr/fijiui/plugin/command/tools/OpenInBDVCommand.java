@@ -26,34 +26,51 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.examples.demo;
+package ome.zarr.fijiui.plugin.command.tools;
 
-import java.nio.file.Paths;
+import java.lang.invoke.MethodHandles;
 
-import net.imagej.ImageJ;
+import org.scijava.command.Command;
+import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 
-import ome.zarr.fijiui.plugin.command.tools.OpenInBDVCommand;
-import ome.zarr.fiji.PyramidalDataset;
-import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.n5.N5PyramidBackend;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@SuppressWarnings( "all" )
-public class PyramidalDatasetDemo
+import ome.zarr.fiji.Pyramidal;
+import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fiji.util.BdvUtils;
+
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
+public class OpenInBDVCommand implements Command
 {
-	public static void main( String[] args )
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	@Parameter
+	private UIService uiService;
+
+	@Parameter( required = false )
+	private PyramidalService pyramidalService;
+
+	@Parameter( required = false )
+	private Pyramidal pyramidal;
+
+	@Override
+	public void run()
 	{
-		// final String multiscalePath = "https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0";
-		final String multiscalePath = "/Users/hahmann/Data/idr0079_images.zarr/0"; // https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0079A/idr0079_images.zarr/0
-
-		// Show as imagePlus
-		final ImageJ imageJ = new ImageJ();
-		imageJ.ui().showUI();
-		final PyramidContents< ? > contents =
-				new N5PyramidBackend().read( Paths.get( multiscalePath ).toUri() );
-		PyramidalDataset pyramidalDataset = new PyramidalDataset( imageJ.context(), contents, 0 );
-		imageJ.ui().show( pyramidalDataset );
-
-		// Also show the displayed image in BDV
-		imageJ.command().run( OpenInBDVCommand.class, true );
+		logger.trace( "Running OpenInBDVCommand. pyramidal={}", pyramidal );
+		if ( pyramidal == null )
+		{
+			final String message = "The active image is not an OME-Zarr dataset.";
+			if ( uiService.isVisible() )
+				uiService.showDialog( message, "Open in BigDataViewer" );
+			else
+				logger.warn( message );
+			return;
+		}
+		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getContext(), pyramidal.getPyramidContents() );
+		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
 	}
 }

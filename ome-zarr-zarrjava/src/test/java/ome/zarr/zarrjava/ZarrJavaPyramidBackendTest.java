@@ -31,10 +31,18 @@ package ome.zarr.zarrjava;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.sun.net.httpserver.HttpServer;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.scijava.Context;
 
 import ome.zarr.imglib2.PyramidContents;
@@ -60,4 +68,69 @@ class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
 		assertEquals( 5, contents.numDimensions() );
 		assertEquals( 2, contents.numResolutionLevels() );
 	}
+
+	@Test
+	void testReadZippedArchive( @TempDir final Path tempDir ) throws Exception
+	{
+		Path archive = ZarrTestUtils.zipDataset( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr", tempDir.resolve( "5d.ozx" ) );
+		PyramidContents< ? > contents = ZarrJavaPyramidBackend.readPyramid( archive.toUri() );
+		assertNotNull( contents );
+		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+		assertEquals( 5, contents.numDimensions() );
+		assertEquals( 2, contents.numResolutionLevels() );
+	}
+	/** A zipped archive served over HTTP. */
+	@Test
+	void testReadZippedArchiveOverHttp( @TempDir final Path tempDir ) throws Exception
+	{
+		Path archive = ZarrTestUtils.zipDataset( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr",
+				tempDir.resolve( "5d.ozx" ) );
+		HttpServer server = startFileServer( archive );
+		try
+		{
+			URI uri = URI.create( "http://localhost:" + server.getAddress().getPort() + "/5d.ozx" );
+			PyramidContents< ? > contents = ZarrJavaPyramidBackend.readPyramid( uri );
+			assertNotNull( contents );
+			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+			assertEquals( 5, contents.numDimensions() );
+			assertEquals( 2, contents.numResolutionLevels() );
+		}
+		finally
+		{
+			server.stop( 0 );
+		}
+	}
+
+	/**
+	 * Serves {@code file} at {@code /<file name>} on a free port, honouring a
+	 * single {@code Range: bytes=<start>-<end>} header – the ZIP entries are read
+	 * at those offsets.
+	 */
+	private static HttpServer startFileServer( final Path file ) throws IOException
+	{
+		byte[] content = Files.readAllBytes( file );
+		HttpServer server = HttpServer.create( new InetSocketAddress( "localhost", 0 ), 0 );
+		server.createContext( "/" + file.getFileName(), exchange -> {
+			String range = exchange.getRequestHeaders().getFirst( "Range" );
+			int start = 0;
+			int end = content.length - 1;
+			if ( range != null && range.startsWith( "bytes=" ) )
+			{
+				String[] bounds = range.substring( "bytes=".length() ).split( "-", -1 );
+				start = Integer.parseInt( bounds[ 0 ] );
+				if ( bounds.length > 1 && !bounds[ 1 ].isEmpty() )
+					end = Math.min( Integer.parseInt( bounds[ 1 ] ), content.length - 1 );
+			}
+			int length = Math.max( end - start + 1, 0 );
+			exchange.getResponseHeaders().add( "Accept-Ranges", "bytes" );
+			exchange.sendResponseHeaders( range == null ? 200 : 206, length );
+			try ( OutputStream out = exchange.getResponseBody() )
+			{
+				out.write( content, start, length );
+			}
+		} );
+		server.start();
+		return server;
+	}
+
 }

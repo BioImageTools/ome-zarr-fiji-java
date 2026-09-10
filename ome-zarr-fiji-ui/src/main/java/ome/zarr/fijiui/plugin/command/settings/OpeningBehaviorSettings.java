@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.plugin.command;
+package ome.zarr.fijiui.plugin.command.settings;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;

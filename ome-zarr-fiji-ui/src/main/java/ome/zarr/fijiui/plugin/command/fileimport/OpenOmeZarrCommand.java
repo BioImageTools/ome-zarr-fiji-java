@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.plugin.command;
+package ome.zarr.fijiui.plugin.command.fileimport;
 
 import java.io.File;
 import java.util.function.Consumer;
@@ -38,8 +38,6 @@ import org.scijava.plugin.Plugin;
 import org.scijava.widget.FileWidget;
 
 import ij.IJ;
-import ome.zarr.fijiui.open.ZarrOpenActions;
-import ome.zarr.imglib2.ZarrUtils;
 
 /**
  * Classical File &gt; Import menu entry for opening a local OME-Zarr dataset,
@@ -52,10 +50,11 @@ import ome.zarr.imglib2.ZarrUtils;
  * Being a SciJava {@link Command} with one input, it is macro-recordable
  * ({@code run("OME-Zarr...", "directory=/path/to/img.ome.zarr")}).
  * <p>
- * The parameter is a directory rather than a file because a local OME-Zarr
- * dataset is always a folder (a {@code .ome.zarr} group or a single array
- * node). Remote locations are not offered here – a file chooser cannot express
- * them; use Plugins &gt; OME-Zarr &gt; Paste OME-Zarr URI for those.
+ * The parameter is a directory because that is the folder form of a local
+ * OME-Zarr dataset (a {@code .ome.zarr} group or a single array node);
+ * {@link OpenOmeZarrArchiveCommand} opens the zipped form. Remote locations are
+ * not offered here – a file chooser cannot express them; use
+ * Plugins &gt; OME-Zarr &gt; Paste OME-Zarr URI for those.
  */
 @Plugin( type = Command.class, menuPath = "File > Import > OME-Zarr..." )
 public class OpenOmeZarrCommand implements Command
@@ -86,15 +85,7 @@ public class OpenOmeZarrCommand implements Command
 	 */
 	static boolean open( final File folder, final Context context, final Consumer< String > errorHandler )
 	{
-		final String error = validate( folder );
-		if ( error != null )
-		{
-			if ( errorHandler != null )
-				errorHandler.accept( error );
-			return false;
-		}
-		ZarrOpenActions.openWithSettings( folder.toURI(), context );
-		return true;
+		return OmeZarrOpener.open( folder, context, errorHandler, "folder" );
 	}
 
 	/**
@@ -108,12 +99,6 @@ public class OpenOmeZarrCommand implements Command
 	 */
 	static String validate( final File folder )
 	{
-		if ( folder == null )
-			return "No folder selected.";
-		// isZarr( URI ) probes for the well-known metadata files on the local
-		// filesystem, which also covers "the folder does not exist at all".
-		if ( !ZarrUtils.isZarr( folder.toURI() ) )
-			return "The selected folder does not appear to be an OME-Zarr dataset:\n" + folder + ".";
-		return null;
+		return OmeZarrOpener.validate( folder, "folder" );
 	}
 }

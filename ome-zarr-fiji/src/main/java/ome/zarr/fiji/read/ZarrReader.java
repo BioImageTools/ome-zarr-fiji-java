@@ -58,6 +58,7 @@ import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.exceptions.ReaderLibraryUnavailableException;
 import ome.zarr.imglib2.exceptions.S3SupportUnavailableException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
+import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
 
 /**
  * Backend-agnostic reader for OME-Zarr datasets.
@@ -81,6 +82,8 @@ public class ZarrReader
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	private static final String CONFIRM_DIALOG_TITLE = "Open this OME-Zarr image anyway?";
+
+	private static final String CANNOT_OPEN_MESSAGE_PREFIX = "Could not open the dataset at: ";
 
 	private final URI inputUri;
 
@@ -451,6 +454,10 @@ public class ZarrReader
 		{
 			showReaderLibraryUnavailable( e );
 		}
+		catch ( ZipArchiveUnsupportedException e )
+		{
+			showZipArchiveUnsupported( e );
+		}
 		catch ( StoreAccessException e )
 		{
 			showStoreAccessError( e );
@@ -485,7 +492,7 @@ public class ZarrReader
 
 	private void showS3SupportUnavailable( final S3SupportUnavailableException e )
 	{
-		errorHandler.accept( "Could not open the dataset at: " + inputUri + "\n\r\n"
+		errorHandler.accept( CANNOT_OPEN_MESSAGE_PREFIX + inputUri + "\n\r\n"
 				+ "Reading from s3:// stores needs the AWS SDK, which is not installed here. "
 				+ "It currently ships with Fiji-Latest only.\n\r\n"
 				+ "Please download Fiji-latest here: https://fiji.sc/" );
@@ -495,13 +502,23 @@ public class ZarrReader
 
 	private void showReaderLibraryUnavailable( final ReaderLibraryUnavailableException e )
 	{
-		errorHandler.accept( "Could not open the dataset at: " + inputUri + "\n\r\n"
+		errorHandler.accept( CANNOT_OPEN_MESSAGE_PREFIX + inputUri + "\n\r\n"
 				+ "The selected backend (" + backend.getName() + ") needs a class that its library "
 				+ "does not provide here:\n"
 				+ e.getMissingClass() + "\n\r\n"
 				+ "Please try using Fiji-latest instead. Download here: https://fiji.sc/" );
 		logger.warn( "Cannot open {} with the {} backend: reader library class missing ({})",
 				inputUri, backend.getName(), e.getMissingClass() );
+	}
+
+	private void showZipArchiveUnsupported( final ZipArchiveUnsupportedException e )
+	{
+		errorHandler.accept( CANNOT_OPEN_MESSAGE_PREFIX + inputUri + "\n\r\n"
+				+ "This is a zipped OME-Zarr archive (.ozx), which the " + e.getBackendName()
+				+ " reader backend cannot read.\n\r\n"
+				+ "Please switch the reader backend to zarr-java under "
+				+ "Plugins > OME-Zarr > Settings > Opening Behavior Settings." );
+		logger.info( "Cannot open {} with the {} backend: zipped archives are unsupported", inputUri, e.getBackendName() );
 	}
 
 	private void showStoreAccessError( final Exception e )

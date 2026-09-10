@@ -54,6 +54,7 @@ import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTran
 import dev.zarr.zarrjava.experimental.ome.metadata.transform.TranslationCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.HttpStore;
+import dev.zarr.zarrjava.store.ReadOnlyZipStore;
 import dev.zarr.zarrjava.store.Store;
 import dev.zarr.zarrjava.store.StoreException;
 import dev.zarr.zarrjava.store.StoreHandle;
@@ -98,6 +99,8 @@ import ome.zarr.imglib2.metadata.Omero;
 public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	private static final String NO_LOCATION_MESSAGE = "No OME-Zarr location given";
 
 	/**
 	 * Convenience entry point for reading an OME-Zarr image with the zarr-java
@@ -231,6 +234,9 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 
 	private static MultiscaleImage openMultiscaleImage( final URI uri )
 	{
+		// Ahead of the try: the catch clauses below dereference uri themselves.
+		if ( uri == null )
+			throw new IllegalArgumentException( NO_LOCATION_MESSAGE );
 		try
 		{
 			return openMultiscaleImageFromHandle( resolveHandle( uri ), uri );
@@ -254,17 +260,41 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 
 	private static StoreHandle resolveHandle( final URI uri )
 	{
+		if ( uri == null )
+			throw new IllegalArgumentException( NO_LOCATION_MESSAGE );
+		// A zipped archive is the dataset: its ZIP root is the OME-Zarr root.
+		if ( ZarrUtils.isOzxArchive( uri ) )
+			return new ReadOnlyZipStore( archiveHandle( uri ) ).resolve();
+		return storeFor( uri ).resolve();
+	}
+
+	/**
+	 * Handle for the {@code .ozx} file itself, which {@link ReadOnlyZipStore}
+	 * reads as one stream.
+	 * <p>
+	 * The archive is a named entry of its parent store, not a store root:
+	 * {@link HttpStore} appends a trailing slash to a root, and
+	 * {@code GET /path/img.ozx/} is a 404.
+	 */
+	private static StoreHandle archiveHandle( final URI uri )
+	{
+		final URI parent = ZarrUtils.parentUri( uri );
+		final String name = ZarrUtils.lastSegment( uri );
+		if ( parent == null || name.isEmpty() )
+			throw new IllegalArgumentException( "Zipped OME-Zarr archive has no parent location: " + uri );
+		return storeFor( ZarrUtils.stripTrailingSlash( parent ) ).resolve( name );
+	}
+
+	private static Store storeFor( final URI uri )
+	{
 		final String scheme = uri.getScheme();
-		final Store store;
 		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
-			store = new FilesystemStore( Paths.get( uri ) );
-		else if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
-			store = new HttpStore( uri.toString() );
-		else if ( isS3( uri ) )
-			store = createS3Store( uri );
-		else
-			throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + uri );
-		return store.resolve();
+			return new FilesystemStore( Paths.get( uri ) );
+		if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
+			return new HttpStore( uri.toString() );
+		if ( isS3( uri ) )
+			return createS3Store( uri );
+		throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + uri );
 	}
 
 	private static Store createS3Store( final URI uri )
