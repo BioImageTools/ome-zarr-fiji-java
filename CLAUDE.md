@@ -238,10 +238,14 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   `PyramidalDataset`, `PyramidalBdv`, `PyramidalService`, `BdvUtils`). Depends on imglib2 only (no backend artifact, and
   no N5 library at all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrReader` is gone,
   single arrays are read through the selected backend as one-level pyramids).
-- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.plugin.command`, `.dialog`,
-  `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`, the SciJava commands (the Fiji
-  dialogs, including `OpeningBehaviorSettings` and `UserScriptSettings`) in `.plugin.command`, Swing dialogs in
-  `.dialog`.
+- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.plugin.command.*`, `.dialog`,
+  `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`, Swing dialogs in `.dialog`.
+  The SciJava commands sit in three sibling packages under `.plugin.command`, one per menu location: `.fileimport`
+  for the two `File > Import` entries plus their shared `OmeZarrOpener` (package-private, so its tests live there
+  too), `.tools` for the `Plugins > OME-Zarr` entries, and `.settings` for `OpeningBehaviorSettings` and
+  `UserScriptSettings`. Commands are discovered through the `@Plugin` annotation index, not by package, so moving one
+  between these packages does not touch its menu path – but `PrefService` keys off the class's package, so moving a
+  class that is used as a preference key (as `ScriptUtils` uses `UserScriptSettings`) resets that stored setting.
   Depends on all four other modules – the batteries-included artifact.
 
 Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`imglib2`, `n5`, `zarrjava`, `fiji`}. Backends

@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.plugin.command;
+package ome.zarr.fijiui.plugin.command.fileimport;
 
 import java.io.File;
 import java.util.function.Consumer;
@@ -40,65 +40,61 @@ import org.scijava.widget.FileWidget;
 import ij.IJ;
 
 /**
- * Classical File &gt; Import menu entry for opening a local OME-Zarr dataset,
- * complementary to drag-and-drop and clipboard paste. It takes a single
- * explicit parameter – the dataset folder – and then follows the user's
- * {@link ome.zarr.fijiui.open.options.ZarrOpeningSettings} exactly like the
- * other entry points do, so the same open behavior, resolution and reader
+ * File &gt; Import menu entry for opening a zipped OME-Zarr archive, a single
+ * {@code .ozx} file; {@link OpenOmeZarrCommand} opens the folder form. It then
+ * follows the user's {@link ome.zarr.fijiui.open.options.ZarrOpeningSettings}
+ * like the other entry points, so the same open behavior, resolution and reader
  * backend apply.
  * <p>
  * Being a SciJava {@link Command} with one input, it is macro-recordable
- * ({@code run("OME-Zarr...", "directory=/path/to/img.ome.zarr")}).
+ * ({@code run("OME-Zarr Archive...", "archive=/path/to/image.ozx")}).
  * <p>
- * The parameter is a directory because that is the folder form of a local
- * OME-Zarr dataset (a {@code .ome.zarr} group or a single array node);
- * {@link OpenOmeZarrArchiveCommand} opens the zipped form. Remote locations are
- * not offered here – a file chooser cannot express them; use
- * Plugins &gt; OME-Zarr &gt; Paste OME-Zarr URI for those.
+ * Remote archives are not offered here – a file chooser cannot express them;
+ * use Plugins &gt; OME-Zarr &gt; Paste OME-Zarr URI for those. Only the zarr-java
+ * backend reads archives, so with the N5 backend selected the user gets that
+ * backend's "cannot read zipped archives" message.
  */
-@Plugin( type = Command.class, menuPath = "File > Import > OME-Zarr..." )
-public class OpenOmeZarrCommand implements Command
+@Plugin( type = Command.class, menuPath = "File > Import > OME-Zarr Archive (.ozx)..." )
+public class OpenOmeZarrArchiveCommand implements Command
 {
 	@Parameter
 	private Context context;
 
-	@Parameter( label = "OME-Zarr folder", style = FileWidget.DIRECTORY_STYLE,
-			description = "The folder holding the OME-Zarr dataset, e.g. /path/to/image.ome.zarr" )
-	private File directory;
+	@Parameter( label = "OME-Zarr archive", style = FileWidget.OPEN_STYLE + ",extensions:ozx",
+			description = "The zipped OME-Zarr dataset, e.g. /path/to/image.ozx" )
+	private File archive;
 
 	@Override
 	public void run()
 	{
-		open( directory, context, IJ::error );
+		open( archive, context, IJ::error );
 	}
 
 	/**
-	 * Verifies that {@code folder} is an OME-Zarr dataset folder and opens it
+	 * Verifies that {@code archive} is a zipped OME-Zarr dataset and opens it
 	 * with the user's configured settings.
 	 *
-	 * @param folder the selected folder; may be {@code null}
+	 * @param archive the selected {@code .ozx} archive; may be {@code null}
 	 * @param context the SciJava context used to open the dataset
 	 * @param errorHandler called with a user-facing message when nothing was
-	 *   selected or the selection is not an OME-Zarr dataset folder
-	 * @return {@code true} if the folder was handed to the opening pipeline,
+	 *   selected or the selection is not an OME-Zarr archive
+	 * @return {@code true} if the archive was handed to the opening pipeline,
 	 *   {@code false} if {@code errorHandler} was invoked instead
 	 */
-	static boolean open( final File folder, final Context context, final Consumer< String > errorHandler )
+	static boolean open( final File archive, final Context context, final Consumer< String > errorHandler )
 	{
-		return OmeZarrOpener.open( folder, context, errorHandler, "folder" );
+		return OmeZarrOpener.open( archive, context, errorHandler, "archive" );
 	}
 
 	/**
-	 * Why {@code folder} cannot be opened, as a user-facing message, or
-	 * {@code null} if it is an OME-Zarr dataset folder. Split out from
-	 * {@link #open} so the acceptance decision can be tested without opening a
-	 * window.
+	 * Why {@code archive} cannot be opened, as a user-facing message, or
+	 * {@code null} if it is a readable OME-Zarr archive.
 	 *
-	 * @param folder the selected folder; may be {@code null}
-	 * @return the rejection message, or {@code null} if the folder is acceptable
+	 * @param archive the selected {@code .ozx} archive; may be {@code null}
+	 * @return the rejection message, or {@code null} if the archive is acceptable
 	 */
-	static String validate( final File folder )
+	static String validate( final File archive )
 	{
-		return OmeZarrOpener.validate( folder, "folder" );
+		return OmeZarrOpener.validate( archive, "archive" );
 	}
 }

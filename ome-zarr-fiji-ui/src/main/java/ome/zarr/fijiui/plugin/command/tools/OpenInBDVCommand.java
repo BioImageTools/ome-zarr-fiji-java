@@ -26,32 +26,51 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.plugin.command;
+package ome.zarr.fijiui.plugin.command.tools;
+
+import java.lang.invoke.MethodHandles;
 
 import org.scijava.command.Command;
-import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.widget.FileWidget;
+import org.scijava.ui.UIService;
 
-import java.io.File;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Settings > User Script Settings", name = "OMEZarrUserScript", headless = true )
-public class UserScriptSettings implements Command
+import ome.zarr.fiji.Pyramidal;
+import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fiji.util.BdvUtils;
+
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
+public class OpenInBDVCommand implements Command
 {
-
-	@Parameter( label = "Tooltip text:" )
-	String scriptTitle;
-
-	@Parameter( label = "Script to be executed:", style = FileWidget.OPEN_STYLE )
-	File scriptPath;
+	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	@Parameter
-	LogService log;
+	private UIService uiService;
+
+	@Parameter( required = false )
+	private PyramidalService pyramidalService;
+
+	@Parameter( required = false )
+	private Pyramidal pyramidal;
 
 	@Override
 	public void run()
 	{
-		log.info( "Thanks, memorizing the path: " + scriptPath );
+		logger.trace( "Running OpenInBDVCommand. pyramidal={}", pyramidal );
+		if ( pyramidal == null )
+		{
+			final String message = "The active image is not an OME-Zarr dataset.";
+			if ( uiService.isVisible() )
+				uiService.showDialog( message, "Open in BigDataViewer" );
+			else
+				logger.warn( message );
+			return;
+		}
+		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getContext(), pyramidal.getPyramidContents() );
+		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
 	}
 }
