@@ -165,6 +165,8 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 
 	private static N5Reader openReader( final URI uri )
 	{
+		if ( uri == null )
+			throw new IllegalArgumentException( "No OME-Zarr location given" );
 		// N5-universe has no ZIP store, and its format detection would call the
 		// archive "not OME-Zarr", so refuse it up front with the real cause.
 		if ( ZarrUtils.isOzxArchive( uri ) )

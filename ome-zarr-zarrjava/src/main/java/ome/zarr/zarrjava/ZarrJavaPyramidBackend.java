@@ -280,6 +280,8 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 
 	private static Store storeFor( final URI uri )
 	{
+		if ( uri == null )
+			throw new IllegalArgumentException( "No OME-Zarr location given" );
 		final String scheme = uri.getScheme();
 		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
 			return new FilesystemStore( Paths.get( uri ) );
