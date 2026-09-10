@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -198,6 +198,29 @@ public class ZarrUtils
 	{
 		final String s = uri.toString();
 		return s.endsWith( "/" ) ? uri : URI.create( s + "/" );
+	}
+
+	/**
+	 * {@code uri} with a single trailing slash removed, undoing the one
+	 * {@link #parentUri} always adds. Needed when a parent location is joined
+	 * with a file name again, which would otherwise yield {@code //}.
+	 * <table border="1">
+	 *   <caption>Representative examples:</caption>
+	 *   <tr><th>{@code uri}</th><th>result</th></tr>
+	 *   <tr><td>{@code file:/data/img.ome.zarr/}</td><td>{@code file:/data/img.ome.zarr}</td></tr>
+	 *   <tr><td>{@code file:/data/img.ozx}</td><td>{@code file:/data/img.ozx} (unchanged)</td></tr>
+	 *   <tr><td>{@code https://example.com//}</td><td>{@code https://example.com/}</td></tr>
+	 * </table>
+	 *
+	 * @param uri location to strip; may be {@code null}
+	 * @return {@code uri} with any single trailing slash removed
+	 */
+	public static URI stripTrailingSlash( final URI uri )
+	{
+		if ( uri == null )
+			return null;
+		final String s = uri.toString();
+		return s.endsWith( "/" ) ? URI.create( s.substring( 0, s.length() - 1 ) ) : uri;
 	}
 
 	/**

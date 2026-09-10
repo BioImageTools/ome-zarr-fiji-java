@@ -316,6 +316,25 @@ class ZarrUtilsTest
 	}
 
 	@ParameterizedTest
+	@CsvSource( nullValues = "null", value = {
+			// The trailing slash parentUri always adds comes off again
+			"file:/data/img.ome.zarr/,   file:/data/img.ome.zarr",
+			"s3://bucket/img.ome.zarr/,  s3://bucket/img.ome.zarr",
+			// A location without one is returned unchanged
+			"file:/data/img.ozx,         file:/data/img.ozx",
+			// Only a single slash goes, and only at the very end
+			"https://example.com//,      https://example.com/",
+			"https://example.com/a/b,    https://example.com/a/b",
+			// Never throws on a missing location
+			"null,                       null"
+	} )
+	void stripTrailingSlashRemovesASingleTrailingSlash( final String uri, final String expected )
+	{
+		final URI stripped = ZarrUtils.stripTrailingSlash( uri == null ? null : URI.create( uri ) );
+		assertEquals( expected == null ? null : URI.create( expected ), stripped );
+	}
+
+	@ParameterizedTest
 	@CsvSource( {
 			"file:///data/img.ome.zarr/0,         0",
 			"file:///data/img.ome.zarr/0/,        0",

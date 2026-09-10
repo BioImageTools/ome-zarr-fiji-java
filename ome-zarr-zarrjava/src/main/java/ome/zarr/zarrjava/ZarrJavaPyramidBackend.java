@@ -275,17 +275,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		final String name = ZarrUtils.lastSegment( uri );
 		if ( parent == null || name.isEmpty() )
 			throw new IllegalArgumentException( "Zipped OME-Zarr archive has no parent location: " + uri );
-		return storeFor( stripTrailingSlash( parent ) ).resolve( name );
-	}
-
-	/**
-	 * {@code uri} without a trailing slash, which {@link HttpStore} would turn
-	 * into {@code //} when it joins the parent with the file name.
-	 */
-	private static URI stripTrailingSlash( final URI uri )
-	{
-		final String s = uri.toString();
-		return s.endsWith( "/" ) ? URI.create( s.substring( 0, s.length() - 1 ) ) : uri;
+		return storeFor( ZarrUtils.stripTrailingSlash( parent ) ).resolve( name );
 	}
 
 	private static Store storeFor( final URI uri )
