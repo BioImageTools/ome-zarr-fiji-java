@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.AWTError;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.MouseInfo;
 import java.awt.Point;
@@ -45,7 +44,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
-import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -80,17 +78,12 @@ public class ZarrOpenActionChooser
 
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	/** Buttons per row in the full version; the number of rows follows the count. */
+	/** Buttons per row; the number of rows follows the number of openers. */
 	private static final int COLUMNS = 3;
-
-	/** Openers offered by the compact version, highest priority first. */
-	private static final int COMPACT_OPENER_COUNT = 2;
 
 	private final ZarrOpenRequest request;
 
 	private final Context context;
-
-	private boolean extendedVersion;
 
 	JDialog currentDialog;
 
@@ -105,19 +98,6 @@ public class ZarrOpenActionChooser
 	{
 		this.request = request;
 		this.context = context;
-		this.extendedVersion = true;
-	}
-
-	/**
-	 * Switches between the full version (every opener plus help) and a compact one
-	 * that offers only the {@value #COMPACT_OPENER_COUNT} highest-priority openers.
-	 *
-	 * @param show whether to show the full version
-	 */
-	public void setShowExtendedVersion( boolean show )
-	{
-		this.extendedVersion = show;
-		logger.debug( "Show extended version: {}", show );
 	}
 
 	public void showDialog()
@@ -171,18 +151,15 @@ public class ZarrOpenActionChooser
 	/** Creates the layout with one button per offered opener, and the help button. */
 	private JPanel initLayout( final JDialog dialog )
 	{
-		final JPanel panel = extendedVersion
-				? new JPanel( new GridLayout( 0, COLUMNS, 5, 5 ) )
-				: new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 5 ) );
+		final JPanel panel = new JPanel( new GridLayout( 0, COLUMNS, 5, 5 ) );
 		final ZarrOpenerService openerService = openerService();
 		if ( openerService == null )
 			// A context without the service is a broken classpath; help still works.
 			logger.warn( "No ZarrOpenerService in the SciJava context, so no opener can be offered." );
 		else
-			for ( final PluginInfo< ZarrOpener > info : openerInfos( openerService ) )
+			for ( final PluginInfo< ZarrOpener > info : openerService.getOpenerInfos() )
 				panel.add( openerButton( dialog, openerService, info ) );
-		if ( extendedVersion )
-			panel.add( helpButton( dialog ) );
+		panel.add( helpButton( dialog ) );
 		return panel;
 	}
 
@@ -190,18 +167,6 @@ public class ZarrOpenActionChooser
 	private ZarrOpenerService openerService()
 	{
 		return context == null ? null : context.getService( ZarrOpenerService.class );
-	}
-
-	/**
-	 * The openers to offer, highest priority first — every one of them in the full
-	 * version, only the first few in the compact one.
-	 */
-	private List< PluginInfo< ZarrOpener > > openerInfos( final ZarrOpenerService openerService )
-	{
-		final List< PluginInfo< ZarrOpener > > infos = openerService.getOpenerInfos();
-		if ( extendedVersion )
-			return infos;
-		return infos.subList( 0, Math.min( COMPACT_OPENER_COUNT, infos.size() ) );
 	}
 
 	private JButton openerButton( final JDialog dialog, final ZarrOpenerService openerService,

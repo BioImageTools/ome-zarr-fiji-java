@@ -66,19 +66,6 @@ public class ZarrOpenActionChooserDemo
 				menu.showDialog();
 			}
 		} );
-
-		rootPane.getInputMap( JComponent.WHEN_IN_FOCUSED_WINDOW )
-				.put( KeyStroke.getKeyStroke( KeyEvent.VK_L, 0 ), "changeSubmenu" );
-
-		//rootPane.getActionMap().put("changeSubmenu", (e) -> shouldShowCustomItems ^= true );
-		rootPane.getActionMap().put( "changeSubmenu", new AbstractAction()
-		{
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				menu.setShowExtendedVersion( false );
-			}
-		} );
 	}
 
 	public static void main( String[] args )
