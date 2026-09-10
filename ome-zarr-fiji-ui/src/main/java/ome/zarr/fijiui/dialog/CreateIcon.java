@@ -57,22 +57,39 @@ public class CreateIcon
 	 */
 	public static ImageIcon getAndResizeIcon( final String resourcePath )
 	{
+		final URL resourceUrl = CreateIcon.class.getResource( resourcePath );
+		if ( resourceUrl == null )
+		{
+			logger.debug( "Icon resource not found: {}", resourcePath );
+			return new ImageIcon();
+		}
+		return getAndResizeIcon( resourceUrl );
+	}
 
+	/**
+	 * Loads an image from an already resolved URL and scales it to 32x32 pixels.
+	 * This is the entry point for icons that come from another jar, as a
+	 * third-party {@link ome.zarr.fiji.open.ZarrOpener}'s does: its
+	 * {@code iconPath} is resolved by SciJava against the contributing class, so
+	 * only the resulting URL reaches us.
+	 *
+	 * @param resourceUrl the image to load, or {@code null}
+	 * @return a scaled ImageIcon, or an empty one if {@code resourceUrl} is
+	 *   {@code null} or cannot be loaded
+	 */
+	public static ImageIcon getAndResizeIcon( final URL resourceUrl )
+	{
+		if ( resourceUrl == null )
+			return new ImageIcon();
 		try
 		{
-			URL resourceUrl = CreateIcon.class.getResource( resourcePath );
-			if ( resourceUrl == null )
-			{
-				throw new IllegalArgumentException( "Resource not found: " + resourcePath );
-			}
-
 			Image image = new ImageIcon( resourceUrl ).getImage().getScaledInstance( 32, 32, Image.SCALE_SMOOTH );
 
 			return new ImageIcon( image );
 		}
 		catch ( Exception e )
 		{
-			logger.debug( "Failed to load icon from path: " + resourcePath, e );
+			logger.debug( "Failed to load icon from URL: " + resourceUrl, e );
 			// Fallback to an empty image if the resource can't be loaded
 			return new ImageIcon();
 		}

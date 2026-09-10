@@ -32,6 +32,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
+import org.scijava.Context;
+
 import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
 
 @SuppressWarnings( "all" )
@@ -81,9 +83,11 @@ public class ZarrOpenActionChooserDemo
 
 	public static void main( String[] args )
 	{
+		// A real context, because the buttons are the ZarrOpeners registered in it.
+		final Context context = new Context();
 		SwingUtilities.invokeLater( () -> {
 			final JFrame mainFrame = new JFrame();
-			final ZarrOpenActionChooser menu = new ZarrOpenActionChooser( null, null );
+			final ZarrOpenActionChooser menu = new ZarrOpenActionChooser( context, null );
 			setupFrame( mainFrame, menu );
 		} );
 	}

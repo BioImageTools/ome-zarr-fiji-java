@@ -29,6 +29,8 @@
 package ome.zarr.fijiui.dialog;
 
 import org.scijava.Context;
+import org.scijava.InstantiableException;
+import org.scijava.plugin.PluginInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,8 +44,9 @@ import java.awt.PointerInfo;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
+import java.net.URL;
+import java.util.List;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -52,18 +55,22 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import ome.zarr.fiji.open.ZarrOpenRequest;
+import ome.zarr.fiji.open.ZarrOpener;
+import ome.zarr.fiji.open.ZarrOpenerService;
 import ome.zarr.fijiui.open.ZarrOpenActions;
-import ome.zarr.fijiui.util.ScriptUtils;
 
 /**
  * Asks the user what to do with an OME-Zarr location that is already known:
  * an undecorated, non-modal popup at the mouse pointer offering one icon
- * button per {@link ZarrOpenActions} action (ImageJ and BigDataViewer at the
- * highest resolution, the N5 importer/viewer dialogs, the preset script, and
- * help). It closes on ESC or fades out once the pointer leaves it.
+ * button per registered {@link ZarrOpener}, plus help. It closes on ESC or fades
+ * out once the pointer leaves it.
  * <p>
- * It is shown whenever the user configured
- * {@link ome.zarr.fijiui.open.options.ZarrOpenBehavior#SHOW_SELECTION_DIALOG},
+ * The buttons are built from the {@link ZarrOpenerService}, so a
+ * {@link ZarrOpener} contributed by another Fiji plugin appears here next to the
+ * built-in ImageJ and BigDataViewer ones, with its own icon and description.
+ * <p>
+ * It is shown whenever the user configured {@link ZarrOpenerService#ASK},
  * independently of how the location arrived — drag-and-drop, a
  * {@code fiji://} link, or clipboard paste all reach it through
  * {@link ZarrOpenActions#openWithSettings(java.net.URI, Context)}.
@@ -73,47 +80,40 @@ public class ZarrOpenActionChooser
 
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private final ZarrOpenActions actions;
+	/** Buttons per row in the full version; the number of rows follows the count. */
+	private static final int COLUMNS = 3;
+
+	/** Openers offered by the compact version, highest priority first. */
+	private static final int COMPACT_OPENER_COUNT = 2;
+
+	private final ZarrOpenRequest request;
 
 	private final Context context;
-
-	private final JButton zarrToIJDialog;
-
-	private final JButton zarrToBDVDialog;
-
-	private final JButton zarrIJHighestResolution;
-
-	private final JButton zarrBDVHighestResolution;
-
-	private final JButton zarrScript;
-
-	private final JButton help;
 
 	private boolean extendedVersion;
 
 	JDialog currentDialog;
 
-	public ZarrOpenActionChooser( final Context context, final ZarrOpenActions actions )
+	/**
+	 * A chooser for {@code request}, offering the openers registered in
+	 * {@code context}.
+	 *
+	 * @param context the SciJava context the openers are looked up in
+	 * @param request the location the chosen opener will be given
+	 */
+	public ZarrOpenActionChooser( final Context context, final ZarrOpenRequest request )
 	{
-		this.actions = actions;
+		this.request = request;
 		this.context = context;
-
 		this.extendedVersion = true;
-
-		ImageIcon zarrIJIcon = CreateIcon.getAndResizeIcon( "zarr_ij_icon.png" );
-		zarrToIJDialog = new JButton( zarrIJIcon );
-		ImageIcon zarrBDVIcon = CreateIcon.getAndResizeIcon( "zarr_bdv_icon.png" );
-		zarrToBDVDialog = new JButton( zarrBDVIcon );
-		ImageIcon ijIcon = CreateIcon.getAndResizeIcon( "ij_icon.png" );
-		zarrIJHighestResolution = new JButton( ijIcon );
-		ImageIcon bdvIcon = CreateIcon.getAndResizeIcon( "bdv_icon.png" );
-		zarrBDVHighestResolution = new JButton( bdvIcon );
-		ImageIcon scriptIcon = CreateIcon.getAndResizeIcon( "script_icon.png" );
-		zarrScript = new JButton( scriptIcon );
-		ImageIcon helpIcon = CreateIcon.getAndResizeIcon( "help_icon.png" );
-		help = new JButton( helpIcon );
 	}
 
+	/**
+	 * Switches between the full version (every opener plus help) and a compact one
+	 * that offers only the {@value #COMPACT_OPENER_COUNT} highest-priority openers.
+	 *
+	 * @param show whether to show the full version
+	 */
 	public void setShowExtendedVersion( boolean show )
 	{
 		this.extendedVersion = show;
@@ -157,7 +157,7 @@ public class ZarrOpenActionChooser
 
 		final JDialog dialog = createDialog();
 		currentDialog = dialog;
-		final JPanel panel = initLayout();
+		final JPanel panel = initLayout( dialog );
 		initBehaviour( dialog );
 
 		dialog.getContentPane().add( panel );
@@ -168,58 +168,76 @@ public class ZarrOpenActionChooser
 		dialog.requestFocus();
 	}
 
-	/** Creates the layout and adds the pre-initialized buttons. */
-	private JPanel initLayout()
+	/** Creates the layout with one button per offered opener, and the help button. */
+	private JPanel initLayout( final JDialog dialog )
 	{
-		JPanel panel;
-		if ( extendedVersion )
-		{
-			panel = new JPanel( new GridLayout( 2, 3, 5, 5 ) );
-			panel.add( zarrToIJDialog );
-			panel.add( zarrIJHighestResolution );
-			panel.add( zarrScript );
-			panel.add( zarrToBDVDialog );
-			panel.add( zarrBDVHighestResolution );
-			panel.add( help );
-		}
+		final JPanel panel = extendedVersion
+				? new JPanel( new GridLayout( 0, COLUMNS, 5, 5 ) )
+				: new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 5 ) );
+		final ZarrOpenerService openerService = openerService();
+		if ( openerService == null )
+			// A context without the service is a broken classpath; help still works.
+			logger.warn( "No ZarrOpenerService in the SciJava context, so no opener can be offered." );
 		else
-		{
-			panel = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 5 ) );
-			panel.add( zarrToIJDialog );
-			panel.add( zarrToBDVDialog );
-		}
+			for ( final PluginInfo< ZarrOpener > info : openerInfos( openerService ) )
+				panel.add( openerButton( dialog, openerService, info ) );
+		if ( extendedVersion )
+			panel.add( helpButton( dialog ) );
 		return panel;
 	}
 
-	/** Adds listeners and global behaviour (keyboard, fade, etc.). */
+	/** The service the openers come from, or {@code null} without a context. */
+	private ZarrOpenerService openerService()
+	{
+		return context == null ? null : context.getService( ZarrOpenerService.class );
+	}
+
+	/**
+	 * The openers to offer, highest priority first — every one of them in the full
+	 * version, only the first few in the compact one.
+	 */
+	private List< PluginInfo< ZarrOpener > > openerInfos( final ZarrOpenerService openerService )
+	{
+		final List< PluginInfo< ZarrOpener > > infos = openerService.getOpenerInfos();
+		if ( extendedVersion )
+			return infos;
+		return infos.subList( 0, Math.min( COMPACT_OPENER_COUNT, infos.size() ) );
+	}
+
+	private JButton openerButton( final JDialog dialog, final ZarrOpenerService openerService,
+			final PluginInfo< ZarrOpener > info )
+	{
+		final JButton button = new JButton( CreateIcon.getAndResizeIcon( iconUrl( info ) ) );
+		button.setToolTipText( openerService.tooltipOf( info, request ) );
+		button.addActionListener( e -> disposeAndRun( dialog, () -> openerService.open( info, request ) ) );
+		return button;
+	}
+
+	private JButton helpButton( final JDialog dialog )
+	{
+		final JButton button = new JButton( CreateIcon.getAndResizeIcon( "help_icon.png" ) );
+		button.setToolTipText( "Help about OME-Zarr actions" );
+		button.addActionListener( e -> disposeAndRun( dialog, new ZarrOpenActions( request )::showHelp ) );
+		return button;
+	}
+
+	/** The opener's own icon, or {@code null} when it declares none or it is unreadable. */
+	private URL iconUrl( final PluginInfo< ZarrOpener > info )
+	{
+		try
+		{
+			return info.getIconURL();
+		}
+		catch ( final InstantiableException e )
+		{
+			logger.debug( "Could not resolve the icon of the OME-Zarr opener {}", info.getClassName(), e );
+			return null;
+		}
+	}
+
+	/** Adds global behaviour (keyboard, fade, etc.). */
 	private void initBehaviour( final JDialog dialog )
 	{
-
-		// OME-Zarr to FIJI importer button
-		zarrToIJDialog.addActionListener( e -> disposeAndRun( dialog, actions::openImporterDialog ) );
-		zarrToIJDialog.setToolTipText( "Open OME-Zarr/N5 Importer dialog" );
-
-		// OME-Zarr to BDV viewer button
-		zarrToBDVDialog.addActionListener( e -> disposeAndRun( dialog, actions::openViewerDialog ) );
-		zarrToBDVDialog.setToolTipText( "Open OME-Zarr/N5 BDV Viewer dialog" );
-
-		// FIJI button
-		zarrIJHighestResolution.addActionListener( e -> disposeAndRun( dialog, actions::openIJWithImage ) );
-		zarrIJHighestResolution.setToolTipText( "Open OME-Zarr in ImageJ at highest resolution level" );
-
-		// BDV button
-		zarrBDVHighestResolution.addActionListener( e -> disposeAndRun( dialog, actions::openBDVWithImage ) );
-		zarrBDVHighestResolution.setToolTipText( "Open OME-Zarr in BDV at highest resolution level" );
-
-		// script button
-		String scriptName = ScriptUtils.getTooltipText( context );
-		zarrScript.setToolTipText( "Open OME-Zarr in user script:\n\n" + scriptName );
-		zarrScript.addActionListener( e -> disposeAndRun( dialog, actions::runScript ) );
-
-		// help button
-		help.setToolTipText( "Help about OME-Zarr actions" );
-		help.addActionListener( e -> disposeAndRun( dialog, actions::showHelp ) );
-
 		setupCloseOnKeyboard( dialog );
 		setupCloseOnMouseLeave( dialog );
 	}

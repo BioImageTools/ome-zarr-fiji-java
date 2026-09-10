@@ -84,7 +84,8 @@ public class ZarrOpenActions
 	{
 		final PrefService prefService = context.getService( PrefService.class );
 		final ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-		final ZarrOpenActions actions = new ZarrOpenActions( inputUri, context, settings );
+		final ZarrOpenRequest request = requestFor( inputUri, context, settings, IJ::error );
+		final ZarrOpenActions actions = new ZarrOpenActions( request );
 		switch ( settings.getOpenBehavior() )
 		{
 		case IMAGEJ_HIGHEST_RESOLUTION:
@@ -96,7 +97,7 @@ public class ZarrOpenActions
 			break;
 		case SHOW_SELECTION_DIALOG:
 		default:
-			new ZarrOpenActionChooser( context, actions ).showDialog();
+			new ZarrOpenActionChooser( context, request ).showDialog();
 			break;
 		}
 	}
