@@ -68,7 +68,7 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
 
 One entry point deliberately does **not** end in `openWithSettings()`: `OpenOmeZarrAsDatasetCommand`
 (`Plugins > OME-Zarr > Open OME-Zarr as Dataset`, issue #40) takes the location as a single `String` input and declares
-a `PyramidalDataset` output, so scripts can capture the image. It cannot honor `ZarrOpenBehavior` — BDV and the
+a `PyramidalDataset` output, so scripts can capture the image. It cannot honor the chosen `ZarrOpener` — BDV and the
 selection dialog produce no `Dataset` — so it always reads one, via `ZarrReader.getPyramidalDataset()` with the
 persisted backend and preferred width, which displays nothing. Being plain text
 rather than a chooser, it accepts `http(s):` too, but *not* `s3:` — it validates with `ZarrUtils.isZarr`, which cannot
@@ -107,7 +107,7 @@ would fix `open/source` while `open/url` keeps failing, and half-working link su
 `jars/` alongside `scijava-desktop` and `scijava-io-http`). Its `OpenLinkHandler` owns the
 `fiji://open/{file,url,source}?p=…` syntax, the OS-level scheme registration, and the URI parsing, and finishes by
 calling `IOService.open(Location)` – which dispatches to whichever `IOPlugin` claims the location, i.e. to
-`OmeZarrIOPlugin`. So `fiji://` links honor the user's `ZarrOpenBehavior` for free. **Do not add a `LinkHandler` plugin
+`OmeZarrIOPlugin`. So `fiji://` links honor the user's chosen `ZarrOpener` for free. **Do not add a `LinkHandler` plugin
 of our own**: it would need `org.scijava:scijava-desktop` (Java 11 bytecode, breaking the Java-8/Fiji-Stable baseline,
 and its unresolvable plugin *type* string in the annotation index makes `DefaultPluginService` log `"1 exceptions
 occurred during plugin discovery."` on every Fiji-Stable start), and it would compete with `fiji-links` for the same
@@ -157,15 +157,45 @@ and wraps it into either a `PyramidalDataset` (extends `DefaultDataset`, for Ima
 BDV `SourceAndConverter` lists, volatile-wrapped per resolution level) – both implement the marker interface
 `Pyramidal`.
 
-**Opening modes** (enum `ZarrOpenBehavior` in `ome.zarr.fijiui.open.options`):
+**Opening modes are an extension point, not an enum** (issue #112). `ZarrOpener` (in `ome.zarr.fiji.open`, module
+`ome-zarr-fiji`) is a plain `SciJavaPlugin`: any Fiji plugin registers itself as an opening option with nothing but `@Plugin( type = ZarrOpener.class, name = …, label = …, iconPath = … )` on a class in
+its own jar. **Deliberately no custom annotation**: `@Plugin` already carries name/label/description/iconPath/priority,
+scijava-common's annotation processor indexes it for free in every downstream jar, and `PluginInfo.getIconURL()`
+resolves the icon out of the *contributing* jar, which is what makes third-party dialog icons work at all. A static
+mutable registry was the other candidate and loses: filling it needs startup code, i.e. a SciJava plugin anyway.
 
-- `IMAGEJ_HIGHEST_RESOLUTION` / `IMAGEJ_CUSTOM_RESOLUTION` → `ZarrOpenActions.openIJWithImage()`
-- `BDV_MULTI_RESOLUTION` → `ZarrOpenActions.openBDVWithImage()`
-- `SHOW_SELECTION_DIALOG` → `ZarrOpenActionChooser` Swing dialog with icon buttons
+- `ZarrOpener.open( ZarrOpenRequest )` – called off the EDT; `tooltip( request )` is an optional dynamic tooltip (only
+  `ScriptEditorOpener` uses it, to name the configured script). Deliberately **no `supports( request )` pre-filter**: no
+  shipped opener needs one, and only the selection dialog could honor it — the direct dispatch in `openWithSettings`
+  runs whichever opener the user configured regardless — so a half-honored hook is worse than none. Adding a
+  `default` method later is source- and binary-compatible, so it can arrive when a downstream opener needs it.
+- `ZarrOpenRequest` – immutable: `uri()`, `context()`, `backend()`, `preferredMaxWidth()`, `errorHandler()`, plus a
+  lazily built, cached `reader()`. Third-party openers use `uri()` and ignore `reader()`; ours go through it.
+- `ZarrOpenerService` – `AbstractPTService<ZarrOpener>`: lists openers by priority, runs one by name, and resolves
+  what a persisted setting means (`effectiveOpenerName`).
+- Shipped openers – `imagej-preferred-resolution`, `imagej-highest-resolution`, `bdv-multi-resolution`,
+  `n5-importer-dialog`, `n5-viewer-dialog`, `script-editor` – all live in `ome.zarr.fijiui.open.openers`
+  (`ome-zarr-fiji-ui`), one class each, next to the `ZarrOpenActions` in the parent package that they drive. Only the extension point itself sits in `ome-zarr-fiji`: that is the
+  artifact a downstream opener compiles against, and it stays free of concrete openers. Help is a plain button, not an
+  opener.
+
+The selection dialog (`ZarrOpenActionChooser`, one icon button per offered opener) is **not** an opener: it opens
+nothing, it *picks* one. The persisted setting is therefore a `String` that is either an opener `name` or the sentinel
+`ZarrOpenerService.ASK`. Making the dialog an opener too, for one uniform list, would need a recursion guard – more
+machinery for no user-visible gain.
+
+**Who becomes the default** (issue #112): an explicit user choice always wins; the highest-`priority` opener only
+takes over when *nothing* is persisted. Installing a plugin must never silently override a decision the user already
+made. The shipped openers sit at `Priority.HIGH` and below, so a third party declares `Priority.VERY_HIGH` to be the
+out-of-the-box default. A persisted name whose opener is gone (plugin uninstalled) logs and falls back to the
+highest-priority one.
 
 **Settings** are persisted across Fiji sessions via SciJava `PrefService`, read/written through `ZarrOpeningSettings` (
-open-behavior, preferred width, reader backend – the backend defaults to `ZarrBackend.ZARR_JAVA`) and surfaced via the
-`OpeningBehaviorSettings` command.
+opener name, preferred width, reader backend – the backend defaults to `ZarrBackend.ZARR_JAVA`) and surfaced via the
+`OpeningBehaviorSettings` command, whose choices are built from the registered openers rather than from a fixed list.
+The pref key stays `"ZarrOpenBehavior"`, and `ZarrOpeningSettings.LEGACY_NAMES` migrates the four names the removed
+`ZarrOpenBehavior` enum wrote, so 0.7-and-earlier preferences keep working; drop it after a release or two.
+`getOpenerName()` returns `null` for "never configured", which is what lets the priority rule above apply.
 `UserScriptSettings` currently only logs the chosen script path – it does not persist it.
 
 **Active-window tracking:** `PyramidalService` (a SciJava service) tracks the most-recently-focused `Pyramidal` window (
@@ -234,12 +264,17 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   extends `StoreAccessException`), which `ZarrReader` turns into a "get Fiji-Latest" message plus a one-line warning
   instead of a linkage stack trace. That exception must be re-thrown ahead of the `catch ( RuntimeException e )` above,
   or its `isSdkException` call would fail to link too — on exactly the installation the message is about.
-- **`ome-zarr-fiji`** (+`.read`, `.read.exceptions`, `.plugins`, `.util`) – ImageJ/BDV integration (`ZarrReader`,
-  `PyramidalDataset`, `PyramidalBdv`, `PyramidalService`, `BdvUtils`). Depends on imglib2 only (no backend artifact, and
+- **`ome-zarr-fiji`** (+`.read`, `.read.exceptions`, `.open`, `.plugins`, `.util`) – ImageJ/BDV integration
+  (`ZarrReader`, `PyramidalDataset`, `PyramidalBdv`, `PyramidalService`, `BdvUtils`) and, in `.open`, the `ZarrOpener`
+  extension point alone (`ZarrOpener`, `ZarrOpenRequest`, `ZarrOpenerService`) – a downstream opener depends on this
+  module, not on `-ui`. It ships no opener of its own, so `ZarrOpenerService` names no default opener either: with an
+  empty registry `effectiveOpenerName` returns `null` and `ZarrOpenActions` falls back to
+  `ImageJPreferredResolutionOpener`. Depends on imglib2 only (no backend artifact, and
   no N5 library at all outside test scope – the former `N5Utils.open()` single-scale fallback in `ZarrReader` is gone,
   single arrays are read through the selected backend as one-level pyramids).
-- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.options`, `.plugin`, `.plugin.command.*`, `.dialog`,
-  `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`, Swing dialogs in `.dialog`.
+- **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.openers`, `.open.options`, `.plugin`,
+  `.plugin.command.*`, `.dialog`, `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`,
+  Swing dialogs in `.dialog`. The six built-in `ZarrOpener`s live in `.open.openers`.
   The SciJava commands sit in three sibling packages under `.plugin.command`, one per menu location: `.fileimport`
   for the two `File > Import` entries plus their shared `OmeZarrOpener` (package-private, so its tests live there
   too), `.tools` for the `Plugins > OME-Zarr` entries, and `.settings` for `OpeningBehaviorSettings` and

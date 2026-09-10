@@ -30,6 +30,9 @@ The options are:
   contrast limits, and the time point are automatically extracted from the OME-Zarr metadata, if available.
 * Show a [**dialog**](#dialog-options) with all available opening options.
 
+The list is not fixed: any Fiji plugin can [register its own opener](#registering-your-own-opener), and it then appears
+here and in the dialog next to the built-in ones.
+
 Note: [BigDataViewer](https://imagej.net/plugins/bdv/) is part of Fiji, so there's no need to install anything extra. It
 is an image(s) viewer especially designed for chunk-based, multiresolution data, designed around the principle of
 loading only pixels that are needed for the current display of the image(s). It is thus suitable for OME-Zarr datasets
@@ -93,21 +96,45 @@ for a page with clickable examples of each form.
 
 ![dialog.png](doc/dialog.png)
 
-#### Top row:
+The dialog shows one icon button per registered opener, plus a help button; hovering a button explains what it does.
+The openers shipped here are:
 
-* Open the N5 import dialog at the position of the dropped OME-Zarr. This lists resolution levels found in the OME-Zarr,
-  allowing users to choose one and possibly even crop it and finally open it in the ImageJ window.
 * Directly open a **single-resolution** image in **ImageJ**, which best matches the preferred width in the user
   settings.
+* Directly open the **highest-resolution** image in **ImageJ**.
+* Directly open a **multi-resolution** image in **BigDataViewer**.
+* Open the N5 import dialog at the position of the dropped OME-Zarr. This lists resolution levels found in the OME-Zarr,
+  allowing users to choose one and possibly even crop it and finally open it in the ImageJ window.
+* Open the N5 viewer dialog at the position of the dropped OME-Zarr. This also lists resolution levels found in the
+  OME-Zarr, allowing users to choose one or the full pyramid and have it opened in the BigDataViewer.
 * Run a [pre-defined script](#scriplet-support) (e.g., a macro) while passing to it the path to the dropped OME-Zarr.
   This way, the user can define her own action.
 
-#### Bottom row:
+The last button is not an opener: it opens a web browser pointing to this
+[Readme](https://github.com/BioImageTools/ome-zarr-fiji-java) file.
 
-* Open the N5 viewer dialog at the position of the dropped OME-Zarr. This also lists resolution levels found in the
-  OME-Zarr, allowing users to choose one or the full pyramid and have it opened in the BigDataViewer.
-* Directly Open **multi-resolution** image in **BigDataViewer**.
-* Open a web browser pointing to this [Readme](https://github.com/BioImageTools/ome-zarr-fiji-java) file.
+### Registering your own opener
+
+Another Fiji plugin can offer itself as a way to open OME-Zarrs — it then appears in the dialog above and in the
+settings, and can be made the default. All it takes is a SciJava plugin implementing `ZarrOpener` from
+`ome.zarr:ome-zarr-fiji`:
+
+```java
+@Plugin( type = ZarrOpener.class, name = "my-opener", label = "My viewer",
+         iconPath = "/icons/my-opener.png", priority = Priority.VERY_HIGH )
+public class MyZarrOpener implements ZarrOpener
+{
+    @Override
+    public void open( final ZarrOpenRequest request )
+    {
+        MyViewer.open( request.uri() );
+    }
+}
+```
+
+`name` is what the setting persists and should stay stable across releases; `label`, `description` and `iconPath` are
+what the user sees. `priority` decides the order and which opener a user who never picked one gets — an explicit user
+choice always wins. `ZarrOpenRequest` also offers a ready-made `reader()` if you want this project to do the reading.
 
 ## Supported OME-Zarr versions
 
