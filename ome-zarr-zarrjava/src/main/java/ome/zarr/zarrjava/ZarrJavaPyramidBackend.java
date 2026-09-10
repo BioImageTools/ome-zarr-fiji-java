@@ -100,6 +100,8 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	private static final String NO_LOCATION_MESSAGE = "No OME-Zarr location given";
+
 	/**
 	 * Convenience entry point for reading an OME-Zarr image with the zarr-java
 	 * backend without first constructing a backend instance. Equivalent to
@@ -232,6 +234,9 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 
 	private static MultiscaleImage openMultiscaleImage( final URI uri )
 	{
+		// Ahead of the try: the catch clauses below dereference uri themselves.
+		if ( uri == null )
+			throw new IllegalArgumentException( NO_LOCATION_MESSAGE );
 		try
 		{
 			return openMultiscaleImageFromHandle( resolveHandle( uri ), uri );
@@ -255,6 +260,8 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 
 	private static StoreHandle resolveHandle( final URI uri )
 	{
+		if ( uri == null )
+			throw new IllegalArgumentException( NO_LOCATION_MESSAGE );
 		// A zipped archive is the dataset: its ZIP root is the OME-Zarr root.
 		if ( ZarrUtils.isOzxArchive( uri ) )
 			return new ReadOnlyZipStore( archiveHandle( uri ) ).resolve();
@@ -280,8 +287,6 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 
 	private static Store storeFor( final URI uri )
 	{
-		if ( uri == null )
-			throw new IllegalArgumentException( "No OME-Zarr location given" );
 		final String scheme = uri.getScheme();
 		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
 			return new FilesystemStore( Paths.get( uri ) );
