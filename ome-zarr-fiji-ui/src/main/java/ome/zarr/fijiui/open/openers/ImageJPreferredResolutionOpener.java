@@ -44,7 +44,7 @@ import org.scijava.plugin.Plugin;
 @Plugin( type = ZarrOpener.class, name = ImageJPreferredResolutionOpener.NAME,
 		label = "ImageJ (preferred resolution)",
 		description = "Open a matching single-resolution image in ImageJ",
-		iconPath = "/ome/zarr/fijiui/dialog/ij_icon.png", priority = Priority.HIGH )
+		iconPath = "/ome/zarr/fijiui/dialog/ij_scaled_icon.png", priority = Priority.HIGH )
 public class ImageJPreferredResolutionOpener implements ZarrOpener
 {
 	/** The stable identifier this opener is persisted under. */

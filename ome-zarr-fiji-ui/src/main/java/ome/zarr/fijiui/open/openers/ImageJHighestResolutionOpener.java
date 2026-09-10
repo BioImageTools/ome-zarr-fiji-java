@@ -42,7 +42,7 @@ import org.scijava.plugin.Plugin;
 @Plugin( type = ZarrOpener.class, name = ImageJHighestResolutionOpener.NAME,
 		label = "ImageJ (highest resolution)",
 		description = "Open the highest available single-resolution in ImageJ",
-		iconPath = "/ome/zarr/fijiui/dialog/ij_icon.png", priority = Priority.HIGH - 1 )
+		iconPath = "/ome/zarr/fijiui/dialog/ij_full_icon.png", priority = Priority.HIGH - 1 )
 public class ImageJHighestResolutionOpener implements ZarrOpener
 {
 	/** The stable identifier this opener is persisted under. */
