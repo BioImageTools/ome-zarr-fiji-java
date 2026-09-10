@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,12 +37,12 @@ import ome.zarr.fijiui.open.ZarrOpenActions;
 import ome.zarr.imglib2.ZarrUtils;
 
 /**
- * The acceptance check and hand-off shared by the two File &gt; Import entries,
- * {@link OpenOmeZarrCommand} for a dataset folder and
- * {@link OpenOmeZarrArchiveCommand} for a zipped {@code .ozx} archive.
+ * Checks a selected location and hands it to the opening pipeline, for both
+ * File &gt; Import entries: {@link OpenOmeZarrCommand} (a dataset folder) and
+ * {@link OpenOmeZarrArchiveCommand} (a zipped {@code .ozx} archive).
  * <p>
- * They are separate commands because a Swing file chooser opens either
- * directories-only or files-only, so one input cannot browse both shapes.
+ * They are two commands, and not one, because a Swing file chooser browses
+ * either folders or files – never both.
  */
 final class OmeZarrOpener
 {
@@ -91,9 +91,6 @@ final class OmeZarrOpener
 	{
 		if ( location == null )
 			return "No " + noun + " selected.";
-		// isZarr( URI ) probes for the well-known metadata files on the local
-		// filesystem – and for a .ozx location, for the archive file itself –
-		// which also covers "the selection does not exist at all".
 		if ( !ZarrUtils.isZarr( location.toURI() ) )
 			return "The selected " + noun + " does not appear to be an OME-Zarr dataset:\n" + location + ".";
 		return null;
