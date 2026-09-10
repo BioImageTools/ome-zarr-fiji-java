@@ -148,6 +148,7 @@
 
 		<zarr-java.version>0.3.0</zarr-java.version>
 		<jacoco.version>0.8.13</jacoco.version>
+		<zarr.test.addOpens/>
 
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
@@ -280,7 +281,7 @@
 					<configuration>
 						<forkCount>1</forkCount>
 						<reuseForks>true</reuseForks>
-						<argLine>-Xmx4g -da -Dimagej.legacy.disable=true</argLine>
+						<argLine>-Xmx4g -da -Dimagej.legacy.disable=true ${zarr.test.addOpens}</argLine>
 					</configuration>
 				</plugin>
 				<!-- Force javadoc onto the classpath instead of the JPMS module path. -->
@@ -302,6 +303,15 @@
 
 	<profiles>
 		<profile>
+			<id>open-java-lang</id>
+			<activation>
+				<jdk>[9,)</jdk>
+			</activation>
+			<properties>
+				<zarr.test.addOpens>--add-opens=java.base/java.lang=ALL-UNNAMED</zarr.test.addOpens>
+			</properties>
+		</profile>
+		<profile>
 			<id>coverage</id>
 			<!-- Only pull the aggregate-coverage module into the reactor when measuring -->
 			<!-- coverage, so normal builds and releases do not build it. It depends on -->
@@ -317,7 +327,7 @@
 						<configuration>
 							<forkCount>1</forkCount>
 							<reuseForks>true</reuseForks>
-							<argLine>@{argLine} -Xmx4g -da</argLine>
+							<argLine>@{argLine} -Xmx4g -da ${zarr.test.addOpens}</argLine>
 						</configuration>
 					</plugin>
 					<plugin>
