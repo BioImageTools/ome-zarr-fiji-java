@@ -166,6 +166,8 @@ class ZarrUtilsTest
 			"file:///data/img.ozx/0, false",
 			"file:///data/img.ozxy, false",
 			"file:///data/img.ome.zarr, false",
+			// A bucket is not an archive, however it is named
+			"s3://bucket.ozx, false",
 			"mailto:someone@example.com, false" } )
 	void recognisesOzxArchiveLocations( final String uri, final boolean expected )
 	{

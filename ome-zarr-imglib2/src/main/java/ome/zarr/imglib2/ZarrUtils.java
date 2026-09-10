@@ -188,10 +188,9 @@ public class ZarrUtils
 		if ( uri == null )
 			return false;
 		final String path = uri.getPath();
-		if ( path == null )
+		if ( path == null || path.isEmpty() )
 			return false;
-		final String withoutTrailingSlash = path.endsWith( "/" ) ? path.substring( 0, path.length() - 1 ) : path;
-		return withoutTrailingSlash.toLowerCase( Locale.ROOT ).endsWith( OZX_EXTENSION );
+		return lastSegment( uri ).toLowerCase( Locale.ROOT ).endsWith( OZX_EXTENSION );
 	}
 
 	private static URI ensureTrailingSlash( final URI uri )
