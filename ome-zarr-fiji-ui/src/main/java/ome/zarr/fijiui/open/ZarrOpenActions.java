@@ -45,8 +45,9 @@ import java.util.function.Consumer;
 import bdv.util.BdvHandle;
 import ij.IJ;
 import ome.zarr.fiji.PyramidalDataset;
-import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
+import ome.zarr.fiji.open.ZarrOpenRequest;
 import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
+import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrBackend;
 import ome.zarr.fiji.read.ZarrReader;
@@ -68,13 +69,7 @@ public class ZarrOpenActions
 
 	private static final String HELP_URL = "https://github.com/BioImageTools/ome-zarr-fiji-java/";
 
-	private final URI inputUri;
-
-	private final Context context;
-
-	private final Consumer< String > errorHandler;
-
-	private final ZarrReader opener;
+	private final ZarrOpenRequest request;
 
 	/**
 	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
@@ -161,31 +156,34 @@ public class ZarrOpenActions
 	ZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings,
 			final Consumer< String > errorHandler )
 	{
-		this.inputUri = inputUri;
-		this.context = context;
-		this.errorHandler = errorHandler;
-		PyramidBackend pyramidBackend = backend( settings ).createBackend();
-		this.opener = new ZarrReader( inputUri, context, pyramidBackend, preferredMaxWidth( settings ), errorHandler );
+		this( requestFor( inputUri, context, settings, errorHandler ) );
 	}
 
 	/**
-	 * Backend from the settings, or the default when no settings are given.
+	 * Actions for an open request, sharing its lazily built {@link ZarrReader} —
+	 * the constructor a {@link ZarrOpener} in this package uses.
+	 *
+	 * @param request the location to act on and the settings to act with
 	 */
-	private static ZarrBackend backend( final ZarrOpeningSettings settings )
+	public ZarrOpenActions( final ZarrOpenRequest request )
 	{
-		return settings == null ? ZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
+		this.request = request;
 	}
 
 	/**
-	 * Preferred maximum width from the settings, or {@code null} (= highest
-	 * resolution) when no settings are given or the behavior is
-	 * {@link ZarrOpenBehavior#IMAGEJ_HIGHEST_RESOLUTION}.
+	 * Request for {@code inputUri} carrying the backend and preferred width from
+	 * {@code settings}, or the defaults when no settings are given. The preferred
+	 * width does not apply to {@link ZarrOpenBehavior#IMAGEJ_HIGHEST_RESOLUTION}.
 	 */
-	private static Integer preferredMaxWidth( final ZarrOpeningSettings settings )
+	private static ZarrOpenRequest requestFor( final URI inputUri, final Context context,
+			final ZarrOpeningSettings settings, final Consumer< String > errorHandler )
 	{
-		if ( settings == null || settings.getOpenBehavior() == ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION )
-			return null;
-		return settings.getPreferredMaxWidth();
+		final ZarrBackend backend = settings == null ? ZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
+		final Integer preferredMaxWidth =
+				settings == null || settings.getOpenBehavior() == ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION
+						? null
+						: settings.getPreferredMaxWidth();
+		return new ZarrOpenRequest( inputUri, context, backend.createBackend(), preferredMaxWidth, errorHandler );
 	}
 
 	/**
@@ -194,6 +192,7 @@ public class ZarrOpenActions
 	 */
 	private String displayLocation()
 	{
+		final URI inputUri = request.uri();
 		return "file".equalsIgnoreCase( inputUri.getScheme() )
 				? Paths.get( inputUri ).toString()
 				: inputUri.toString();
@@ -207,7 +206,7 @@ public class ZarrOpenActions
 	{
 		new N5Importer().runWithDialog( displayLocation(), Collections.emptyList() );
 		if ( logger.isInfoEnabled() )
-			logger.info( "Opened Zarr/N5 importer dialog with location: {}.", inputUri );
+			logger.info( "Opened Zarr/N5 importer dialog with location: {}.", request.uri() );
 	}
 
 	/**
@@ -219,11 +218,11 @@ public class ZarrOpenActions
 		new N5ViewerCreator().runWithDialog( displayLocation(),
 				e -> logger.warn( "Could not open viewer selection dialog: {}", e.getMessage() ) );
 		if ( logger.isInfoEnabled() )
-			logger.info( "Opened Zarr/N5 viewer with location: {}.", inputUri );
+			logger.info( "Opened Zarr/N5 viewer with location: {}.", request.uri() );
 	}
 
 	/**
-	 * Opens the dataset in ImageJ at the resolution selected by the settings.
+	 * Opens the dataset in ImageJ at the resolution level selected by the settings.
 	 * Delegates to {@link ZarrReader#openIJWithImage()}.
 	 *
 	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
@@ -232,7 +231,7 @@ public class ZarrOpenActions
 	@SuppressWarnings( "UnusedReturnValue" )
 	public PyramidalDataset openIJWithImage()
 	{
-		return opener.openIJWithImage();
+		return request.reader().openIJWithImage();
 	}
 
 	/**
@@ -246,7 +245,7 @@ public class ZarrOpenActions
 	@SuppressWarnings( "UnusedReturnValue" )
 	public PyramidalDataset openIJWithImage( final int resolutionLevel )
 	{
-		return opener.openIJWithImage( resolutionLevel );
+		return request.reader().openIJWithImage( resolutionLevel );
 	}
 
 	/**
@@ -259,7 +258,7 @@ public class ZarrOpenActions
 	@SuppressWarnings( "UnusedReturnValue" )
 	public BdvHandle openBDVWithImage()
 	{
-		return opener.openBDVWithImage();
+		return request.reader().openBDVWithImage();
 	}
 
 	/**
@@ -268,8 +267,8 @@ public class ZarrOpenActions
 	 */
 	public void runScript()
 	{
-		logger.info( "Attempt to execute script on location: {}.", inputUri );
-		ScriptUtils.executePresetScript( context, inputUri, errorHandler );
+		logger.info( "Attempt to execute script on location: {}.", request.uri() );
+		ScriptUtils.executePresetScript( request.context(), request.uri(), request.errorHandler() );
 	}
 
 	/**
