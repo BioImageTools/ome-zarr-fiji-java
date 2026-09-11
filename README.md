@@ -4,6 +4,31 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=BioImageTools_ome-zarr-fiji-java&metric=coverage)](https://sonarcloud.io/summary/overall?id=BioImageTools_ome-zarr-fiji-java)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=BioImageTools_ome-zarr-fiji-java&metric=ncloc)](https://sonarcloud.io/summary/overall?id=BioImageTools_ome-zarr-fiji-java)
 
+## Table of contents
+
+- [About](#about)
+- [Features](#features)
+    - [Drag & Drop of local OME-Zarr folders and URIs](#drag--drop-of-local-ome-zarr-folders-and-uris)
+    - [Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)](#copy--paste-of-ome-zarr-uris-local-folder-http-https-s3)
+    - [Open via menu (local folders)](#open-via-menu-local-folders)
+    - [Open as `Dataset` (scripting)](#open-as-dataset-scripting)
+    - [FIJI links (`fiji://`)](#fiji-links-fiji)
+    - [Dialog options](#dialog-options)
+    - [Registering your own opener](#registering-your-own-opener)
+    - [Supported OME-Zarr versions](#supported-ome-zarr-versions)
+    - [Dual dataset view](#dual-dataset-view)
+    - [Multi-resolution vs. single-resolution](#multi-resolution-vs-single-resolution)
+    - [Read channel information from OME-Zarr metadata](#read-channel-information-from-ome-zarr-metadata)
+    - [Reader Backend](#reader-backend)
+    - [Scriplet support](#scriplet-support)
+- [Known issues](#known-issues)
+- [Example data](#example-data)
+- [Availability](#availability)
+    - [Fiji Update Site](#fiji-update-site)
+    - [Manual installation](#manual-installation)
+        - [Third-party jars](#third-party-jars)
+- [History](#history)
+
 # About
 
 This repo is currently primarily a Fiji Drag & Drop / Copy & Paste / FIJI links handler for OME-Zarrs.
