@@ -101,7 +101,10 @@ import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
-import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
+import ome.zarr.fiji.open.ZarrOpenerService;
+import ome.zarr.fijiui.open.openers.BdvMultiResolutionOpener;
+import ome.zarr.fijiui.open.openers.ImageJHighestResolutionOpener;
+import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
 import ome.zarr.fijiui.open.options.ZarrBackend;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fijiui.util.ScriptUtils;
@@ -158,46 +161,44 @@ class ZarrOpenActionsTest
 	}
 
 	@Test
-	void openWithSettingsDispatchesToConfiguredOpenAction() throws URISyntaxException
+	void openWithSettingsDispatchesToTheConfiguredOpener() throws URISyntaxException
 	{
 		try (Context context = new Context())
 		{
 			final PrefService prefService = context.getService( PrefService.class );
-			final ZarrOpeningSettings settings = new ZarrOpeningSettings();
 			final Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/" );
 
-			try (MockedConstruction< ZarrOpenActions > actionsConstruction =
-					mockConstruction( ZarrOpenActions.class );
+			try (MockedConstruction< ZarrReader > readerConstruction = mockConstruction( ZarrReader.class );
 					MockedConstruction< ZarrOpenActionChooser > chooserConstruction =
 							mockConstruction( ZarrOpenActionChooser.class ))
 			{
-				settings.setCurrentChoice( ZarrOpenBehavior.BDV_MULTI_RESOLUTION );
-				settings.saveSettingsToPreferences( prefService );
-				ZarrOpenActions.openWithSettings( path.toUri(), context );
+				openAs( BdvMultiResolutionOpener.NAME, path, context, prefService );
+				openAs( ImageJHighestResolutionOpener.NAME, path, context, prefService );
+				openAs( ImageJPreferredResolutionOpener.NAME, path, context, prefService );
+				openAs( ZarrOpenerService.ASK, path, context, prefService );
 
-				settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION );
-				settings.saveSettingsToPreferences( prefService );
-				ZarrOpenActions.openWithSettings( path.toUri(), context );
-
-				settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_CUSTOM_RESOLUTION );
-				settings.saveSettingsToPreferences( prefService );
-				ZarrOpenActions.openWithSettings( path.toUri(), context );
-
-				settings.setCurrentChoice( ZarrOpenBehavior.SHOW_SELECTION_DIALOG );
-				settings.saveSettingsToPreferences( prefService );
-				ZarrOpenActions.openWithSettings( path.toUri(), context );
-
-				final List< ZarrOpenActions > actionsInstances = actionsConstruction.constructed();
-				assertEquals( 4, actionsInstances.size() );
-				verify( actionsInstances.get( 0 ), times( 1 ) ).openBDVWithImage();
-				verify( actionsInstances.get( 1 ), times( 1 ) ).openIJWithImage();
-				verify( actionsInstances.get( 2 ), times( 1 ) ).openIJWithImage();
+				// One reader per opener that reads; the selection dialog builds none.
+				final List< ZarrReader > readers = readerConstruction.constructed();
+				assertEquals( 3, readers.size() );
+				verify( readers.get( 0 ), times( 1 ) ).openBDVWithImage();
+				verify( readers.get( 1 ), times( 1 ) ).openIJWithImage( 0 );
+				verify( readers.get( 2 ), times( 1 ) ).openIJWithImage();
 
 				final List< ZarrOpenActionChooser > chooserInstances = chooserConstruction.constructed();
 				assertEquals( 1, chooserInstances.size() );
 				verify( chooserInstances.get( 0 ), times( 1 ) ).showDialog();
 			}
 		}
+	}
+
+	/** Persists {@code openerName} as the user's choice and opens {@code path} with it. */
+	private static void openAs( final String openerName, final Path path, final Context context,
+			final PrefService prefService )
+	{
+		final ZarrOpeningSettings settings = new ZarrOpeningSettings();
+		settings.setOpenerName( openerName );
+		settings.saveSettingsToPreferences( prefService );
+		ZarrOpenActions.openWithSettings( path.toUri(), context );
 	}
 
 	@ParameterizedTest
@@ -234,7 +235,7 @@ class ZarrOpenActionsTest
 			{
 				PrefService prefService = context.getService( PrefService.class );
 				ZarrOpeningSettings settings = new ZarrOpeningSettings();
-				settings.setCurrentChoice( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION );
+				settings.setOpenerName( ImageJHighestResolutionOpener.NAME );
 				settings.setBackend( backend );
 				settings.saveSettingsToPreferences( prefService );
 

@@ -26,60 +26,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.open.options;
+package ome.zarr.fijiui.open.openers;
 
-import java.util.NoSuchElementException;
+import ome.zarr.fiji.open.ZarrOpenRequest;
+import ome.zarr.fiji.open.ZarrOpener;
+
+import org.scijava.Priority;
+import org.scijava.plugin.Plugin;
 
 /**
- * Options for opening OME-Zarr datasets in different viewers and resolutions.
+ * Opens the dataset in ImageJ at the finest resolution level that is still no
+ * wider than {@link ZarrOpenRequest#preferredMaxWidth()}.
+ * <p>
+ * This is the highest-priority opener shipped here, and therefore what a user
+ * who never configured a choice gets.
  */
-public enum ZarrOpenBehavior
+@Plugin( type = ZarrOpener.class, name = ImageJPreferredResolutionOpener.NAME,
+		label = "ImageJ (preferred resolution)",
+		description = "Open a matching single-resolution image in ImageJ",
+		iconPath = "/ome/zarr/fijiui/dialog/ij_scaled_icon.png", priority = Priority.HIGH )
+public class ImageJPreferredResolutionOpener implements ZarrOpener
 {
-	/**
-	 * Open the highest available single-resolution in ImageJ.
-	 */
-	IMAGEJ_HIGHEST_RESOLUTION( "Open the highest available single-resolution in ImageJ" ),
+	/** The stable identifier this opener is persisted under. */
+	public static final String NAME = "imagej-preferred-resolution";
 
-	/**
-	 * Open a matching single-resolution image in ImageJ.
-	 */
-	IMAGEJ_CUSTOM_RESOLUTION( "Open a matching single-resolution image in ImageJ" ),
-
-	/**
-	 * Open as multi-resolution in BigDataViewer (BDV).
-	 */
-	BDV_MULTI_RESOLUTION( "Open as a multi-resolution source in BigDataViewer" ),
-
-	/**
-	 * Always open the selection dialog with different icons.
-	 */
-	SHOW_SELECTION_DIALOG( "Open selection dialog with choices" );
-
-	private final String description;
-
-	ZarrOpenBehavior( final String description )
+	@Override
+	public void open( final ZarrOpenRequest request )
 	{
-		this.description = description;
-	}
-
-	public static ZarrOpenBehavior getByName( final String name )
-	{
-		for ( final ZarrOpenBehavior option : values() )
-			if ( option.name().equals( name ) )
-				return option;
-		throw new NoSuchElementException( name );
-	}
-
-	public static ZarrOpenBehavior getByDescription( final String description )
-	{
-		for ( final ZarrOpenBehavior behavior : values() )
-			if ( behavior.description.equals( description ) )
-				return behavior;
-		return null;
-	}
-
-	public String getDescription()
-	{
-		return description;
+		request.reader().openIJWithImage();
 	}
 }

@@ -5,7 +5,7 @@
     * [ ] Update Documentation in the repo
     * [ ] Screenshots with demo data (Optional)
     * [ ] Screencasts (Optional)
-    * [ ] Point to example data (e.g. celltrackingchallenge, Kos data from Elephant paper)
+    * [ ] Point to example data
 * [ ] Update license information
     * [ ] Run "mvn license:update-file-header" and commit
 * [ ] Update release date and version in CITATION.cff file and commit

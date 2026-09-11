@@ -42,8 +42,9 @@ import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
+import ome.zarr.fijiui.open.openers.ImageJHighestResolutionOpener;
+import ome.zarr.fiji.open.ZarrOpenerService;
 import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
-import ome.zarr.fijiui.open.options.ZarrOpenBehavior;
 import ome.zarr.fijiui.open.options.ZarrBackend;
 
 /**
@@ -64,49 +65,23 @@ class OpeningBehaviorSettingsTest
 			prefService.clearAll();
 			final int customWidth = 500;
 
-			Field prefServiceField = OpeningBehaviorSettings.class.getDeclaredField( "prefService" );
-			prefServiceField.setAccessible( true );
-			prefServiceField.set( ui, prefService );
+			setField( ui, "prefService", prefService );
+			setField( ui, "openerService", context.getService( ZarrOpenerService.class ) );
 
 			Method initMethod = OpeningBehaviorSettings.class.getDeclaredMethod( "init" );
 			initMethod.setAccessible( true ); // bypasses private visibility
 			initMethod.invoke( ui );
 
-			Field defaultZarrOpenBehaviorField = OpeningBehaviorSettings.class.getDeclaredField( "defaultZarrOpenBehavior" );
-			defaultZarrOpenBehaviorField.setAccessible( true );
-			defaultZarrOpenBehaviorField.set( ui, ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION.getDescription() );
-
-			Field preferredWidthField = OpeningBehaviorSettings.class.getDeclaredField( "preferredWidth" );
-			preferredWidthField.setAccessible( true );
-			preferredWidthField.set( ui, customWidth );
+			setField( ui, "defaultOpener", labelOf( context, ImageJHighestResolutionOpener.NAME ) );
+			setField( ui, "preferredWidth", customWidth );
 
 			ui.run();
 
 			ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 
-			assertEquals( ZarrOpenBehavior.IMAGEJ_HIGHEST_RESOLUTION, settings.getOpenBehavior() );
+			assertEquals( ImageJHighestResolutionOpener.NAME, settings.getOpenerName() );
 			assertEquals( customWidth, settings.getPreferredMaxWidth() );
-
 		}
-	}
-
-	@Test
-	void testEnumNamesAsListReturnsAllDescriptionsInDeclarationOrder()
-	{
-		final List< String > expected =
-				Arrays.stream( ZarrOpenBehavior.values() ).map( ZarrOpenBehavior::getDescription ).collect( Collectors.toList() );
-		final List< String > actual = OpeningBehaviorSettings.enumNamesAsList( ZarrOpenBehavior.values() );
-		assertEquals( expected, actual );
-		// Sanity-check a couple of entries explicitly so the test catches a
-		// mistaken switch from getDescription() to name() or to toString().
-		assertEquals( "Open the highest available single-resolution in ImageJ", actual.get( 0 ) );
-		assertEquals( ZarrOpenBehavior.values().length, actual.size() );
-	}
-
-	@Test
-	void testEnumNamesAsListIsEmptyForEmptyInput()
-	{
-		assertEquals( Collections.emptyList(), OpeningBehaviorSettings.enumNamesAsList( new ZarrOpenBehavior[ 0 ] ) );
 	}
 
 	@Test
@@ -125,5 +100,20 @@ class OpeningBehaviorSettingsTest
 	void testBackendDescriptionsIsEmptyForEmptyInput()
 	{
 		assertEquals( Collections.emptyList(), OpeningBehaviorSettings.backendDescriptions( new ZarrBackend[ 0 ] ) );
+	}
+
+	/** The choice the dialog shows for the opener registered under {@code name}. */
+	private static String labelOf( final Context context, final String name )
+	{
+		final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
+		return ZarrOpenerService.labelOf( openerService.getOpenerInfo( name ) );
+	}
+
+	private static void setField( final OpeningBehaviorSettings ui, final String fieldName, final Object value )
+			throws NoSuchFieldException, IllegalAccessException
+	{
+		final Field field = OpeningBehaviorSettings.class.getDeclaredField( fieldName );
+		field.setAccessible( true );
+		field.set( ui, value );
 	}
 }
