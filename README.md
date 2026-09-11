@@ -119,7 +119,7 @@ for a page with clickable examples of each form.
 
 ### Dialog options
 
-![dialog.png](doc/dialog.png)
+<img src="doc/dialog.png" width="120" alt="The opening-selection dialog with six openers and the help button">
 
 The dialog shows one icon button per registered opener, plus a help button; hovering a button explains what it does.
 The openers shipped here are:
