@@ -20,22 +20,21 @@
     * [ ] Confirm version number
     * [ ] The release script pushes to master on github.com
         * This triggers a *github Action* which copies the version to be released to maven.scijava.org.
-        * https://maven.scijava.org/repository/releases/ome/zarr/ome-zarr-fiji/
-        * https://maven.scijava.org/repository/releases/ome/zarr/ome-zarr-fiji-ui/
-        * https://maven.scijava.org/repository/releases/ome/zarr/ome-zarr-imglib2/
-        * https://maven.scijava.org/repository/releases/ome/zarr/ome-zarr-n5/
-        * https://maven.scijava.org/repository/releases/ome/zarr/ome-zarr-zarrjava/
+        * https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-fiji/
+        * https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-fiji-ui/
+        * https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-imglib2/
+        * https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-n5/
+        * https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-zarrjava/
         * Snapshots of the main branch land in the snapshots repo instead, e.g.
-          https://maven.scijava.org/repository/snapshots/ome/zarr/ome-zarr-fiji/
+          https://maven.scijava.org/service/rest/repository/browse/snapshots/ome/zarr/ome-zarr-fiji/
 * [ ] Download the created artifacts from
   maven.scijava.org
-    * The build releases five artifacts: [
-      `ome-zarr-imglib2`](https://maven.scijava.org/repository/releases/ome/zarr/ome-zarr-imglib2/), [
-      `ome-zarr-n5`](https://maven.scijava.org/repository/releases/ome/zarr/ome-zarr-n5/), [
-      `ome-zarr-zarrjava`](https://maven.scijava.org/repository/releases/ome/zarr/ome-zarr-zarrjava/),
-      [`ome-zarr-fiji`](https://maven.scijava.org/repository/releases/ome/zarr/ome-zarr-fiji/), [
-      `ome-zarr-fiji-ui`](https://maven.scijava.org/repository/releases/ome/zarr/ome-zarr-fiji-ui/) (plus the
-      `ome-zarr-java` POM).
+    * The build releases five artifacts (plus the `ome-zarr-java` POM):
+        * [`ome-zarr-imglib2`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-imglib2/)
+        * [`ome-zarr-n5`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-n5/)
+        * [`ome-zarr-zarrjava`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-zarrjava/)
+        * [`ome-zarr-fiji`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-fiji/)
+        * [`ome-zarr-fiji-ui`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-fiji-ui/)
     * [ ] Delete the jar-files from the last release version from the local Fiji installation path (if any)
     * [ ] Copy the five new module jars to the local Fiji installation path
     * [ ] Copy new dependencies, if any
