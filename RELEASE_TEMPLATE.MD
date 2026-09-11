@@ -30,15 +30,18 @@
 * [ ] Download the created artifacts from
   maven.scijava.org
     * The build releases five artifacts (plus the `ome-zarr-java` POM):
-        * [`ome-zarr-imglib2`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-imglib2/)
+        * [
+          `ome-zarr-imglib2`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-imglib2/)
         * [`ome-zarr-n5`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-n5/)
-        * [`ome-zarr-zarrjava`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-zarrjava/)
+        * [
+          `ome-zarr-zarrjava`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-zarrjava/)
         * [`ome-zarr-fiji`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-fiji/)
-        * [`ome-zarr-fiji-ui`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-fiji-ui/)
+        * [
+          `ome-zarr-fiji-ui`](https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-fiji-ui/)
     * [ ] Delete the jar-files from the last release version from the local Fiji installation path (if any)
     * [ ] Copy the five new module jars to the local Fiji installation path
     * [ ] Copy new dependencies, if any
-        * [ ] zarr-java-0.1.3.jar
+        * [ ]
     * [ ] Test, if Fiji starts successfully
     * [ ] Test new functionalities of to-be-released version in Fiji
 * [ ] Copy Jar-File to [OME-Zarr-PREVIEW](https://sites.imagej.net/OME-Zarr-PREVIEW/) Update-Site using Fiji/ImageJ
