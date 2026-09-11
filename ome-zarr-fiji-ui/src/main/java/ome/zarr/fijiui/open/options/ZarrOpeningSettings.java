@@ -29,17 +29,12 @@
 package ome.zarr.fijiui.open.options;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ome.zarr.fijiui.open.openers.BdvMultiResolutionOpener;
-import ome.zarr.fijiui.open.openers.ImageJHighestResolutionOpener;
 import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
 import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fiji.open.ZarrOpenerService;
@@ -64,14 +59,6 @@ public class ZarrOpeningSettings
 	public static final int DEFAULT_PREFERRED_WIDTH = 1000;
 
 	public static final ZarrBackend DEFAULT_BACKEND = ZarrBackend.ZARR_JAVA;
-
-	/**
-	 * The names the opening behavior was persisted under before openers were
-	 * plugins, mapped to the opener that replaced each of them. Preferences
-	 * written by version 0.7 and earlier are read through this; it can go once
-	 * those are no longer in the field.
-	 */
-	private static final Map< String, String > LEGACY_NAMES = legacyNames();
 
 	/**
 	 * The chosen opener's plugin name, {@link ZarrOpenerService#ASK}, or
@@ -180,7 +167,7 @@ public class ZarrOpeningSettings
 	public static ZarrOpeningSettings loadSettingsFromPreferences( final PrefService prefs )
 	{
 		final String openerName = prefs == null ? null
-				: migrateLegacyName( prefs.get( ZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, null ) );
+				: prefs.get( ZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, null );
 		int preferredWidth = prefs == null ? DEFAULT_PREFERRED_WIDTH
 				: prefs.getInt( ZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, DEFAULT_PREFERRED_WIDTH );
 		ZarrBackend backend;
@@ -197,29 +184,6 @@ public class ZarrOpeningSettings
 		logger.debug( "Loaded OME-Zarr preferred width: {}", preferredWidth );
 		logger.debug( "Loaded OME-Zarr default backend: {}", backend );
 		return new ZarrOpeningSettings( openerName, preferredWidth, backend );
-	}
-
-	/**
-	 * Translates a value written by an older version into the opener name that
-	 * replaced it; anything else is passed through unchanged.
-	 */
-	private static String migrateLegacyName( final String storedName )
-	{
-		final String migrated = LEGACY_NAMES.get( storedName );
-		if ( migrated == null )
-			return storedName;
-		logger.debug( "Migrated the stored opening behavior '{}' to the opener '{}'.", storedName, migrated );
-		return migrated;
-	}
-
-	private static Map< String, String > legacyNames()
-	{
-		final Map< String, String > names = new HashMap<>();
-		names.put( "IMAGEJ_HIGHEST_RESOLUTION", ImageJHighestResolutionOpener.NAME );
-		names.put( "IMAGEJ_CUSTOM_RESOLUTION", ImageJPreferredResolutionOpener.NAME );
-		names.put( "BDV_MULTI_RESOLUTION", BdvMultiResolutionOpener.NAME );
-		names.put( "SHOW_SELECTION_DIALOG", ZarrOpenerService.ASK );
-		return Collections.unmodifiableMap( names );
 	}
 
 	/**

@@ -23,8 +23,6 @@ has to support. These are *inputs* to the ladder, not exemptions from it:
 - **Module and package boundaries are API, so merging them is a breaking change, not a shorter diff.** The five-module
   split is five published artifacts; opener and command discovery runs off the `@Plugin` annotation index; `PrefService`
   keys off a class's package. "Understand the problem before picking a rung" applies before consolidating any of it.
-- **`ZarrOpeningSettings.LEGACY_NAMES` is data-loss prevention, not dead config** — it stops 0.7-and-earlier users
-  losing their saved preference — so it falls under "never simplify away error handling that prevents data loss".
 - **Design notes are explicitly requested output here, so they are not prose debt.** This file, commit bodies, and
   javadoc on non-obvious private helpers exist because the repo's history is how design decisions get reviewed. That
   is the "explanation the user explicitly asked for" carve-out, not an exception to it. Cutting duplicated
@@ -224,9 +222,12 @@ highest-priority one.
 **Settings** are persisted across Fiji sessions via SciJava `PrefService`, read/written through `ZarrOpeningSettings`
 (opener name, preferred width, reader backend – the backend defaults to `ZarrBackend.ZARR_JAVA`) and surfaced via the
 `OpeningBehaviorSettings` command, whose choices are built from the registered openers rather than from a fixed list.
-The pref key stays `"ZarrOpenBehavior"`, and `ZarrOpeningSettings.LEGACY_NAMES` migrates the four names the removed
-`ZarrOpenBehavior` enum wrote, so 0.7-and-earlier preferences keep working; drop it after a release or two.
-`getOpenerName()` returns `null` for "never configured", which is what lets the priority rule above apply.
+The pref key stays `"ZarrOpenBehavior"`, but the four names the removed `ZarrOpenBehavior` enum wrote are **not**
+migrated: a migration map existed and was deliberately deleted, because adoption at 0.7 is small enough that carrying
+it is not worth the code. A 0.7-and-earlier preference therefore reads as an unknown opener name and lands in the
+"configured opener is not installed" fallback in `ZarrOpenActions.openWithSettings` – highest-priority opener, one
+`info` log, nothing thrown – and the next visit to `OpeningBehaviorSettings` overwrites it. `getOpenerName()` returns
+`null` for "never configured", which is what lets the priority rule above apply.
 
 **Active-window tracking:** `PyramidalService` (a SciJava service) tracks the most-recently-focused `Pyramidal` window
 (BDV or ImageJ) via AWT focus listening; `PyramidalPreprocessor` auto-fills any `Pyramidal`-typed command parameter
