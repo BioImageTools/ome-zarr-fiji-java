@@ -234,7 +234,7 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 
 ## Fiji Update Site
 
-Enable the the Fiji update site [OME-Zarr-PREVIEW](https://sites.imagej.net/OME-Zarr-PREVIEW/) in the
+Enable the Fiji update site [OME-Zarr](https://sites.imagej.net/OME-Zarr/) in the
 `Help -> Update -> Manage Update Sites`:
 
 ![update_site.png](doc/update_site.png)
