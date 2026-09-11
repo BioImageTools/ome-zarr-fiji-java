@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -60,31 +60,17 @@ public class BdvUtils
 	}
 
 	/**
-	 * Displays the given pyramidal dataset in a BigDataViewer (BDV) window.<br>
-	 * Increments the dataset's reference count.<br>
-	 * Ensures that the dataset's reference count is properly decreased when the BDV window is closed.
-	 * <br>
-	 * @param pyramidalDataset the input dataset to be displayed in BDV; this dataset
-	 *                         contains multi-resolution image data along with associated metadata.
-	 * @return a {@code BdvHandle} instance representing the BDV window.
-	 */
-	public static BdvHandle showBdvAndRegisterDataset( final PyramidalBdv< ? > pyramidalDataset )
-	{
-		return showBdvAndRegisterDataset( pyramidalDataset, null );
-	}
-
-	/**
-	 * Displays the given pyramidal dataset in a BigDataViewer (BDV) window and registers
+	 * Displays the given pyramidal in a BigDataViewer (BDV) window and registers
 	 * it with {@code pyramidalService} for focus tracking.<br>
-	 * Increments the dataset's reference count and decrements it when the window closes.
-	 * If {@code pyramidalService} is non-null, the dataset is immediately marked as active.
+	 * Increments the pyramidal's reference count and decrements it when the window closes.
+	 * If {@code pyramidalService} is non-null, the pyramidal is immediately marked as active.
 	 * Later focus changes are picked up centrally by {@link PyramidalService}.
 	 *
 	 * @param pyramidalBdv the input {@link PyramidalBdv} to be displayed in BDV
 	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking
 	 * @return a {@code BdvHandle} instance representing the BDV window
 	 */
-	public static BdvHandle showBdvAndRegisterDataset( final PyramidalBdv< ? > pyramidalBdv, final PyramidalService pyramidalService )
+	public static BdvHandle showBdvAndRegisterWindow( final PyramidalBdv< ? > pyramidalBdv, final PyramidalService pyramidalService )
 	{
 		BdvHandle bdvHandle = BdvFunctions.show( pyramidalBdv.asSources(), pyramidalBdv.getPyramidContents().numTimepoints(),
 				BdvOptions.options().frameTitle( pyramidalBdv.getName() ) ).getBdvHandle();
@@ -96,26 +82,26 @@ public class BdvUtils
 		if ( topLevelContainer instanceof Window )
 		{
 			final Window window = ( Window ) topLevelContainer;
-			registerDatasetLifecycle( pyramidalBdv, window, pyramidalService );
+			registerBdvWindow( pyramidalBdv, window, pyramidalService );
 		}
 		return bdvHandle;
 	}
 
 	/**
-	 * Increments the reference count for this dataset and, if {@code pyramidalService} is non-null,
+	 * Increments the reference count for this pyramidal and, if {@code pyramidalService} is non-null,
 	 * registers the BDV window with it for focus tracking. Also installs a listener to decrement the
 	 * reference count (and unregister the window) when the BDV window closes.
 	 * <p>
 	 * Focus switches themselves are observed centrally by {@link PyramidalService} via the AWT
 	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
 	 */
-	private static void registerDatasetLifecycle( final PyramidalBdv< ? > pyramidalDataset, final Window window,
+	private static void registerBdvWindow( final PyramidalBdv< ? > pyramidal, final Window window,
 			final PyramidalService pyramidalService
 	)
 	{
-		pyramidalDataset.incrementReferences();
+		pyramidal.incrementReferences();
 		if ( pyramidalService != null )
-			pyramidalService.registerBdvWindow( window, pyramidalDataset );
+			pyramidalService.registerBdvWindow( window, pyramidal );
 		window.addWindowListener( new WindowAdapter()
 		{
 			@Override
@@ -123,27 +109,27 @@ public class BdvUtils
 			{
 				if ( pyramidalService != null )
 					pyramidalService.unregisterBdvWindow( window );
-				pyramidalDataset.decrementReferences();
+				pyramidal.decrementReferences();
 			}
 		} );
 	}
 
-	private static void setChannelProperties( final PyramidalBdv< ? > pyramidalDataset, final BdvHandle bdvHandle )
+	private static void setChannelProperties( final PyramidalBdv< ? > pyramidalBdv, final BdvHandle bdvHandle )
 	{
-		Omero omero = pyramidalDataset.getPyramidContents().omero;
+		Omero omero = pyramidalBdv.getPyramidContents().omero;
 		if ( omero == null || omero.channels == null || omero.channels.isEmpty() )
 			return;
 		List< Omero.Channel > omeroChannels = omero.channels;
-		if ( omeroChannels.size() != pyramidalDataset.asSources().size() )
+		if ( omeroChannels.size() != pyramidalBdv.asSources().size() )
 		{
 			logger.warn(
 					"The number of channels in the Omero metadata ({}) does not match the number of sources in the dataset ({}). Channel properties will not be applied.",
-					omeroChannels.size(), pyramidalDataset.asSources().size() );
+					omeroChannels.size(), pyramidalBdv.asSources().size() );
 			return;
 		}
-		for ( int channelNumber = 0; channelNumber < pyramidalDataset.asSources().size(); channelNumber++ )
+		for ( int channelNumber = 0; channelNumber < pyramidalBdv.asSources().size(); channelNumber++ )
 		{
-			SourceAndConverter< ? > source = pyramidalDataset.asSources().get( channelNumber );
+			SourceAndConverter< ? > source = pyramidalBdv.asSources().get( channelNumber );
 			final Omero.Channel omeroChannel = omeroChannels.get( channelNumber );
 			ConverterSetup converterSetup = bdvHandle.getConverterSetups().getConverterSetup( source );
 			Color color = omeroChannel == null || omeroChannel.color == null ? Color.white : Color.decode( "#" + omeroChannel.color );

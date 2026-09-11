@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -60,8 +60,8 @@ public class OpenInBDVCommand implements Command
 	@Override
 	public void run()
 	{
-		logger.trace( "Running OpenInBDVCommand. pyramidal={}", pyramidal );
-		if ( pyramidal == null )
+		logger.trace( "Running OpenInBDVCommand. pyramidal={}", this.pyramidal );
+		if ( this.pyramidal == null )
 		{
 			final String message = "The active image is not an OME-Zarr dataset.";
 			if ( uiService.isVisible() )
@@ -70,7 +70,7 @@ public class OpenInBDVCommand implements Command
 				logger.warn( message );
 			return;
 		}
-		final PyramidalBdv< ? > bdvDataset = new PyramidalBdv<>( pyramidal.getContext(), pyramidal.getPyramidContents() );
-		BdvUtils.showBdvAndRegisterDataset( bdvDataset, pyramidalService );
+		final PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( this.pyramidal.getContext(), this.pyramidal.getPyramidContents() );
+		BdvUtils.showBdvAndRegisterWindow( pyramidalBdv, pyramidalService );
 	}
 }
