@@ -67,8 +67,8 @@ public interface ZarrOpener extends SciJavaPlugin
 {
 	/**
 	 * Opens the requested location. Called on a background thread, never on the
-	 * AWT event dispatch thread, so it may read and block; anything touching Swing
-	 * has to hop onto the EDT itself. Failures are the opener's own to report,
+	 * AWT event dispatch thread, so it may read and block.<br>
+	 * Failures are the opener's own to report,
 	 * through {@link ZarrOpenRequest#errorHandler()}: an exception thrown from
 	 * here is logged by the caller but never shown to the user.
 	 *
