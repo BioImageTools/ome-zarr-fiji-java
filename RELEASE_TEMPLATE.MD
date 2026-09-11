@@ -44,13 +44,13 @@
         * [ ]
     * [ ] Test, if Fiji starts successfully
     * [ ] Test new functionalities of to-be-released version in Fiji
-* [ ] Copy Jar-File to [OME-Zarr-PREVIEW](https://sites.imagej.net/OME-Zarr-PREVIEW/) Update-Site using Fiji/ImageJ
+* [ ] Copy Jar-File to [OME-Zarr](https://sites.imagej.net/OME-Zarr/) Update-Site using Fiji/ImageJ
   Updaters (Fiji > Help > Update...)
     * [ ] Set Updater to Advanced Mode
         * [ ] If needed, add `webdav:stefanhahmann` (or any other valid username for the update site) as `Host` under
-          `Manage Update Sites > OME-Zarr-PREVIEW`
+          `Manage Update Sites > OME-Zarr`
     * [ ] Upload all five module jars: ome-zarr-imglib2-*.jar, ome-zarr-n5-*.jar, ome-zarr-zarrjava-*.jar,
       ome-zarr-fiji-*.jar, ome-zarr-fiji-ui-*.jar
-    * [ ] Check Upload success: https://sites.imagej.net/OME-Zarr-PREVIEW/jars/
+    * [ ] Check Upload success: https://sites.imagej.net/OME-Zarr/jars/
 * [ ] Add Release documentation: https://github.com/BioImageTools/ome-zarr-fiji-java/releases
 * [ ] Make an announcement on image.sc: https://forum.image.sc/t/ngff-weekly-dev-update-thread/110810/
