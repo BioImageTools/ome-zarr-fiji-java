@@ -1,0 +1,13 @@
+[workspace]
+authors = ["Vladimír Ulman <ulman@fi.muni.cz>"]
+channels = ["conda-forge"]
+name = "ome-zarr-fiji-java__logo"
+platforms = ["linux-64", "osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = ">=3.14.6,<3.15"
+matplotlib = ">=3.11.0,<4"
+numpy = ">=2.4.6,<3"

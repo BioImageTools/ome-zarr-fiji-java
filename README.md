@@ -4,23 +4,28 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=BioImageTools_ome-zarr-fiji-java&metric=coverage)](https://sonarcloud.io/summary/overall?id=BioImageTools_ome-zarr-fiji-java)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=BioImageTools_ome-zarr-fiji-java&metric=ncloc)](https://sonarcloud.io/summary/overall?id=BioImageTools_ome-zarr-fiji-java)
 
+<img align="right" width="200" src="doc/logo/logo.png" alt="OME-Zarr for Fiji logo">
+
 ## Table of contents
 
 - [About](#about)
 - [Features](#features)
-    - [Drag & Drop of local OME-Zarr folders and URIs](#drag--drop-of-local-ome-zarr-folders-and-uris)
-    - [Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)](#copy--paste-of-ome-zarr-uris-local-folder-http-https-s3)
-    - [Open via menu (local folders)](#open-via-menu-local-folders)
-    - [Open as `Dataset` (scripting)](#open-as-dataset-scripting)
-    - [FIJI links (`fiji://`)](#fiji-links-fiji)
-    - [Dialog options](#dialog-options)
-    - [Registering your own opener](#registering-your-own-opener)
-    - [Supported OME-Zarr versions](#supported-ome-zarr-versions)
-    - [Dual dataset view](#dual-dataset-view)
-    - [Multi-resolution vs. single-resolution](#multi-resolution-vs-single-resolution)
-    - [Read channel information from OME-Zarr metadata](#read-channel-information-from-ome-zarr-metadata)
-    - [Reader Backend](#reader-backend)
-    - [Scriplet support](#scriplet-support)
+    - [How to open an OME-Zarr](#how-to-open-an-ome-zarr)
+        - [Drag & Drop of local OME-Zarr folders and URIs](#drag--drop-of-local-ome-zarr-folders-and-uris)
+        - [Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)](#copy--paste-of-ome-zarr-uris-local-folder-http-https-s3)
+        - [Open via menu (local folders)](#open-via-menu-local-folders)
+        - [Open as `Dataset` (scripting)](#open-as-dataset-scripting)
+        - [FIJI links (`fiji://`)](#fiji-links-fiji)
+    - [Choosing what happens on open](#choosing-what-happens-on-open)
+        - [Dialog options](#dialog-options)
+        - [Multi-resolution vs. single-resolution](#multi-resolution-vs-single-resolution)
+        - [Reader Backend](#reader-backend)
+        - [Registering your own opener](#registering-your-own-opener)
+        - [Scriplet support](#scriplet-support)
+    - [What is read and displayed](#what-is-read-and-displayed)
+        - [Supported OME-Zarr versions](#supported-ome-zarr-versions)
+        - [Read channel information from OME-Zarr metadata](#read-channel-information-from-ome-zarr-metadata)
+        - [Dual dataset view](#dual-dataset-view)
 - [Known issues](#known-issues)
 - [Example data](#example-data)
 - [Availability](#availability)
@@ -36,6 +41,8 @@ This repo is currently primarily a Fiji Drag & Drop / Copy & Paste / FIJI links 
 If the dropped / pasted / linked target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing.
 
 # Features
+
+## How to open an OME-Zarr
 
 ### Drag & Drop of local OME-Zarr folders and URIs
 
@@ -117,6 +124,8 @@ opens that IDR dataset. Use `open/file?p=` for a local path and `open/source?p=`
 See [doc/fiji-links-demo.html](https://htmlpreview.github.io/?https://raw.githubusercontent.com/BioImageTools/ome-zarr-fiji-java/main/doc/fiji-links-demo.html)
 for a page with clickable examples of each form.
 
+## Choosing what happens on open
+
 ### Dialog options
 
 <img src="doc/dialog.png" width="120" alt="The opening-selection dialog with six openers and the help button">
@@ -138,63 +147,13 @@ The openers shipped here are:
 The last button is not an opener: it opens a web browser pointing to this
 [Readme](https://github.com/BioImageTools/ome-zarr-fiji-java) file.
 
-### Registering your own opener
-
-Another Fiji plugin can offer itself as a way to open OME-Zarrs — it then appears in the dialog above and in the
-settings, and can be made the default. All it takes is a SciJava plugin implementing `ZarrOpener` from
-`ome.zarr:ome-zarr-fiji`:
-
-```java
-@Plugin( type = ZarrOpener.class, name = "my-opener", label = "My viewer",
-         iconPath = "/icons/my-opener.png", priority = Priority.VERY_HIGH )
-public class MyZarrOpener implements ZarrOpener
-{
-    @Override
-    public void open( final ZarrOpenRequest request )
-    {
-        MyViewer.open( request.uri() );
-    }
-}
-```
-
-`name` is what the setting persists and should stay stable across releases; `label`, `description` and `iconPath` are
-what the user sees. `priority` decides the order and which opener a user who never picked one gets — an explicit user
-choice always wins. `ZarrOpenRequest` also offers a ready-made `reader()` if you want this project to do the reading.
-
-## Supported OME-Zarr versions
-
-* [OME-Zarr v0.5](https://ngff.openmicroscopy.org/0.5/index.html) (Zarr v3)
-* [OME-Zarr v0.4](https://ngff.openmicroscopy.org/0.4/index.html) (Zarr v2)
-* [OME-Zarr v0.3](https://ngff.openmicroscopy.org/0.3/index.html) (Zarr v2)
-* Supports 2D (xy), 3D (xyc, xyt, xyz), 4D (xyct, xyzc, xyzt) and 5D (xyzct) images.
-
-## Dual dataset view
-
-* Fiji memorizes the full context of a drag & dropped / copy & pasted OME-Zarr. That said, even if the OME-Zarr is
-  opened as a particular resolution in ImageJ via drag & drop / copy & paste, one can still open it in BigDataViewer
-  using all resolution pyramids (via `Plugins -> OME-Zarr -> Open Current Zarr Image in BigDataViewer`).
-* Or the opposite, even if the dropped / pasted OME-Zarr has right away landed in BigDataViewer, it is possible to
-  display a particular resolution of it as Dataset in ImageJ (via `Plugins > OME-Zarr > Open Resolution Level...`).
-  Images which support swithing resolutions are displayed carry `(R)` in their name to indicate this property.
-* To sum it up, once OME-Zarr is in Fiji, users don't have to drop / paste it again to display it differently. This is a
-  great way to save RAM (memory) on your computer.
-
-## Multi-resolution vs. single-resolution
+### Multi-resolution vs. single-resolution
 
 * Users can drag & drop / copy & paste a top-level OME-Zarr folder, which contains a multi-resolution dataset. It will
   be opened as multi-resolution data.
 * Users can also drag & drop / copy & paste a subfolder of the top-level OME-Zarr folder (i.e., single-resolution data).
 
-## Read channel information from OME-Zarr metadata
-
-* The channel names, colors, and contrast limits and their active/inactive state are automatically extracted from the
-  OME-Zarr metadata, if available. The time point is also automatically set to the time point specified in the metadata,
-  if available.
-* Works only when a multi-resolution OME-Zarr is drag & dropped / copy & pasted and opened in BigDataViewer.
-
-![bdv_channel_information.png](doc/bdv_channel_information.png)
-
-## Reader Backend
+### Reader Backend
 
 We support two backends for reading OME-Zarrs. Users can choose between the two via the
 `Plugins -> OME-Zarr -> Settings -> Open Behavior settings` menu.
@@ -205,11 +164,66 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 * [N5 library](https://github.com/saalfeldlab/n5)
     * alternative, and the only one that reads OME-Zarr v0.3.
 
-## Scriplet support
+### Registering your own opener
+
+Another Fiji plugin can offer itself as a way to open OME-Zarrs — it then appears in the dialog above and in the
+settings, and can be made the default. All it takes is a SciJava plugin implementing `ZarrOpener` from
+`ome.zarr:ome-zarr-fiji`:
+
+```java
+
+@Plugin(
+		type = ZarrOpener.class, name = "my-opener", label = "My viewer",
+		iconPath = "/icons/my-opener.png", priority = Priority.VERY_HIGH
+)
+public class MyZarrOpener implements ZarrOpener
+{
+	@Override
+	public void open( final ZarrOpenRequest request )
+	{
+		MyViewer.open( request.uri() );
+	}
+}
+```
+
+`name` is what the setting persists and should stay stable across releases; `label`, `description` and `iconPath` are
+what the user sees. `priority` decides the order and which opener a user who never picked one gets — an explicit user
+choice always wins. `ZarrOpenRequest` also offers a ready-made `reader()` if you want this project to do the reading.
+
+### Scriplet support
 
 * Users can run a script on the OME-Zarr. The script resource can be a file and can be set in the
   `Plugins -> OME-Zarr -> Settings -> User Script Settings` menu.
 * If no script is set, the script editor opens with a default script.
+
+## What is read and displayed
+
+### Supported OME-Zarr versions
+
+* [OME-Zarr v0.5](https://ngff.openmicroscopy.org/0.5/index.html) (Zarr v3)
+* [OME-Zarr v0.4](https://ngff.openmicroscopy.org/0.4/index.html) (Zarr v2)
+* [OME-Zarr v0.3](https://ngff.openmicroscopy.org/0.3/index.html) (Zarr v2)
+* Supports 2D (xy), 3D (xyc, xyt, xyz), 4D (xyct, xyzc, xyzt) and 5D (xyzct) images.
+
+### Read channel information from OME-Zarr metadata
+
+* The channel names, colors, and contrast limits and their active/inactive state are automatically extracted from the
+  OME-Zarr metadata, if available. The time point is also automatically set to the time point specified in the metadata,
+  if available.
+* Works only when a multi-resolution OME-Zarr is drag & dropped / copy & pasted and opened in BigDataViewer.
+
+![bdv_channel_information.png](doc/bdv_channel_information.png)
+
+### Dual dataset view
+
+* Fiji memorizes the full context of a drag & dropped / copy & pasted OME-Zarr. That said, even if the OME-Zarr is
+  opened as a particular resolution in ImageJ via drag & drop / copy & paste, one can still open it in BigDataViewer
+  using all resolution pyramids (via `Plugins -> OME-Zarr -> Open Current Zarr Image in BigDataViewer`).
+* Or the opposite, even if the dropped / pasted OME-Zarr has right away landed in BigDataViewer, it is possible to
+  display a particular resolution of it as Dataset in ImageJ (via `Plugins > OME-Zarr > Open Resolution Level...`).
+  Images which support swithing resolutions are displayed carry `(R)` in their name to indicate this property.
+* To sum it up, once OME-Zarr is in Fiji, users don't have to drop / paste it again to display it differently. This is a
+  great way to save RAM (memory) on your computer.
 
 # Known issues
 
@@ -229,6 +243,9 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 
 * There are some OME-Zarr example datasets in the image data repository. You can download them
   from [here](https://idr.github.io/ome-ngff-samples/) to your local machine to test the drag & drop.
+* A zipped OME-Zarr archive (`.ozx`, 38 MB): [6001240.ozx](https://static.webknossos.org/misc/6001240.ozx).
+  Open it with `File -> Import -> OME-Zarr Archive (.ozx)...`, or drag & drop the downloaded file. Archives are
+  read by the zarr-java backend only.
 
 # Availability
 
@@ -266,7 +283,7 @@ On top of those five, a number of third-party `.jar` files are needed. Which one
   plugin `n5-viewer_fiji`.
     * **Fiji-Latest** ships these artifacts, so there is usually nothing to do.
     * **Fiji-Stable** ships older versions that have to be updated to the ones listed below. Be aware that other Fiji
-      plugins depend on N5 as well, e.g. **BigStitcher** — so updating the N5 jars in a Fiji-Stable installation may
+      plugins depend on N5 as well, e.g. BigStitcher. Thus, updating the N5 jars in a Fiji-Stable installation may
       break them. If you can, use Fiji-Latest, or keep a separate Fiji installation for OME-Zarr work.
 * **zarr-java backend** (the default) needs `zarr-java` 0.3.0 and two of its dependencies (the Blosc codec and a
   Jackson module), none of which Fiji ships.
