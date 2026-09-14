@@ -28,7 +28,7 @@
  */
 package ome.zarr.fijiui.open.openers;
 
-import ome.zarr.fiji.open.ZarrOpenRequest;
+import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fiji.open.ZarrOpener;
 
 import org.scijava.Priority;
@@ -49,8 +49,8 @@ public class BdvMultiResolutionOpener implements ZarrOpener
 	public static final String NAME = "bdv-multi-resolution";
 
 	@Override
-	public void open( final ZarrOpenRequest request )
+	public void open( final ZarrReader reader )
 	{
-		request.reader().openBDVWithImage();
+		reader.openBDVWithImage();
 	}
 }

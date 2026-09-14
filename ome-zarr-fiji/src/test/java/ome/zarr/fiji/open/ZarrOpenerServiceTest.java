@@ -44,6 +44,8 @@ import org.scijava.Priority;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.plugin.PluginService;
 
+import ome.zarr.fiji.read.ZarrReader;
+
 /**
  * Unit tests for {@link ZarrOpenerService}. The openers are added to the
  * context programmatically rather than through the annotation index: this module
@@ -60,7 +62,7 @@ class ZarrOpenerServiceTest
 		static int opened;
 
 		@Override
-		public void open( final ZarrOpenRequest request )
+		public void open( final ZarrReader reader )
 		{
 			opened++;
 		}
@@ -70,15 +72,15 @@ class ZarrOpenerServiceTest
 	public static class FailingOpener implements ZarrOpener
 	{
 		@Override
-		public void open( final ZarrOpenRequest request )
+		public void open( final ZarrReader reader )
 		{
 			throw new IllegalStateException( "deliberate failure" );
 		}
 
 		@Override
-		public String tooltip( final ZarrOpenRequest request )
+		public String tooltip( final ZarrReader reader )
 		{
-			return "tooltip for " + request.uri();
+			return "tooltip for " + reader.uri();
 		}
 	}
 
@@ -92,9 +94,9 @@ class ZarrOpenerServiceTest
 		return info;
 	}
 
-	private static ZarrOpenRequest requestFor( final Context context )
+	private static ZarrReader readerFor( final Context context )
 	{
-		return new ZarrOpenRequest( URI_UNDER_TEST, context, null, null, message -> {} );
+		return new ZarrReader( URI_UNDER_TEST, context, null, null, message -> {} );
 	}
 
 	@Test
@@ -163,10 +165,10 @@ class ZarrOpenerServiceTest
 			register( context, RecordingOpener.class, "recording", Priority.NORMAL );
 			RecordingOpener.opened = 0;
 
-			assertTrue( openerService.open( "recording", requestFor( context ) ) );
+			assertTrue( openerService.open( "recording", readerFor( context ) ) );
 			assertEquals( 1, RecordingOpener.opened );
 
-			assertFalse( openerService.open( "uninstalled", requestFor( context ) ),
+			assertFalse( openerService.open( "uninstalled", readerFor( context ) ),
 					"An unknown name opens nothing and says so" );
 			assertEquals( 1, RecordingOpener.opened );
 		}
@@ -180,7 +182,7 @@ class ZarrOpenerServiceTest
 			final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
 			register( context, FailingOpener.class, "failing", Priority.NORMAL );
 
-			assertDoesNotThrow( () -> openerService.open( "failing", requestFor( context ) ) );
+			assertDoesNotThrow( () -> openerService.open( "failing", readerFor( context ) ) );
 		}
 	}
 
@@ -190,13 +192,13 @@ class ZarrOpenerServiceTest
 		try (Context context = new Context())
 		{
 			final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
-			final ZarrOpenRequest request = requestFor( context );
+			final ZarrReader reader = readerFor( context );
 
 			// Neither label nor description given, so both fall back to the name.
 			final PluginInfo< ZarrOpener > bare = register( context, RecordingOpener.class, "bare", Priority.NORMAL );
 			assertEquals( "bare", ZarrOpenerService.labelOf( bare ) );
 			assertEquals( "bare", ZarrOpenerService.descriptionOf( bare ) );
-			assertEquals( "bare", openerService.tooltipOf( bare, request ),
+			assertEquals( "bare", openerService.tooltipOf( bare, reader ),
 					"Without a dynamic tooltip the description is used" );
 
 			bare.setLabel( "Bare opener" );
@@ -210,7 +212,7 @@ class ZarrOpenerServiceTest
 			assertEquals( RecordingOpener.class.getName(), ZarrOpenerService.nameOf( unnamed ) );
 
 			final PluginInfo< ZarrOpener > failing = register( context, FailingOpener.class, "failing", Priority.LOW );
-			assertEquals( "tooltip for " + URI_UNDER_TEST, openerService.tooltipOf( failing, request ),
+			assertEquals( "tooltip for " + URI_UNDER_TEST, openerService.tooltipOf( failing, reader ),
 					"A dynamic tooltip wins over the static description" );
 		}
 	}

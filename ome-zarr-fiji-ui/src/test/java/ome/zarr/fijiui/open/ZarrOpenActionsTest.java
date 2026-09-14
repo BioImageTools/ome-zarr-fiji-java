@@ -43,6 +43,7 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static ome.zarr.ZarrTestUtils.IMAGE_NAME;
 
 import net.imagej.Dataset;
@@ -177,12 +178,14 @@ class ZarrOpenActionsTest
 				openAs( ImageJPreferredResolutionOpener.NAME, path, context, prefService );
 				openAs( ZarrOpenerService.ASK, path, context, prefService );
 
-				// One reader per opener that reads; the selection dialog builds none.
+				// One reader per open, the selection dialog included: constructing a
+				// ZarrReader reads nothing, the opener it hands the reader to does.
 				final List< ZarrReader > readers = readerConstruction.constructed();
-				assertEquals( 3, readers.size() );
+				assertEquals( 4, readers.size() );
 				verify( readers.get( 0 ), times( 1 ) ).openBDVWithImage();
 				verify( readers.get( 1 ), times( 1 ) ).openIJWithImage( 0 );
 				verify( readers.get( 2 ), times( 1 ) ).openIJWithImage();
+				verifyNoInteractions( readers.get( 3 ) );
 
 				final List< ZarrOpenActionChooser > chooserInstances = chooserConstruction.constructed();
 				assertEquals( 1, chooserInstances.size() );

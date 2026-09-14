@@ -39,6 +39,8 @@ import org.scijava.service.SciJavaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ome.zarr.fiji.read.ZarrReader;
+
 /**
  * Finds the registered {@link ZarrOpener}s and runs them.
  * <p>
@@ -122,14 +124,14 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 	}
 
 	/**
-	 * Runs the named opener on {@code request}.
+	 * Runs the named opener on {@code reader}.
 	 *
 	 * @param name the {@link Plugin} name of the opener to run
-	 * @param request the location to open and the settings to open it with
+	 * @param reader the location to open and the settings to open it with
 	 * @return {@code false} if no opener answers to {@code name}, in which case
 	 *   nothing was opened
 	 */
-	public boolean open( final String name, final ZarrOpenRequest request )
+	public boolean open( final String name, final ZarrReader reader )
 	{
 		final PluginInfo< ZarrOpener > info = getOpenerInfo( name );
 		if ( info == null )
@@ -137,32 +139,32 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 			logger.debug( "No OME-Zarr opener named '{}' is registered.", name );
 			return false;
 		}
-		open( info, request );
+		open( info, reader );
 		return true;
 	}
 
 	/**
-	 * Runs the given opener on {@code request}. An exception from the opener is
+	 * Runs the given opener on {@code reader}. An exception from the opener is
 	 * logged and swallowed: a third-party opener must not take the whole opening
 	 * pipeline down with it.
 	 *
 	 * @param info the opener to run
-	 * @param request the location to open and the settings to open it with
+	 * @param reader the location to open and the settings to open it with
 	 */
-	public void open( final PluginInfo< ZarrOpener > info, final ZarrOpenRequest request )
+	public void open( final PluginInfo< ZarrOpener > info, final ZarrReader reader )
 	{
 		final ZarrOpener opener = createOpener( info );
 		if ( opener == null )
 			return;
 		if ( logger.isDebugEnabled() )
-			logger.debug( "Opening {} with the '{}' opener.", request.uri(), nameOf( info ) );
+			logger.debug( "Opening {} with the '{}' opener.", reader.uri(), nameOf( info ) );
 		try
 		{
-			opener.open( request );
+			opener.open( reader );
 		}
 		catch ( final RuntimeException e )
 		{
-			logger.warn( "The '{}' OME-Zarr opener failed on {}", nameOf( info ), request.uri(), e );
+			logger.warn( "The '{}' OME-Zarr opener failed on {}", nameOf( info ), reader.uri(), e );
 		}
 	}
 
@@ -208,16 +210,16 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 
 	/**
 	 * The tooltip to show for an opener: what {@link ZarrOpener#tooltip} answers
-	 * for this request, falling back to the static description.
+	 * for this reader, falling back to the static description.
 	 *
 	 * @param info the opener's metadata
-	 * @param request the request the tooltip is asked for
+	 * @param reader the reader the tooltip is asked for
 	 * @return a non-empty tooltip text
 	 */
-	public String tooltipOf( final PluginInfo< ZarrOpener > info, final ZarrOpenRequest request )
+	public String tooltipOf( final PluginInfo< ZarrOpener > info, final ZarrReader reader )
 	{
 		final ZarrOpener opener = createOpener( info );
-		final String tooltip = opener == null ? null : opener.tooltip( request );
+		final String tooltip = opener == null ? null : opener.tooltip( reader );
 		return tooltip == null || tooltip.isEmpty() ? descriptionOf( info ) : tooltip;
 	}
 

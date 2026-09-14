@@ -53,7 +53,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import ome.zarr.fiji.open.ZarrOpenRequest;
+import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fiji.open.ZarrOpenerService;
 import ome.zarr.fijiui.open.ZarrOpenActions;
@@ -81,22 +81,22 @@ public class ZarrOpenActionChooser
 	/** Buttons per row; the number of rows follows the number of openers. */
 	private static final int COLUMNS = 3;
 
-	private final ZarrOpenRequest request;
+	private final ZarrReader reader;
 
 	private final Context context;
 
 	JDialog currentDialog;
 
 	/**
-	 * A chooser for {@code request}, offering the openers registered in
+	 * A chooser for {@code reader}, offering the openers registered in
 	 * {@code context}.
 	 *
 	 * @param context the SciJava context the openers are looked up in
-	 * @param request the location the chosen opener will be given
+	 * @param reader the location the chosen opener will be given
 	 */
-	public ZarrOpenActionChooser( final Context context, final ZarrOpenRequest request )
+	public ZarrOpenActionChooser( final Context context, final ZarrReader reader )
 	{
-		this.request = request;
+		this.reader = reader;
 		this.context = context;
 	}
 
@@ -173,8 +173,8 @@ public class ZarrOpenActionChooser
 			final PluginInfo< ZarrOpener > info )
 	{
 		final JButton button = new JButton( CreateIcon.getAndResizeIcon( iconUrl( info ) ) );
-		button.setToolTipText( openerService.tooltipOf( info, request ) );
-		button.addActionListener( e -> disposeAndRun( dialog, () -> openerService.open( info, request ) ) );
+		button.setToolTipText( openerService.tooltipOf( info, reader ) );
+		button.addActionListener( e -> disposeAndRun( dialog, () -> openerService.open( info, reader ) ) );
 		return button;
 	}
 
@@ -182,7 +182,7 @@ public class ZarrOpenActionChooser
 	{
 		final JButton button = new JButton( CreateIcon.getAndResizeIcon( "help_icon.png" ) );
 		button.setToolTipText( "Help about OME-Zarr actions" );
-		button.addActionListener( e -> disposeAndRun( dialog, new ZarrOpenActions( request )::showHelp ) );
+		button.addActionListener( e -> disposeAndRun( dialog, new ZarrOpenActions( reader )::showHelp ) );
 		return button;
 	}
 

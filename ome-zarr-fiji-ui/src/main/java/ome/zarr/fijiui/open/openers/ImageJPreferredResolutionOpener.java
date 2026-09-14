@@ -28,7 +28,7 @@
  */
 package ome.zarr.fijiui.open.openers;
 
-import ome.zarr.fiji.open.ZarrOpenRequest;
+import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fiji.open.ZarrOpener;
 
 import org.scijava.Priority;
@@ -36,7 +36,7 @@ import org.scijava.plugin.Plugin;
 
 /**
  * Opens the dataset in ImageJ at the finest resolution level that is still no
- * wider than {@link ZarrOpenRequest#preferredMaxWidth()}.
+ * wider than the preferred width the {@link ZarrReader} was configured with.
  * <p>
  * This is the highest-priority opener shipped here, and therefore what a user
  * who never configured a choice gets.
@@ -51,8 +51,8 @@ public class ImageJPreferredResolutionOpener implements ZarrOpener
 	public static final String NAME = "imagej-preferred-resolution";
 
 	@Override
-	public void open( final ZarrOpenRequest request )
+	public void open( final ZarrReader reader )
 	{
-		request.reader().openIJWithImage();
+		reader.openIJWithImage();
 	}
 }

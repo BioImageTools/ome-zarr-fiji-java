@@ -57,7 +57,7 @@ import org.scijava.Priority;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.plugin.PluginService;
 
-import ome.zarr.fiji.open.ZarrOpenRequest;
+import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fiji.open.ZarrOpenerService;
 
@@ -94,11 +94,11 @@ class ZarrOpenActionChooserTest
 	{
 		try (Context context = new Context())
 		{
-			final ZarrOpenRequest request = requestIn( context );
+			final ZarrReader reader = readerIn( context );
 			final int openerCount = context.getService( ZarrOpenerService.class ).getOpenerInfos().size();
 			assertTrue( openerCount > 1, "The shipped openers should all be registered" );
 
-			final ZarrOpenActionChooser chooser = new ZarrOpenActionChooser( context, request );
+			final ZarrOpenActionChooser chooser = new ZarrOpenActionChooser( context, reader );
 			SwingUtilities.invokeAndWait( chooser::showDialog );
 			try
 			{
@@ -124,7 +124,7 @@ class ZarrOpenActionChooserTest
 			context.getService( PluginService.class ).addPlugin( info );
 
 			LatchOpener.opened = new CountDownLatch( 1 );
-			final ZarrOpenActionChooser chooser = new ZarrOpenActionChooser( context, requestIn( context ) );
+			final ZarrOpenActionChooser chooser = new ZarrOpenActionChooser( context, readerIn( context ) );
 			SwingUtilities.invokeAndWait( chooser::showDialog );
 			final JDialog dialog = chooser.currentDialog;
 
@@ -141,7 +141,7 @@ class ZarrOpenActionChooserTest
 		static CountDownLatch opened;
 
 		@Override
-		public void open( final ZarrOpenRequest request )
+		public void open( final ZarrReader reader )
 		{
 			opened.countDown();
 		}
@@ -158,9 +158,9 @@ class ZarrOpenActionChooserTest
 			listener.actionPerformed( new ActionEvent( button, ActionEvent.ACTION_PERFORMED, "" ) );
 	}
 
-	private static ZarrOpenRequest requestIn( final Context context )
+	private static ZarrReader readerIn( final Context context )
 	{
-		return new ZarrOpenRequest( URI.create( "file:/tmp/not-read-by-this-test.ome.zarr" ), context, null, null,
+		return new ZarrReader( URI.create( "file:/tmp/not-read-by-this-test.ome.zarr" ), context, null, null,
 				message -> {} );
 	}
 

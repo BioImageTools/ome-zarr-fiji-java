@@ -194,13 +194,18 @@ jar, and `PluginInfo.getIconURL()` resolves the icon out of the *contributing* j
 dialog icons work at all. A static mutable registry was the other candidate and loses: filling it needs startup code,
 i.e. a SciJava plugin anyway.
 
-- `ZarrOpener.open( ZarrOpenRequest )` – called off the EDT; `tooltip( request )` is an optional dynamic tooltip (only
-  `ScriptEditorOpener` uses it, to name the configured script). Deliberately **no `supports( request )` pre-filter**: no
+- `ZarrOpener.open( ZarrReader )` – called off the EDT; `tooltip( reader )` is an optional dynamic tooltip (only
+  `ScriptEditorOpener` uses it, to name the configured script). Deliberately **no `supports( reader )` pre-filter**: no
   shipped opener needs one, and only the selection dialog could honor it — the direct dispatch in `openWithSettings`
   runs whichever opener the user configured regardless — so a half-honored hook is worse than none. Adding a
   `default` method later is source- and binary-compatible, so it can arrive when a downstream opener needs it.
-- `ZarrOpenRequest` – immutable, with a lazily built, cached `reader()`. Third-party openers use `uri()` and ignore
-  `reader()`; ours go through it.
+- **The parameter is the reader, not a request object.** A `ZarrOpenRequest` carrying `uri`/`context`/`backend`/
+  `preferredMaxWidth`/`errorHandler` plus a lazily built `reader()` existed until 0.9 and was deleted: every field
+  duplicated one `ZarrReader` already had, and the laziness bought nothing because the `ZarrReader` constructor is
+  pure field assignment — `getContents()` is what reads. Do **not** reintroduce a bare `open( URI )`: the reader carries
+  *the user's configured backend and preferred width*, which a URI does not, and sharing one reader is what lets the
+  selection dialog and the opener it picks share the cached `PyramidContents`. Third-party openers that read for
+  themselves use `uri()` alone; `context()` and `errorHandler()` exist on the reader so they need nothing else.
 - `ZarrOpenerService` – `AbstractPTService<ZarrOpener>`: lists openers by priority, runs one by name, and resolves what
   a persisted setting means (`effectiveOpenerName`).
 - Shipped openers – `imagej-preferred-resolution`, `imagej-highest-resolution`, `bdv-multi-resolution`,

@@ -31,7 +31,7 @@ package ome.zarr.fijiui.open.openers;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
-import ome.zarr.fiji.open.ZarrOpenRequest;
+import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fijiui.open.ZarrOpenActions;
 
@@ -51,8 +51,8 @@ public class N5ViewerDialogOpener implements ZarrOpener
 	public static final String NAME = "n5-viewer-dialog";
 
 	@Override
-	public void open( final ZarrOpenRequest request )
+	public void open( final ZarrReader reader )
 	{
-		new ZarrOpenActions( request ).openViewerDialog();
+		new ZarrOpenActions( reader ).openViewerDialog();
 	}
 }

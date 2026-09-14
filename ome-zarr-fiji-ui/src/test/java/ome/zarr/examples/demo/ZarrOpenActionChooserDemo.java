@@ -38,7 +38,7 @@ import org.scijava.Priority;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.plugin.PluginService;
 
-import ome.zarr.fiji.open.ZarrOpenRequest;
+import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fiji.open.ZarrOpener;
 import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
 
@@ -92,10 +92,10 @@ public class ZarrOpenActionChooserDemo
 		registerDummyOpeners( context );
 		SwingUtilities.invokeLater( () -> {
 			final JFrame mainFrame = new JFrame();
-			// A real request: an opener's tooltip may read it, as the script editor's does.
-			final ZarrOpenRequest request =
-					new ZarrOpenRequest( URI.create( "file:/tmp/demo.ome.zarr" ), context, null );
-			final ZarrOpenActionChooser menu = new ZarrOpenActionChooser( context, request );
+			// A real reader: an opener's tooltip may read it, as the script editor's does.
+			final ZarrReader reader =
+					new ZarrReader( URI.create( "file:/tmp/demo.ome.zarr" ), context, null );
+			final ZarrOpenActionChooser menu = new ZarrOpenActionChooser( context, reader );
 			setupFrame( mainFrame, menu );
 		} );
 	}
@@ -134,27 +134,27 @@ public class ZarrOpenActionChooserDemo
 	public static class DummyOpenerOne implements ZarrOpener
 	{
 		@Override
-		public void open( final ZarrOpenRequest request )
+		public void open( final ZarrReader reader )
 		{
-			System.out.println( "Dummy one would open " + request.uri() );
+			System.out.println( "Dummy one would open " + reader.uri() );
 		}
 	}
 
 	public static class DummyOpenerTwo implements ZarrOpener
 	{
 		@Override
-		public void open( final ZarrOpenRequest request )
+		public void open( final ZarrReader reader )
 		{
-			System.out.println( "Dummy two would open " + request.uri() );
+			System.out.println( "Dummy two would open " + reader.uri() );
 		}
 	}
 
 	public static class DummyOpenerThree implements ZarrOpener
 	{
 		@Override
-		public void open( final ZarrOpenRequest request )
+		public void open( final ZarrReader reader )
 		{
-			System.out.println( "Dummy three would open " + request.uri() );
+			System.out.println( "Dummy three would open " + reader.uri() );
 		}
 	}
 }

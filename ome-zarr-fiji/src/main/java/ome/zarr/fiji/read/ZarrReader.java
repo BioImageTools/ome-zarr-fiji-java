@@ -132,6 +132,8 @@ public class ZarrReader
 	 * Reader for {@code inputUri} with an explicit backend, preferred
 	 * resolution, and error sink.
 	 *
+	 * @param inputUri the location of the OME-Zarr dataset
+	 * @param context the SciJava context to get services from
 	 * @param backend the backend used to read the dataset
 	 * @param preferredMaxWidth the highest-resolution level that is still no wider
 	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
@@ -146,7 +148,9 @@ public class ZarrReader
 	/**
 	 * Reader for {@code inputUri} with an explicit backend, preferred resolution,
 	 * error sink, and open-anyway confirmation.
-	 *
+	 * 
+	 * @param inputUri the location of the OME-Zarr dataset
+	 * @param context the SciJava context to get services from
 	 * @param backend the backend used to read the dataset
 	 * @param preferredMaxWidth the highest-resolution level that is still no wider
 	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
@@ -166,6 +170,36 @@ public class ZarrReader
 		this.preferredMaxWidth = preferredMaxWidth;
 		this.errorHandler = errorHandler;
 		this.openAnywayConfirmation = openAnywayConfirmation;
+	}
+
+	/**
+	 * @return the OME-Zarr location this reader was configured for
+	 */
+	public URI uri()
+	{
+		return inputUri;
+	}
+
+	/**
+	 * @return the SciJava context this reader gets its services from
+	 */
+	public Context context()
+	{
+		return context;
+	}
+
+	/**
+	 * The sink this reader reports failures through.
+	 * <ul>
+	 *     <li>{@code IJ::error} for the interactive paths</li>
+	 *     <li>a capturing handler in tests and headless callers</li>
+	 * </ul>
+	 *
+	 * @return the sink for user-facing messages when opening fails
+	 */
+	public Consumer< String > errorHandler()
+	{
+		return errorHandler;
 	}
 
 	/**

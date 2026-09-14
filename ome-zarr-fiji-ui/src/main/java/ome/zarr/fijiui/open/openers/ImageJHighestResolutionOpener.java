@@ -28,7 +28,7 @@
  */
 package ome.zarr.fijiui.open.openers;
 
-import ome.zarr.fiji.open.ZarrOpenRequest;
+import ome.zarr.fiji.read.ZarrReader;
 import ome.zarr.fiji.open.ZarrOpener;
 
 import org.scijava.Priority;
@@ -49,8 +49,8 @@ public class ImageJHighestResolutionOpener implements ZarrOpener
 	public static final String NAME = "imagej-highest-resolution";
 
 	@Override
-	public void open( final ZarrOpenRequest request )
+	public void open( final ZarrReader reader )
 	{
-		request.reader().openIJWithImage( 0 );
+		reader.openIJWithImage( 0 );
 	}
 }
