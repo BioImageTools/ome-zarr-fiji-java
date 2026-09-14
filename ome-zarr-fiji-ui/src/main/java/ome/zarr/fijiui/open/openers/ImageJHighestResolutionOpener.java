@@ -28,8 +28,8 @@
  */
 package ome.zarr.fijiui.open.openers;
 
-import ome.zarr.fiji.read.ZarrReader;
-import ome.zarr.fiji.open.ZarrOpener;
+import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.open.OmeZarrOpener;
 
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
@@ -39,17 +39,17 @@ import org.scijava.plugin.Plugin;
  * has. The preferred width is deliberately ignored here — this opener is the
  * "give me all the pixels" answer.
  */
-@Plugin( type = ZarrOpener.class, name = ImageJHighestResolutionOpener.NAME,
+@Plugin( type = OmeZarrOpener.class, name = ImageJHighestResolutionOpener.NAME,
 		label = "ImageJ (highest resolution)",
 		description = "Open the highest available single-resolution in ImageJ",
 		iconPath = "/ome/zarr/fijiui/dialog/ij_full_icon.png", priority = Priority.HIGH - 1 )
-public class ImageJHighestResolutionOpener implements ZarrOpener
+public class ImageJHighestResolutionOpener implements OmeZarrOpener
 {
 	/** The stable identifier this opener is persisted under. */
 	public static final String NAME = "imagej-highest-resolution";
 
 	@Override
-	public void open( final ZarrReader reader )
+	public void open( final OmeZarrReader reader )
 	{
 		reader.openIJWithImage( 0 );
 	}

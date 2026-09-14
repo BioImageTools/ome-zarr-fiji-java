@@ -50,7 +50,7 @@ import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.command.CommandService;
 
-import ome.zarr.fijiui.open.ZarrOpenActions;
+import ome.zarr.fijiui.open.OmeZarrOpenActions;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.ZarrTestUtils;
@@ -89,7 +89,7 @@ class OpenInBDVCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new ZarrOpenActions( path.toUri(), context ).openIJWithImage();
+			new OmeZarrOpenActions( path.toUri(), context ).openIJWithImage();
 
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			final DatasetService datasetService = context.getService( DatasetService.class );
@@ -127,7 +127,7 @@ class OpenInBDVCommandTest
 		{
 			// Simulate the first BDV open.
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new ZarrOpenActions( path.toUri(), context ).openBDVWithImage();
+			new OmeZarrOpenActions( path.toUri(), context ).openBDVWithImage();
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );

@@ -36,18 +36,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
-import ome.zarr.fiji.open.ZarrOpener;
-import ome.zarr.fiji.open.ZarrOpenerService;
+import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fiji.open.OmeZarrOpenerService;
 
 /**
- * The user's OME-Zarr opening preferences: which {@link ZarrOpener} to use, up
+ * The user's OME-Zarr opening preferences: which {@link OmeZarrOpener} to use, up
  * to which width to open in ImageJ, and which library to read with.
  * <p>
  * The opener is stored as its plugin name rather than as a fixed set of
- * choices, so a plugin that registers its own {@link ZarrOpener} can be selected
+ * choices, so a plugin that registers its own {@link OmeZarrOpener} can be selected
  * here like the built-in ones.
  */
-public class ZarrOpeningSettings
+public class OmeZarrOpeningSettings
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -61,7 +61,7 @@ public class ZarrOpeningSettings
 	public static final ZarrBackend DEFAULT_BACKEND = ZarrBackend.ZARR_JAVA;
 
 	/**
-	 * The chosen opener's plugin name, {@link ZarrOpenerService#ASK}, or
+	 * The chosen opener's plugin name, {@link OmeZarrOpenerService#ASK}, or
 	 * {@code null} when the user never made a choice.
 	 */
 	private String openerName;
@@ -76,17 +76,17 @@ public class ZarrOpeningSettings
 
 	private static final String ZARR_BACKEND_SETTING_NAME = "ZarrBackend";
 
-	public ZarrOpeningSettings()
+	public OmeZarrOpeningSettings()
 	{
 		this( null, DEFAULT_PREFERRED_WIDTH, DEFAULT_BACKEND );
 	}
 
-	public ZarrOpeningSettings( final String openerName, final int preferredMaxWidth )
+	public OmeZarrOpeningSettings( final String openerName, final int preferredMaxWidth )
 	{
 		this( openerName, preferredMaxWidth, DEFAULT_BACKEND );
 	}
 
-	public ZarrOpeningSettings( final String openerName, final int preferredMaxWidth, final ZarrBackend backend )
+	public OmeZarrOpeningSettings( final String openerName, final int preferredMaxWidth, final ZarrBackend backend )
 	{
 		this.openerName = openerName;
 		this.preferredMaxWidth = preferredMaxWidth;
@@ -96,9 +96,9 @@ public class ZarrOpeningSettings
 	/**
 	 * The opener the user picked.
 	 *
-	 * @return the {@link ZarrOpener} plugin name, {@link ZarrOpenerService#ASK}, or
+	 * @return the {@link OmeZarrOpener} plugin name, {@link OmeZarrOpenerService#ASK}, or
 	 *   {@code null} when nothing was ever configured — in which case
-	 *   {@link ZarrOpenerService#effectiveOpenerName(String)} decides
+	 *   {@link OmeZarrOpenerService#effectiveOpenerName(String)} decides
 	 */
 	public String getOpenerName()
 	{
@@ -108,8 +108,8 @@ public class ZarrOpeningSettings
 	/**
 	 * Sets the opener to use.
 	 *
-	 * @param openerName a {@link ZarrOpener} plugin name, or
-	 *   {@link ZarrOpenerService#ASK} to be prompted every time
+	 * @param openerName a {@link OmeZarrOpener} plugin name, or
+	 *   {@link OmeZarrOpenerService#ASK} to be prompted every time
 	 */
 	public void setOpenerName( final String openerName )
 	{
@@ -164,17 +164,17 @@ public class ZarrOpeningSettings
 	 * @param prefs If {@code null} is provided, default settings values from this class are used and returned.
 	 * @return the settings from the provided preference store, or default values if {@code prefs} is {@code null} or if the provided preference store does not contain any information about the default settings.
 	 */
-	public static ZarrOpeningSettings loadSettingsFromPreferences( final PrefService prefs )
+	public static OmeZarrOpeningSettings loadSettingsFromPreferences( final PrefService prefs )
 	{
 		final String openerName = prefs == null ? null
-				: prefs.get( ZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, null );
+				: prefs.get( OmeZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, null );
 		int preferredWidth = prefs == null ? DEFAULT_PREFERRED_WIDTH
-				: prefs.getInt( ZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, DEFAULT_PREFERRED_WIDTH );
+				: prefs.getInt( OmeZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, DEFAULT_PREFERRED_WIDTH );
 		ZarrBackend backend;
 		try
 		{
 			backend = prefs == null ? DEFAULT_BACKEND : ZarrBackend.getByName(
-					prefs.get( ZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, DEFAULT_BACKEND.name() ) );
+					prefs.get( OmeZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, DEFAULT_BACKEND.name() ) );
 		}
 		catch ( NoSuchElementException e )
 		{
@@ -183,7 +183,7 @@ public class ZarrOpeningSettings
 		logger.debug( "Loaded OME-Zarr opener: {}", openerName );
 		logger.debug( "Loaded OME-Zarr preferred width: {}", preferredWidth );
 		logger.debug( "Loaded OME-Zarr default backend: {}", backend );
-		return new ZarrOpeningSettings( openerName, preferredWidth, backend );
+		return new OmeZarrOpeningSettings( openerName, preferredWidth, backend );
 	}
 
 	/**
@@ -196,9 +196,9 @@ public class ZarrOpeningSettings
 		if ( prefs == null )
 			return;
 		if ( openerName != null )
-			prefs.put( ZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, openerName );
-		prefs.put( ZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
-		prefs.put( ZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, getBackend().name() );
+			prefs.put( OmeZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, openerName );
+		prefs.put( OmeZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
+		prefs.put( OmeZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, getBackend().name() );
 		logger.debug( "Saved OME-Zarr opener to preferences: {}", openerName );
 		logger.debug( "Saved OME-Zarr preferred width to preferences: {}", getPreferredMaxWidth() );
 		logger.debug( "Saved OME-Zarr backend to preferences: {}", getBackend() );
@@ -207,7 +207,7 @@ public class ZarrOpeningSettings
 	@Override
 	public String toString()
 	{
-		return "ZarrOpeningSettings{openerName=" + openerName
+		return "OmeZarrOpeningSettings{openerName=" + openerName
 				+ ", preferredMaxWidth=" + preferredMaxWidth
 				+ ", backend=" + backend + "}";
 	}

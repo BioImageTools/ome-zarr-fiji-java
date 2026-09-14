@@ -41,12 +41,12 @@ import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.ArrayList;
 
-import ome.zarr.fijiui.open.ZarrOpenActions;
+import ome.zarr.fijiui.open.OmeZarrOpenActions;
 import ome.zarr.imglib2.ZarrUtils;
 
 /**
  * SciJava {@link IOPlugin} that claims OME-Zarr locations and opens them via
- * {@link ZarrOpenActions#openWithSettings(URI, org.scijava.Context)}.
+ * {@link OmeZarrOpenActions#openWithSettings(URI, org.scijava.Context)}.
  * <p>
  * Besides drag-and-drop, this is also what makes {@code fiji://open/...} links
  * work. Fiji-Latest ships {@code fiji-links}, whose {@code OpenLinkHandler}
@@ -98,7 +98,7 @@ public class OmeZarrIOPlugin extends AbstractIOPlugin< Object >
 
 		logger.debug( "OME-Zarr IO plugin: opening {}", inputUri );
 
-		ZarrOpenActions.openWithSettings( inputUri, context() );
+		OmeZarrOpenActions.openWithSettings( inputUri, context() );
 
 		// Returning a non-null object tells SciJava's IO subsystem the drop was fully
 		// handled. It then tries to display the result, finds it cannot, and silently

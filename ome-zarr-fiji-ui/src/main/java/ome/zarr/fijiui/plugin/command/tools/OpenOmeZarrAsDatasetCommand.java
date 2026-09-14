@@ -40,8 +40,8 @@ import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
 import ome.zarr.fiji.PyramidalDataset;
-import ome.zarr.fiji.read.ZarrReader;
-import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
+import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.util.ClipboardUtils;
 import ome.zarr.imglib2.ZarrUtils;
 
@@ -100,8 +100,8 @@ public class OpenOmeZarrAsDatasetCommand extends ContextCommand
 			errorHandler.accept( "The given location does not appear to be an OME-Zarr dataset:\n" + uri + "." );
 			return null;
 		}
-		final ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
-		final ZarrReader zarrReader = new ZarrReader( uri, context, settings.getBackend().createBackend(), null, errorHandler );
+		final OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
+		final OmeZarrReader zarrReader = new OmeZarrReader( uri, context, settings.getBackend().createBackend(), null, errorHandler );
 		return zarrReader.getPyramidalDataset();
 	}
 }

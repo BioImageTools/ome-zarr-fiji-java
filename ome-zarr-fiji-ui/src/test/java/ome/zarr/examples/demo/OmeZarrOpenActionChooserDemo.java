@@ -38,15 +38,15 @@ import org.scijava.Priority;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.plugin.PluginService;
 
-import ome.zarr.fiji.read.ZarrReader;
-import ome.zarr.fiji.open.ZarrOpener;
-import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
+import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fijiui.dialog.OmeZarrOpenActionChooser;
 
 @SuppressWarnings( "all" )
-public class ZarrOpenActionChooserDemo
+public class OmeZarrOpenActionChooserDemo
 {
 
-	private static void setupFrame( JFrame frame, ZarrOpenActionChooser menu )
+	private static void setupFrame( JFrame frame, OmeZarrOpenActionChooser menu )
 	{
 		frame.setTitle( "Keyboard Submenu Example" );
 		frame.setSize( 600, 400 );
@@ -86,16 +86,16 @@ public class ZarrOpenActionChooserDemo
 		{
 			System.out.println( "Staying on the default look and feel: " + e );
 		}
-		// A real context, because the buttons are the ZarrOpeners registered in it.
+		// A real context, because the buttons are the OmeZarrOpeners registered in it.
 		final Context context = new Context();
 		// More than the six shipped ones, to see the dialog wrap into a further row.
 		registerDummyOpeners( context );
 		SwingUtilities.invokeLater( () -> {
 			final JFrame mainFrame = new JFrame();
 			// A real reader: an opener's tooltip may read it, as the script editor's does.
-			final ZarrReader reader =
-					new ZarrReader( URI.create( "file:/tmp/demo.ome.zarr" ), context, null );
-			final ZarrOpenActionChooser menu = new ZarrOpenActionChooser( context, reader );
+			final OmeZarrReader reader =
+					new OmeZarrReader( URI.create( "file:/tmp/demo.ome.zarr" ), context, null );
+			final OmeZarrOpenActionChooser menu = new OmeZarrOpenActionChooser( context, reader );
 			setupFrame( mainFrame, menu );
 		} );
 	}
@@ -118,10 +118,10 @@ public class ZarrOpenActionChooserDemo
 				dummyInfo( DummyOpenerThree.class, "dummy-three", "Dummy three", "dummy_three_icon.png" ) );
 	}
 
-	private static PluginInfo< ZarrOpener > dummyInfo( final Class< ? extends ZarrOpener > openerClass,
+	private static PluginInfo< OmeZarrOpener > dummyInfo( final Class< ? extends OmeZarrOpener > openerClass,
 			final String name, final String label, final String iconName )
 	{
-		final PluginInfo< ZarrOpener > info = new PluginInfo<>( openerClass, ZarrOpener.class );
+		final PluginInfo< OmeZarrOpener > info = new PluginInfo<>( openerClass, OmeZarrOpener.class );
 		info.setName( name );
 		info.setLabel( label );
 		info.setDescription( label + " – a demo opener that does nothing" );
@@ -131,28 +131,28 @@ public class ZarrOpenActionChooserDemo
 		return info;
 	}
 
-	public static class DummyOpenerOne implements ZarrOpener
+	public static class DummyOpenerOne implements OmeZarrOpener
 	{
 		@Override
-		public void open( final ZarrReader reader )
+		public void open( final OmeZarrReader reader )
 		{
 			System.out.println( "Dummy one would open " + reader.uri() );
 		}
 	}
 
-	public static class DummyOpenerTwo implements ZarrOpener
+	public static class DummyOpenerTwo implements OmeZarrOpener
 	{
 		@Override
-		public void open( final ZarrReader reader )
+		public void open( final OmeZarrReader reader )
 		{
 			System.out.println( "Dummy two would open " + reader.uri() );
 		}
 	}
 
-	public static class DummyOpenerThree implements ZarrOpener
+	public static class DummyOpenerThree implements OmeZarrOpener
 	{
 		@Override
-		public void open( final ZarrReader reader )
+		public void open( final OmeZarrReader reader )
 		{
 			System.out.println( "Dummy three would open " + reader.uri() );
 		}

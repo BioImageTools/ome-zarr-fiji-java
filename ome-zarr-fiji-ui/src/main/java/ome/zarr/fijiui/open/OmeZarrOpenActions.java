@@ -45,38 +45,38 @@ import java.util.function.Consumer;
 import bdv.util.BdvHandle;
 import ij.IJ;
 import ome.zarr.fiji.PyramidalDataset;
-import ome.zarr.fiji.open.ZarrOpener;
-import ome.zarr.fiji.open.ZarrOpenerService;
+import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fiji.open.OmeZarrOpenerService;
 import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
-import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
-import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
+import ome.zarr.fijiui.dialog.OmeZarrOpenActionChooser;
+import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrBackend;
-import ome.zarr.fiji.read.ZarrReader;
+import ome.zarr.fiji.read.OmeZarrReader;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.imglib2.PyramidBackend;
 
 /**
  * Fiji-ui orchestration of the OME-Zarr opening pipeline: it reads the user's
- * {@link ZarrOpeningSettings}, hands the location to the {@link ZarrOpener} the
+ * {@link OmeZarrOpeningSettings}, hands the location to the {@link OmeZarrOpener} the
  * user chose, and provides the UI-facing actions (N5 importer/viewer dialogs,
- * preset script, help) that the {@link ZarrOpenActionChooser} and the openers in
+ * preset script, help) that the {@link OmeZarrOpenActionChooser} and the openers in
  * this package are built from.
  * <p>
  * The actual reading and ImageJ/BigDataViewer opening lives in
- * {@link ZarrReader}, so this class only adds the UI concerns on top.
+ * {@link OmeZarrReader}, so this class only adds the UI concerns on top.
  */
-public class ZarrOpenActions
+public class OmeZarrOpenActions
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	private static final String HELP_URL = "https://github.com/BioImageTools/ome-zarr-fiji-java/";
 
-	private final ZarrReader reader;
+	private final OmeZarrReader reader;
 
 	/**
-	 * Loads {@link ZarrOpeningSettings} from {@code context} and opens
-	 * {@code inputUri} with the {@link ZarrOpener} the user configured — or, when
-	 * the user asked to be prompted, through the {@link ZarrOpenActionChooser}
+	 * Loads {@link OmeZarrOpeningSettings} from {@code context} and opens
+	 * {@code inputUri} with the {@link OmeZarrOpener} the user configured — or, when
+	 * the user asked to be prompted, through the {@link OmeZarrOpenActionChooser}
 	 * selection dialog.
 	 * <p>
 	 * This is the single funnel every entry path ends in (drag-and-drop,
@@ -89,21 +89,21 @@ public class ZarrOpenActions
 	public static void openWithSettings( final URI inputUri, final Context context )
 	{
 		final PrefService prefService = context.getService( PrefService.class );
-		final ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-		final ZarrReader reader = readerFor( inputUri, context, settings, IJ::error );
-		final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
+		final OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
+		final OmeZarrReader reader = readerFor( inputUri, context, settings, IJ::error );
+		final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 		if ( openerService == null )
 		{
 			// A context without the service is a broken classpath, not a user choice.
-			logger.warn( "No ZarrOpenerService in the SciJava context. Opening {} with the built-in ImageJ opener.",
+			logger.warn( "No OmeZarrOpenerService in the SciJava context. Opening {} with the built-in ImageJ opener.",
 					inputUri );
 			new ImageJPreferredResolutionOpener().open( reader );
 			return;
 		}
 		final String openerName = openerService.effectiveOpenerName( settings.getOpenerName() );
-		if ( ZarrOpenerService.ASK.equals( openerName ) )
+		if ( OmeZarrOpenerService.ASK.equals( openerName ) )
 		{
-			new ZarrOpenActionChooser( context, reader ).showDialog();
+			new OmeZarrOpenActionChooser( context, reader ).showDialog();
 			return;
 		}
 		if ( !openerService.open( openerName, reader ) )
@@ -118,23 +118,23 @@ public class ZarrOpenActions
 	}
 
 	/**
-	 * Convenience factory for a backend-agnostic {@link ZarrReader} that uses the
-	 * default backend ({@link ZarrOpeningSettings#DEFAULT_BACKEND})
+	 * Convenience factory for a backend-agnostic {@link OmeZarrReader} that uses the
+	 * default backend ({@link OmeZarrOpeningSettings#DEFAULT_BACKEND})
 	 * at the highest resolution, reporting failures via {@code IJ::error}.
 	 * <p>
 	 * This lives in the fiji-ui layer because picking a concrete backend is a
-	 * fiji-ui concern: {@link ZarrReader} itself only knows {@link PyramidBackend}
+	 * fiji-ui concern: {@link OmeZarrReader} itself only knows {@link PyramidBackend}
 	 * and the fiji layer therefore depends on no concrete backend. It restores the
-	 * one-liner ergonomics of the former no-backend {@code ZarrReader}
+	 * one-liner ergonomics of the former no-backend {@code OmeZarrReader}
 	 * constructor.
 	 *
 	 * @param inputUri the OME-Zarr location to read
 	 * @param context the SciJava context used for display and services
 	 * @return a reader for {@code inputUri} using the default backend
 	 */
-	public static ZarrReader defaultOpener( final URI inputUri, final Context context )
+	public static OmeZarrReader defaultOpener( final URI inputUri, final Context context )
 	{
-		return new ZarrReader( inputUri, context, ZarrOpeningSettings.DEFAULT_BACKEND.createBackend(), null );
+		return new OmeZarrReader( inputUri, context, OmeZarrOpeningSettings.DEFAULT_BACKEND.createBackend(), null );
 	}
 
 	/**
@@ -144,7 +144,7 @@ public class ZarrOpenActions
 	 * @param inputUri the OME-Zarr location the actions operate on
 	 * @param context the SciJava context used for display and services
 	 */
-	public ZarrOpenActions( final URI inputUri, final Context context )
+	public OmeZarrOpenActions( final URI inputUri, final Context context )
 	{
 		this( inputUri, context, null, IJ::error );
 	}
@@ -158,7 +158,7 @@ public class ZarrOpenActions
 	 * @param context the SciJava context used for display and services
 	 * @param settings the opening settings, or {@code null} for the defaults
 	 */
-	public ZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings )
+	public OmeZarrOpenActions( final URI inputUri, final Context context, final OmeZarrOpeningSettings settings )
 	{
 		this( inputUri, context, settings, IJ::error );
 	}
@@ -169,21 +169,21 @@ public class ZarrOpenActions
 	 *
 	 * @param errorHandler receives a user-facing message when opening fails
 	 */
-	ZarrOpenActions( final URI inputUri, final Context context, final ZarrOpeningSettings settings,
+	OmeZarrOpenActions( final URI inputUri, final Context context, final OmeZarrOpeningSettings settings,
 			final Consumer< String > errorHandler )
 	{
 		this( readerFor( inputUri, context, settings, errorHandler ) );
 	}
 
 	/**
-	 * Actions sharing an existing {@link ZarrReader} — the constructor a
-	 * {@link ZarrOpener} in this package uses, so the actions read through the same
+	 * Actions sharing an existing {@link OmeZarrReader} — the constructor a
+	 * {@link OmeZarrOpener} in this package uses, so the actions read through the same
 	 * reader the opener was handed and reuse its cached
 	 * {@link ome.zarr.imglib2.PyramidContents}.
 	 *
 	 * @param reader the location to act on and the settings to act with
 	 */
-	public ZarrOpenActions( final ZarrReader reader )
+	public OmeZarrOpenActions( final OmeZarrReader reader )
 	{
 		this.reader = reader;
 	}
@@ -192,12 +192,12 @@ public class ZarrOpenActions
 	 * Reader for {@code inputUri} using the backend and preferred width from
 	 * {@code settings}, or the defaults when no settings are given.
 	 */
-	private static ZarrReader readerFor( final URI inputUri, final Context context,
-			final ZarrOpeningSettings settings, final Consumer< String > errorHandler )
+	private static OmeZarrReader readerFor( final URI inputUri, final Context context,
+			final OmeZarrOpeningSettings settings, final Consumer< String > errorHandler )
 	{
-		final ZarrBackend backend = settings == null ? ZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
+		final ZarrBackend backend = settings == null ? OmeZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
 		final Integer preferredMaxWidth = settings == null ? null : settings.getPreferredMaxWidth();
-		return new ZarrReader( inputUri, context, backend.createBackend(), preferredMaxWidth, errorHandler );
+		return new OmeZarrReader( inputUri, context, backend.createBackend(), preferredMaxWidth, errorHandler );
 	}
 
 	/**
@@ -237,7 +237,7 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the dataset in ImageJ at the resolution level selected by the settings.
-	 * Delegates to {@link ZarrReader#openIJWithImage()}.
+	 * Delegates to {@link OmeZarrReader#openIJWithImage()}.
 	 *
 	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
 	 */
@@ -250,7 +250,7 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the given resolution level of the dataset in ImageJ (0 = highest
-	 * resolution). Delegates to {@link ZarrReader#openIJWithImage(int)}.
+	 * resolution). Delegates to {@link OmeZarrReader#openIJWithImage(int)}.
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
 	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
@@ -264,7 +264,7 @@ public class ZarrOpenActions
 
 	/**
 	 * Opens the dataset in BigDataViewer. Delegates to
-	 * {@link ZarrReader#openBDVWithImage()}.
+	 * {@link OmeZarrReader#openBDVWithImage()}.
 	 *
 	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
 	 */

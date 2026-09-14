@@ -80,7 +80,7 @@ public class PasteToOpenAction
 				errorHandler.accept( "The pasted location does not appear to be an OME-Zarr dataset:\n" + uri + "." );
 			return false;
 		}
-		ZarrOpenActions.openWithSettings( uri, context );
+		OmeZarrOpenActions.openWithSettings( uri, context );
 		return true;
 	}
 }

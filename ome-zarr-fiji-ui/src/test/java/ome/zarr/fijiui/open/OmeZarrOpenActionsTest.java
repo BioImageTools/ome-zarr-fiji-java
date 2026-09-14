@@ -92,17 +92,17 @@ import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import javax.swing.SwingUtilities;
 
 import bdv.viewer.ViewerFrame;
-import ome.zarr.fijiui.dialog.ZarrOpenActionChooser;
+import ome.zarr.fijiui.dialog.OmeZarrOpenActionChooser;
 import ome.zarr.fijiui.plugin.command.settings.UserScriptSettings;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.fiji.read.ZarrReader;
+import ome.zarr.fiji.read.OmeZarrReader;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
-import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
-import ome.zarr.fiji.open.ZarrOpenerService;
+import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
+import ome.zarr.fiji.open.OmeZarrOpenerService;
 import ome.zarr.fijiui.open.openers.BdvMultiResolutionOpener;
 import ome.zarr.fijiui.open.openers.ImageJHighestResolutionOpener;
 import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
@@ -111,7 +111,7 @@ import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.ZarrTestUtils;
 
-class ZarrOpenActionsTest
+class OmeZarrOpenActionsTest
 {
 
 	static Stream< ZarrBackend > backendChoices()
@@ -120,7 +120,7 @@ class ZarrOpenActionsTest
 	}
 
 	/**
-	 * Reads the dataset headlessly through {@link ZarrReader#getContents()} with
+	 * Reads the dataset headlessly through {@link OmeZarrReader#getContents()} with
 	 * the given backend, without instantiating any UI. Returns the
 	 * {@link PyramidContents} that was read; throws the relevant domain exception (e.g.
 	 * {@link ome.zarr.imglib2.exceptions.NotAMultiscaleImageException} or
@@ -130,7 +130,7 @@ class ZarrOpenActionsTest
 			final ZarrBackend backend )
 	{
 		final PyramidBackend pyramidBackend = backend.createBackend();
-		final ZarrReader opener = new ZarrReader( uri, context, pyramidBackend, null, error -> {} );
+		final OmeZarrReader opener = new OmeZarrReader( uri, context, pyramidBackend, null, error -> {} );
 		return opener.getContents();
 	}
 
@@ -169,25 +169,25 @@ class ZarrOpenActionsTest
 			final PrefService prefService = context.getService( PrefService.class );
 			final Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/" );
 
-			try (MockedConstruction< ZarrReader > readerConstruction = mockConstruction( ZarrReader.class );
-					MockedConstruction< ZarrOpenActionChooser > chooserConstruction =
-							mockConstruction( ZarrOpenActionChooser.class ))
+			try (MockedConstruction< OmeZarrReader > readerConstruction = mockConstruction( OmeZarrReader.class );
+					MockedConstruction< OmeZarrOpenActionChooser > chooserConstruction =
+							mockConstruction( OmeZarrOpenActionChooser.class ))
 			{
 				openAs( BdvMultiResolutionOpener.NAME, path, context, prefService );
 				openAs( ImageJHighestResolutionOpener.NAME, path, context, prefService );
 				openAs( ImageJPreferredResolutionOpener.NAME, path, context, prefService );
-				openAs( ZarrOpenerService.ASK, path, context, prefService );
+				openAs( OmeZarrOpenerService.ASK, path, context, prefService );
 
 				// One reader per open, the selection dialog included: constructing a
-				// ZarrReader reads nothing, the opener it hands the reader to does.
-				final List< ZarrReader > readers = readerConstruction.constructed();
+				// OmeZarrReader reads nothing, the opener it hands the reader to does.
+				final List< OmeZarrReader > readers = readerConstruction.constructed();
 				assertEquals( 4, readers.size() );
 				verify( readers.get( 0 ), times( 1 ) ).openBDVWithImage();
 				verify( readers.get( 1 ), times( 1 ) ).openIJWithImage( 0 );
 				verify( readers.get( 2 ), times( 1 ) ).openIJWithImage();
 				verifyNoInteractions( readers.get( 3 ) );
 
-				final List< ZarrOpenActionChooser > chooserInstances = chooserConstruction.constructed();
+				final List< OmeZarrOpenActionChooser > chooserInstances = chooserConstruction.constructed();
 				assertEquals( 1, chooserInstances.size() );
 				verify( chooserInstances.get( 0 ), times( 1 ) ).showDialog();
 			}
@@ -198,10 +198,10 @@ class ZarrOpenActionsTest
 	private static void openAs( final String openerName, final Path path, final Context context,
 			final PrefService prefService )
 	{
-		final ZarrOpeningSettings settings = new ZarrOpeningSettings();
+		final OmeZarrOpeningSettings settings = new OmeZarrOpeningSettings();
 		settings.setOpenerName( openerName );
 		settings.saveSettingsToPreferences( prefService );
-		ZarrOpenActions.openWithSettings( path.toUri(), context );
+		OmeZarrOpenActions.openWithSettings( path.toUri(), context );
 	}
 
 	@ParameterizedTest
@@ -237,12 +237,12 @@ class ZarrOpenActionsTest
 			try (Context context = new Context())
 			{
 				PrefService prefService = context.getService( PrefService.class );
-				ZarrOpeningSettings settings = new ZarrOpeningSettings();
+				OmeZarrOpeningSettings settings = new OmeZarrOpeningSettings();
 				settings.setOpenerName( ImageJHighestResolutionOpener.NAME );
 				settings.setBackend( backend );
 				settings.saveSettingsToPreferences( prefService );
 
-				ZarrOpenActions.openWithSettings( httpUri, context );
+				OmeZarrOpenActions.openWithSettings( httpUri, context );
 
 				DatasetService datasetService = context.getService( DatasetService.class );
 				assertEquals( 1, datasetService.getDatasets().size() );
@@ -265,7 +265,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr" );
 		try (Context context = new Context(); MockedConstruction< N5Importer > ignored = mockConstruction( N5Importer.class ))
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context );
 			assertDoesNotThrow( actions::openImporterDialog );
 		}
 	}
@@ -277,7 +277,7 @@ class ZarrOpenActionsTest
 		try (Context context = new Context();
 				MockedConstruction< N5ViewerCreator > ignored = mockConstruction( N5ViewerCreator.class ))
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context );
 			assertDoesNotThrow( actions::openViewerDialog );
 		}
 	}
@@ -288,9 +288,9 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			ZarrReader opener = ZarrOpenActions.defaultOpener( path.toUri(), context );
+			OmeZarrReader opener = OmeZarrOpenActions.defaultOpener( path.toUri(), context );
 
-			assertEquals( ZarrBackend.ZARR_JAVA, ZarrOpeningSettings.DEFAULT_BACKEND );
+			assertEquals( ZarrBackend.ZARR_JAVA, OmeZarrOpeningSettings.DEFAULT_BACKEND );
 			assertInstanceOf( ZarrJavaPyramidBackend.class, backendOf( opener ) );
 
 			// The wired backend also has to be usable, not just of the right type.
@@ -300,9 +300,9 @@ class ZarrOpenActionsTest
 		}
 	}
 
-	private static PyramidBackend backendOf( ZarrReader opener ) throws ReflectiveOperationException
+	private static PyramidBackend backendOf( OmeZarrReader opener ) throws ReflectiveOperationException
 	{
-		Field field = ZarrReader.class.getDeclaredField( "backend" );
+		Field field = OmeZarrReader.class.getDeclaredField( "backend" );
 		field.setAccessible( true );
 		return ( PyramidBackend ) field.get( opener );
 	}
@@ -314,7 +314,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context ); // no settings object means that the highest resolution is opened by default
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context ); // no settings object means that the highest resolution is opened by default
 			actions.openIJWithImage();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
@@ -382,7 +382,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context, null, System.out::println );
 			actions.openIJWithImage();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
@@ -454,7 +454,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context );
 			BdvHandle bdvHandle = actions.openBDVWithImage();
 			assertNotNull( bdvHandle, "BDV should have opened" );
 
@@ -482,7 +482,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, System.out::println );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context, null, System.out::println );
 			BdvHandle bdvHandle = actions.openBDVWithImage();
 			assertNotNull( bdvHandle, "BDV should have opened" );
 
@@ -552,10 +552,10 @@ class ZarrOpenActionsTest
 		{
 			final URI uri = URI.create( "s3://nonexistent-bucket/some/path" );
 			final AtomicReference< String > capturedError = new AtomicReference<>();
-			final ZarrOpeningSettings settings = new ZarrOpeningSettings();
+			final OmeZarrOpeningSettings settings = new OmeZarrOpeningSettings();
 			settings.setBackend( backend );
 
-			final ZarrOpenActions actions = new ZarrOpenActions( uri, context, settings, capturedError::set );
+			final OmeZarrOpenActions actions = new OmeZarrOpenActions( uri, context, settings, capturedError::set );
 			assertDoesNotThrow( () -> {
 				actions.openIJWithImage();
 			}, "Store access failures must not escape openIJWithImage() for backend " + backend );
@@ -589,7 +589,7 @@ class ZarrOpenActionsTest
 					scriptFailed.set( true );
 					System.out.println( errorMessage );
 				};
-				ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, errorHandler );
+				OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context, null, errorHandler );
 				actions.runScript();
 
 				// wait until all Swing events are processed
@@ -632,7 +632,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context );
 
 			// Open both resolution levels in ImageJ – each produces a separate dataset window,
 			// all backed by the same PyramidContents (shared cachedCellImgs / volatileImgs)
@@ -720,7 +720,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context );
 			BdvHandle bdvHandle = null;
 			try
 			{
@@ -778,7 +778,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context );
 			BdvHandle bdvHandle = null;
 			try
 			{
@@ -837,7 +837,7 @@ class ZarrOpenActionsTest
 				scriptFailed.set( true );
 				System.out.println( errorMessage );
 			};
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context, null, errorHandler );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context, null, errorHandler );
 			actions.runScript();
 
 			boolean foundTextEditor = false;
@@ -873,7 +873,7 @@ class ZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr" );
 		try (Context context = new Context())
 		{
-			ZarrOpenActions actions = new ZarrOpenActions( path.toUri(), context );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context );
 			try
 			{
 				actions.openIJWithImage( 0 );

@@ -31,9 +31,9 @@ package ome.zarr.fijiui.open.openers;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
-import ome.zarr.fiji.read.ZarrReader;
-import ome.zarr.fiji.open.ZarrOpener;
-import ome.zarr.fijiui.open.ZarrOpenActions;
+import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fijiui.open.OmeZarrOpenActions;
 
 /**
  * Hands the location to the N5 importer dialog, i.e. to
@@ -42,18 +42,18 @@ import ome.zarr.fijiui.open.ZarrOpenActions;
  * Unlike the openers in {@code ome-zarr-fiji}, this one does not read anything
  * itself — the n5-ij dialog does, with its own reader and its own choices.
  */
-@Plugin( type = ZarrOpener.class, name = N5ImporterDialogOpener.NAME,
+@Plugin( type = OmeZarrOpener.class, name = N5ImporterDialogOpener.NAME,
 		label = "N5 importer dialog",
 		description = "Open the OME-Zarr/N5 importer dialog on this location",
 		iconPath = "/ome/zarr/fijiui/dialog/zarr_ij_icon.png", priority = Priority.LOW )
-public class N5ImporterDialogOpener implements ZarrOpener
+public class N5ImporterDialogOpener implements OmeZarrOpener
 {
 	/** The stable identifier this opener is persisted under. */
 	public static final String NAME = "n5-importer-dialog";
 
 	@Override
-	public void open( final ZarrReader reader )
+	public void open( final OmeZarrReader reader )
 	{
-		new ZarrOpenActions( reader ).openImporterDialog();
+		new OmeZarrOpenActions( reader ).openImporterDialog();
 	}
 }

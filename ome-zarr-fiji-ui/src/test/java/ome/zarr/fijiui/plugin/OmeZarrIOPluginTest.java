@@ -51,13 +51,13 @@ import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
 import org.scijava.io.location.URLLocation;
 
-import ome.zarr.fijiui.open.ZarrOpenActions;
+import ome.zarr.fijiui.open.OmeZarrOpenActions;
 import ome.zarr.ZarrTestUtils;
 
 class OmeZarrIOPluginTest
 {
 	@Test
-	void openDelegatesToZarrOpenActions() throws URISyntaxException, IOException
+	void openDelegatesToOmeZarrOpenActions() throws URISyntaxException, IOException
 	{
 		try (Context context = new Context())
 		{
@@ -67,10 +67,10 @@ class OmeZarrIOPluginTest
 			final OmeZarrIOPlugin plugin = new OmeZarrIOPlugin();
 			plugin.setContext( context );
 
-			try (MockedStatic< ZarrOpenActions > mocked = Mockito.mockStatic( ZarrOpenActions.class ))
+			try (MockedStatic< OmeZarrOpenActions > mocked = Mockito.mockStatic( OmeZarrOpenActions.class ))
 			{
 				plugin.open( fileLocation );
-				mocked.verify( () -> ZarrOpenActions.openWithSettings( path.toUri(), context ), times( 1 ) );
+				mocked.verify( () -> OmeZarrOpenActions.openWithSettings( path.toUri(), context ), times( 1 ) );
 			}
 		}
 	}
@@ -132,10 +132,10 @@ class OmeZarrIOPluginTest
 			final OmeZarrIOPlugin plugin = new OmeZarrIOPlugin();
 			plugin.setContext( context );
 
-			try (MockedStatic< ZarrOpenActions > mocked = Mockito.mockStatic( ZarrOpenActions.class ))
+			try (MockedStatic< OmeZarrOpenActions > mocked = Mockito.mockStatic( OmeZarrOpenActions.class ))
 			{
 				plugin.open( location );
-				mocked.verify( () -> ZarrOpenActions.openWithSettings( uri, context ), times( 1 ) );
+				mocked.verify( () -> OmeZarrOpenActions.openWithSettings( uri, context ), times( 1 ) );
 			}
 		}
 	}

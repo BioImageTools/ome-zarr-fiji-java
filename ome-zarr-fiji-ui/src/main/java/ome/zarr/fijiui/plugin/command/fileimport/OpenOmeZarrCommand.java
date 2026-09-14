@@ -43,7 +43,7 @@ import ij.IJ;
  * Classical File &gt; Import menu entry for opening a local OME-Zarr dataset,
  * complementary to drag-and-drop and clipboard paste. It takes a single
  * explicit parameter – the dataset folder – and then follows the user's
- * {@link ome.zarr.fijiui.open.options.ZarrOpeningSettings} exactly like the
+ * {@link ome.zarr.fijiui.open.options.OmeZarrOpeningSettings} exactly like the
  * other entry points do, so the same open behavior, resolution and reader
  * backend apply.
  * <p>
@@ -85,7 +85,7 @@ public class OpenOmeZarrCommand implements Command
 	 */
 	static boolean open( final File folder, final Context context, final Consumer< String > errorHandler )
 	{
-		return OmeZarrOpener.open( folder, context, errorHandler, "folder" );
+		return FileImportHelper.open( folder, context, errorHandler, "folder" );
 	}
 
 	/**
@@ -99,6 +99,6 @@ public class OpenOmeZarrCommand implements Command
 	 */
 	static String validate( final File folder )
 	{
-		return OmeZarrOpener.validate( folder, "folder" );
+		return FileImportHelper.validate( folder, "folder" );
 	}
 }

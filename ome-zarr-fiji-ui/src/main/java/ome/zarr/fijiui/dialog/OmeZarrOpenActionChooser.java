@@ -53,27 +53,27 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import ome.zarr.fiji.read.ZarrReader;
-import ome.zarr.fiji.open.ZarrOpener;
-import ome.zarr.fiji.open.ZarrOpenerService;
-import ome.zarr.fijiui.open.ZarrOpenActions;
+import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fiji.open.OmeZarrOpenerService;
+import ome.zarr.fijiui.open.OmeZarrOpenActions;
 
 /**
  * Asks the user what to do with an OME-Zarr location that is already known:
  * an undecorated, non-modal popup at the mouse pointer offering one icon
- * button per registered {@link ZarrOpener}, plus help. It closes on ESC or fades
+ * button per registered {@link OmeZarrOpener}, plus help. It closes on ESC or fades
  * out once the pointer leaves it.
  * <p>
- * The buttons are built from the {@link ZarrOpenerService}, so a
- * {@link ZarrOpener} contributed by another Fiji plugin appears here next to the
+ * The buttons are built from the {@link OmeZarrOpenerService}, so a
+ * {@link OmeZarrOpener} contributed by another Fiji plugin appears here next to the
  * built-in ImageJ and BigDataViewer ones, with its own icon and description.
  * <p>
- * It is shown whenever the user configured {@link ZarrOpenerService#ASK},
+ * It is shown whenever the user configured {@link OmeZarrOpenerService#ASK},
  * independently of how the location arrived — drag-and-drop, a
  * {@code fiji://} link, or clipboard paste all reach it through
- * {@link ZarrOpenActions#openWithSettings(java.net.URI, Context)}.
+ * {@link OmeZarrOpenActions#openWithSettings(java.net.URI, Context)}.
  */
-public class ZarrOpenActionChooser
+public class OmeZarrOpenActionChooser
 {
 
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
@@ -81,7 +81,7 @@ public class ZarrOpenActionChooser
 	/** Buttons per row; the number of rows follows the number of openers. */
 	private static final int COLUMNS = 3;
 
-	private final ZarrReader reader;
+	private final OmeZarrReader reader;
 
 	private final Context context;
 
@@ -94,7 +94,7 @@ public class ZarrOpenActionChooser
 	 * @param context the SciJava context the openers are looked up in
 	 * @param reader the location the chosen opener will be given
 	 */
-	public ZarrOpenActionChooser( final Context context, final ZarrReader reader )
+	public OmeZarrOpenActionChooser( final Context context, final OmeZarrReader reader )
 	{
 		this.reader = reader;
 		this.context = context;
@@ -152,25 +152,25 @@ public class ZarrOpenActionChooser
 	private JPanel initLayout( final JDialog dialog )
 	{
 		final JPanel panel = new JPanel( new GridLayout( 0, COLUMNS, 5, 5 ) );
-		final ZarrOpenerService openerService = openerService();
+		final OmeZarrOpenerService openerService = openerService();
 		if ( openerService == null )
 			// A context without the service is a broken classpath; help still works.
-			logger.warn( "No ZarrOpenerService in the SciJava context, so no opener can be offered." );
+			logger.warn( "No OmeZarrOpenerService in the SciJava context, so no opener can be offered." );
 		else
-			for ( final PluginInfo< ZarrOpener > info : openerService.getOpenerInfos() )
+			for ( final PluginInfo< OmeZarrOpener > info : openerService.getOpenerInfos() )
 				panel.add( openerButton( dialog, openerService, info ) );
 		panel.add( helpButton( dialog ) );
 		return panel;
 	}
 
 	/** The service the openers come from, or {@code null} without a context. */
-	private ZarrOpenerService openerService()
+	private OmeZarrOpenerService openerService()
 	{
-		return context == null ? null : context.getService( ZarrOpenerService.class );
+		return context == null ? null : context.getService( OmeZarrOpenerService.class );
 	}
 
-	private JButton openerButton( final JDialog dialog, final ZarrOpenerService openerService,
-			final PluginInfo< ZarrOpener > info )
+	private JButton openerButton( final JDialog dialog, final OmeZarrOpenerService openerService,
+			final PluginInfo< OmeZarrOpener > info )
 	{
 		final JButton button = new JButton( CreateIcon.getAndResizeIcon( iconUrl( info ) ) );
 		button.setToolTipText( openerService.tooltipOf( info, reader ) );
@@ -182,12 +182,12 @@ public class ZarrOpenActionChooser
 	{
 		final JButton button = new JButton( CreateIcon.getAndResizeIcon( "help_icon.png" ) );
 		button.setToolTipText( "Help about OME-Zarr actions" );
-		button.addActionListener( e -> disposeAndRun( dialog, new ZarrOpenActions( reader )::showHelp ) );
+		button.addActionListener( e -> disposeAndRun( dialog, new OmeZarrOpenActions( reader )::showHelp ) );
 		return button;
 	}
 
 	/** The opener's own icon, or {@code null} when it declares none or it is unreadable. */
-	private URL iconUrl( final PluginInfo< ZarrOpener > info )
+	private URL iconUrl( final PluginInfo< OmeZarrOpener > info )
 	{
 		try
 		{

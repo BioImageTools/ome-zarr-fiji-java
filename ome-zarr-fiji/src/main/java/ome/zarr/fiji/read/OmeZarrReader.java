@@ -77,7 +77,7 @@ import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
  * calibration is a placeholder ({@link PyramidContents#hasPlaceholderCalibration})
  * unless the user confirms.
  */
-public class ZarrReader
+public class OmeZarrReader
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -107,7 +107,7 @@ public class ZarrReader
 	 * @param context the SciJava context to get services from
 	 * @param backend the backend used to read the dataset
 	 */
-	public ZarrReader( final URI inputUri, final Context context, final PyramidBackend backend )
+	public OmeZarrReader( final URI inputUri, final Context context, final PyramidBackend backend )
 	{
 		this( inputUri, context, backend, null );
 	}
@@ -122,7 +122,7 @@ public class ZarrReader
 	 * @param preferredMaxWidth the highest-resolution level that is still no wider
 	 *   than this will be selected, or {@code null} for the highest resolution
 	 */
-	public ZarrReader( final URI inputUri, final Context context, final PyramidBackend backend,
+	public OmeZarrReader( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth )
 	{
 		this( inputUri, context, backend, preferredMaxWidth, IJ::error );
@@ -139,10 +139,10 @@ public class ZarrReader
 	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
 	 * @param errorHandler receives a user-facing message when opening fails
 	 */
-	public ZarrReader( final URI inputUri, final Context context, final PyramidBackend backend,
+	public OmeZarrReader( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth, final Consumer< String > errorHandler )
 	{
-		this( inputUri, context, backend, preferredMaxWidth, errorHandler, ZarrReader::confirmWithDialog );
+		this( inputUri, context, backend, preferredMaxWidth, errorHandler, OmeZarrReader::confirmWithDialog );
 	}
 
 	/**
@@ -160,7 +160,7 @@ public class ZarrReader
 	 *   Pass a non-interactive implementation for headless use — the default shows a
 	 *   modal (modified) {@link YesNoCancelDialog}.
 	 */
-	public ZarrReader( final URI inputUri, final Context context, final PyramidBackend backend,
+	public OmeZarrReader( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth, final Consumer< String > errorHandler,
 			final Predicate< String > openAnywayConfirmation )
 	{

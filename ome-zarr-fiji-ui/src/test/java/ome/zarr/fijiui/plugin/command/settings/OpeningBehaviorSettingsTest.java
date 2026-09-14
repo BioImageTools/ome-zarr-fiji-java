@@ -43,8 +43,8 @@ import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 
 import ome.zarr.fijiui.open.openers.ImageJHighestResolutionOpener;
-import ome.zarr.fiji.open.ZarrOpenerService;
-import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
+import ome.zarr.fiji.open.OmeZarrOpenerService;
+import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.ZarrBackend;
 
 /**
@@ -66,7 +66,7 @@ class OpeningBehaviorSettingsTest
 			final int customWidth = 500;
 
 			setField( ui, "prefService", prefService );
-			setField( ui, "openerService", context.getService( ZarrOpenerService.class ) );
+			setField( ui, "openerService", context.getService( OmeZarrOpenerService.class ) );
 
 			Method initMethod = OpeningBehaviorSettings.class.getDeclaredMethod( "init" );
 			initMethod.setAccessible( true ); // bypasses private visibility
@@ -77,7 +77,7 @@ class OpeningBehaviorSettingsTest
 
 			ui.run();
 
-			ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
+			OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 
 			assertEquals( ImageJHighestResolutionOpener.NAME, settings.getOpenerName() );
 			assertEquals( customWidth, settings.getPreferredMaxWidth() );
@@ -105,8 +105,8 @@ class OpeningBehaviorSettingsTest
 	/** The choice the dialog shows for the opener registered under {@code name}. */
 	private static String labelOf( final Context context, final String name )
 	{
-		final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
-		return ZarrOpenerService.labelOf( openerService.getOpenerInfo( name ) );
+		final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
+		return OmeZarrOpenerService.labelOf( openerService.getOpenerInfo( name ) );
 	}
 
 	private static void setField( final OpeningBehaviorSettings ui, final String fieldName, final Object value )

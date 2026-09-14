@@ -39,12 +39,12 @@ import org.scijava.service.SciJavaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ome.zarr.fiji.read.ZarrReader;
+import ome.zarr.fiji.read.OmeZarrReader;
 
 /**
- * Finds the registered {@link ZarrOpener}s and runs them.
+ * Finds the registered {@link OmeZarrOpener}s and runs them.
  * <p>
- * Discovery is SciJava's: every {@code @Plugin( type = ZarrOpener.class )} class
+ * Discovery is SciJava's: every {@code @Plugin( type = OmeZarrOpener.class )} class
  * on the classpath is listed here, in priority order, no matter which jar it
  * came from. Scripts can add one at runtime through
  * {@link org.scijava.plugin.PluginService#addPlugin(PluginInfo)}.
@@ -55,21 +55,21 @@ import ome.zarr.fiji.read.ZarrReader;
  * the user wants the selection dialog instead of a fixed choice.
  */
 @Plugin( type = SciJavaService.class )
-public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implements SciJavaService
+public class OmeZarrOpenerService extends AbstractPTService< OmeZarrOpener > implements SciJavaService
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	/**
 	 * Persisted instead of an opener name when the user wants to be asked every
-	 * time. Not a {@link ZarrOpener} and never returned by {@link #getOpenerInfos()}
+	 * time. Not a {@link OmeZarrOpener} and never returned by {@link #getOpenerInfos()}
 	 * — the selection dialog opens nothing itself, it only picks an opener.
 	 */
 	public static final String ASK = "ask";
 
 	@Override
-	public Class< ZarrOpener > getPluginType()
+	public Class< OmeZarrOpener > getPluginType()
 	{
-		return ZarrOpener.class;
+		return OmeZarrOpener.class;
 	}
 
 	/**
@@ -77,10 +77,10 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 	 *
 	 * @return the registered openers' metadata, never {@code null}
 	 */
-	public List< PluginInfo< ZarrOpener > > getOpenerInfos()
+	public List< PluginInfo< OmeZarrOpener > > getOpenerInfos()
 	{
-		final List< PluginInfo< ZarrOpener > > enabled = new ArrayList<>();
-		for ( final PluginInfo< ZarrOpener > info : getPlugins() )
+		final List< PluginInfo< OmeZarrOpener > > enabled = new ArrayList<>();
+		for ( final PluginInfo< OmeZarrOpener > info : getPlugins() )
 			if ( info.isEnabled() )
 				enabled.add( info );
 		return enabled;
@@ -91,11 +91,11 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 	 * @return the opener registered under {@code name}, or {@code null} if there
 	 *   is none (an uninstalled third-party opener, or {@link #ASK})
 	 */
-	public PluginInfo< ZarrOpener > getOpenerInfo( final String name )
+	public PluginInfo< OmeZarrOpener > getOpenerInfo( final String name )
 	{
 		if ( name == null )
 			return null;
-		for ( final PluginInfo< ZarrOpener > info : getOpenerInfos() )
+		for ( final PluginInfo< OmeZarrOpener > info : getOpenerInfos() )
 			if ( name.equals( nameOf( info ) ) )
 				return info;
 		return null;
@@ -119,7 +119,7 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 	{
 		if ( persistedName != null && !persistedName.isEmpty() )
 			return persistedName;
-		final List< PluginInfo< ZarrOpener > > infos = getOpenerInfos();
+		final List< PluginInfo< OmeZarrOpener > > infos = getOpenerInfos();
 		return infos.isEmpty() ? null : nameOf( infos.get( 0 ) );
 	}
 
@@ -131,9 +131,9 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 	 * @return {@code false} if no opener answers to {@code name}, in which case
 	 *   nothing was opened
 	 */
-	public boolean open( final String name, final ZarrReader reader )
+	public boolean open( final String name, final OmeZarrReader reader )
 	{
-		final PluginInfo< ZarrOpener > info = getOpenerInfo( name );
+		final PluginInfo< OmeZarrOpener > info = getOpenerInfo( name );
 		if ( info == null )
 		{
 			logger.debug( "No OME-Zarr opener named '{}' is registered.", name );
@@ -151,9 +151,9 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 	 * @param info the opener to run
 	 * @param reader the location to open and the settings to open it with
 	 */
-	public void open( final PluginInfo< ZarrOpener > info, final ZarrReader reader )
+	public void open( final PluginInfo< OmeZarrOpener > info, final OmeZarrReader reader )
 	{
-		final ZarrOpener opener = createOpener( info );
+		final OmeZarrOpener opener = createOpener( info );
 		if ( opener == null )
 			return;
 		if ( logger.isDebugEnabled() )
@@ -176,7 +176,7 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 	 * @param info the opener's metadata
 	 * @return the opener's stable name
 	 */
-	public static String nameOf( final PluginInfo< ZarrOpener > info )
+	public static String nameOf( final PluginInfo< OmeZarrOpener > info )
 	{
 		final String name = info.getName();
 		return name == null || name.isEmpty() ? info.getClassName() : name;
@@ -189,7 +189,7 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 	 * @param info the opener's metadata
 	 * @return a non-empty display text
 	 */
-	public static String labelOf( final PluginInfo< ZarrOpener > info )
+	public static String labelOf( final PluginInfo< OmeZarrOpener > info )
 	{
 		final String label = info.getLabel();
 		return label == null || label.isEmpty() ? nameOf( info ) : label;
@@ -202,31 +202,31 @@ public class ZarrOpenerService extends AbstractPTService< ZarrOpener > implement
 	 * @param info the opener's metadata
 	 * @return a non-empty description
 	 */
-	public static String descriptionOf( final PluginInfo< ZarrOpener > info )
+	public static String descriptionOf( final PluginInfo< OmeZarrOpener > info )
 	{
 		final String description = info.getDescription();
 		return description == null || description.isEmpty() ? labelOf( info ) : description;
 	}
 
 	/**
-	 * The tooltip to show for an opener: what {@link ZarrOpener#tooltip} answers
+	 * The tooltip to show for an opener: what {@link OmeZarrOpener#tooltip} answers
 	 * for this reader, falling back to the static description.
 	 *
 	 * @param info the opener's metadata
 	 * @param reader the reader the tooltip is asked for
 	 * @return a non-empty tooltip text
 	 */
-	public String tooltipOf( final PluginInfo< ZarrOpener > info, final ZarrReader reader )
+	public String tooltipOf( final PluginInfo< OmeZarrOpener > info, final OmeZarrReader reader )
 	{
-		final ZarrOpener opener = createOpener( info );
+		final OmeZarrOpener opener = createOpener( info );
 		final String tooltip = opener == null ? null : opener.tooltip( reader );
 		return tooltip == null || tooltip.isEmpty() ? descriptionOf( info ) : tooltip;
 	}
 
 	/** Instantiates an opener, reporting rather than throwing when that fails. */
-	private ZarrOpener createOpener( final PluginInfo< ZarrOpener > info )
+	private OmeZarrOpener createOpener( final PluginInfo< OmeZarrOpener > info )
 	{
-		final ZarrOpener opener = pluginService().createInstance( info );
+		final OmeZarrOpener opener = pluginService().createInstance( info );
 		if ( opener == null )
 			logger.warn( "Could not instantiate the OME-Zarr opener {}.", info.getClassName() );
 		return opener;

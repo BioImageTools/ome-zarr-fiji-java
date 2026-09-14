@@ -31,7 +31,7 @@ package ome.zarr.fiji.open;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-import ome.zarr.fiji.read.ZarrReader;
+import ome.zarr.fiji.read.OmeZarrReader;
 
 /**
  * Something that can open an OME-Zarr location — the extension point a Fiji
@@ -42,13 +42,13 @@ import ome.zarr.fiji.read.ZarrReader;
  * annotation on a class in your own jar:
  *
  * <pre>
- * &#64;Plugin( type = ZarrOpener.class, name = "my-opener", label = "My viewer",
+ * &#64;Plugin( type = OmeZarrOpener.class, name = "my-opener", label = "My viewer",
  *          description = "Open the OME-Zarr in My viewer",
  *          iconPath = "/icons/my-opener.png", priority = Priority.VERY_HIGH )
- * public class MyZarrOpener implements ZarrOpener
+ * public class MyOmeZarrOpener implements OmeZarrOpener
  * {
  *     &#64;Override
- *     public void open( final ZarrReader reader )
+ *     public void open( final OmeZarrReader reader )
  *     {
  *         MyViewer.open( reader.uri() );
  *     }
@@ -63,23 +63,23 @@ import ome.zarr.fiji.read.ZarrReader;
  * never configured a choice gets — an explicit choice always wins, and the
  * openers shipped here sit at {@link org.scijava.Priority#HIGH} and below.
  *
- * @see ZarrOpenerService
+ * @see OmeZarrOpenerService
  */
-public interface ZarrOpener extends SciJavaPlugin
+public interface OmeZarrOpener extends SciJavaPlugin
 {
 	/**
 	 * Opens the location the reader is configured for. Called on a background
 	 * thread, never on the AWT event dispatch thread, so it may read and block.
 	 * <p>
-	 * An opener that brings its own reading code needs only {@link ZarrReader#uri()}
+	 * An opener that brings its own reading code needs only {@link OmeZarrReader#uri()}
 	 * and can ignore the rest.
 	 * <br>
 	 * Failures are the opener's own to report, through
-	 * {@link ZarrReader#errorHandler()}.
+	 * {@link OmeZarrReader#errorHandler()}.
 	 *
 	 * @param reader the location to open, configured with the settings to open it with
 	 */
-	void open( ZarrReader reader );
+	void open( OmeZarrReader reader );
 
 	/**
 	 * The tooltip for this opener's button in the selection dialog, when the
@@ -91,7 +91,7 @@ public interface ZarrOpener extends SciJavaPlugin
 	 * @return the tooltip text, or {@code null} to use the annotation's
 	 *   {@code description}
 	 */
-	default String tooltip( final ZarrReader reader )
+	default String tooltip( final OmeZarrReader reader )
 	{
 		return null;
 	}

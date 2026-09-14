@@ -57,11 +57,11 @@ import org.scijava.Priority;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.plugin.PluginService;
 
-import ome.zarr.fiji.read.ZarrReader;
-import ome.zarr.fiji.open.ZarrOpener;
-import ome.zarr.fiji.open.ZarrOpenerService;
+import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fiji.open.OmeZarrOpenerService;
 
-class ZarrOpenActionChooserTest
+class OmeZarrOpenActionChooserTest
 {
 	@BeforeEach
 	void requireDisplay()
@@ -72,13 +72,13 @@ class ZarrOpenActionChooserTest
 	@Test
 	void showDialogDoesNotThrow()
 	{
-		assertDoesNotThrow( () -> new ZarrOpenActionChooser( null, null ) );
+		assertDoesNotThrow( () -> new OmeZarrOpenActionChooser( null, null ) );
 	}
 
 	@Test
 	void showDialogCreatesVisibleDialog() throws Exception
 	{
-		ZarrOpenActionChooser chooser = new ZarrOpenActionChooser( null, null );
+		OmeZarrOpenActionChooser chooser = new OmeZarrOpenActionChooser( null, null );
 		SwingUtilities.invokeAndWait( chooser::showDialog );
 
 		JDialog dialog = chooser.currentDialog;
@@ -94,11 +94,11 @@ class ZarrOpenActionChooserTest
 	{
 		try (Context context = new Context())
 		{
-			final ZarrReader reader = readerIn( context );
-			final int openerCount = context.getService( ZarrOpenerService.class ).getOpenerInfos().size();
+			final OmeZarrReader reader = readerIn( context );
+			final int openerCount = context.getService( OmeZarrOpenerService.class ).getOpenerInfos().size();
 			assertTrue( openerCount > 1, "The shipped openers should all be registered" );
 
-			final ZarrOpenActionChooser chooser = new ZarrOpenActionChooser( context, reader );
+			final OmeZarrOpenActionChooser chooser = new OmeZarrOpenActionChooser( context, reader );
 			SwingUtilities.invokeAndWait( chooser::showDialog );
 			try
 			{
@@ -118,13 +118,13 @@ class ZarrOpenActionChooserTest
 		try (Context context = new Context())
 		{
 			// Highest priority, so it is the first button.
-			final PluginInfo< ZarrOpener > info = new PluginInfo<>( LatchOpener.class, ZarrOpener.class );
+			final PluginInfo< OmeZarrOpener > info = new PluginInfo<>( LatchOpener.class, OmeZarrOpener.class );
 			info.setName( "test-latch-opener" );
 			info.setPriority( Priority.FIRST );
 			context.getService( PluginService.class ).addPlugin( info );
 
 			LatchOpener.opened = new CountDownLatch( 1 );
-			final ZarrOpenActionChooser chooser = new ZarrOpenActionChooser( context, readerIn( context ) );
+			final OmeZarrOpenActionChooser chooser = new OmeZarrOpenActionChooser( context, readerIn( context ) );
 			SwingUtilities.invokeAndWait( chooser::showDialog );
 			final JDialog dialog = chooser.currentDialog;
 
@@ -136,12 +136,12 @@ class ZarrOpenActionChooserTest
 	}
 
 	/** Counts down instead of opening anything, so no dataset is read. */
-	public static class LatchOpener implements ZarrOpener
+	public static class LatchOpener implements OmeZarrOpener
 	{
 		static CountDownLatch opened;
 
 		@Override
-		public void open( final ZarrReader reader )
+		public void open( final OmeZarrReader reader )
 		{
 			opened.countDown();
 		}
@@ -158,14 +158,14 @@ class ZarrOpenActionChooserTest
 			listener.actionPerformed( new ActionEvent( button, ActionEvent.ACTION_PERFORMED, "" ) );
 	}
 
-	private static ZarrReader readerIn( final Context context )
+	private static OmeZarrReader readerIn( final Context context )
 	{
-		return new ZarrReader( URI.create( "file:/tmp/not-read-by-this-test.ome.zarr" ), context, null, null,
+		return new OmeZarrReader( URI.create( "file:/tmp/not-read-by-this-test.ome.zarr" ), context, null, null,
 				message -> {} );
 	}
 
 	/** The chooser's buttons, in the order they were added. */
-	private static List< JButton > buttonsOf( final ZarrOpenActionChooser chooser )
+	private static List< JButton > buttonsOf( final OmeZarrOpenActionChooser chooser )
 	{
 		final List< JButton > buttons = new ArrayList<>();
 		collectButtons( chooser.currentDialog.getContentPane(), buttons );

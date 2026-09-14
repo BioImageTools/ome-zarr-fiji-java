@@ -39,16 +39,16 @@ import ome.zarr.fijiui.open.openers.BdvMultiResolutionOpener;
 import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
 
 /**
- * Unit tests for {@link ZarrOpeningSettings#getOpenerName()}, which reports
- * which {@link ome.zarr.fiji.open.ZarrOpener} the user chose.
+ * Unit tests for {@link OmeZarrOpeningSettings#getOpenerName()}, which reports
+ * which {@link ome.zarr.fiji.open.OmeZarrOpener} the user chose.
  */
-class ZarrOpeningSettingsTest
+class OmeZarrOpeningSettingsTest
 {
 
 	@Test
 	void testGetOpenerNameIsUnsetByDefault()
 	{
-		ZarrOpeningSettings settings = new ZarrOpeningSettings();
+		OmeZarrOpeningSettings settings = new OmeZarrOpeningSettings();
 
 		// Nothing configured: it is the opener service, not the settings, that
 		// decides what an unconfigured user gets.
@@ -58,7 +58,7 @@ class ZarrOpeningSettingsTest
 	@Test
 	void testGetOpenerName()
 	{
-		ZarrOpeningSettings settings = new ZarrOpeningSettings();
+		OmeZarrOpeningSettings settings = new OmeZarrOpeningSettings();
 
 		settings.setOpenerName( BdvMultiResolutionOpener.NAME );
 
@@ -74,9 +74,9 @@ class ZarrOpeningSettingsTest
 			PrefService prefService = context.getService( PrefService.class );
 			prefService.clearAll();
 			// Load settings from preferences for the first time and verify default values
-			ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
+			OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 			assertNull( settings.getOpenerName() );
-			assertEquals( ZarrOpeningSettings.DEFAULT_PREFERRED_WIDTH, settings.getPreferredMaxWidth() );
+			assertEquals( OmeZarrOpeningSettings.DEFAULT_PREFERRED_WIDTH, settings.getPreferredMaxWidth() );
 
 			// Set custom values and save them to preferences
 			settings.setOpenerName( ImageJPreferredResolutionOpener.NAME );
@@ -84,7 +84,7 @@ class ZarrOpeningSettingsTest
 			settings.saveSettingsToPreferences( prefService );
 
 			// Load settings from preferences again and verify custom values
-			ZarrOpeningSettings settings2 = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
+			OmeZarrOpeningSettings settings2 = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 			assertEquals( ImageJPreferredResolutionOpener.NAME, settings2.getOpenerName() );
 			assertEquals( 500, settings2.getPreferredMaxWidth() );
 		}

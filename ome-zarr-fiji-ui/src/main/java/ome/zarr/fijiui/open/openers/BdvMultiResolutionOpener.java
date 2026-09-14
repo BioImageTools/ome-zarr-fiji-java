@@ -28,8 +28,8 @@
  */
 package ome.zarr.fijiui.open.openers;
 
-import ome.zarr.fiji.read.ZarrReader;
-import ome.zarr.fiji.open.ZarrOpener;
+import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.open.OmeZarrOpener;
 
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
@@ -39,17 +39,17 @@ import org.scijava.plugin.Plugin;
  * BigDataViewer, which is the only opener here that does not have to pick a
  * single level.
  */
-@Plugin( type = ZarrOpener.class, name = BdvMultiResolutionOpener.NAME,
+@Plugin( type = OmeZarrOpener.class, name = BdvMultiResolutionOpener.NAME,
 		label = "BigDataViewer",
 		description = "Open as a multi-resolution source in BigDataViewer",
 		iconPath = "/ome/zarr/fijiui/dialog/bdv_icon.png", priority = Priority.NORMAL )
-public class BdvMultiResolutionOpener implements ZarrOpener
+public class BdvMultiResolutionOpener implements OmeZarrOpener
 {
 	/** The stable identifier this opener is persisted under. */
 	public static final String NAME = "bdv-multi-resolution";
 
 	@Override
-	public void open( final ZarrReader reader )
+	public void open( final OmeZarrReader reader )
 	{
 		reader.openBDVWithImage();
 	}
