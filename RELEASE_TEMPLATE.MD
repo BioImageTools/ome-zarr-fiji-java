@@ -53,4 +53,11 @@
       ome-zarr-fiji-*.jar, ome-zarr-fiji-ui-*.jar
     * [ ] Check Upload success: https://sites.imagej.net/OME-Zarr/jars/
 * [ ] Add Release documentation: https://github.com/BioImageTools/ome-zarr-fiji-java/releases
+* [ ] Breaking changes / developer notes
+    * [ ] Note the breaking API changes in the release documentation, so a downstream developer sees them without
+      reading the diff
+    * [ ] Identify affected external projects (e.g. [MoBIE](https://github.com/mobie/mobie-viewer-fiji), and any
+      plugin registering its own `OmeZarrOpener`)
+    * [ ] Inform their maintainers (issue or direct message), or open a PR against their repo with the migration
 * [ ] Make an announcement on image.sc: https://forum.image.sc/t/ngff-weekly-dev-update-thread/110810/
+    * [ ] Mention the breaking changes explicitly, if there are any
