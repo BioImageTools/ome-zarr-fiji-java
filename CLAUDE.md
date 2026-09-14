@@ -181,7 +181,7 @@ the `hasPlaceholderCalibration` flag, so the guess always travels with the image
 warning. Every `OmeZarrReader` display path refuses to show a flagged image unless the user confirms. An array whose axes
 cannot be named at all (Zarr v2 without a readable parent) remains a hard `SingleArrayAxesUnknownException`.
 
-`OmeZarrReader` picks a backend (`ZarrBackend`: N5 or ZARR_JAVA), reads and caches the `PyramidContents`, and wraps it into
+`OmeZarrReader` picks a backend (`OmeZarrBackend`: N5 or ZARR_JAVA), reads and caches the `PyramidContents`, and wraps it into
 either a `PyramidalDataset` (extends `DefaultDataset`, for ImageJ) or a `PyramidalBdv` (per-channel BDV
 `SourceAndConverter` lists, volatile-wrapped per resolution level) – both implement the marker interface `Pyramidal`.
 
@@ -226,7 +226,7 @@ out-of-the-box default. A persisted name whose opener is gone (plugin uninstalle
 highest-priority one.
 
 **Settings** are persisted across Fiji sessions via SciJava `PrefService`, read/written through `OmeZarrOpeningSettings`
-(opener name, preferred width, reader backend – the backend defaults to `ZarrBackend.ZARR_JAVA`) and surfaced via the
+(opener name, preferred width, reader backend – the backend defaults to `OmeZarrBackend.ZARR_JAVA`) and surfaced via the
 `OpeningBehaviorSettings` command, whose choices are built from the registered openers rather than from a fixed list.
 The pref key stays `"ZarrOpenBehavior"`, but the four names the removed `ZarrOpenBehavior` enum wrote are **not**
 migrated: a migration map existed and was deliberately deleted, because adoption at 0.7 is small enough that carrying
@@ -310,7 +310,7 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   Depends on all four other modules – the batteries-included artifact.
 
 Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`imglib2`, `n5`, `zarrjava`, `fiji`}. Backends
-are selected at runtime (`ZarrBackend`), so `fiji` needs at least one backend on the classpath at runtime even
+are selected at runtime (`OmeZarrBackend`), so `fiji` needs at least one backend on the classpath at runtime even
 though it doesn't depend on one.
 
 A sixth, non-published module **`ome-zarr-coverage-report`** only runs `jacoco:report-aggregate` to produce a

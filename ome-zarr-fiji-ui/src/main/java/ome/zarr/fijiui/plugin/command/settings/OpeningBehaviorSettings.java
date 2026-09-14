@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fiji.open.OmeZarrOpenerService;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
-import ome.zarr.fijiui.open.options.ZarrBackend;
+import ome.zarr.fijiui.open.options.OmeZarrBackend;
 
 /**
  * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.
@@ -104,7 +104,7 @@ public class OpeningBehaviorSettings extends DynamicCommand
 			+ "</html>";
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Reader backend", description = "Choose which library is used to read OME-Zarr datasets", initializer = "initZarrBackends" )
+	@Parameter( label = "Reader backend", description = "Choose which library is used to read OME-Zarr datasets", initializer = "initOmeZarrBackends" )
 	private String readerBackend;
 
 	@SuppressWarnings( "all" )
@@ -130,7 +130,7 @@ public class OpeningBehaviorSettings extends DynamicCommand
 		else
 			settings.setOpenerName( openerName );
 		settings.setPreferredMaxWidth( preferredWidth );
-		settings.setBackend( ZarrBackend.getByDescription( readerBackend ) );
+		settings.setBackend( OmeZarrBackend.getByDescription( readerBackend ) );
 		logger.debug( "Now saving OME-Zarr settings to user preferences. Opener: {}, preferredWidth: {}, readerBackend: {}",
 				settings.getOpenerName(), preferredWidth, settings.getBackend() );
 		settings.saveSettingsToPreferences( prefService );
@@ -152,10 +152,10 @@ public class OpeningBehaviorSettings extends DynamicCommand
 	}
 
 	@SuppressWarnings( "unused" )
-	private void initZarrBackends()
+	private void initOmeZarrBackends()
 	{
 		getInfo().getMutableInput( "readerBackend", String.class )
-				.setChoices( backendDescriptions( ZarrBackend.values() ) );
+				.setChoices( backendDescriptions( OmeZarrBackend.values() ) );
 	}
 
 	/**
@@ -194,8 +194,8 @@ public class OpeningBehaviorSettings extends DynamicCommand
 		return choices;
 	}
 
-	static List< String > backendDescriptions( final ZarrBackend[] values )
+	static List< String > backendDescriptions( final OmeZarrBackend[] values )
 	{
-		return Arrays.stream( values ).map( ZarrBackend::getDescription ).collect( Collectors.toList() );
+		return Arrays.stream( values ).map( OmeZarrBackend::getDescription ).collect( Collectors.toList() );
 	}
 }

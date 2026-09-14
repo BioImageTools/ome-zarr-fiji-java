@@ -45,7 +45,7 @@ import org.scijava.prefs.PrefService;
 import ome.zarr.fijiui.open.openers.ImageJHighestResolutionOpener;
 import ome.zarr.fiji.open.OmeZarrOpenerService;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
-import ome.zarr.fijiui.open.options.ZarrBackend;
+import ome.zarr.fijiui.open.options.OmeZarrBackend;
 
 /**
  * Unit tests for the {@link OpeningBehaviorSettings#run()} method.
@@ -88,8 +88,8 @@ class OpeningBehaviorSettingsTest
 	void testBackendDescriptionsReturnsAllDescriptionsInDeclarationOrder()
 	{
 		final List< String > expected =
-				Arrays.stream( ZarrBackend.values() ).map( ZarrBackend::getDescription ).collect( Collectors.toList() );
-		final List< String > actual = OpeningBehaviorSettings.backendDescriptions( ZarrBackend.values() );
+				Arrays.stream( OmeZarrBackend.values() ).map( OmeZarrBackend::getDescription ).collect( Collectors.toList() );
+		final List< String > actual = OpeningBehaviorSettings.backendDescriptions( OmeZarrBackend.values() );
 		assertEquals( expected, actual );
 		// Anchored explicit values: these are the strings the settings dialog
 		// presents to the user, so a stealth rename should fail this test.
@@ -99,7 +99,7 @@ class OpeningBehaviorSettingsTest
 	@Test
 	void testBackendDescriptionsIsEmptyForEmptyInput()
 	{
-		assertEquals( Collections.emptyList(), OpeningBehaviorSettings.backendDescriptions( new ZarrBackend[ 0 ] ) );
+		assertEquals( Collections.emptyList(), OpeningBehaviorSettings.backendDescriptions( new OmeZarrBackend[ 0 ] ) );
 	}
 
 	/** The choice the dialog shows for the opener registered under {@code name}. */

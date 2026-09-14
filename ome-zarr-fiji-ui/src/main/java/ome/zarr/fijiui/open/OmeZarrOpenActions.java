@@ -50,7 +50,7 @@ import ome.zarr.fiji.open.OmeZarrOpenerService;
 import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
 import ome.zarr.fijiui.dialog.OmeZarrOpenActionChooser;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
-import ome.zarr.fijiui.open.options.ZarrBackend;
+import ome.zarr.fijiui.open.options.OmeZarrBackend;
 import ome.zarr.fiji.read.OmeZarrReader;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.imglib2.PyramidBackend;
@@ -195,7 +195,7 @@ public class OmeZarrOpenActions
 	private static OmeZarrReader readerFor( final URI inputUri, final Context context,
 			final OmeZarrOpeningSettings settings, final Consumer< String > errorHandler )
 	{
-		final ZarrBackend backend = settings == null ? OmeZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
+		final OmeZarrBackend backend = settings == null ? OmeZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
 		final Integer preferredMaxWidth = settings == null ? null : settings.getPreferredMaxWidth();
 		return new OmeZarrReader( inputUri, context, backend.createBackend(), preferredMaxWidth, errorHandler );
 	}

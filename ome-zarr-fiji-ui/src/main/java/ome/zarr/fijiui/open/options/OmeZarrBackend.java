@@ -37,7 +37,7 @@ import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 /**
  * The library to be used to read (write) OME-Zarr datasets.
  */
-public enum ZarrBackend
+public enum OmeZarrBackend
 {
 	/**
 	 * Backend supported via the N5 library (supports Zarr v2 and v3 through n5-zarr).
@@ -51,22 +51,22 @@ public enum ZarrBackend
 
 	private final String description;
 
-	ZarrBackend( final String description )
+	OmeZarrBackend( final String description )
 	{
 		this.description = description;
 	}
 
-	public static ZarrBackend getByName( final String name )
+	public static OmeZarrBackend getByName( final String name )
 	{
-		for ( final ZarrBackend option : values() )
+		for ( final OmeZarrBackend option : values() )
 			if ( option.name().equals( name ) )
 				return option;
 		throw new NoSuchElementException( name );
 	}
 
-	public static ZarrBackend getByDescription( final String description )
+	public static OmeZarrBackend getByDescription( final String description )
 	{
-		for ( final ZarrBackend option : values() )
+		for ( final OmeZarrBackend option : values() )
 			if ( option.description.equals( description ) )
 				return option;
 		return null;

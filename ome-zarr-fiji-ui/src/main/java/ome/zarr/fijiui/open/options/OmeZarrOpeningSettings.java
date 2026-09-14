@@ -58,7 +58,7 @@ public class OmeZarrOpeningSettings
 	 */
 	public static final int DEFAULT_PREFERRED_WIDTH = 1000;
 
-	public static final ZarrBackend DEFAULT_BACKEND = ZarrBackend.ZARR_JAVA;
+	public static final OmeZarrBackend DEFAULT_BACKEND = OmeZarrBackend.ZARR_JAVA;
 
 	/**
 	 * The chosen opener's plugin name, {@link OmeZarrOpenerService#ASK}, or
@@ -68,13 +68,13 @@ public class OmeZarrOpeningSettings
 
 	private int preferredMaxWidth;
 
-	private ZarrBackend backend;
+	private OmeZarrBackend backend;
 
 	private static final String ZARR_OPEN_BEHAVIOR_SETTING_NAME = "ZarrOpenBehavior";
 
 	private static final String ZARR_PREFERRED_WIDTH_SETTING_NAME = "ZarrPreferredWidth";
 
-	private static final String ZARR_BACKEND_SETTING_NAME = "ZarrBackend";
+	private static final String ZARR_BACKEND_SETTING_NAME = "OmeZarrBackend";
 
 	public OmeZarrOpeningSettings()
 	{
@@ -86,7 +86,7 @@ public class OmeZarrOpeningSettings
 		this( openerName, preferredMaxWidth, DEFAULT_BACKEND );
 	}
 
-	public OmeZarrOpeningSettings( final String openerName, final int preferredMaxWidth, final ZarrBackend backend )
+	public OmeZarrOpeningSettings( final String openerName, final int preferredMaxWidth, final OmeZarrBackend backend )
 	{
 		this.openerName = openerName;
 		this.preferredMaxWidth = preferredMaxWidth;
@@ -143,7 +143,7 @@ public class OmeZarrOpeningSettings
 	 *
 	 * @return the configured backend
 	 */
-	public ZarrBackend getBackend()
+	public OmeZarrBackend getBackend()
 	{
 		return backend;
 	}
@@ -153,7 +153,7 @@ public class OmeZarrOpeningSettings
 	 *
 	 * @param backend the backend to use
 	 */
-	public void setBackend( final ZarrBackend backend )
+	public void setBackend( final OmeZarrBackend backend )
 	{
 		this.backend = backend;
 	}
@@ -170,10 +170,10 @@ public class OmeZarrOpeningSettings
 				: prefs.get( OmeZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, null );
 		int preferredWidth = prefs == null ? DEFAULT_PREFERRED_WIDTH
 				: prefs.getInt( OmeZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, DEFAULT_PREFERRED_WIDTH );
-		ZarrBackend backend;
+		OmeZarrBackend backend;
 		try
 		{
-			backend = prefs == null ? DEFAULT_BACKEND : ZarrBackend.getByName(
+			backend = prefs == null ? DEFAULT_BACKEND : OmeZarrBackend.getByName(
 					prefs.get( OmeZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, DEFAULT_BACKEND.name() ) );
 		}
 		catch ( NoSuchElementException e )

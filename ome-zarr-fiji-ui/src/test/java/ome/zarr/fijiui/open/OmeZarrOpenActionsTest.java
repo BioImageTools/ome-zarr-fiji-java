@@ -106,7 +106,7 @@ import ome.zarr.fiji.open.OmeZarrOpenerService;
 import ome.zarr.fijiui.open.openers.BdvMultiResolutionOpener;
 import ome.zarr.fijiui.open.openers.ImageJHighestResolutionOpener;
 import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
-import ome.zarr.fijiui.open.options.ZarrBackend;
+import ome.zarr.fijiui.open.options.OmeZarrBackend;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.ZarrTestUtils;
@@ -114,9 +114,9 @@ import ome.zarr.ZarrTestUtils;
 class OmeZarrOpenActionsTest
 {
 
-	static Stream< ZarrBackend > backendChoices()
+	static Stream< OmeZarrBackend > backendChoices()
 	{
-		return Stream.of( ZarrBackend.N5, ZarrBackend.ZARR_JAVA );
+		return Stream.of( OmeZarrBackend.N5, OmeZarrBackend.ZARR_JAVA );
 	}
 
 	/**
@@ -127,7 +127,7 @@ class OmeZarrOpenActionsTest
 	 * {@link ome.zarr.imglib2.exceptions.MultiImageDatasetException}).
 	 */
 	private static PyramidContents< ? > readMultiscaleHeadless( final URI uri, final Context context,
-			final ZarrBackend backend )
+			final OmeZarrBackend backend )
 	{
 		final PyramidBackend pyramidBackend = backend.createBackend();
 		final OmeZarrReader opener = new OmeZarrReader( uri, context, pyramidBackend, null, error -> {} );
@@ -206,7 +206,7 @@ class OmeZarrOpenActionsTest
 
 	@ParameterizedTest
 	@MethodSource( "backendChoices" )
-	void openWithSettingsOpensV5DatasetFromHttpUri( ZarrBackend backend )
+	void openWithSettingsOpensV5DatasetFromHttpUri( OmeZarrBackend backend )
 			throws URISyntaxException, IOException, InterruptedException, InvocationTargetException
 	{
 		Path datasetRoot = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr" );
@@ -290,7 +290,7 @@ class OmeZarrOpenActionsTest
 		{
 			OmeZarrReader opener = OmeZarrOpenActions.defaultOpener( path.toUri(), context );
 
-			assertEquals( ZarrBackend.ZARR_JAVA, OmeZarrOpeningSettings.DEFAULT_BACKEND );
+			assertEquals( OmeZarrBackend.ZARR_JAVA, OmeZarrOpeningSettings.DEFAULT_BACKEND );
 			assertInstanceOf( ZarrJavaPyramidBackend.class, backendOf( opener ) );
 
 			// The wired backend also has to be usable, not just of the right type.
@@ -534,7 +534,7 @@ class OmeZarrOpenActionsTest
 
 	@ParameterizedTest
 	@MethodSource( "backendChoices" )
-	void openImageFromS3( final ZarrBackend backend )
+	void openImageFromS3( final OmeZarrBackend backend )
 	{
 		try (Context context = new Context())
 		{
@@ -546,7 +546,7 @@ class OmeZarrOpenActionsTest
 	@ParameterizedTest
 	@MethodSource( "backendChoices" )
 	@SuppressWarnings( "java:S1612" )
-	void storeAccessErrorIsReportedToErrorHandler( final ZarrBackend backend )
+	void storeAccessErrorIsReportedToErrorHandler( final OmeZarrBackend backend )
 	{
 		try (Context context = new Context())
 		{
