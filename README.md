@@ -147,15 +147,18 @@ settings, and can be made the default. All it takes is a SciJava plugin implemen
 `ome.zarr:ome-zarr-fiji`:
 
 ```java
-@Plugin( type = ZarrOpener.class, name = "my-opener", label = "My viewer",
-         iconPath = "/icons/my-opener.png", priority = Priority.VERY_HIGH )
+
+@Plugin(
+		type = ZarrOpener.class, name = "my-opener", label = "My viewer",
+		iconPath = "/icons/my-opener.png", priority = Priority.VERY_HIGH
+)
 public class MyZarrOpener implements ZarrOpener
 {
-    @Override
-    public void open( final ZarrOpenRequest request )
-    {
-        MyViewer.open( request.uri() );
-    }
+	@Override
+	public void open( final ZarrOpenRequest request )
+	{
+		MyViewer.open( request.uri() );
+	}
 }
 ```
 
@@ -231,6 +234,9 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 
 * There are some OME-Zarr example datasets in the image data repository. You can download them
   from [here](https://idr.github.io/ome-ngff-samples/) to your local machine to test the drag & drop.
+* A zipped OME-Zarr archive (`.ozx`, 38 MB): [6001240.ozx](https://static.webknossos.org/misc/6001240.ozx).
+  Open it with `File -> Import -> OME-Zarr Archive (.ozx)...`, or drag & drop the downloaded file. Archives are
+  read by the zarr-java backend only.
 
 # Availability
 
