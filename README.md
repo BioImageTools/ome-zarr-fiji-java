@@ -6,7 +6,7 @@
 
 <img align="right" width="200" src="doc/logo/logo.png" alt="OME-Zarr for Fiji logo">
 
-## Table of contents
+### Table of contents
 
 - [About](#about)
 - [Features](#features)
