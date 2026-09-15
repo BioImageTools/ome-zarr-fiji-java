@@ -211,7 +211,7 @@ public class OmeZarr
 	// returned PyramidContents; making this generic would push the
 	// wildcard onto every use site.
 	@SuppressWarnings( "java:S1452" )
-	public PyramidContents< ? > contents()
+	public PyramidContents< ? > readContents()
 	{
 		if ( cachedContents == null )
 		{
@@ -263,7 +263,7 @@ public class OmeZarr
 	{
 		return openPyramidImage(
 				() -> {
-					final PyramidContents< ? > contents = contents();
+					final PyramidContents< ? > contents = readContents();
 					if ( uncalibratedAndDeclined( contents ) )
 						return null;
 					final int suggestedLevel = contents.suggestResolutionLevel( preferredMaxWidth );
@@ -344,7 +344,7 @@ public class OmeZarr
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidContents< ? > contents = contents();
+						final PyramidContents< ? > contents = readContents();
 						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
 							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels() );
 						if ( uncalibratedAndDeclined( contents ) )
@@ -367,14 +367,18 @@ public class OmeZarr
 	 * {@code Dataset} output.
 	 * <p>
 	 * The resolution level is the one the preferred width selects.
+	 * <p>
+	 * Unlike {@link #readContents()}, which caches, this builds a fresh
+	 * {@link PyramidalDataset} on every call — around the same cached contents, so
+	 * only the first call reads the store.
 	 *
 	 * @return the dataset, or {@code null} if reading failed with an exception whose message is forwarded to {@link #errorHandler()}
 	 */
-	public PyramidalDataset asPyramidalDataset()
+	public PyramidalDataset readPyramidalDataset()
 	{
 		return openPyramidImage(
 				() -> {
-					final PyramidContents< ? > contents = contents();
+					final PyramidContents< ? > contents = readContents();
 					final int suggestedLevel = contents.suggestResolutionLevel( preferredMaxWidth );
 					if ( suggestedLevel != PyramidContents.NO_MATCHING_LEVEL )
 						return new PyramidalDataset( context, contents, suggestedLevel );
@@ -448,9 +452,9 @@ public class OmeZarr
 	{
 		return openPyramidImage(
 				() -> {
-					if ( uncalibratedAndDeclined( contents() ) )
+					if ( uncalibratedAndDeclined( readContents() ) )
 						return null;
-					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, contents() );
+					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, readContents() );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 					final BdvHandle result = BdvUtils.showBdvAndRegisterWindow( pyramidal, pyramidalService );
 					logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );

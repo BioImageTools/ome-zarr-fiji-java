@@ -83,13 +83,13 @@ class OmeZarrTest
 
 	@ParameterizedTest
 	@MethodSource( "backends" )
-	void contentsLoadsWithChosenBackend( PyramidBackend backend ) throws Exception
+	void readContentsLoadsWithChosenBackend( PyramidBackend backend ) throws Exception
 	{
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
 			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend, null );
-			PyramidContents< ? > contents = omeZarr.contents();
+			PyramidContents< ? > contents = omeZarr.readContents();
 			assertNotNull( contents );
 			assertEquals( 2, contents.numResolutionLevels() );
 			assertEquals( 3, contents.numChannels() );
