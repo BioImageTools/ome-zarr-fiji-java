@@ -42,7 +42,7 @@ import ij.IJ;
 /**
  * File &gt; Import menu entry for opening a zipped OME-Zarr archive, a single
  * {@code .ozx} file; {@link OpenOmeZarrCommand} opens the folder form. It then
- * follows the user's {@link ome.zarr.fijiui.open.options.ZarrOpeningSettings}
+ * follows the user's {@link ome.zarr.fijiui.open.options.OmeZarrOpeningSettings}
  * like the other entry points, so the same open behavior, resolution and reader
  * backend apply.
  * <p>
@@ -83,7 +83,7 @@ public class OpenOmeZarrArchiveCommand implements Command
 	 */
 	static boolean open( final File archive, final Context context, final Consumer< String > errorHandler )
 	{
-		return OmeZarrOpener.open( archive, context, errorHandler, "archive" );
+		return FileImportHelper.open( archive, context, errorHandler, "archive" );
 	}
 
 	/**
@@ -95,6 +95,6 @@ public class OpenOmeZarrArchiveCommand implements Command
 	 */
 	static String validate( final File archive )
 	{
-		return OmeZarrOpener.validate( archive, "archive" );
+		return FileImportHelper.validate( archive, "archive" );
 	}
 }

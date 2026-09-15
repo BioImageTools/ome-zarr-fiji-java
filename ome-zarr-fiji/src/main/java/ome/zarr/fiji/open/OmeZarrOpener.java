@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,6 +31,8 @@ package ome.zarr.fiji.open;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
+import ome.zarr.fiji.read.OmeZarr;
+
 /**
  * Something that can open an OME-Zarr location — the extension point a Fiji
  * plugin implements to appear next to ImageJ and BigDataViewer wherever this
@@ -40,15 +42,15 @@ import org.scijava.plugin.SciJavaPlugin;
  * annotation on a class in your own jar:
  *
  * <pre>
- * &#64;Plugin( type = ZarrOpener.class, name = "my-opener", label = "My viewer",
+ * &#64;Plugin( type = OmeZarrOpener.class, name = "my-opener", label = "My viewer",
  *          description = "Open the OME-Zarr in My viewer",
  *          iconPath = "/icons/my-opener.png", priority = Priority.VERY_HIGH )
- * public class MyZarrOpener implements ZarrOpener
+ * public class MyOmeZarrOpener implements OmeZarrOpener
  * {
  *     &#64;Override
- *     public void open( final ZarrOpenRequest request )
+ *     public void open( final OmeZarr omeZarr )
  *     {
- *         MyViewer.open( request.uri() );
+ *         MyViewer.open( omeZarr.uri() );
  *     }
  * }
  * </pre>
@@ -61,20 +63,25 @@ import org.scijava.plugin.SciJavaPlugin;
  * never configured a choice gets — an explicit choice always wins, and the
  * openers shipped here sit at {@link org.scijava.Priority#HIGH} and below.
  *
- * @see ZarrOpenerService
+ * @see OmeZarrOpenerService
  */
-public interface ZarrOpener extends SciJavaPlugin
+public interface OmeZarrOpener extends SciJavaPlugin
 {
 	/**
-	 * Opens the requested location. Called on a background thread, never on the
-	 * AWT event dispatch thread, so it may read and block.<br>
-	 * Failures are the opener's own to report,
-	 * through {@link ZarrOpenRequest#errorHandler()}: an exception thrown from
-	 * here is logged by the caller but never shown to the user.
+	 * Opens the location {@code omeZarr} is configured for. Called on a background
+	 * thread, never on the AWT event dispatch thread, so it may read and block.
+	 * <p>
+	 * An opener that brings its own reading code needs only {@link OmeZarr#uri()}
+	 * and can ignore the rest.
+	 * <br>
+	 * Failures are the opener's own to report, through
+	 * {@link OmeZarr#errorHandler()}.
 	 *
-	 * @param request the location to open and the settings to open it with
+	 * @param omeZarr the dataset to open, together with the settings to open it
+	 *   with — it is the target of this call, not a collaborator the opener has
+	 *   to drive
 	 */
-	void open( ZarrOpenRequest request );
+	void open( OmeZarr omeZarr );
 
 	/**
 	 * The tooltip for this opener's button in the selection dialog, when the
@@ -82,11 +89,11 @@ public interface ZarrOpener extends SciJavaPlugin
 	 * enough — for an opener that names the script or the viewer it is currently
 	 * configured for, say.
 	 *
-	 * @param request the request the dialog was raised for
+	 * @param omeZarr the OME-Zarr the dialog was raised for
 	 * @return the tooltip text, or {@code null} to use the annotation's
 	 *   {@code description}
 	 */
-	default String tooltip( final ZarrOpenRequest request )
+	default String tooltip( final OmeZarr omeZarr )
 	{
 		return null;
 	}

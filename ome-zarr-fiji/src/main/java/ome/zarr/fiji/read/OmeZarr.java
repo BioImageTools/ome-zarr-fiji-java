@@ -61,23 +61,23 @@ import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
 
 /**
- * Backend-agnostic reader for OME-Zarr datasets.
+ * Backend-agnostic handle on an OME-Zarr dataset.
  * Given a {@link URI} location, a {@link PyramidBackend} and an optional
  * preferred resolution width, it reads a {@link PyramidContents} and
  * opens it in ImageJ (as a {@link PyramidalDataset}) or in BigDataViewer (as a
  * {@link PyramidalBdv}, registered in both cases with the {@link PyramidalService} lifecycle).
  * <p>
- * The preferred width applies to {@link #openIJWithImage()} only, which shows one
+ * The preferred width applies to {@link #showInImageJ()} only, which shows one
  * resolution level at a time: it picks that level and, when not even the coarsest
  * one is narrow enough, asks the user for confirmation before opening it anyway.
- * {@link #openIJWithImage(int)} opens the level its caller named, and
+ * {@link #showInImageJ(int)} opens the level its caller named, and
  * BigDataViewer displays all levels and streams them lazily.
  * <p>
  * Independently of the width, every display path refuses to show an image whose
  * calibration is a placeholder ({@link PyramidContents#hasPlaceholderCalibration})
  * unless the user confirms.
  */
-public class ZarrReader
+public class OmeZarr
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -100,20 +100,20 @@ public class ZarrReader
 	private PyramidContents< ? > cachedContents;
 
 	/**
-	 * Reader for {@code inputUri} with an explicit backend.
+	 * The OME-Zarr at {@code inputUri} with an explicit backend.
 	 * Will select highest resolution level und report failures via {@code IJ::error}.
 	 *
 	 * @param inputUri the location of the OME-Zarr dataset
 	 * @param context the SciJava context to get services from
 	 * @param backend the backend used to read the dataset
 	 */
-	public ZarrReader( final URI inputUri, final Context context, final PyramidBackend backend )
+	public OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend )
 	{
 		this( inputUri, context, backend, null );
 	}
 
 	/**
-	 * Reader for {@code inputUri} with an explicit backend and preferred
+	 * The OME-Zarr at {@code inputUri} with an explicit backend and preferred
 	 * resolution, reporting failures via {@code IJ::error}.
 	 *
 	 * @param inputUri the location of the OME-Zarr dataset
@@ -122,31 +122,35 @@ public class ZarrReader
 	 * @param preferredMaxWidth the highest-resolution level that is still no wider
 	 *   than this will be selected, or {@code null} for the highest resolution
 	 */
-	public ZarrReader( final URI inputUri, final Context context, final PyramidBackend backend,
+	public OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth )
 	{
 		this( inputUri, context, backend, preferredMaxWidth, IJ::error );
 	}
 
 	/**
-	 * Reader for {@code inputUri} with an explicit backend, preferred
+	 * The OME-Zarr at {@code inputUri} with an explicit backend, preferred
 	 * resolution, and error sink.
 	 *
+	 * @param inputUri the location of the OME-Zarr dataset
+	 * @param context the SciJava context to get services from
 	 * @param backend the backend used to read the dataset
 	 * @param preferredMaxWidth the highest-resolution level that is still no wider
 	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
 	 * @param errorHandler receives a user-facing message when opening fails
 	 */
-	public ZarrReader( final URI inputUri, final Context context, final PyramidBackend backend,
+	public OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth, final Consumer< String > errorHandler )
 	{
-		this( inputUri, context, backend, preferredMaxWidth, errorHandler, ZarrReader::confirmWithDialog );
+		this( inputUri, context, backend, preferredMaxWidth, errorHandler, OmeZarr::confirmWithDialog );
 	}
 
 	/**
-	 * Reader for {@code inputUri} with an explicit backend, preferred resolution,
+	 * The OME-Zarr at {@code inputUri} with an explicit backend, preferred resolution,
 	 * error sink, and open-anyway confirmation.
 	 *
+	 * @param inputUri the location of the OME-Zarr dataset
+	 * @param context the SciJava context to get services from
 	 * @param backend the backend used to read the dataset
 	 * @param preferredMaxWidth the highest-resolution level that is still no wider
 	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
@@ -156,7 +160,7 @@ public class ZarrReader
 	 *   Pass a non-interactive implementation for headless use — the default shows a
 	 *   modal (modified) {@link YesNoCancelDialog}.
 	 */
-	public ZarrReader( final URI inputUri, final Context context, final PyramidBackend backend,
+	public OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth, final Consumer< String > errorHandler,
 			final Predicate< String > openAnywayConfirmation )
 	{
@@ -169,6 +173,36 @@ public class ZarrReader
 	}
 
 	/**
+	 * @return the OME-Zarr location this was configured for
+	 */
+	public URI uri()
+	{
+		return inputUri;
+	}
+
+	/**
+	 * @return the SciJava context this gets its services from
+	 */
+	public Context context()
+	{
+		return context;
+	}
+
+	/**
+	 * The sink this reports failures through.
+	 * <ul>
+	 *     <li>{@code IJ::error} for the interactive paths</li>
+	 *     <li>a capturing handler in tests and headless callers</li>
+	 * </ul>
+	 *
+	 * @return the sink for user-facing messages when opening fails
+	 */
+	public Consumer< String > errorHandler()
+	{
+		return errorHandler;
+	}
+
+	/**
 	 * Reads (once, then caches) the {@link PyramidContents} for the configured
 	 * location using the configured {@link PyramidBackend}.
 	 */
@@ -177,7 +211,7 @@ public class ZarrReader
 	// returned PyramidContents; making this generic would push the
 	// wildcard onto every use site.
 	@SuppressWarnings( "java:S1452" )
-	public PyramidContents< ? > getContents()
+	public PyramidContents< ? > readContents()
 	{
 		if ( cachedContents == null )
 		{
@@ -225,11 +259,11 @@ public class ZarrReader
 	 *   failed or the user declined to open the image
 	 */
 	// NB: the return value is for API and script users
-	public PyramidalDataset openIJWithImage()
+	public PyramidalDataset showInImageJ()
 	{
 		return openPyramidImage(
 				() -> {
-					final PyramidContents< ? > contents = getContents();
+					final PyramidContents< ? > contents = readContents();
 					if ( uncalibratedAndDeclined( contents ) )
 						return null;
 					final int suggestedLevel = contents.suggestResolutionLevel( preferredMaxWidth );
@@ -304,13 +338,13 @@ public class ZarrReader
 	 *   failed, the level does not exist, or the user declined to open the image
 	 */
 	// NB: the return value is for API and script users
-	public PyramidalDataset openIJWithImage( final int resolutionLevel )
+	public PyramidalDataset showInImageJ( final int resolutionLevel )
 	{
 		try
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidContents< ? > contents = getContents();
+						final PyramidContents< ? > contents = readContents();
 						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
 							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels() );
 						if ( uncalibratedAndDeclined( contents ) )
@@ -333,14 +367,18 @@ public class ZarrReader
 	 * {@code Dataset} output.
 	 * <p>
 	 * The resolution level is the one the preferred width selects.
+	 * <p>
+	 * Unlike {@link #readContents()}, which caches, this builds a fresh
+	 * {@link PyramidalDataset} on every call — around the same cached contents, so
+	 * only the first call reads the store.
 	 *
-	 * @return the dataset, or {@code null} if reading failed
+	 * @return the dataset, or {@code null} if reading failed with an exception whose message is forwarded to {@link #errorHandler()}
 	 */
-	public PyramidalDataset getPyramidalDataset()
+	public PyramidalDataset readPyramidalDataset()
 	{
 		return openPyramidImage(
 				() -> {
-					final PyramidContents< ? > contents = getContents();
+					final PyramidContents< ? > contents = readContents();
 					final int suggestedLevel = contents.suggestResolutionLevel( preferredMaxWidth );
 					if ( suggestedLevel != PyramidContents.NO_MATCHING_LEVEL )
 						return new PyramidalDataset( context, contents, suggestedLevel );
@@ -410,13 +448,13 @@ public class ZarrReader
 	 *   the user declined to open the image
 	 */
 	// NB: the return value is for API and script users
-	public BdvHandle openBDVWithImage()
+	public BdvHandle showInBdv()
 	{
 		return openPyramidImage(
 				() -> {
-					if ( uncalibratedAndDeclined( getContents() ) )
+					if ( uncalibratedAndDeclined( readContents() ) )
 						return null;
-					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, getContents() );
+					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, readContents() );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 					final BdvHandle result = BdvUtils.showBdvAndRegisterWindow( pyramidal, pyramidalService );
 					logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );

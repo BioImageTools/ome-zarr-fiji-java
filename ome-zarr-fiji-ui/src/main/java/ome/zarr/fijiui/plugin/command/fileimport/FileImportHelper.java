@@ -33,7 +33,7 @@ import java.util.function.Consumer;
 
 import org.scijava.Context;
 
-import ome.zarr.fijiui.open.ZarrOpenActions;
+import ome.zarr.fijiui.open.OmeZarrOpenActions;
 import ome.zarr.imglib2.ZarrUtils;
 
 /**
@@ -44,9 +44,9 @@ import ome.zarr.imglib2.ZarrUtils;
  * They are two commands, and not one, because a Swing file chooser browses
  * either folders or files – never both.
  */
-final class OmeZarrOpener
+final class FileImportHelper
 {
-	private OmeZarrOpener()
+	private FileImportHelper()
 	{
 		// prevent instantiation
 	}
@@ -74,7 +74,7 @@ final class OmeZarrOpener
 				errorHandler.accept( error );
 			return false;
 		}
-		ZarrOpenActions.openWithSettings( location.toURI(), context );
+		OmeZarrOpenActions.openWithSettings( location.toURI(), context );
 		return true;
 	}
 

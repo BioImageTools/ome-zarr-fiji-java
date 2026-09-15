@@ -69,7 +69,7 @@ public class CreateIcon
 	/**
 	 * Loads an image from an already resolved URL and scales it to 32x32 pixels.
 	 * This is the entry point for icons that come from another jar, as a
-	 * third-party {@link ome.zarr.fiji.open.ZarrOpener}'s does: its
+	 * third-party {@link ome.zarr.fiji.open.OmeZarrOpener}'s does: its
 	 * {@code iconPath} is resolved by SciJava against the contributing class, so
 	 * only the resulting URL reaches us.
 	 *

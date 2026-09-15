@@ -46,16 +46,16 @@ import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ome.zarr.fiji.open.ZarrOpener;
-import ome.zarr.fiji.open.ZarrOpenerService;
-import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
-import ome.zarr.fijiui.open.options.ZarrBackend;
+import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fiji.open.OmeZarrOpenerService;
+import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
+import ome.zarr.fijiui.open.options.OmeZarrBackend;
 
 /**
  * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.
  * <p>
  * The list of choices is not fixed: it is one entry per registered
- * {@link ZarrOpener} — including those contributed by other Fiji plugins — plus
+ * {@link OmeZarrOpener} — including those contributed by other Fiji plugins — plus
  * the "ask me" entry that opens the selection dialog instead.
  */
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Settings > Opening Behavior Settings", initializer = "init" )
@@ -65,7 +65,7 @@ public class OpeningBehaviorSettings extends DynamicCommand
 
 	private static final Integer WIDTH = 20;
 
-	/** The choice that stands for {@link ZarrOpenerService#ASK} rather than for an opener. */
+	/** The choice that stands for {@link OmeZarrOpenerService#ASK} rather than for an opener. */
 	static final String ASK_LABEL = "Ask me every time";
 
 	@SuppressWarnings( "all" )
@@ -74,7 +74,7 @@ public class OpeningBehaviorSettings extends DynamicCommand
 
 	@SuppressWarnings( "all" )
 	@Parameter
-	private ZarrOpenerService openerService;
+	private OmeZarrOpenerService openerService;
 
 	@SuppressWarnings( "all" )
 	@Parameter( visibility = ItemVisibility.MESSAGE, required = false, persist = false )
@@ -104,7 +104,7 @@ public class OpeningBehaviorSettings extends DynamicCommand
 			+ "</html>";
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Reader backend", description = "Choose which library is used to read OME-Zarr datasets", initializer = "initZarrBackends" )
+	@Parameter( label = "Reader backend", description = "Choose which library is used to read OME-Zarr datasets", initializer = "initOmeZarrBackends" )
 	private String readerBackend;
 
 	@SuppressWarnings( "all" )
@@ -116,9 +116,9 @@ public class OpeningBehaviorSettings extends DynamicCommand
 			+ "</body>"
 			+ "</html>";
 
-	private ZarrOpeningSettings settings;
+	private OmeZarrOpeningSettings settings;
 
-	/** Shown choice to the opener name (or {@link ZarrOpenerService#ASK}) it stands for. */
+	/** Shown choice to the opener name (or {@link OmeZarrOpenerService#ASK}) it stands for. */
 	private Map< String, String > choices;
 
 	@Override
@@ -130,7 +130,7 @@ public class OpeningBehaviorSettings extends DynamicCommand
 		else
 			settings.setOpenerName( openerName );
 		settings.setPreferredMaxWidth( preferredWidth );
-		settings.setBackend( ZarrBackend.getByDescription( readerBackend ) );
+		settings.setBackend( OmeZarrBackend.getByDescription( readerBackend ) );
 		logger.debug( "Now saving OME-Zarr settings to user preferences. Opener: {}, preferredWidth: {}, readerBackend: {}",
 				settings.getOpenerName(), preferredWidth, settings.getBackend() );
 		settings.saveSettingsToPreferences( prefService );
@@ -139,7 +139,7 @@ public class OpeningBehaviorSettings extends DynamicCommand
 	@SuppressWarnings( "unused" )
 	private void init()
 	{
-		settings = ZarrOpeningSettings.loadSettingsFromPreferences( prefService );
+		settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 		defaultOpener = choiceFor( openerService.effectiveOpenerName( settings.getOpenerName() ) );
 		preferredWidth = settings.getPreferredMaxWidth();
 		readerBackend = settings.getBackend().getDescription();
@@ -152,10 +152,10 @@ public class OpeningBehaviorSettings extends DynamicCommand
 	}
 
 	@SuppressWarnings( "unused" )
-	private void initZarrBackends()
+	private void initOmeZarrBackends()
 	{
 		getInfo().getMutableInput( "readerBackend", String.class )
-				.setChoices( backendDescriptions( ZarrBackend.values() ) );
+				.setChoices( backendDescriptions( OmeZarrBackend.values() ) );
 	}
 
 	/**
@@ -181,21 +181,21 @@ public class OpeningBehaviorSettings extends DynamicCommand
 		return fallback;
 	}
 
-	static Map< String, String > openerChoices( final List< PluginInfo< ZarrOpener > > infos )
+	static Map< String, String > openerChoices( final List< PluginInfo< OmeZarrOpener > > infos )
 	{
 		final Map< String, String > choices = new LinkedHashMap<>();
-		for ( final PluginInfo< ZarrOpener > info : infos )
+		for ( final PluginInfo< OmeZarrOpener > info : infos )
 		{
-			final String name = ZarrOpenerService.nameOf( info );
-			final String label = ZarrOpenerService.labelOf( info );
+			final String name = OmeZarrOpenerService.nameOf( info );
+			final String label = OmeZarrOpenerService.labelOf( info );
 			choices.put( choices.containsKey( label ) ? label + " [" + name + "]" : label, name );
 		}
-		choices.put( ASK_LABEL, ZarrOpenerService.ASK );
+		choices.put( ASK_LABEL, OmeZarrOpenerService.ASK );
 		return choices;
 	}
 
-	static List< String > backendDescriptions( final ZarrBackend[] values )
+	static List< String > backendDescriptions( final OmeZarrBackend[] values )
 	{
-		return Arrays.stream( values ).map( ZarrBackend::getDescription ).collect( Collectors.toList() );
+		return Arrays.stream( values ).map( OmeZarrBackend::getDescription ).collect( Collectors.toList() );
 	}
 }

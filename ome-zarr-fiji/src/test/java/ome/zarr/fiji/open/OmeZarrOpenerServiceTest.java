@@ -44,57 +44,59 @@ import org.scijava.Priority;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.plugin.PluginService;
 
+import ome.zarr.fiji.read.OmeZarr;
+
 /**
- * Unit tests for {@link ZarrOpenerService}. The openers are added to the
+ * Unit tests for {@link OmeZarrOpenerService}. The openers are added to the
  * context programmatically rather than through the annotation index: this module
  * deliberately ships none of its own, so the registry is empty here unless a
  * test fills it.
  */
-class ZarrOpenerServiceTest
+class OmeZarrOpenerServiceTest
 {
 	private static final URI URI_UNDER_TEST = URI.create( "file:/tmp/does-not-need-to-exist.ome.zarr" );
 
 	/** Records that it ran, without reading anything. */
-	public static class RecordingOpener implements ZarrOpener
+	public static class RecordingOpener implements OmeZarrOpener
 	{
 		static int opened;
 
 		@Override
-		public void open( final ZarrOpenRequest request )
+		public void open( final OmeZarr omeZarr )
 		{
 			opened++;
 		}
 	}
 
 	/** Stands in for a third-party opener that throws on its own. */
-	public static class FailingOpener implements ZarrOpener
+	public static class FailingOpener implements OmeZarrOpener
 	{
 		@Override
-		public void open( final ZarrOpenRequest request )
+		public void open( final OmeZarr omeZarr )
 		{
 			throw new IllegalStateException( "deliberate failure" );
 		}
 
 		@Override
-		public String tooltip( final ZarrOpenRequest request )
+		public String tooltip( final OmeZarr omeZarr )
 		{
-			return "tooltip for " + request.uri();
+			return "tooltip for " + omeZarr.uri();
 		}
 	}
 
-	private static PluginInfo< ZarrOpener > register( final Context context,
-			final Class< ? extends ZarrOpener > openerClass, final String name, final double priority )
+	private static PluginInfo< OmeZarrOpener > register( final Context context,
+			final Class< ? extends OmeZarrOpener > openerClass, final String name, final double priority )
 	{
-		final PluginInfo< ZarrOpener > info = new PluginInfo<>( openerClass, ZarrOpener.class );
+		final PluginInfo< OmeZarrOpener > info = new PluginInfo<>( openerClass, OmeZarrOpener.class );
 		info.setName( name );
 		info.setPriority( priority );
 		context.getService( PluginService.class ).addPlugin( info );
 		return info;
 	}
 
-	private static ZarrOpenRequest requestFor( final Context context )
+	private static OmeZarr omeZarrFor( final Context context )
 	{
-		return new ZarrOpenRequest( URI_UNDER_TEST, context, null, null, message -> {} );
+		return new OmeZarr( URI_UNDER_TEST, context, null, null, message -> {} );
 	}
 
 	@Test
@@ -102,7 +104,7 @@ class ZarrOpenerServiceTest
 	{
 		try (Context context = new Context())
 		{
-			final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
+			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 			// Nothing registered: there is nothing to fall back to either.
 			assertTrue( openerService.getOpenerInfos().isEmpty() );
 			assertNull( openerService.effectiveOpenerName( null ) );
@@ -118,7 +120,7 @@ class ZarrOpenerServiceTest
 					"An explicit choice wins over priority" );
 			assertEquals( "uninstalled", openerService.effectiveOpenerName( "uninstalled" ),
 					"A name whose opener is gone is reported, not silently replaced" );
-			assertEquals( ZarrOpenerService.ASK, openerService.effectiveOpenerName( ZarrOpenerService.ASK ) );
+			assertEquals( OmeZarrOpenerService.ASK, openerService.effectiveOpenerName( OmeZarrOpenerService.ASK ) );
 		}
 	}
 
@@ -127,14 +129,14 @@ class ZarrOpenerServiceTest
 	{
 		try (Context context = new Context())
 		{
-			final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
+			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 			register( context, RecordingOpener.class, "low", Priority.LOW );
 			register( context, FailingOpener.class, "high", Priority.HIGH );
 
-			final List< PluginInfo< ZarrOpener > > infos = openerService.getOpenerInfos();
+			final List< PluginInfo< OmeZarrOpener > > infos = openerService.getOpenerInfos();
 			assertEquals( 2, infos.size() );
-			assertEquals( "high", ZarrOpenerService.nameOf( infos.get( 0 ) ) );
-			assertEquals( "low", ZarrOpenerService.nameOf( infos.get( 1 ) ) );
+			assertEquals( "high", OmeZarrOpenerService.nameOf( infos.get( 0 ) ) );
+			assertEquals( "low", OmeZarrOpenerService.nameOf( infos.get( 1 ) ) );
 		}
 	}
 
@@ -143,12 +145,12 @@ class ZarrOpenerServiceTest
 	{
 		try (Context context = new Context())
 		{
-			final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
-			final PluginInfo< ZarrOpener > info = register( context, RecordingOpener.class, "recording", Priority.NORMAL );
+			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
+			final PluginInfo< OmeZarrOpener > info = register( context, RecordingOpener.class, "recording", Priority.NORMAL );
 
 			assertSame( info, openerService.getOpenerInfo( "recording" ) );
 			assertNull( openerService.getOpenerInfo( null ) );
-			assertNull( openerService.getOpenerInfo( ZarrOpenerService.ASK ),
+			assertNull( openerService.getOpenerInfo( OmeZarrOpenerService.ASK ),
 					"The ask sentinel is not an opener" );
 			assertNull( openerService.getOpenerInfo( "uninstalled" ) );
 		}
@@ -159,14 +161,14 @@ class ZarrOpenerServiceTest
 	{
 		try (Context context = new Context())
 		{
-			final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
+			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 			register( context, RecordingOpener.class, "recording", Priority.NORMAL );
 			RecordingOpener.opened = 0;
 
-			assertTrue( openerService.open( "recording", requestFor( context ) ) );
+			assertTrue( openerService.open( "recording", omeZarrFor( context ) ) );
 			assertEquals( 1, RecordingOpener.opened );
 
-			assertFalse( openerService.open( "uninstalled", requestFor( context ) ),
+			assertFalse( openerService.open( "uninstalled", omeZarrFor( context ) ),
 					"An unknown name opens nothing and says so" );
 			assertEquals( 1, RecordingOpener.opened );
 		}
@@ -177,10 +179,10 @@ class ZarrOpenerServiceTest
 	{
 		try (Context context = new Context())
 		{
-			final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
+			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 			register( context, FailingOpener.class, "failing", Priority.NORMAL );
 
-			assertDoesNotThrow( () -> openerService.open( "failing", requestFor( context ) ) );
+			assertDoesNotThrow( () -> openerService.open( "failing", omeZarrFor( context ) ) );
 		}
 	}
 
@@ -189,28 +191,28 @@ class ZarrOpenerServiceTest
 	{
 		try (Context context = new Context())
 		{
-			final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
-			final ZarrOpenRequest request = requestFor( context );
+			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
+			final OmeZarr omeZarr = omeZarrFor( context );
 
 			// Neither label nor description given, so both fall back to the name.
-			final PluginInfo< ZarrOpener > bare = register( context, RecordingOpener.class, "bare", Priority.NORMAL );
-			assertEquals( "bare", ZarrOpenerService.labelOf( bare ) );
-			assertEquals( "bare", ZarrOpenerService.descriptionOf( bare ) );
-			assertEquals( "bare", openerService.tooltipOf( bare, request ),
+			final PluginInfo< OmeZarrOpener > bare = register( context, RecordingOpener.class, "bare", Priority.NORMAL );
+			assertEquals( "bare", OmeZarrOpenerService.labelOf( bare ) );
+			assertEquals( "bare", OmeZarrOpenerService.descriptionOf( bare ) );
+			assertEquals( "bare", openerService.tooltipOf( bare, omeZarr ),
 					"Without a dynamic tooltip the description is used" );
 
 			bare.setLabel( "Bare opener" );
-			assertEquals( "Bare opener", ZarrOpenerService.descriptionOf( bare ),
+			assertEquals( "Bare opener", OmeZarrOpenerService.descriptionOf( bare ),
 					"A missing description falls back to the label" );
 			bare.setDescription( "Opens bare things" );
-			assertEquals( "Opens bare things", ZarrOpenerService.descriptionOf( bare ) );
+			assertEquals( "Opens bare things", OmeZarrOpenerService.descriptionOf( bare ) );
 
 			// An unnamed opener is still identifiable, by its class name.
-			final PluginInfo< ZarrOpener > unnamed = new PluginInfo<>( RecordingOpener.class, ZarrOpener.class );
-			assertEquals( RecordingOpener.class.getName(), ZarrOpenerService.nameOf( unnamed ) );
+			final PluginInfo< OmeZarrOpener > unnamed = new PluginInfo<>( RecordingOpener.class, OmeZarrOpener.class );
+			assertEquals( RecordingOpener.class.getName(), OmeZarrOpenerService.nameOf( unnamed ) );
 
-			final PluginInfo< ZarrOpener > failing = register( context, FailingOpener.class, "failing", Priority.LOW );
-			assertEquals( "tooltip for " + URI_UNDER_TEST, openerService.tooltipOf( failing, request ),
+			final PluginInfo< OmeZarrOpener > failing = register( context, FailingOpener.class, "failing", Priority.LOW );
+			assertEquals( "tooltip for " + URI_UNDER_TEST, openerService.tooltipOf( failing, omeZarr ),
 					"A dynamic tooltip wins over the static description" );
 		}
 	}
@@ -220,8 +222,8 @@ class ZarrOpenerServiceTest
 	{
 		try (Context context = new Context())
 		{
-			final ZarrOpenerService openerService = context.getService( ZarrOpenerService.class );
-			final PluginInfo< ZarrOpener > info = register( context, RecordingOpener.class, "recording", Priority.NORMAL );
+			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
+			final PluginInfo< OmeZarrOpener > info = register( context, RecordingOpener.class, "recording", Priority.NORMAL );
 			info.setEnabled( false );
 
 			assertTrue( openerService.getOpenerInfos().isEmpty() );
@@ -234,7 +236,7 @@ class ZarrOpenerServiceTest
 	{
 		try (Context context = new Context())
 		{
-			assertSame( ZarrOpener.class, context.getService( ZarrOpenerService.class ).getPluginType() );
+			assertSame( OmeZarrOpener.class, context.getService( OmeZarrOpenerService.class ).getPluginType() );
 		}
 	}
 }

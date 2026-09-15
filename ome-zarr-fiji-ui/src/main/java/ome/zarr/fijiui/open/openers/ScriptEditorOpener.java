@@ -31,9 +31,9 @@ package ome.zarr.fijiui.open.openers;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
-import ome.zarr.fiji.open.ZarrOpenRequest;
-import ome.zarr.fiji.open.ZarrOpener;
-import ome.zarr.fijiui.open.ZarrOpenActions;
+import ome.zarr.fiji.read.OmeZarr;
+import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fijiui.open.OmeZarrOpenActions;
 import ome.zarr.fijiui.util.ScriptUtils;
 
 /**
@@ -41,25 +41,25 @@ import ome.zarr.fijiui.util.ScriptUtils;
  * example) with the location handed in as the {@code path} variable, so the
  * dataset can be opened from a macro or script instead of by hand.
  */
-@Plugin( type = ZarrOpener.class, name = ScriptEditorOpener.NAME,
+@Plugin( type = OmeZarrOpener.class, name = ScriptEditorOpener.NAME,
 		label = "Script editor",
 		description = "Open the OME-Zarr in the script editor, using your preset script",
 		iconPath = "/ome/zarr/fijiui/dialog/script_icon.png", priority = Priority.LOW - 2 )
-public class ScriptEditorOpener implements ZarrOpener
+public class ScriptEditorOpener implements OmeZarrOpener
 {
 	/** The stable identifier this opener is persisted under. */
 	public static final String NAME = "script-editor";
 
 	@Override
-	public void open( final ZarrOpenRequest request )
+	public void open( final OmeZarr omeZarr )
 	{
-		new ZarrOpenActions( request ).runScript();
+		new OmeZarrOpenActions( omeZarr ).runScript();
 	}
 
 	/** Names the script that is actually configured, which the label cannot. */
 	@Override
-	public String tooltip( final ZarrOpenRequest request )
+	public String tooltip( final OmeZarr omeZarr )
 	{
-		return "Open OME-Zarr in user script:\n\n" + ScriptUtils.getTooltipText( request.context() );
+		return "Open OME-Zarr in user script:\n\n" + ScriptUtils.getTooltipText( omeZarr.context() );
 	}
 }

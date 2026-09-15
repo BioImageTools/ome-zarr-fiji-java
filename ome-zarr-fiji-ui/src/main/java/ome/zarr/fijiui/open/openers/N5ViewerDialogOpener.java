@@ -31,9 +31,9 @@ package ome.zarr.fijiui.open.openers;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
-import ome.zarr.fiji.open.ZarrOpenRequest;
-import ome.zarr.fiji.open.ZarrOpener;
-import ome.zarr.fijiui.open.ZarrOpenActions;
+import ome.zarr.fiji.read.OmeZarr;
+import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fijiui.open.OmeZarrOpenActions;
 
 /**
  * Hands the location to the N5 viewer dialog, i.e. to
@@ -41,18 +41,18 @@ import ome.zarr.fijiui.open.ZarrOpenActions;
  * already filled in. Like {@link N5ImporterDialogOpener} it reads nothing
  * itself.
  */
-@Plugin( type = ZarrOpener.class, name = N5ViewerDialogOpener.NAME,
+@Plugin( type = OmeZarrOpener.class, name = N5ViewerDialogOpener.NAME,
 		label = "N5 viewer dialog",
 		description = "Open the OME-Zarr/N5 BigDataViewer dialog on this location",
 		iconPath = "/ome/zarr/fijiui/dialog/zarr_bdv_icon.png", priority = Priority.LOW - 1 )
-public class N5ViewerDialogOpener implements ZarrOpener
+public class N5ViewerDialogOpener implements OmeZarrOpener
 {
 	/** The stable identifier this opener is persisted under. */
 	public static final String NAME = "n5-viewer-dialog";
 
 	@Override
-	public void open( final ZarrOpenRequest request )
+	public void open( final OmeZarr omeZarr )
 	{
-		new ZarrOpenActions( request ).openViewerDialog();
+		new OmeZarrOpenActions( omeZarr ).openViewerDialog();
 	}
 }

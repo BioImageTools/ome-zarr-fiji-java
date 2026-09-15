@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -40,8 +40,8 @@ import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
 import ome.zarr.fiji.PyramidalDataset;
-import ome.zarr.fiji.read.ZarrReader;
-import ome.zarr.fijiui.open.options.ZarrOpeningSettings;
+import ome.zarr.fiji.read.OmeZarr;
+import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.util.ClipboardUtils;
 import ome.zarr.imglib2.ZarrUtils;
 
@@ -54,8 +54,7 @@ import ome.zarr.imglib2.ZarrUtils;
  * run( "Open OME-Zarr as Dataset", "uri=/path/to/image.ome.zarr" );
  * </pre>
  *
- * The command itself displays nothing. When it is run interactively from the
- * menu, SciJava's output post-processing shows the returned dataset as usual; a
+ * SciJava's output post-processing shows the returned dataset as usual; a
  * script that captures the output decides for itself.
  */
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open OME-Zarr as Dataset" )
@@ -100,8 +99,9 @@ public class OpenOmeZarrAsDatasetCommand extends ContextCommand
 			errorHandler.accept( "The given location does not appear to be an OME-Zarr dataset:\n" + uri + "." );
 			return null;
 		}
-		final ZarrOpeningSettings settings = ZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
-		final ZarrReader zarrReader = new ZarrReader( uri, context, settings.getBackend().createBackend(), null, errorHandler );
-		return zarrReader.getPyramidalDataset();
+		final OmeZarrOpeningSettings settings =
+				OmeZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
+		final OmeZarr omeZarr = new OmeZarr( uri, context, settings.getBackend().createBackend(), null, errorHandler );
+		return omeZarr.readPyramidalDataset();
 	}
 }

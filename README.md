@@ -167,28 +167,30 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 ### Registering your own opener
 
 Another Fiji plugin can offer itself as a way to open OME-Zarrs — it then appears in the dialog above and in the
-settings, and can be made the default. All it takes is a SciJava plugin implementing `ZarrOpener` from
+settings, and can be made the default. All it takes is a SciJava plugin implementing `OmeZarrOpener` from
 `ome.zarr:ome-zarr-fiji`:
 
 ```java
 
 @Plugin(
-		type = ZarrOpener.class, name = "my-opener", label = "My viewer",
+		type = OmeZarrOpener.class, name = "my-opener", label = "My viewer",
 		iconPath = "/icons/my-opener.png", priority = Priority.VERY_HIGH
 )
-public class MyZarrOpener implements ZarrOpener
+public class MyOmeZarrOpener implements OmeZarrOpener
 {
 	@Override
-	public void open( final ZarrOpenRequest request )
+	public void open( final OmeZarr omeZarr )
 	{
-		MyViewer.open( request.uri() );
+		MyViewer.open( omeZarr.uri() );
 	}
 }
 ```
 
 `name` is what the setting persists and should stay stable across releases; `label`, `description` and `iconPath` are
 what the user sees. `priority` decides the order and which opener a user who never picked one gets — an explicit user
-choice always wins. `ZarrOpenRequest` also offers a ready-made `reader()` if you want this project to do the reading.
+choice always wins. An opener that reads the dataset itself needs only `omeZarr.uri()`; call its
+`showInImageJ()` / `showInBdv()` instead if you want this project to do the reading, with the backend and
+preferred resolution the user configured.
 
 ### Scriplet support
 
