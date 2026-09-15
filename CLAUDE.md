@@ -99,8 +99,10 @@ One entry point deliberately does **not** end in `openWithSettings()`: `OpenOmeZ
 (`Plugins > OME-Zarr > Open OME-Zarr as Dataset`, issue #40) takes the location as a single `String` input and declares
 a `PyramidalDataset` output, so scripts can capture the image. It cannot honor the chosen `OmeZarrOpener` — BDV and the
 selection dialog produce no `Dataset` — so it always reads one, via `OmeZarrReader.asPyramidalDataset()` with the
-persisted backend and preferred width, which displays nothing. Being plain text rather than a chooser, it accepts
-`http(s):` too, but *not* `s3:`.
+persisted backend and preferred width. Neither that method nor the command shows anything: the window a menu user sees
+comes from the `@Parameter( type = ItemIO.OUTPUT )` on the `dataset` field, which SciJava's `DisplayPostprocessor`
+displays after the command runs — so that annotation, not any call in this repo, is what makes the command usable from
+the menu and recordable as a macro. Being plain text rather than a chooser, it accepts `http(s):` too, but *not* `s3:`.
 
 `OmeZarrReader.showInImageJ()`/`showInBdv()` return what they showed (`null` on failure or when the user
 declined) and `OmeZarrOpenActions` mirrors that; the plugin's own call sites want only the side effect, hence the

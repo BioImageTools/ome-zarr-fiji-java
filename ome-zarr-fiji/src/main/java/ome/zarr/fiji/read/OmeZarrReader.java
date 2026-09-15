@@ -148,7 +148,7 @@ public class OmeZarrReader
 	/**
 	 * Reader for {@code inputUri} with an explicit backend, preferred resolution,
 	 * error sink, and open-anyway confirmation.
-	 * 
+	 *
 	 * @param inputUri the location of the OME-Zarr dataset
 	 * @param context the SciJava context to get services from
 	 * @param backend the backend used to read the dataset
@@ -368,7 +368,7 @@ public class OmeZarrReader
 	 * <p>
 	 * The resolution level is the one the preferred width selects.
 	 *
-	 * @return the dataset, or {@code null} if reading failed
+	 * @return the dataset, or {@code null} if reading failed with an exception whose message is forwarded to {@link #errorHandler()}
 	 */
 	public PyramidalDataset asPyramidalDataset()
 	{
