@@ -237,42 +237,42 @@ public class OmeZarrOpenActions
 
 	/**
 	 * Opens the dataset in ImageJ at the resolution level selected by the settings.
-	 * Delegates to {@link OmeZarrReader#openIJWithImage()}.
+	 * Delegates to {@link OmeZarrReader#showInImageJ()}.
 	 *
 	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
 	 */
 	// UnusedReturnValue: the dataset is returned for API and script users
 	@SuppressWarnings( "UnusedReturnValue" )
-	public PyramidalDataset openIJWithImage()
+	public PyramidalDataset showInImageJ()
 	{
-		return reader.openIJWithImage();
+		return reader.showInImageJ();
 	}
 
 	/**
 	 * Opens the given resolution level of the dataset in ImageJ (0 = highest
-	 * resolution). Delegates to {@link OmeZarrReader#openIJWithImage(int)}.
+	 * resolution). Delegates to {@link OmeZarrReader#showInImageJ(int)}.
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
 	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
 	 */
 	// UnusedReturnValue: the dataset is returned for API and script users
 	@SuppressWarnings( "UnusedReturnValue" )
-	public PyramidalDataset openIJWithImage( final int resolutionLevel )
+	public PyramidalDataset showInImageJ( final int resolutionLevel )
 	{
-		return reader.openIJWithImage( resolutionLevel );
+		return reader.showInImageJ( resolutionLevel );
 	}
 
 	/**
 	 * Opens the dataset in BigDataViewer. Delegates to
-	 * {@link OmeZarrReader#openBDVWithImage()}.
+	 * {@link OmeZarrReader#showInBdv()}.
 	 *
 	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
 	 */
 	// UnusedReturnValue: the dataset is returned for API and script users
 	@SuppressWarnings( "UnusedReturnValue" )
-	public BdvHandle openBDVWithImage()
+	public BdvHandle showInBdv()
 	{
-		return reader.openBDVWithImage();
+		return reader.showInBdv();
 	}
 
 	/**

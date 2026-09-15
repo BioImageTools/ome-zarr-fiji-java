@@ -51,6 +51,6 @@ public class ImageJHighestResolutionOpener implements OmeZarrOpener
 	@Override
 	public void open( final OmeZarrReader reader )
 	{
-		reader.openIJWithImage( 0 );
+		reader.showInImageJ( 0 );
 	}
 }

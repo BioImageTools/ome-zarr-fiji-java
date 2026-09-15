@@ -70,7 +70,7 @@ class PyramidalServiceTest
 		try (Context context = new Context())
 		{
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
-			BdvHandle bdvHandle = new OmeZarrReader( path.toUri(), context, new N5PyramidBackend(), null ).openBDVWithImage();
+			BdvHandle bdvHandle = new OmeZarrReader( path.toUri(), context, new N5PyramidBackend(), null ).showInBdv();
 			try
 			{
 				assertNotNull( pyramidalService.getActivePyramidal() );
@@ -98,7 +98,7 @@ class PyramidalServiceTest
 		try (Context context = new Context())
 		{
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
-			BdvHandle bdvHandle = new OmeZarrReader( path.toUri(), context, new N5PyramidBackend(), null ).openBDVWithImage();
+			BdvHandle bdvHandle = new OmeZarrReader( path.toUri(), context, new N5PyramidBackend(), null ).showInBdv();
 			ImagePlus nonOmeZarrImagePlus = null;
 			try
 			{
@@ -143,8 +143,8 @@ class PyramidalServiceTest
 		try (Context context = new Context())
 		{
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
-			BdvHandle bdvHandle1 = new OmeZarrReader( path1.toUri(), context, new N5PyramidBackend(), null ).openBDVWithImage();
-			BdvHandle bdvHandle2 = new OmeZarrReader( path2.toUri(), context, new N5PyramidBackend(), null ).openBDVWithImage();
+			BdvHandle bdvHandle1 = new OmeZarrReader( path1.toUri(), context, new N5PyramidBackend(), null ).showInBdv();
+			BdvHandle bdvHandle2 = new OmeZarrReader( path2.toUri(), context, new N5PyramidBackend(), null ).showInBdv();
 			try
 			{
 				assertEquals( 2, pyramidalService.getPyramidals().size() );

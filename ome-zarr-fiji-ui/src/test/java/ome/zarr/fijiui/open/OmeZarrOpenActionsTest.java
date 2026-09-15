@@ -182,9 +182,9 @@ class OmeZarrOpenActionsTest
 				// OmeZarrReader reads nothing, the opener it hands the reader to does.
 				final List< OmeZarrReader > readers = readerConstruction.constructed();
 				assertEquals( 4, readers.size() );
-				verify( readers.get( 0 ), times( 1 ) ).openBDVWithImage();
-				verify( readers.get( 1 ), times( 1 ) ).openIJWithImage( 0 );
-				verify( readers.get( 2 ), times( 1 ) ).openIJWithImage();
+				verify( readers.get( 0 ), times( 1 ) ).showInBdv();
+				verify( readers.get( 1 ), times( 1 ) ).showInImageJ( 0 );
+				verify( readers.get( 2 ), times( 1 ) ).showInImageJ();
 				verifyNoInteractions( readers.get( 3 ) );
 
 				final List< OmeZarrOpenActionChooser > chooserInstances = chooserConstruction.constructed();
@@ -315,7 +315,7 @@ class OmeZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context ); // no settings object means that the highest resolution is opened by default
-			actions.openIJWithImage();
+			actions.showInImageJ();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertNotNull( datasetService );
@@ -383,7 +383,7 @@ class OmeZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context, null, System.out::println );
-			actions.openIJWithImage();
+			actions.showInImageJ();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertNotNull( datasetService );
@@ -455,7 +455,7 @@ class OmeZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context );
-			BdvHandle bdvHandle = actions.openBDVWithImage();
+			BdvHandle bdvHandle = actions.showInBdv();
 			assertNotNull( bdvHandle, "BDV should have opened" );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
@@ -483,7 +483,7 @@ class OmeZarrOpenActionsTest
 		try (Context context = new Context())
 		{
 			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context, null, System.out::println );
-			BdvHandle bdvHandle = actions.openBDVWithImage();
+			BdvHandle bdvHandle = actions.showInBdv();
 			assertNotNull( bdvHandle, "BDV should have opened" );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
@@ -557,8 +557,8 @@ class OmeZarrOpenActionsTest
 
 			final OmeZarrOpenActions actions = new OmeZarrOpenActions( uri, context, settings, capturedError::set );
 			assertDoesNotThrow( () -> {
-				actions.openIJWithImage();
-			}, "Store access failures must not escape openIJWithImage() for backend " + backend );
+				actions.showInImageJ();
+			}, "Store access failures must not escape showInImageJ() for backend " + backend );
 
 			assertNotNull( capturedError.get(), "Error handler should have been called for backend " + backend );
 			assertTrue( capturedError.get().contains( uri.toString() ),
@@ -636,8 +636,8 @@ class OmeZarrOpenActionsTest
 
 			// Open both resolution levels in ImageJ – each produces a separate dataset window,
 			// all backed by the same PyramidContents (shared cachedCellImgs / volatileImgs)
-			actions.openIJWithImage( 0 ); // highest resolution
-			actions.openIJWithImage( 1 ); // coarser resolution
+			actions.showInImageJ( 0 ); // highest resolution
+			actions.showInImageJ( 1 ); // coarser resolution
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertEquals( 2, datasetService.getDatasets().size() );
@@ -650,11 +650,11 @@ class OmeZarrOpenActionsTest
 			BdvHandle bdvHandle2 = null;
 			try
 			{
-				bdvHandle1 = actions.openBDVWithImage();
+				bdvHandle1 = actions.showInBdv();
 				assertNotNull( bdvHandle1, "BDV should have opened" );
 				assertEquals( 3, pyramidalService.getPyramidals().size() );
 
-				bdvHandle2 = actions.openBDVWithImage();
+				bdvHandle2 = actions.showInBdv();
 				assertNotNull( bdvHandle2, "BDV should have opened" );
 				assertEquals( 4, pyramidalService.getPyramidals().size() );
 
@@ -725,7 +725,7 @@ class OmeZarrOpenActionsTest
 			try
 			{
 				// BDV open covers all resolution levels and registers one dataset
-				bdvHandle = actions.openBDVWithImage();
+				bdvHandle = actions.showInBdv();
 				assertNotNull( bdvHandle, "BDV should have opened" );
 
 				PyramidalService pyramidalService = context.getService( PyramidalService.class );
@@ -735,7 +735,7 @@ class OmeZarrOpenActionsTest
 
 				// Opening a specific resolution level in IJ creates a 2nd dataset window,
 				// backed by the same PyramidContents as the BDV dataset
-				actions.openIJWithImage( 1 ); // coarser resolution: [x=32, y=32, z=8, c=3, t=4]
+				actions.showInImageJ( 1 ); // coarser resolution: [x=32, y=32, z=8, c=3, t=4]
 				assertEquals( 2, pyramidalService.getPyramidals().size() );
 				assertEquals( 1, datasetService.getDatasets().size() );
 
@@ -782,11 +782,11 @@ class OmeZarrOpenActionsTest
 			BdvHandle bdvHandle = null;
 			try
 			{
-				actions.openIJWithImage( 0 ); // first instance of level 0
-				actions.openIJWithImage( 0 ); // second instance of level 0
-				bdvHandle = actions.openBDVWithImage();
+				actions.showInImageJ( 0 ); // first instance of level 0
+				actions.showInImageJ( 0 ); // second instance of level 0
+				bdvHandle = actions.showInBdv();
 				assertNotNull( bdvHandle, "BDV should have opened" );
-				actions.openIJWithImage( 1 );
+				actions.showInImageJ( 1 );
 
 				PyramidalService pyramidalService = context.getService( PyramidalService.class );
 				PyramidalDataset ijLevel0First = assertInstanceOf( PyramidalDataset.class, pyramidalService.getPyramidals().get( 0 ) );
@@ -876,8 +876,8 @@ class OmeZarrOpenActionsTest
 			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context );
 			try
 			{
-				actions.openIJWithImage( 0 );
-				actions.openIJWithImage( 1 );
+				actions.showInImageJ( 0 );
+				actions.showInImageJ( 1 );
 
 				DatasetService datasetService = context.getService( DatasetService.class );
 				PyramidalDataset ijLevel0 = assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 0 ) );

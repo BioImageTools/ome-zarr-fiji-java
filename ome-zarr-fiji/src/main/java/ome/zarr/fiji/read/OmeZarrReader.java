@@ -67,10 +67,10 @@ import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
  * opens it in ImageJ (as a {@link PyramidalDataset}) or in BigDataViewer (as a
  * {@link PyramidalBdv}, registered in both cases with the {@link PyramidalService} lifecycle).
  * <p>
- * The preferred width applies to {@link #openIJWithImage()} only, which shows one
+ * The preferred width applies to {@link #showInImageJ()} only, which shows one
  * resolution level at a time: it picks that level and, when not even the coarsest
  * one is narrow enough, asks the user for confirmation before opening it anyway.
- * {@link #openIJWithImage(int)} opens the level its caller named, and
+ * {@link #showInImageJ(int)} opens the level its caller named, and
  * BigDataViewer displays all levels and streams them lazily.
  * <p>
  * Independently of the width, every display path refuses to show an image whose
@@ -259,7 +259,7 @@ public class OmeZarrReader
 	 *   failed or the user declined to open the image
 	 */
 	// NB: the return value is for API and script users
-	public PyramidalDataset openIJWithImage()
+	public PyramidalDataset showInImageJ()
 	{
 		return openPyramidImage(
 				() -> {
@@ -338,7 +338,7 @@ public class OmeZarrReader
 	 *   failed, the level does not exist, or the user declined to open the image
 	 */
 	// NB: the return value is for API and script users
-	public PyramidalDataset openIJWithImage( final int resolutionLevel )
+	public PyramidalDataset showInImageJ( final int resolutionLevel )
 	{
 		try
 		{
@@ -444,7 +444,7 @@ public class OmeZarrReader
 	 *   the user declined to open the image
 	 */
 	// NB: the return value is for API and script users
-	public BdvHandle openBDVWithImage()
+	public BdvHandle showInBdv()
 	{
 		return openPyramidImage(
 				() -> {

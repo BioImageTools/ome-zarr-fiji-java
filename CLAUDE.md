@@ -102,7 +102,7 @@ selection dialog produce no `Dataset` — so it always reads one, via `OmeZarrRe
 persisted backend and preferred width, which displays nothing. Being plain text rather than a chooser, it accepts
 `http(s):` too, but *not* `s3:`.
 
-`OmeZarrReader.openIJWithImage()`/`openBDVWithImage()` return what they showed (`null` on failure or when the user
+`OmeZarrReader.showInImageJ()`/`showInBdv()` return what they showed (`null` on failure or when the user
 declined) and `OmeZarrOpenActions` mirrors that; the plugin's own call sites want only the side effect, hence the
 `@SuppressWarnings( "UnusedReturnValue" )` — the values exist for API and script users.
 

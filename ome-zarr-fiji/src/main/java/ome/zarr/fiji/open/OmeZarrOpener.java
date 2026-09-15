@@ -77,7 +77,9 @@ public interface OmeZarrOpener extends SciJavaPlugin
 	 * Failures are the opener's own to report, through
 	 * {@link OmeZarrReader#errorHandler()}.
 	 *
-	 * @param reader the location to open, configured with the settings to open it with
+	 * @param reader the dataset to open, together with the settings to open it
+	 *   with — it is the target of this call, not a collaborator the opener has
+	 *   to drive
 	 */
 	void open( OmeZarrReader reader );
 

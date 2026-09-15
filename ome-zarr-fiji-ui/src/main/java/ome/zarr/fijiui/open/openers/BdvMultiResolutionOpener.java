@@ -51,6 +51,6 @@ public class BdvMultiResolutionOpener implements OmeZarrOpener
 	@Override
 	public void open( final OmeZarrReader reader )
 	{
-		reader.openBDVWithImage();
+		reader.showInBdv();
 	}
 }

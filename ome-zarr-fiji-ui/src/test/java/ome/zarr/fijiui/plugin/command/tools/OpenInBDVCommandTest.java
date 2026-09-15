@@ -89,7 +89,7 @@ class OpenInBDVCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarrOpenActions( path.toUri(), context ).openIJWithImage();
+			new OmeZarrOpenActions( path.toUri(), context ).showInImageJ();
 
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			final DatasetService datasetService = context.getService( DatasetService.class );
@@ -127,7 +127,7 @@ class OpenInBDVCommandTest
 		{
 			// Simulate the first BDV open.
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarrOpenActions( path.toUri(), context ).openBDVWithImage();
+			new OmeZarrOpenActions( path.toUri(), context ).showInBdv();
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );

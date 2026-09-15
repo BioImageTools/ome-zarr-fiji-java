@@ -53,6 +53,6 @@ public class ImageJPreferredResolutionOpener implements OmeZarrOpener
 	@Override
 	public void open( final OmeZarrReader reader )
 	{
-		reader.openIJWithImage();
+		reader.showInImageJ();
 	}
 }
