@@ -53,7 +53,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fiji.open.OmeZarrOpenerService;
 import ome.zarr.fijiui.open.OmeZarrOpenActions;
@@ -81,22 +81,22 @@ public class OmeZarrOpenActionChooser
 	/** Buttons per row; the number of rows follows the number of openers. */
 	private static final int COLUMNS = 3;
 
-	private final OmeZarrReader reader;
+	private final OmeZarr omeZarr;
 
 	private final Context context;
 
 	JDialog currentDialog;
 
 	/**
-	 * A chooser for {@code reader}, offering the openers registered in
+	 * A chooser for {@code omeZarr}, offering the openers registered in
 	 * {@code context}.
 	 *
 	 * @param context the SciJava context the openers are looked up in
-	 * @param reader the location the chosen opener will be given
+	 * @param omeZarr the location the chosen opener will be given
 	 */
-	public OmeZarrOpenActionChooser( final Context context, final OmeZarrReader reader )
+	public OmeZarrOpenActionChooser( final Context context, final OmeZarr omeZarr )
 	{
-		this.reader = reader;
+		this.omeZarr = omeZarr;
 		this.context = context;
 	}
 
@@ -173,8 +173,8 @@ public class OmeZarrOpenActionChooser
 			final PluginInfo< OmeZarrOpener > info )
 	{
 		final JButton button = new JButton( CreateIcon.getAndResizeIcon( iconUrl( info ) ) );
-		button.setToolTipText( openerService.tooltipOf( info, reader ) );
-		button.addActionListener( e -> disposeAndRun( dialog, () -> openerService.open( info, reader ) ) );
+		button.setToolTipText( openerService.tooltipOf( info, omeZarr ) );
+		button.addActionListener( e -> disposeAndRun( dialog, () -> openerService.open( info, omeZarr ) ) );
 		return button;
 	}
 
@@ -182,7 +182,7 @@ public class OmeZarrOpenActionChooser
 	{
 		final JButton button = new JButton( CreateIcon.getAndResizeIcon( "help_icon.png" ) );
 		button.setToolTipText( "Help about OME-Zarr actions" );
-		button.addActionListener( e -> disposeAndRun( dialog, new OmeZarrOpenActions( reader )::showHelp ) );
+		button.addActionListener( e -> disposeAndRun( dialog, new OmeZarrOpenActions( omeZarr )::showHelp ) );
 		return button;
 	}
 

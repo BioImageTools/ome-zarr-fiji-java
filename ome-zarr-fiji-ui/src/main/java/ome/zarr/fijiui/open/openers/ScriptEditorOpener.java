@@ -31,7 +31,7 @@ package ome.zarr.fijiui.open.openers;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fijiui.open.OmeZarrOpenActions;
 import ome.zarr.fijiui.util.ScriptUtils;
@@ -51,15 +51,15 @@ public class ScriptEditorOpener implements OmeZarrOpener
 	public static final String NAME = "script-editor";
 
 	@Override
-	public void open( final OmeZarrReader reader )
+	public void open( final OmeZarr omeZarr )
 	{
-		new OmeZarrOpenActions( reader ).runScript();
+		new OmeZarrOpenActions( omeZarr ).runScript();
 	}
 
 	/** Names the script that is actually configured, which the label cannot. */
 	@Override
-	public String tooltip( final OmeZarrReader reader )
+	public String tooltip( final OmeZarr omeZarr )
 	{
-		return "Open OME-Zarr in user script:\n\n" + ScriptUtils.getTooltipText( reader.context() );
+		return "Open OME-Zarr in user script:\n\n" + ScriptUtils.getTooltipText( omeZarr.context() );
 	}
 }

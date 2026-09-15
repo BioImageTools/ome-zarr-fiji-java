@@ -179,16 +179,16 @@ settings, and can be made the default. All it takes is a SciJava plugin implemen
 public class MyOmeZarrOpener implements OmeZarrOpener
 {
 	@Override
-	public void open( final OmeZarrReader reader )
+	public void open( final OmeZarr omeZarr )
 	{
-		MyViewer.open( reader.uri() );
+		MyViewer.open( omeZarr.uri() );
 	}
 }
 ```
 
 `name` is what the setting persists and should stay stable across releases; `label`, `description` and `iconPath` are
 what the user sees. `priority` decides the order and which opener a user who never picked one gets — an explicit user
-choice always wins. An opener that reads the dataset itself needs only `reader.uri()`; call the reader's
+choice always wins. An opener that reads the dataset itself needs only `omeZarr.uri()`; call its
 `showInImageJ()` / `showInBdv()` instead if you want this project to do the reading, with the backend and
 preferred resolution the user configured.
 

@@ -44,7 +44,7 @@ import org.scijava.Priority;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.plugin.PluginService;
 
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 
 /**
  * Unit tests for {@link OmeZarrOpenerService}. The openers are added to the
@@ -62,7 +62,7 @@ class OmeZarrOpenerServiceTest
 		static int opened;
 
 		@Override
-		public void open( final OmeZarrReader reader )
+		public void open( final OmeZarr omeZarr )
 		{
 			opened++;
 		}
@@ -72,15 +72,15 @@ class OmeZarrOpenerServiceTest
 	public static class FailingOpener implements OmeZarrOpener
 	{
 		@Override
-		public void open( final OmeZarrReader reader )
+		public void open( final OmeZarr omeZarr )
 		{
 			throw new IllegalStateException( "deliberate failure" );
 		}
 
 		@Override
-		public String tooltip( final OmeZarrReader reader )
+		public String tooltip( final OmeZarr omeZarr )
 		{
-			return "tooltip for " + reader.uri();
+			return "tooltip for " + omeZarr.uri();
 		}
 	}
 
@@ -94,9 +94,9 @@ class OmeZarrOpenerServiceTest
 		return info;
 	}
 
-	private static OmeZarrReader readerFor( final Context context )
+	private static OmeZarr omeZarrFor( final Context context )
 	{
-		return new OmeZarrReader( URI_UNDER_TEST, context, null, null, message -> {} );
+		return new OmeZarr( URI_UNDER_TEST, context, null, null, message -> {} );
 	}
 
 	@Test
@@ -165,10 +165,10 @@ class OmeZarrOpenerServiceTest
 			register( context, RecordingOpener.class, "recording", Priority.NORMAL );
 			RecordingOpener.opened = 0;
 
-			assertTrue( openerService.open( "recording", readerFor( context ) ) );
+			assertTrue( openerService.open( "recording", omeZarrFor( context ) ) );
 			assertEquals( 1, RecordingOpener.opened );
 
-			assertFalse( openerService.open( "uninstalled", readerFor( context ) ),
+			assertFalse( openerService.open( "uninstalled", omeZarrFor( context ) ),
 					"An unknown name opens nothing and says so" );
 			assertEquals( 1, RecordingOpener.opened );
 		}
@@ -182,7 +182,7 @@ class OmeZarrOpenerServiceTest
 			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 			register( context, FailingOpener.class, "failing", Priority.NORMAL );
 
-			assertDoesNotThrow( () -> openerService.open( "failing", readerFor( context ) ) );
+			assertDoesNotThrow( () -> openerService.open( "failing", omeZarrFor( context ) ) );
 		}
 	}
 
@@ -192,13 +192,13 @@ class OmeZarrOpenerServiceTest
 		try (Context context = new Context())
 		{
 			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
-			final OmeZarrReader reader = readerFor( context );
+			final OmeZarr omeZarr = omeZarrFor( context );
 
 			// Neither label nor description given, so both fall back to the name.
 			final PluginInfo< OmeZarrOpener > bare = register( context, RecordingOpener.class, "bare", Priority.NORMAL );
 			assertEquals( "bare", OmeZarrOpenerService.labelOf( bare ) );
 			assertEquals( "bare", OmeZarrOpenerService.descriptionOf( bare ) );
-			assertEquals( "bare", openerService.tooltipOf( bare, reader ),
+			assertEquals( "bare", openerService.tooltipOf( bare, omeZarr ),
 					"Without a dynamic tooltip the description is used" );
 
 			bare.setLabel( "Bare opener" );
@@ -212,7 +212,7 @@ class OmeZarrOpenerServiceTest
 			assertEquals( RecordingOpener.class.getName(), OmeZarrOpenerService.nameOf( unnamed ) );
 
 			final PluginInfo< OmeZarrOpener > failing = register( context, FailingOpener.class, "failing", Priority.LOW );
-			assertEquals( "tooltip for " + URI_UNDER_TEST, openerService.tooltipOf( failing, reader ),
+			assertEquals( "tooltip for " + URI_UNDER_TEST, openerService.tooltipOf( failing, omeZarr ),
 					"A dynamic tooltip wins over the static description" );
 		}
 	}

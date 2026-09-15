@@ -57,7 +57,7 @@ import org.scijava.Priority;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.plugin.PluginService;
 
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fiji.open.OmeZarrOpenerService;
 
@@ -94,11 +94,11 @@ class OmeZarrOpenActionChooserTest
 	{
 		try (Context context = new Context())
 		{
-			final OmeZarrReader reader = readerIn( context );
+			final OmeZarr omeZarr = omeZarrIn( context );
 			final int openerCount = context.getService( OmeZarrOpenerService.class ).getOpenerInfos().size();
 			assertTrue( openerCount > 1, "The shipped openers should all be registered" );
 
-			final OmeZarrOpenActionChooser chooser = new OmeZarrOpenActionChooser( context, reader );
+			final OmeZarrOpenActionChooser chooser = new OmeZarrOpenActionChooser( context, omeZarr );
 			SwingUtilities.invokeAndWait( chooser::showDialog );
 			try
 			{
@@ -124,7 +124,7 @@ class OmeZarrOpenActionChooserTest
 			context.getService( PluginService.class ).addPlugin( info );
 
 			LatchOpener.opened = new CountDownLatch( 1 );
-			final OmeZarrOpenActionChooser chooser = new OmeZarrOpenActionChooser( context, readerIn( context ) );
+			final OmeZarrOpenActionChooser chooser = new OmeZarrOpenActionChooser( context, omeZarrIn( context ) );
 			SwingUtilities.invokeAndWait( chooser::showDialog );
 			final JDialog dialog = chooser.currentDialog;
 
@@ -141,7 +141,7 @@ class OmeZarrOpenActionChooserTest
 		static CountDownLatch opened;
 
 		@Override
-		public void open( final OmeZarrReader reader )
+		public void open( final OmeZarr omeZarr )
 		{
 			opened.countDown();
 		}
@@ -158,9 +158,9 @@ class OmeZarrOpenActionChooserTest
 			listener.actionPerformed( new ActionEvent( button, ActionEvent.ACTION_PERFORMED, "" ) );
 	}
 
-	private static OmeZarrReader readerIn( final Context context )
+	private static OmeZarr omeZarrIn( final Context context )
 	{
-		return new OmeZarrReader( URI.create( "file:/tmp/not-read-by-this-test.ome.zarr" ), context, null, null,
+		return new OmeZarr( URI.create( "file:/tmp/not-read-by-this-test.ome.zarr" ), context, null, null,
 				message -> {} );
 	}
 

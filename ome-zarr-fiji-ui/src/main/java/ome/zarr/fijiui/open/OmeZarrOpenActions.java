@@ -51,7 +51,7 @@ import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
 import ome.zarr.fijiui.dialog.OmeZarrOpenActionChooser;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.OmeZarrBackend;
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fijiui.util.ScriptUtils;
 import ome.zarr.imglib2.PyramidBackend;
 
@@ -63,7 +63,7 @@ import ome.zarr.imglib2.PyramidBackend;
  * this package are built from.
  * <p>
  * The actual reading and ImageJ/BigDataViewer opening lives in
- * {@link OmeZarrReader}, so this class only adds the UI concerns on top.
+ * {@link OmeZarr}, so this class only adds the UI concerns on top.
  */
 public class OmeZarrOpenActions
 {
@@ -71,7 +71,7 @@ public class OmeZarrOpenActions
 
 	private static final String HELP_URL = "https://github.com/BioImageTools/ome-zarr-fiji-java/";
 
-	private final OmeZarrReader reader;
+	private final OmeZarr omeZarr;
 
 	/**
 	 * Loads {@link OmeZarrOpeningSettings} from {@code context} and opens
@@ -90,51 +90,51 @@ public class OmeZarrOpenActions
 	{
 		final PrefService prefService = context.getService( PrefService.class );
 		final OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-		final OmeZarrReader reader = readerFor( inputUri, context, settings, IJ::error );
+		final OmeZarr omeZarr = omeZarrFor( inputUri, context, settings, IJ::error );
 		final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 		if ( openerService == null )
 		{
 			// A context without the service is a broken classpath, not a user choice.
 			logger.warn( "No OmeZarrOpenerService in the SciJava context. Opening {} with the built-in ImageJ opener.",
 					inputUri );
-			new ImageJPreferredResolutionOpener().open( reader );
+			new ImageJPreferredResolutionOpener().open( omeZarr );
 			return;
 		}
 		final String openerName = openerService.effectiveOpenerName( settings.getOpenerName() );
 		if ( OmeZarrOpenerService.ASK.equals( openerName ) )
 		{
-			new OmeZarrOpenActionChooser( context, reader ).showDialog();
+			new OmeZarrOpenActionChooser( context, omeZarr ).showDialog();
 			return;
 		}
-		if ( !openerService.open( openerName, reader ) )
+		if ( !openerService.open( openerName, omeZarr ) )
 		{
 			// The chosen opener came from a plugin that is no longer installed.
 			final String fallback = openerService.effectiveOpenerName( null );
 			logger.info( "The configured OME-Zarr opener '{}' is not installed, using '{}' instead.",
 					openerName, fallback );
-			if ( !openerService.open( fallback, reader ) )
-				new ImageJPreferredResolutionOpener().open( reader );
+			if ( !openerService.open( fallback, omeZarr ) )
+				new ImageJPreferredResolutionOpener().open( omeZarr );
 		}
 	}
 
 	/**
-	 * Convenience factory for a backend-agnostic {@link OmeZarrReader} that uses the
+	 * Convenience factory for a backend-agnostic {@link OmeZarr} that uses the
 	 * default backend ({@link OmeZarrOpeningSettings#DEFAULT_BACKEND})
 	 * at the highest resolution, reporting failures via {@code IJ::error}.
 	 * <p>
 	 * This lives in the fiji-ui layer because picking a concrete backend is a
-	 * fiji-ui concern: {@link OmeZarrReader} itself only knows {@link PyramidBackend}
+	 * fiji-ui concern: {@link OmeZarr} itself only knows {@link PyramidBackend}
 	 * and the fiji layer therefore depends on no concrete backend. It restores the
-	 * one-liner ergonomics of the former no-backend {@code OmeZarrReader}
+	 * one-liner ergonomics of the former no-backend {@code OmeZarr}
 	 * constructor.
 	 *
 	 * @param inputUri the OME-Zarr location to read
 	 * @param context the SciJava context used for display and services
-	 * @return a reader for {@code inputUri} using the default backend
+	 * @return an {@link OmeZarr} for {@code inputUri} using the default backend
 	 */
-	public static OmeZarrReader defaultOpener( final URI inputUri, final Context context )
+	public static OmeZarr withDefaultBackend( final URI inputUri, final Context context )
 	{
-		return new OmeZarrReader( inputUri, context, OmeZarrOpeningSettings.DEFAULT_BACKEND.createBackend(), null );
+		return new OmeZarr( inputUri, context, OmeZarrOpeningSettings.DEFAULT_BACKEND.createBackend(), null );
 	}
 
 	/**
@@ -172,32 +172,32 @@ public class OmeZarrOpenActions
 	OmeZarrOpenActions( final URI inputUri, final Context context, final OmeZarrOpeningSettings settings,
 			final Consumer< String > errorHandler )
 	{
-		this( readerFor( inputUri, context, settings, errorHandler ) );
+		this( omeZarrFor( inputUri, context, settings, errorHandler ) );
 	}
 
 	/**
-	 * Actions sharing an existing {@link OmeZarrReader} — the constructor a
-	 * {@link OmeZarrOpener} in this package uses, so the actions read through the same
-	 * reader the opener was handed and reuse its cached
+	 * Actions sharing an existing {@link OmeZarr} — the constructor a
+	 * {@link OmeZarrOpener} in this package uses, so the actions read through the
+	 * same {@link OmeZarr} the opener was handed and reuse its cached
 	 * {@link ome.zarr.imglib2.PyramidContents}.
 	 *
-	 * @param reader the location to act on and the settings to act with
+	 * @param omeZarr the location to act on and the settings to act with
 	 */
-	public OmeZarrOpenActions( final OmeZarrReader reader )
+	public OmeZarrOpenActions( final OmeZarr omeZarr )
 	{
-		this.reader = reader;
+		this.omeZarr = omeZarr;
 	}
 
 	/**
 	 * Reader for {@code inputUri} using the backend and preferred width from
 	 * {@code settings}, or the defaults when no settings are given.
 	 */
-	private static OmeZarrReader readerFor( final URI inputUri, final Context context,
+	private static OmeZarr omeZarrFor( final URI inputUri, final Context context,
 			final OmeZarrOpeningSettings settings, final Consumer< String > errorHandler )
 	{
 		final OmeZarrBackend backend = settings == null ? OmeZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
 		final Integer preferredMaxWidth = settings == null ? null : settings.getPreferredMaxWidth();
-		return new OmeZarrReader( inputUri, context, backend.createBackend(), preferredMaxWidth, errorHandler );
+		return new OmeZarr( inputUri, context, backend.createBackend(), preferredMaxWidth, errorHandler );
 	}
 
 	/**
@@ -206,7 +206,7 @@ public class OmeZarrOpenActions
 	 */
 	private String displayLocation()
 	{
-		final URI inputUri = reader.uri();
+		final URI inputUri = omeZarr.uri();
 		return "file".equalsIgnoreCase( inputUri.getScheme() )
 				? Paths.get( inputUri ).toString()
 				: inputUri.toString();
@@ -220,7 +220,7 @@ public class OmeZarrOpenActions
 	{
 		new N5Importer().runWithDialog( displayLocation(), Collections.emptyList() );
 		if ( logger.isInfoEnabled() )
-			logger.info( "Opened Zarr/N5 importer dialog with location: {}.", reader.uri() );
+			logger.info( "Opened Zarr/N5 importer dialog with location: {}.", omeZarr.uri() );
 	}
 
 	/**
@@ -232,12 +232,12 @@ public class OmeZarrOpenActions
 		new N5ViewerCreator().runWithDialog( displayLocation(),
 				e -> logger.warn( "Could not open viewer selection dialog: {}", e.getMessage() ) );
 		if ( logger.isInfoEnabled() )
-			logger.info( "Opened Zarr/N5 viewer with location: {}.", reader.uri() );
+			logger.info( "Opened Zarr/N5 viewer with location: {}.", omeZarr.uri() );
 	}
 
 	/**
 	 * Opens the dataset in ImageJ at the resolution level selected by the settings.
-	 * Delegates to {@link OmeZarrReader#showInImageJ()}.
+	 * Delegates to {@link OmeZarr#showInImageJ()}.
 	 *
 	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
 	 */
@@ -245,12 +245,12 @@ public class OmeZarrOpenActions
 	@SuppressWarnings( "UnusedReturnValue" )
 	public PyramidalDataset showInImageJ()
 	{
-		return reader.showInImageJ();
+		return omeZarr.showInImageJ();
 	}
 
 	/**
 	 * Opens the given resolution level of the dataset in ImageJ (0 = highest
-	 * resolution). Delegates to {@link OmeZarrReader#showInImageJ(int)}.
+	 * resolution). Delegates to {@link OmeZarr#showInImageJ(int)}.
 	 *
 	 * @param resolutionLevel 0-based index into the resolution pyramid
 	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
@@ -259,12 +259,12 @@ public class OmeZarrOpenActions
 	@SuppressWarnings( "UnusedReturnValue" )
 	public PyramidalDataset showInImageJ( final int resolutionLevel )
 	{
-		return reader.showInImageJ( resolutionLevel );
+		return omeZarr.showInImageJ( resolutionLevel );
 	}
 
 	/**
 	 * Opens the dataset in BigDataViewer. Delegates to
-	 * {@link OmeZarrReader#showInBdv()}.
+	 * {@link OmeZarr#showInBdv()}.
 	 *
 	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
 	 */
@@ -272,7 +272,7 @@ public class OmeZarrOpenActions
 	@SuppressWarnings( "UnusedReturnValue" )
 	public BdvHandle showInBdv()
 	{
-		return reader.showInBdv();
+		return omeZarr.showInBdv();
 	}
 
 	/**
@@ -281,8 +281,8 @@ public class OmeZarrOpenActions
 	 */
 	public void runScript()
 	{
-		logger.info( "Attempt to execute script on location: {}.", reader.uri() );
-		ScriptUtils.executePresetScript( reader.context(), reader.uri(), reader.errorHandler() );
+		logger.info( "Attempt to execute script on location: {}.", omeZarr.uri() );
+		ScriptUtils.executePresetScript( omeZarr.context(), omeZarr.uri(), omeZarr.errorHandler() );
 	}
 
 	/**

@@ -38,7 +38,7 @@ import org.scijava.Priority;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.plugin.PluginService;
 
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fijiui.dialog.OmeZarrOpenActionChooser;
 
@@ -92,10 +92,10 @@ public class OmeZarrOpenActionChooserDemo
 		registerDummyOpeners( context );
 		SwingUtilities.invokeLater( () -> {
 			final JFrame mainFrame = new JFrame();
-			// A real reader: an opener's tooltip may read it, as the script editor's does.
-			final OmeZarrReader reader =
-					new OmeZarrReader( URI.create( "file:/tmp/demo.ome.zarr" ), context, null );
-			final OmeZarrOpenActionChooser menu = new OmeZarrOpenActionChooser( context, reader );
+			// A real omeZarr: an opener's tooltip may read it, as the script editor's does.
+			final OmeZarr omeZarr =
+					new OmeZarr( URI.create( "file:/tmp/demo.ome.zarr" ), context, null );
+			final OmeZarrOpenActionChooser menu = new OmeZarrOpenActionChooser( context, omeZarr );
 			setupFrame( mainFrame, menu );
 		} );
 	}
@@ -134,27 +134,27 @@ public class OmeZarrOpenActionChooserDemo
 	public static class DummyOpenerOne implements OmeZarrOpener
 	{
 		@Override
-		public void open( final OmeZarrReader reader )
+		public void open( final OmeZarr omeZarr )
 		{
-			System.out.println( "Dummy one would open " + reader.uri() );
+			System.out.println( "Dummy one would open " + omeZarr.uri() );
 		}
 	}
 
 	public static class DummyOpenerTwo implements OmeZarrOpener
 	{
 		@Override
-		public void open( final OmeZarrReader reader )
+		public void open( final OmeZarr omeZarr )
 		{
-			System.out.println( "Dummy two would open " + reader.uri() );
+			System.out.println( "Dummy two would open " + omeZarr.uri() );
 		}
 	}
 
 	public static class DummyOpenerThree implements OmeZarrOpener
 	{
 		@Override
-		public void open( final OmeZarrReader reader )
+		public void open( final OmeZarr omeZarr )
 		{
-			System.out.println( "Dummy three would open " + reader.uri() );
+			System.out.println( "Dummy three would open " + omeZarr.uri() );
 		}
 	}
 }

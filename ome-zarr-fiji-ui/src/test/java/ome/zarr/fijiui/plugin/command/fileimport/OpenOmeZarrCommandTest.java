@@ -48,7 +48,7 @@ import ome.zarr.ZarrTestUtils;
 
 /**
  * Tests the folder-acceptance decision of the {@code File > Import > OME-Zarr...}
- * command. The actual opening is covered by {@code OmeZarrReader}'s tests; here
+ * command. The actual opening is covered by {@code OmeZarr}'s tests; here
  * only {@link OpenOmeZarrCommand#validate} and the error wiring of
  * {@link OpenOmeZarrCommand#open} are exercised, so no window is ever shown.
  */

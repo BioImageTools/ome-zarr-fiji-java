@@ -98,13 +98,13 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
 One entry point deliberately does **not** end in `openWithSettings()`: `OpenOmeZarrAsDatasetCommand`
 (`Plugins > OME-Zarr > Open OME-Zarr as Dataset`, issue #40) takes the location as a single `String` input and declares
 a `PyramidalDataset` output, so scripts can capture the image. It cannot honor the chosen `OmeZarrOpener` — BDV and the
-selection dialog produce no `Dataset` — so it always reads one, via `OmeZarrReader.asPyramidalDataset()` with the
+selection dialog produce no `Dataset` — so it always reads one, via `OmeZarr.asPyramidalDataset()` with the
 persisted backend and preferred width. Neither that method nor the command shows anything: the window a menu user sees
 comes from the `@Parameter( type = ItemIO.OUTPUT )` on the `dataset` field, which SciJava's `DisplayPostprocessor`
 displays after the command runs — so that annotation, not any call in this repo, is what makes the command usable from
 the menu and recordable as a macro. Being plain text rather than a chooser, it accepts `http(s):` too, but *not* `s3:`.
 
-`OmeZarrReader.showInImageJ()`/`showInBdv()` return what they showed (`null` on failure or when the user
+`OmeZarr.showInImageJ()`/`showInBdv()` return what they showed (`null` on failure or when the user
 declined) and `OmeZarrOpenActions` mirrors that; the plugin's own call sites want only the side effect, hence the
 `@SuppressWarnings( "UnusedReturnValue" )` — the values exist for API and script users.
 
@@ -143,7 +143,8 @@ throws so the user gets a "get Fiji-Latest" message instead of a linkage stack t
 `jars/` alongside `scijava-desktop` and `scijava-io-http`). Its `OpenLinkHandler` owns the
 `fiji://open/{file,url,source}?p=…` syntax, the OS-level scheme registration, and the URI parsing, and finishes by
 calling `IOService.open(Location)` – which dispatches to whichever `IOPlugin` claims the location, i.e. to
-`OmeZarrIOPlugin`. So `fiji://` links honor the user's chosen `OmeZarrOpener` for free. **Do not add a `LinkHandler` plugin
+`OmeZarrIOPlugin`. So `fiji://` links honor the user's chosen `OmeZarrOpener` for free. **Do not add a `LinkHandler`
+plugin
 of our own**: it would need `org.scijava:scijava-desktop` (Java 11 bytecode, breaking the Java-8/Fiji-Stable baseline,
 and its unresolvable plugin *type* string in the annotation index makes `DefaultPluginService` log `"1 exceptions
 occurred during plugin discovery."` on every Fiji-Stable start), and it would compete with `fiji-links` for the same
@@ -165,7 +166,7 @@ outside API users — not named `read`, because Java forbids a static method hid
 **A too-old reader library is reported, not thrown at the console.** A Fiji-Stable installation whose N5 stack predates
 this plugin fails inside the backend with a `NoClassDefFoundError` (e.g. on `OmeNgffMetadataParser`), which is useless
 to a user. `read` therefore catches it and rethrows `ReaderLibraryUnavailableException` (extends `StoreAccessException`,
-exposes the missing class through `getMissingClass()`); `OmeZarrReader.showReaderLibraryUnavailable` names the backend and
+exposes the missing class through `getMissingClass()`); `OmeZarr.showReaderLibraryUnavailable` names the backend and
 the missing class and points at Fiji-Latest. The multiscale/single-array fallback lives in a private
 `readMultiscaleOrSingleArray` for exactly this reason: a `NoClassDefFoundError` from `readSingleArray` inside the
 `catch ( NotAMultiscaleImageException )` block would not be caught by that same `try`. The guard only spans `read` —
@@ -173,23 +174,24 @@ cell images are lazy, so a class missing solely on the chunk-read path still sur
 `s3:`-specific `S3SupportUnavailableException` is thrown deeper and converted before it ever reaches this guard.
 
 `PyramidContents.suggestResolutionLevel(Integer preferredMaxWidth)` returns the `NO_MATCHING_LEVEL` sentinel rather
-than silently falling back when no level is narrow enough; the caller decides (`OmeZarrReader` offers
+than silently falling back when no level is narrow enough; the caller decides (`OmeZarr` offers
 `smallestResolutionLevel()` and asks).
 
 The `tryReadArrayNodeOnly` route can only invent a calibration – `AxisCalibration.createPlaceholderCalibration` builds
 axes with scale `1.0` and an empty unit, because a bare array names its axes (Zarr v3 `dimension_names`) but not their
 scale. Such contents are built through `PyramidContents.singleLevelWithPlaceholderCalibration(...)`, the only way to set
 the `hasPlaceholderCalibration` flag, so the guess always travels with the image; `AbstractPyramidBackend` also logs a
-warning. Every `OmeZarrReader` display path refuses to show a flagged image unless the user confirms. An array whose axes
+warning. Every `OmeZarr` display path refuses to show a flagged image unless the user confirms. An array whose axes
 cannot be named at all (Zarr v2 without a readable parent) remains a hard `SingleArrayAxesUnknownException`.
 
-`OmeZarrReader` picks a backend (`OmeZarrBackend`: N5 or ZARR_JAVA), reads and caches the `PyramidContents`, and wraps it into
+`OmeZarr` picks a backend (`OmeZarrBackend`: N5 or ZARR_JAVA), reads and caches the `PyramidContents`, and wraps it into
 either a `PyramidalDataset` (extends `DefaultDataset`, for ImageJ) or a `PyramidalBdv` (per-channel BDV
 `SourceAndConverter` lists, volatile-wrapped per resolution level) – both implement the marker interface `Pyramidal`.
 
 ### Opening modes are an extension point, not an enum
 
-(issue #112) `OmeZarrOpener` (in `ome.zarr.fiji.open`, module `ome-zarr-fiji`) is a plain `SciJavaPlugin`: any Fiji plugin
+(issue #112) `OmeZarrOpener` (in `ome.zarr.fiji.open`, module `ome-zarr-fiji`) is a plain `SciJavaPlugin`: any Fiji
+plugin
 registers itself as an opening option with nothing but `@Plugin( type = OmeZarrOpener.class, name = …, label = …,
 iconPath = … )` on a class in its own jar. **Deliberately no custom annotation**: `@Plugin` already carries
 name/label/description/iconPath/priority, scijava-common's annotation processor indexes it for free in every downstream
@@ -197,19 +199,26 @@ jar, and `PluginInfo.getIconURL()` resolves the icon out of the *contributing* j
 dialog icons work at all. A static mutable registry was the other candidate and loses: filling it needs startup code,
 i.e. a SciJava plugin anyway.
 
-- `OmeZarrOpener.open( OmeZarrReader )` – called off the EDT; `tooltip( reader )` is an optional dynamic tooltip (only
-  `ScriptEditorOpener` uses it, to name the configured script). Deliberately **no `supports( reader )` pre-filter**: no
+- `OmeZarrOpener.open( OmeZarr )` – called off the EDT; `tooltip( omeZarr )` is an optional dynamic tooltip (only
+  `ScriptEditorOpener` uses it, to name the configured script). Deliberately **no `supports( omeZarr )` pre-filter**: no
   shipped opener needs one, and only the selection dialog could honor it — the direct dispatch in `openWithSettings`
   runs whichever opener the user configured regardless — so a half-honored hook is worse than none. Adding a
   `default` method later is source- and binary-compatible, so it can arrive when a downstream opener needs it.
-- **The parameter is the reader, not a request object.** A `ZarrOpenRequest` carrying `uri`/`context`/`backend`/
-  `preferredMaxWidth`/`errorHandler` plus a lazily built `reader()` existed until 0.9 and was deleted: every field
-  duplicated one `OmeZarrReader` already had, and the laziness bought nothing because the `OmeZarrReader` constructor is
-  pure field assignment — `contents()` is what reads. Do **not** reintroduce a bare `open( URI )`: the reader carries
-  *the user's configured backend and preferred width*, which a URI does not, and sharing one reader is what lets the
+- **The parameter is the `OmeZarr` itself, not a request object.** A `ZarrOpenRequest` carrying `uri`/`context`/
+  `backend`/`preferredMaxWidth`/`errorHandler` plus a lazily built `reader()` existed until 0.9 and was deleted: every
+  field duplicated one `OmeZarr` already had, and the laziness bought nothing because the `OmeZarr` constructor is
+  pure field assignment — `contents()` is what reads. Do **not** reintroduce a bare `open( URI )`: an `OmeZarr` carries
+  *the user's configured backend and preferred width*, which a URI does not, and sharing one instance is what lets the
   selection dialog and the opener it picks share the cached `PyramidContents`. Third-party openers that read for
-  themselves use `uri()` alone; `context()` and `errorHandler()` exist on the reader so they need nothing else.
-- `OmeZarrOpenerService` – `AbstractPTService<OmeZarrOpener>`: lists openers by priority, runs one by name, and resolves what
+  themselves use `uri()` alone; `context()` and `errorHandler()` exist on it so they need nothing else.
+- **The type is `OmeZarr`, not `OmeZarrReader` (0.9).** `opener.open( omeZarr )` reads as prose where
+  `open( reader )` put a tool-noun in the object slot, but the deciding reason was a collision: once `OmeZarrOpener`
+  existed, ten locals of the reader type were named `opener`, and `OmeZarrOpenActions.defaultOpener()` returned a
+  *reader* while `OpeningBehaviorSettings.defaultOpener` held the actual default opener **name**. That factory is now
+  `withDefaultBackend()`. The class stays in `ome.zarr.fiji.read`: it does read, and moving it would leave that package
+  holding nothing but `exceptions`.
+- `OmeZarrOpenerService` – `AbstractPTService<OmeZarrOpener>`: lists openers by priority, runs one by name, and resolves
+  what
   a persisted setting means (`effectiveOpenerName`).
 - Shipped openers – `imagej-preferred-resolution`, `imagej-highest-resolution`, `bdv-multi-resolution`,
   `n5-importer-dialog`, `n5-viewer-dialog`, `script-editor` – are one class each, next to the `OmeZarrOpenActions` they
@@ -276,7 +285,7 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   archive as a named entry of its parent store, not a store root — `HttpStore` appends a slash to a root and
   `GET /img.ozx/` is a 404. `ZarrUtils.isZarr` judges an archive by the file alone, since looking inside means reading
   the whole ZIP index. Other backends refuse archives up front: `N5PyramidBackend.openReader` throws
-  `ZipArchiveUnsupportedException`, which `OmeZarrReader` turns into "switch the reader backend to zarr-java".
+  `ZipArchiveUnsupportedException`, which `OmeZarr` turns into "switch the reader backend to zarr-java".
 
   Every AWS SDK reference lives in the package-private `S3StoreFactory` (the AWS SDK arrives transitively via
   zarr-java), so the SDK is loaded only when an `s3:` URI is actually opened; `file:`/`http(s):` datasets never touch
@@ -287,15 +296,17 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   resolving that call. The flip side of lazy loading is that an installation without the AWS SDK (Fiji-Stable) only
   notices on the first `s3:` open: linking `S3StoreFactory` then throws `NoClassDefFoundError`. `createS3Store` catches
   that and throws `S3SupportUnavailableException` (in `ome-zarr-imglib2`, extends `StoreAccessException`), which
-  `OmeZarrReader` turns into a "get Fiji-Latest" message plus a one-line warning instead of a linkage stack trace. That
+  `OmeZarr` turns into a "get Fiji-Latest" message plus a one-line warning instead of a linkage stack trace. That
   exception must be re-thrown ahead of the `catch ( RuntimeException e )` above, or its `isSdkException` call would fail
   to link too — on exactly the installation the message is about.
 - **`ome-zarr-fiji`** (+`.read`, `.read.exceptions`, `.open`, `.plugins`, `.util`) – ImageJ/BDV integration and, in
-  `.open`, the `OmeZarrOpener` extension point alone – a downstream opener depends on this module, not on `-ui`. It ships
+  `.open`, the `OmeZarrOpener` extension point alone – a downstream opener depends on this module, not on `-ui`. It
+  ships
   no opener of its own, so `OmeZarrOpenerService` names no default opener either: with an empty registry
-  `effectiveOpenerName` returns `null` and `OmeZarrOpenActions` falls back to `ImageJPreferredResolutionOpener`. Depends on
+  `effectiveOpenerName` returns `null` and `OmeZarrOpenActions` falls back to `ImageJPreferredResolutionOpener`. Depends
+  on
   imglib2 only (no backend artifact, and no N5 library at all outside test scope – the former `N5Utils.open()`
-  single-scale fallback in `OmeZarrReader` is gone, single arrays are read through the selected backend as one-level
+  single-scale fallback in `OmeZarr` is gone, single arrays are read through the selected backend as one-level
   pyramids).
 - **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.openers`, `.open.options`, `.plugin`,
   `.plugin.command.*`, `.dialog`, `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`,

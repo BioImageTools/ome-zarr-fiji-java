@@ -51,7 +51,7 @@ import ome.zarr.ZarrTestUtils;
 /**
  * Tests the archive-acceptance decision of the
  * {@code File > Import > OME-Zarr Archive (.ozx)...} command. The actual opening
- * is covered by {@code OmeZarrReader}'s tests; here only
+ * is covered by {@code OmeZarr}'s tests; here only
  * {@link OpenOmeZarrArchiveCommand#validate} and the error wiring of
  * {@link OpenOmeZarrArchiveCommand#open} are exercised, so no window is ever
  * shown.

@@ -98,7 +98,7 @@ import ome.zarr.fiji.Pyramidal;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
@@ -120,7 +120,7 @@ class OmeZarrOpenActionsTest
 	}
 
 	/**
-	 * Reads the dataset headlessly through {@link OmeZarrReader#contents()} with
+	 * Reads the dataset headlessly through {@link OmeZarr#contents()} with
 	 * the given backend, without instantiating any UI. Returns the
 	 * {@link PyramidContents} that was read; throws the relevant domain exception (e.g.
 	 * {@link ome.zarr.imglib2.exceptions.NotAMultiscaleImageException} or
@@ -130,8 +130,8 @@ class OmeZarrOpenActionsTest
 			final OmeZarrBackend backend )
 	{
 		final PyramidBackend pyramidBackend = backend.createBackend();
-		final OmeZarrReader opener = new OmeZarrReader( uri, context, pyramidBackend, null, error -> {} );
-		return opener.contents();
+		final OmeZarr omeZarr = new OmeZarr( uri, context, pyramidBackend, null, error -> {} );
+		return omeZarr.contents();
 	}
 
 	static Stream< String > omeZarrExamples()
@@ -169,7 +169,7 @@ class OmeZarrOpenActionsTest
 			final PrefService prefService = context.getService( PrefService.class );
 			final Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/" );
 
-			try (MockedConstruction< OmeZarrReader > readerConstruction = mockConstruction( OmeZarrReader.class );
+			try (MockedConstruction< OmeZarr > readerConstruction = mockConstruction( OmeZarr.class );
 					MockedConstruction< OmeZarrOpenActionChooser > chooserConstruction =
 							mockConstruction( OmeZarrOpenActionChooser.class ))
 			{
@@ -179,8 +179,8 @@ class OmeZarrOpenActionsTest
 				openAs( OmeZarrOpenerService.ASK, path, context, prefService );
 
 				// One reader per open, the selection dialog included: constructing a
-				// OmeZarrReader reads nothing, the opener it hands the reader to does.
-				final List< OmeZarrReader > readers = readerConstruction.constructed();
+				// OmeZarr reads nothing, the omeZarr it hands the reader to does.
+				final List< OmeZarr > readers = readerConstruction.constructed();
 				assertEquals( 4, readers.size() );
 				verify( readers.get( 0 ), times( 1 ) ).showInBdv();
 				verify( readers.get( 1 ), times( 1 ) ).showInImageJ( 0 );
@@ -283,28 +283,28 @@ class OmeZarrOpenActionsTest
 	}
 
 	@Test
-	void defaultOpenerReadsWithTheDefaultBackend() throws URISyntaxException, ReflectiveOperationException
+	void withDefaultBackendReadsWithTheDefaultBackend() throws URISyntaxException, ReflectiveOperationException
 	{
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			OmeZarrReader opener = OmeZarrOpenActions.defaultOpener( path.toUri(), context );
+			OmeZarr omeZarr = OmeZarrOpenActions.withDefaultBackend( path.toUri(), context );
 
 			assertEquals( OmeZarrBackend.ZARR_JAVA, OmeZarrOpeningSettings.DEFAULT_BACKEND );
-			assertInstanceOf( ZarrJavaPyramidBackend.class, backendOf( opener ) );
+			assertInstanceOf( ZarrJavaPyramidBackend.class, backendOf( omeZarr ) );
 
 			// The wired backend also has to be usable, not just of the right type.
-			PyramidContents< ? > contents = opener.contents();
+			PyramidContents< ? > contents = omeZarr.contents();
 			assertEquals( 2, contents.numResolutionLevels() );
 			assertEquals( 3, contents.numChannels() );
 		}
 	}
 
-	private static PyramidBackend backendOf( OmeZarrReader opener ) throws ReflectiveOperationException
+	private static PyramidBackend backendOf( OmeZarr omeZarr ) throws ReflectiveOperationException
 	{
-		Field field = OmeZarrReader.class.getDeclaredField( "backend" );
+		Field field = OmeZarr.class.getDeclaredField( "backend" );
 		field.setAccessible( true );
-		return ( PyramidBackend ) field.get( opener );
+		return ( PyramidBackend ) field.get( omeZarr );
 	}
 
 	@ParameterizedTest

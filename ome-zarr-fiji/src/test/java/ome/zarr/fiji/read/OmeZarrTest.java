@@ -62,12 +62,12 @@ import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 
 /**
- * Direct coverage of the fiji-layer {@link OmeZarrReader}: it reads and opens a
+ * Direct coverage of the fiji-layer {@link OmeZarr}: it reads and opens a
  * dataset in ImageJ and BigDataViewer for either backend implementation,
  * without going through any fiji-ui settings or dialogs.
  * <p>
  */
-class OmeZarrReaderTest
+class OmeZarrTest
 {
 	private static final String DATASET = "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr";
 
@@ -88,8 +88,8 @@ class OmeZarrReaderTest
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
-			OmeZarrReader opener = new OmeZarrReader( path.toUri(), context, backend, null );
-			PyramidContents< ? > contents = opener.contents();
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend, null );
+			PyramidContents< ? > contents = omeZarr.contents();
 			assertNotNull( contents );
 			assertEquals( 2, contents.numResolutionLevels() );
 			assertEquals( 3, contents.numChannels() );
@@ -103,7 +103,7 @@ class OmeZarrReaderTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			new OmeZarrReader( path.toUri(), context, new N5PyramidBackend(), null ).showInImageJ();
+			new OmeZarr( path.toUri(), context, new N5PyramidBackend(), null ).showInImageJ();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertEquals( 1, datasetService.getDatasets().size() );
@@ -121,8 +121,8 @@ class OmeZarrReaderTest
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
-			final OmeZarrReader opener = new OmeZarrReader( path.toUri(), context, new N5PyramidBackend(), null );
-			BdvHandle bdvHandle = opener.showInBdv();
+			final OmeZarr omeZarr = new OmeZarr( path.toUri(), context, new N5PyramidBackend(), null );
+			BdvHandle bdvHandle = omeZarr.showInBdv();
 			assertNotNull( bdvHandle, "BDV should have opened" );
 
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
@@ -150,7 +150,7 @@ class OmeZarrReaderTest
 			{
 				Path path = ZarrTestUtils.resourcePath( levelPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				new OmeZarrReader( path.toUri(), context, backend, null, capturedError::set ).showInImageJ();
+				new OmeZarr( path.toUri(), context, backend, null, capturedError::set ).showInImageJ();
 
 				assertEquals( 1, datasetService.getDatasets().size(),
 						"Single resolution level should open as a one-level dataset: " + levelPath );
@@ -184,7 +184,7 @@ class OmeZarrReaderTest
 			AtomicReference< String > capturedError = new AtomicReference<>();
 			AtomicReference< String > shownMessage = new AtomicReference<>();
 
-			OmeZarrReader declining = new OmeZarrReader( path.toUri(), context, backend, null, capturedError::set,
+			OmeZarr declining = new OmeZarr( path.toUri(), context, backend, null, capturedError::set,
 					message -> {
 						shownMessage.set( message );
 						return false;
@@ -198,7 +198,7 @@ class OmeZarrReaderTest
 			assertTrue( shownMessage.get().contains( "no calibration" ),
 					"Unexpected confirmation message: " + shownMessage.get() );
 
-			new OmeZarrReader( path.toUri(), context, backend, null, capturedError::set, message -> true )
+			new OmeZarr( path.toUri(), context, backend, null, capturedError::set, message -> true )
 					.showInImageJ();
 
 			assertEquals( 1, datasetService.getDatasets().size(), "Accepting must open the image" );
@@ -229,9 +229,9 @@ class OmeZarrReaderTest
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				OmeZarrReader opener = new OmeZarrReader( path.toUri(), context, backend, null, capturedError::set );
+				OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend, null, capturedError::set );
 
-				assertDoesNotThrow( () -> opener.showInImageJ(), "Opening " + invalidPath + " should not throw" );
+				assertDoesNotThrow( () -> omeZarr.showInImageJ(), "Opening " + invalidPath + " should not throw" );
 				assertNotNull( capturedError.get(), "Error handler should have been called for " + invalidPath );
 				assertTrue( datasetService.getDatasets().isEmpty(),
 						"Nothing must be opened for the non-image path " + invalidPath );
@@ -248,9 +248,9 @@ class OmeZarrReaderTest
 		try (Context context = new Context())
 		{
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			OmeZarrReader opener = new OmeZarrReader( path.toUri(), context, backend, null, capturedError::set );
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend, null, capturedError::set );
 
-			assertDoesNotThrow( () -> opener.showInImageJ() );
+			assertDoesNotThrow( () -> omeZarr.showInImageJ() );
 			assertTrue( context.getService( DatasetService.class ).getDatasets().isEmpty(),
 					"Multi-image collection must not be opened as a single multiscale image" );
 			assertNotNull( capturedError.get(), "Error handler should have been called for backend " + backend );
@@ -276,9 +276,9 @@ class OmeZarrReaderTest
 			{
 				Path path = ZarrTestUtils.resourcePath( childPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				OmeZarrReader opener = new OmeZarrReader( path.toUri(), context, backend, null, capturedError::set );
+				OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend, null, capturedError::set );
 
-				assertDoesNotThrow( () -> opener.showInImageJ(), "Opening child image " + childPath + " should not throw" );
+				assertDoesNotThrow( () -> omeZarr.showInImageJ(), "Opening child image " + childPath + " should not throw" );
 				assertEquals( 1, datasetService.getDatasets().size(),
 						"Child image " + childPath + " should be opened as a multiscale image" );
 				assertNull( capturedError.get(),
@@ -293,7 +293,7 @@ class OmeZarrReaderTest
 
 	/**
 	 * No level of {@link #DATASET} is 10 pixels wide or narrower (level 0 is 64,
-	 * level 1 is 32), so the opener offers the coarsest level and opens it only when
+	 * level 1 is 32), so OmeZarr offers the coarsest level and opens it only when
 	 * the confirmation is accepted.
 	 */
 	@Test
@@ -308,7 +308,7 @@ class OmeZarrReaderTest
 			AtomicReference< String > capturedError = new AtomicReference<>();
 			AtomicReference< String > shownMessage = new AtomicReference<>();
 
-			OmeZarrReader declining = new OmeZarrReader( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
+			OmeZarr declining = new OmeZarr( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
 					message -> {
 						shownMessage.set( message );
 						return false;
@@ -324,7 +324,7 @@ class OmeZarrReaderTest
 			assertTrue( shownMessage.get().contains( "2 resolution levels" ),
 					"A multi-level dataset should say that no level is narrow enough: " + shownMessage.get() );
 
-			OmeZarrReader accepting = new OmeZarrReader( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
+			OmeZarr accepting = new OmeZarr( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
 					message -> true );
 			accepting.showInImageJ();
 
@@ -350,11 +350,11 @@ class OmeZarrReaderTest
 		try (Context context = new Context())
 		{
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			OmeZarrReader opener = new OmeZarrReader( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, new N5PyramidBackend(), 10, capturedError::set,
 					message -> {
 						throw new AssertionError( "BDV must not ask about the preferred width: " + message );
 					} );
-			BdvHandle bdvHandle = opener.showInBdv();
+			BdvHandle bdvHandle = omeZarr.showInBdv();
 
 			assertNull( capturedError.get(), "Opening should not have failed, got: " + capturedError.get() );
 			assertNotNull( bdvHandle, "BDV should open regardless of the preferred width" );
@@ -374,10 +374,10 @@ class OmeZarrReaderTest
 		try (Context context = new Context())
 		{
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			OmeZarrReader opener = new OmeZarrReader( archive.toUri(), context, new N5PyramidBackend(), null,
+			OmeZarr omeZarr = new OmeZarr( archive.toUri(), context, new N5PyramidBackend(), null,
 					capturedError::set );
 
-			assertNull( opener.showInImageJ() );
+			assertNull( omeZarr.showInImageJ() );
 			assertTrue( context.getService( DatasetService.class ).getDatasets().isEmpty(),
 					"Nothing must be opened for an archive the backend cannot read" );
 			assertNotNull( capturedError.get() );
@@ -394,7 +394,7 @@ class OmeZarrReaderTest
 		try (Context context = new Context())
 		{
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			PyramidalDataset dataset = new OmeZarrReader( archive.toUri(), context, new ZarrJavaPyramidBackend(), null,
+			PyramidalDataset dataset = new OmeZarr( archive.toUri(), context, new ZarrJavaPyramidBackend(), null,
 					capturedError::set ).showInImageJ();
 
 			assertNull( capturedError.get() );

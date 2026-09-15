@@ -31,7 +31,7 @@ package ome.zarr.fiji.open;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 
 /**
  * Something that can open an OME-Zarr location — the extension point a Fiji
@@ -48,9 +48,9 @@ import ome.zarr.fiji.read.OmeZarrReader;
  * public class MyOmeZarrOpener implements OmeZarrOpener
  * {
  *     &#64;Override
- *     public void open( final OmeZarrReader reader )
+ *     public void open( final OmeZarr omeZarr )
  *     {
- *         MyViewer.open( reader.uri() );
+ *         MyViewer.open( omeZarr.uri() );
  *     }
  * }
  * </pre>
@@ -68,20 +68,20 @@ import ome.zarr.fiji.read.OmeZarrReader;
 public interface OmeZarrOpener extends SciJavaPlugin
 {
 	/**
-	 * Opens the location the reader is configured for. Called on a background
+	 * Opens the location {@code omeZarr} is configured for. Called on a background
 	 * thread, never on the AWT event dispatch thread, so it may read and block.
 	 * <p>
-	 * An opener that brings its own reading code needs only {@link OmeZarrReader#uri()}
+	 * An opener that brings its own reading code needs only {@link OmeZarr#uri()}
 	 * and can ignore the rest.
 	 * <br>
 	 * Failures are the opener's own to report, through
-	 * {@link OmeZarrReader#errorHandler()}.
+	 * {@link OmeZarr#errorHandler()}.
 	 *
-	 * @param reader the dataset to open, together with the settings to open it
+	 * @param omeZarr the dataset to open, together with the settings to open it
 	 *   with — it is the target of this call, not a collaborator the opener has
 	 *   to drive
 	 */
-	void open( OmeZarrReader reader );
+	void open( OmeZarr omeZarr );
 
 	/**
 	 * The tooltip for this opener's button in the selection dialog, when the
@@ -89,11 +89,11 @@ public interface OmeZarrOpener extends SciJavaPlugin
 	 * enough — for an opener that names the script or the viewer it is currently
 	 * configured for, say.
 	 *
-	 * @param reader the reader the dialog was raised for
+	 * @param omeZarr the OME-Zarr the dialog was raised for
 	 * @return the tooltip text, or {@code null} to use the annotation's
 	 *   {@code description}
 	 */
-	default String tooltip( final OmeZarrReader reader )
+	default String tooltip( final OmeZarr omeZarr )
 	{
 		return null;
 	}

@@ -40,7 +40,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
 import ome.zarr.fiji.PyramidalDataset;
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.util.ClipboardUtils;
 import ome.zarr.imglib2.ZarrUtils;
@@ -101,7 +101,7 @@ public class OpenOmeZarrAsDatasetCommand extends ContextCommand
 		}
 		final OmeZarrOpeningSettings settings =
 				OmeZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
-		final OmeZarrReader zarrReader = new OmeZarrReader( uri, context, settings.getBackend().createBackend(), null, errorHandler );
-		return zarrReader.asPyramidalDataset();
+		final OmeZarr omeZarr = new OmeZarr( uri, context, settings.getBackend().createBackend(), null, errorHandler );
+		return omeZarr.asPyramidalDataset();
 	}
 }

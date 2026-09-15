@@ -28,7 +28,7 @@
  */
 package ome.zarr.fijiui.open.openers;
 
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.open.OmeZarrOpener;
 
 import org.scijava.Priority;
@@ -49,8 +49,8 @@ public class BdvMultiResolutionOpener implements OmeZarrOpener
 	public static final String NAME = "bdv-multi-resolution";
 
 	@Override
-	public void open( final OmeZarrReader reader )
+	public void open( final OmeZarr omeZarr )
 	{
-		reader.showInBdv();
+		omeZarr.showInBdv();
 	}
 }

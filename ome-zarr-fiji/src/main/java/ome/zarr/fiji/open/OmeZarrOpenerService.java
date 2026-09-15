@@ -39,7 +39,7 @@ import org.scijava.service.SciJavaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ome.zarr.fiji.read.OmeZarrReader;
+import ome.zarr.fiji.read.OmeZarr;
 
 /**
  * Finds the registered {@link OmeZarrOpener}s and runs them.
@@ -124,14 +124,14 @@ public class OmeZarrOpenerService extends AbstractPTService< OmeZarrOpener > imp
 	}
 
 	/**
-	 * Runs the named opener on {@code reader}.
+	 * Runs the named opener on {@code omeZarr}.
 	 *
 	 * @param name the {@link Plugin} name of the opener to run
-	 * @param reader the location to open and the settings to open it with
+	 * @param omeZarr the location to open and the settings to open it with
 	 * @return {@code false} if no opener answers to {@code name}, in which case
 	 *   nothing was opened
 	 */
-	public boolean open( final String name, final OmeZarrReader reader )
+	public boolean open( final String name, final OmeZarr omeZarr )
 	{
 		final PluginInfo< OmeZarrOpener > info = getOpenerInfo( name );
 		if ( info == null )
@@ -139,32 +139,32 @@ public class OmeZarrOpenerService extends AbstractPTService< OmeZarrOpener > imp
 			logger.debug( "No OME-Zarr opener named '{}' is registered.", name );
 			return false;
 		}
-		open( info, reader );
+		open( info, omeZarr );
 		return true;
 	}
 
 	/**
-	 * Runs the given opener on {@code reader}. An exception from the opener is
+	 * Runs the given opener on {@code omeZarr}. An exception from the opener is
 	 * logged and swallowed: a third-party opener must not take the whole opening
 	 * pipeline down with it.
 	 *
 	 * @param info the opener to run
-	 * @param reader the location to open and the settings to open it with
+	 * @param omeZarr the location to open and the settings to open it with
 	 */
-	public void open( final PluginInfo< OmeZarrOpener > info, final OmeZarrReader reader )
+	public void open( final PluginInfo< OmeZarrOpener > info, final OmeZarr omeZarr )
 	{
 		final OmeZarrOpener opener = createOpener( info );
 		if ( opener == null )
 			return;
 		if ( logger.isDebugEnabled() )
-			logger.debug( "Opening {} with the '{}' opener.", reader.uri(), nameOf( info ) );
+			logger.debug( "Opening {} with the '{}' opener.", omeZarr.uri(), nameOf( info ) );
 		try
 		{
-			opener.open( reader );
+			opener.open( omeZarr );
 		}
 		catch ( final RuntimeException e )
 		{
-			logger.warn( "The '{}' OME-Zarr opener failed on {}", nameOf( info ), reader.uri(), e );
+			logger.warn( "The '{}' OME-Zarr opener failed on {}", nameOf( info ), omeZarr.uri(), e );
 		}
 	}
 
@@ -210,16 +210,16 @@ public class OmeZarrOpenerService extends AbstractPTService< OmeZarrOpener > imp
 
 	/**
 	 * The tooltip to show for an opener: what {@link OmeZarrOpener#tooltip} answers
-	 * for this reader, falling back to the static description.
+	 * for this OME-Zarr, falling back to the static description.
 	 *
 	 * @param info the opener's metadata
-	 * @param reader the reader the tooltip is asked for
+	 * @param omeZarr the OME-Zarr the tooltip is asked for
 	 * @return a non-empty tooltip text
 	 */
-	public String tooltipOf( final PluginInfo< OmeZarrOpener > info, final OmeZarrReader reader )
+	public String tooltipOf( final PluginInfo< OmeZarrOpener > info, final OmeZarr omeZarr )
 	{
 		final OmeZarrOpener opener = createOpener( info );
-		final String tooltip = opener == null ? null : opener.tooltip( reader );
+		final String tooltip = opener == null ? null : opener.tooltip( omeZarr );
 		return tooltip == null || tooltip.isEmpty() ? descriptionOf( info ) : tooltip;
 	}
 
