@@ -120,7 +120,7 @@ class OmeZarrOpenActionsTest
 	}
 
 	/**
-	 * Reads the dataset headlessly through {@link OmeZarrReader#getContents()} with
+	 * Reads the dataset headlessly through {@link OmeZarrReader#contents()} with
 	 * the given backend, without instantiating any UI. Returns the
 	 * {@link PyramidContents} that was read; throws the relevant domain exception (e.g.
 	 * {@link ome.zarr.imglib2.exceptions.NotAMultiscaleImageException} or
@@ -131,7 +131,7 @@ class OmeZarrOpenActionsTest
 	{
 		final PyramidBackend pyramidBackend = backend.createBackend();
 		final OmeZarrReader opener = new OmeZarrReader( uri, context, pyramidBackend, null, error -> {} );
-		return opener.getContents();
+		return opener.contents();
 	}
 
 	static Stream< String > omeZarrExamples()
@@ -294,7 +294,7 @@ class OmeZarrOpenActionsTest
 			assertInstanceOf( ZarrJavaPyramidBackend.class, backendOf( opener ) );
 
 			// The wired backend also has to be usable, not just of the right type.
-			PyramidContents< ? > contents = opener.getContents();
+			PyramidContents< ? > contents = opener.contents();
 			assertEquals( 2, contents.numResolutionLevels() );
 			assertEquals( 3, contents.numChannels() );
 		}

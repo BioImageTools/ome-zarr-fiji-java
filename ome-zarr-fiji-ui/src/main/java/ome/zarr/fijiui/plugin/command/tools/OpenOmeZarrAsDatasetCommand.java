@@ -102,6 +102,6 @@ public class OpenOmeZarrAsDatasetCommand extends ContextCommand
 		}
 		final OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
 		final OmeZarrReader zarrReader = new OmeZarrReader( uri, context, settings.getBackend().createBackend(), null, errorHandler );
-		return zarrReader.getPyramidalDataset();
+		return zarrReader.asPyramidalDataset();
 	}
 }

@@ -211,7 +211,7 @@ public class OmeZarrReader
 	// returned PyramidContents; making this generic would push the
 	// wildcard onto every use site.
 	@SuppressWarnings( "java:S1452" )
-	public PyramidContents< ? > getContents()
+	public PyramidContents< ? > contents()
 	{
 		if ( cachedContents == null )
 		{
@@ -263,7 +263,7 @@ public class OmeZarrReader
 	{
 		return openPyramidImage(
 				() -> {
-					final PyramidContents< ? > contents = getContents();
+					final PyramidContents< ? > contents = contents();
 					if ( uncalibratedAndDeclined( contents ) )
 						return null;
 					final int suggestedLevel = contents.suggestResolutionLevel( preferredMaxWidth );
@@ -344,7 +344,7 @@ public class OmeZarrReader
 		{
 			return openPyramidImage(
 					() -> {
-						final PyramidContents< ? > contents = getContents();
+						final PyramidContents< ? > contents = contents();
 						if ( resolutionLevel < 0 || resolutionLevel >= contents.numResolutionLevels() )
 							throw new NonExistingResolutionLevelException( resolutionLevel, contents.numResolutionLevels() );
 						if ( uncalibratedAndDeclined( contents ) )
@@ -370,11 +370,11 @@ public class OmeZarrReader
 	 *
 	 * @return the dataset, or {@code null} if reading failed
 	 */
-	public PyramidalDataset getPyramidalDataset()
+	public PyramidalDataset asPyramidalDataset()
 	{
 		return openPyramidImage(
 				() -> {
-					final PyramidContents< ? > contents = getContents();
+					final PyramidContents< ? > contents = contents();
 					final int suggestedLevel = contents.suggestResolutionLevel( preferredMaxWidth );
 					if ( suggestedLevel != PyramidContents.NO_MATCHING_LEVEL )
 						return new PyramidalDataset( context, contents, suggestedLevel );
@@ -448,9 +448,9 @@ public class OmeZarrReader
 	{
 		return openPyramidImage(
 				() -> {
-					if ( uncalibratedAndDeclined( getContents() ) )
+					if ( uncalibratedAndDeclined( contents() ) )
 						return null;
-					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, getContents() );
+					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, contents() );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 					final BdvHandle result = BdvUtils.showBdvAndRegisterWindow( pyramidal, pyramidalService );
 					logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );

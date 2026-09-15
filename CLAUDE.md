@@ -98,7 +98,7 @@ export JAVA_TOOL_OPTIONS="-Djava.library.path=$(brew --prefix c-blosc)/lib -Djna
 One entry point deliberately does **not** end in `openWithSettings()`: `OpenOmeZarrAsDatasetCommand`
 (`Plugins > OME-Zarr > Open OME-Zarr as Dataset`, issue #40) takes the location as a single `String` input and declares
 a `PyramidalDataset` output, so scripts can capture the image. It cannot honor the chosen `OmeZarrOpener` — BDV and the
-selection dialog produce no `Dataset` — so it always reads one, via `OmeZarrReader.getPyramidalDataset()` with the
+selection dialog produce no `Dataset` — so it always reads one, via `OmeZarrReader.asPyramidalDataset()` with the
 persisted backend and preferred width, which displays nothing. Being plain text rather than a chooser, it accepts
 `http(s):` too, but *not* `s3:`.
 
@@ -203,7 +203,7 @@ i.e. a SciJava plugin anyway.
 - **The parameter is the reader, not a request object.** A `ZarrOpenRequest` carrying `uri`/`context`/`backend`/
   `preferredMaxWidth`/`errorHandler` plus a lazily built `reader()` existed until 0.9 and was deleted: every field
   duplicated one `OmeZarrReader` already had, and the laziness bought nothing because the `OmeZarrReader` constructor is
-  pure field assignment — `getContents()` is what reads. Do **not** reintroduce a bare `open( URI )`: the reader carries
+  pure field assignment — `contents()` is what reads. Do **not** reintroduce a bare `open( URI )`: the reader carries
   *the user's configured backend and preferred width*, which a URI does not, and sharing one reader is what lets the
   selection dialog and the opener it picks share the cached `PyramidContents`. Third-party openers that read for
   themselves use `uri()` alone; `context()` and `errorHandler()` exist on the reader so they need nothing else.
