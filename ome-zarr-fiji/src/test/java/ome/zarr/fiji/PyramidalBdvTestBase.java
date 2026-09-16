@@ -30,8 +30,10 @@ package ome.zarr.fiji;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
@@ -39,6 +41,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.scijava.Context;
 
 import java.net.URISyntaxException;
@@ -47,10 +50,13 @@ import java.util.List;
 import bdv.tools.brightness.ConverterSetup;
 import bdv.util.BdvHandle;
 import bdv.viewer.Source;
+import bdv.viewer.SourceAndConverter;
+import bdv.viewer.ViewerState;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import ome.zarr.ZarrTestUtils;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.metadata.Omero;
 
 /**
  * Shared parameterized tests for the BigDataViewer Fiji wrapper
@@ -65,6 +71,10 @@ import ome.zarr.imglib2.PyramidContents;
  */
 public interface PyramidalBdvTestBase
 {
+	/** The examples carrying omero metadata, the only ones with display settings to apply. */
+	String DATASET_5D_V4 = "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr";
+
+	String DATASET_5D_V5 = "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr";
 
 	PyramidContents< ? > read( String resource, Context context )
 			throws URISyntaxException;
@@ -242,6 +252,48 @@ public interface PyramidalBdvTestBase
 				assertEquals( "(r=255,g=0,b=0,a=255)", converterSetup1.getColor().toString() );
 			}
 			bdvHandle.close();
+		}
+	}
+
+	/**
+	 * The omero rendering defaults decide the timepoint a dataset opens at and
+	 * which of its channels are shown. Only the 5d examples carry omero metadata.
+	 */
+	@ParameterizedTest
+	@ValueSource( strings = { DATASET_5D_V4, DATASET_5D_V5 } )
+	default void testOmeroDisplaySettings( final String resource ) throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			PyramidContents< ? > contents = read( resource, context );
+			// NB: neither example turns a channel off, so switch one off to cover both answers.
+			contents.omero.channels.get( 1 ).active = false;
+			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
+			BdvHandle bdvHandle = BdvUtils.showBdvAndRegisterWindow( pyramidalBdv, null );
+			ViewerState state = bdvHandle.getViewerPanel().state();
+			assertEquals( 1, state.getCurrentTimepoint(), "the timepoint the rendering defaults name" );
+			List< ? extends SourceAndConverter< ? > > sources = pyramidalBdv.asSources();
+			assertTrue( state.isSourceActive( sources.get( 0 ) ) );
+			assertFalse( state.isSourceActive( sources.get( 1 ) ) );
+			assertTrue( state.isSourceActive( sources.get( 2 ) ) );
+			bdvHandle.close();
+		}
+	}
+
+	/** Omero channels are applied only when there are as many of them as there are sources. */
+	@ParameterizedTest
+	@ValueSource( strings = { DATASET_5D_V4, DATASET_5D_V5 } )
+	default void testOmeroChannelCountMismatch( final String resource ) throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			final Omero omero = read( resource, context ).omero;
+			final int numChannels = omero.channels.size();
+			assertEquals( numChannels, BdvUtils.omeroChannels( omero, numChannels ).size(), "as many channels as sources" );
+			assertTrue( BdvUtils.omeroChannels( omero, numChannels + 1 ).isEmpty(), "fewer channels than sources" );
+			assertTrue( BdvUtils.omeroChannels( omero, numChannels - 1 ).isEmpty(), "more channels than sources" );
+			// empty, never null, so callers test isEmpty() and never dereference null
+			assertTrue( BdvUtils.omeroChannels( null, numChannels ).isEmpty(), "no omero metadata at all" );
 		}
 	}
 }
