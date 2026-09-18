@@ -1,7 +1,6 @@
 package ome.zarr.fijiui.plugin.command;
 
-import net.imglib2.cache.img.CachedCellImg;
-import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
+import net.imglib2.img.basictypeaccess.DataAccess;
 import net.imglib2.img.basictypeaccess.array.DoubleArray;
 import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.img.basictypeaccess.array.IntArray;
@@ -21,6 +20,7 @@ import net.imglib2.util.Intervals;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
+import org.jspecify.annotations.NonNull;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.plugin.Parameter;
@@ -121,27 +121,40 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 		transforms[ 1 ] = new AffineTransform3D();
 		transforms[ 2 ] = new AffineTransform3D();
 
-		final CellGrid baseCellGrid = new CellGrid(
-				new long[] { xSize, ySize, zSize, numChannels, numTimepoints },
-				new int[] { 256, 256, 256, 1, 1 }); //chunks size basically...
+		LazyCellImg baseImg = getLazyCellImg( baseCellGrid );
+		LazyCellImg[] imgs = new LazyCellImg[ 3 ];
+		imgs[ 0 ] = baseImg;
 
-		LazyCellImg.Get<Cell<?>> emptyCellProvider = index -> {
-			final long[] cellMin  = new long[5];
-			final int[]  cellDims = new int[5];
-			baseCellGrid.getCellDimensions(index, cellMin, cellDims);
-			return new Cell<>(cellDims, cellMin,
-					getBackingArray(typeAsStr, (int)Intervals.numElements(cellDims));
-		};
-		LazyCellImg baseImg = new LazyCellImg<>(baseCellGrid, (NativeType) getType(typeAsStr), emptyCellProvider);
-		CachedCellImg[] imgs = new CachedCellImg[ 3 ];
-		imgs[0] = baseImg;
-
+		PyramidContents.Builder< ? > q = builderForType( getType( typeAsStr ) );
 		pyramidContents = builderForType( getType( typeAsStr ) )
 				.axesPerLevel( axes )
 				.transforms( transforms )
-				.cachedCellImgs(imgs)
+				.cachedCellImgs( imgs )
 				.name( name )
 				.build();
+	}
+
+	private @NonNull LazyCellImg getLazyCellImg(
+			final long[] wholeGridSize,
+			final int[] oneCellSize,
+			double downScaleFactor )
+	{
+		assert wholeGridSize.length == oneCellSize.length;
+
+		final CellGrid cellGrid = new CellGrid(
+				new long[] { xSize, ySize, zSize, numChannels, numTimepoints },
+				new int[] { 256, 256, 256, 1, 1 } ); //chunks size basically...
+
+		LazyCellImg.Get< Cell< ? > > emptyCellProvider = index -> {
+			final long[] cellMin = new long[ 5 ];
+			final int[] cellDims = new int[ 5 ];
+			baseCellGrid.getCellDimensions( index, cellMin, cellDims );
+			return new Cell<>( cellDims, cellMin,
+					getBackingArray( typeAsStr, ( int ) Intervals.numElements( cellDims ) ) );
+		};
+		NativeType< ? > type = getType( typeAsStr );
+		LazyCellImg baseImg = new LazyCellImg<>( baseCellGrid, type, emptyCellProvider );
+		return baseImg;
 	}
 
 	private AxisCalibration[] downScaledAxes( AxisCalibration[] axes, double downSizeFactor )
@@ -186,34 +199,34 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 		return ( T ) new UnsignedShortType();
 	}
 
-	private < A extends ArrayDataAccess< A > > ArrayDataAccess<A> getBackingArray(
-			  String type, int numEntities )
+	private < A extends DataAccess > A getBackingArray(
+			String type, int numEntities )
 	{
 		if ( type.startsWith( "uint" ) )
 		{
 			if ( type.endsWith( "8" ) )
 			{
-				return (A)new ByteArray(numEntities);
+				return ( A ) new ByteArray( numEntities );
 			}
 			else if ( type.endsWith( "16" ) )
 			{
-				return ( A ) new ShortArray(numEntities);
+				return ( A ) new ShortArray( numEntities );
 			}
 			else if ( type.endsWith( "32" ) )
 			{
-				return ( A ) new IntArray(numEntities);
+				return ( A ) new IntArray( numEntities );
 			}
 		}
 		else if ( "float".equals( type ) )
 		{
-			return ( A ) new FloatArray(numEntities);
+			return ( A ) new FloatArray( numEntities );
 		}
 		else if ( "double".equals( type ) )
 		{
-			return ( A ) new DoubleArray(numEntities);
+			return ( A ) new DoubleArray( numEntities );
 		}
 		//a terrible default....
-		return ( A ) new ShortArray(numEntities);
+		return ( A ) new ShortArray( numEntities );
 	}
 
 	private < T extends RealType< T > & NativeType< T > > PyramidContents.Builder< T > builderForType( T type )
