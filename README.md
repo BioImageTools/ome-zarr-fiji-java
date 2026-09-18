@@ -36,7 +36,8 @@
 
 # About
 
-This repo is currently primarily a Fiji Drag & Drop / Copy & Paste / FIJI links handler for OME-Zarrs.
+A convenience layer for using **OME-Zarr** in Fiji/ImageJ. Open a dataset the way you would open any image: drag it
+in, paste a URI, use the menu, or call it from a script. Support local and remote (https/s3) stores.
 
 If the dropped / pasted / linked target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing.
 
