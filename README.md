@@ -82,7 +82,7 @@ and easily handles even the huge ones.
 * Three entry points:
     * Paste with `CTRL` / `CMD` / `SHIFT` + `V` (requires FIJI latest)
     * Paste via menu: Plugins -> OME-Zarr -> Paste OME-Zarr URI
-    * Paste via button in FIJI: ![fiji_paste_button.png](doc/fiji_paste_button.png)
+    * Paste via button in FIJI: ![fiji_paste_button.png](doc/readme/fiji_paste_button.png)
 
 ### Open via menu (local folders)
 
@@ -129,7 +129,7 @@ for a page with clickable examples of each form.
 
 ### Dialog options
 
-<img src="doc/dialog.png" width="120" alt="The opening-selection dialog with six openers and the help button">
+<img src="doc/readme/dialog.png" width="120" alt="The opening-selection dialog with six openers and the help button">
 
 The dialog shows one icon button per registered opener, plus a help button; hovering a button explains what it does.
 The openers shipped here are:
@@ -215,7 +215,7 @@ preferred resolution the user configured.
   if available.
 * Works only when a multi-resolution OME-Zarr is drag & dropped / copy & pasted and opened in BigDataViewer.
 
-![bdv_channel_information.png](doc/bdv_channel_information.png)
+![bdv_channel_information.png](doc/readme/bdv_channel_information.png)
 
 ### Dual dataset view
 
@@ -257,7 +257,7 @@ preferred resolution the user configured.
 Enable the Fiji update site [OME-Zarr](https://sites.imagej.net/OME-Zarr/) in the
 `Help -> Update -> Manage Update Sites`:
 
-![update_site.png](doc/update_site.png)
+![update_site.png](doc/readme/update_site.png)
 
 ## Manual installation
 
