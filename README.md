@@ -20,7 +20,6 @@
         - [Dialog options](#dialog-options)
         - [Multi-resolution vs. single-resolution](#multi-resolution-vs-single-resolution)
         - [Reader Backend](#reader-backend)
-        - [Registering your own opener](#registering-your-own-opener)
         - [Scriplet support](#scriplet-support)
     - [What is read and displayed](#what-is-read-and-displayed)
         - [Supported OME-Zarr versions](#supported-ome-zarr-versions)
@@ -32,6 +31,7 @@
     - [Fiji Update Site](#fiji-update-site)
     - [Manual installation](#manual-installation)
         - [Third-party jars](#third-party-jars)
+- [For developers](#for-developers)
 - [History](#history)
 
 # About
@@ -63,7 +63,8 @@ The options are:
   contrast limits, and the time point are automatically extracted from the OME-Zarr metadata, if available.
 * Show a [**dialog**](#dialog-options) with all available opening options.
 
-The list is not fixed: any Fiji plugin can [register its own opener](#registering-your-own-opener), and it then appears
+The list is not fixed: any Fiji plugin can
+[register its own opener](doc/DEVELOPERS.md#registering-your-own-opener), and it then appears
 here and in the dialog next to the built-in ones.
 
 Note: [BigDataViewer](https://imagej.net/plugins/bdv/) is part of Fiji, so there's no need to install anything extra. It
@@ -164,34 +165,6 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
     * only supports OME-Zarr v0.4 and v0.5, not v0.3.
 * [N5 library](https://github.com/saalfeldlab/n5)
     * alternative, and the only one that reads OME-Zarr v0.3.
-
-### Registering your own opener
-
-Another Fiji plugin can offer itself as a way to open OME-Zarrs — it then appears in the dialog above and in the
-settings, and can be made the default. All it takes is a SciJava plugin implementing `OmeZarrOpener` from
-`ome.zarr:ome-zarr-fiji`:
-
-```java
-
-@Plugin(
-		type = OmeZarrOpener.class, name = "my-opener", label = "My viewer",
-		iconPath = "/icons/my-opener.png", priority = Priority.VERY_HIGH
-)
-public class MyOmeZarrOpener implements OmeZarrOpener
-{
-	@Override
-	public void open( final OmeZarr omeZarr )
-	{
-		MyViewer.open( omeZarr.uri() );
-	}
-}
-```
-
-`name` is what the setting persists and should stay stable across releases; `label`, `description` and `iconPath` are
-what the user sees. `priority` decides the order and which opener a user who never picked one gets — an explicit user
-choice always wins. An opener that reads the dataset itself needs only `omeZarr.uri()`; call its
-`showInImageJ()` / `showInBdv()` instead if you want this project to do the reading, with the backend and
-preferred resolution the user configured.
 
 ### Scriplet support
 
@@ -319,6 +292,17 @@ Delete older versions of an artifact when you add a newer one.
 Note that two options of the [dialog](#dialog-options) — the ones opening the **N5 Importer** and the **N5 Viewer** —
 are implemented using `n5-ij` and `n5-viewer_fiji`, so the N5 jars are also needed when the zarr-java
 backend is selected.
+
+# For developers
+
+[**doc/DEVELOPERS.md**](doc/DEVELOPERS.md) covers using this project as a library rather than as a plugin:
+
+* [which of the five modules to depend on](doc/DEVELOPERS.md#which-module-do-i-depend-on)
+* [`PyramidContents<T>`](doc/DEVELOPERS.md#reading-a-dataset-pyramidcontentst), the object you get after reading, and
+  its lazy cell images
+* [one read, two views](doc/DEVELOPERS.md#one-read-two-views) — the same pyramid in ImageJ and in BigDataViewer
+* [opening with the user's settings](doc/DEVELOPERS.md#opening-the-way-the-user-configured-it) from your own plugin
+* [registering your own opener](doc/DEVELOPERS.md#registering-your-own-opener)
 
 # History
 
