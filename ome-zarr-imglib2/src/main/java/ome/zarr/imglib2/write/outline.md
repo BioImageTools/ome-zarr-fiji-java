@@ -160,20 +160,45 @@ Collected by Claude.
 
 ### OmeZarrWritingOptions
 
-Analog to `BdvOptions`. The list of writing parameters is likely incomplete.
+Analog to `BdvOptions`. Covers only what `PyramidContents` cannot supply.
 
 ```java
 public class OmeZarrWritingOptions
 {
     /*
-     * Used analogously to BdvOptions. PyramidContents prescribes only the
-     * shape/geometry of the pyramid levels, not storage-level details such
-     * as chunk sizes, shard sizes, or compression method.
+     * Used analogously to BdvOptions. The following are already derivable from
+     * PyramidContents and therefore absent here:
+     *   - axis count, names, types, units  (from AxisCalibration)
+     *   - array shape and data type        (from CachedCellImg + PyramidContents.type)
+     *   - scale/translation transforms     (stored per level in PyramidContents)
+     *   - number of resolution levels
+     *   - OMERO display metadata           (optional field in PyramidContents)
+     *   - key separator, zarr format etc.  (choices made by the package, thus hardcoded)
      */
-    private shardSizePerLevel[]
-    private chunkSizePerLevel[]
-    private compressionPerLevel[]
-    // TODO: check what everything OME-Zarr specs permits to set
+
+    // --- Zarr format ---
+    //zarrFormat and chunkKeySeparator will be hardcoded to v3 and '/'
+
+    // --- Array storage ---
+    private Object fillValue;             // default value for unwritten chunks; default: 0
+    //memoryOrder will be hardcoded to "F"
+
+    // --- Chunking (per level; auto-computed from array shape if not set) ---
+    private int[][] chunkShapePerLevel;
+
+    // --- Sharding (Zarr v3 only; null = no sharding) ---
+    private int[][] shardShapePerLevel;       // coarse shard grid
+    private int[][] innerChunkShapePerLevel;  // fine chunk grid inside each shard
+    private String shardIndexLocation;        // "start" or "end"; default: "end"
+
+    // --- Codec pipeline (per level; same codec applied to all levels if not set per level) ---
+    // NB: in Zarr v3 byte order (endianness) is part of this pipeline ("bytes" codec)
+    private Compression[] compressionPerLevel;
+
+    // --- Optional OME-Zarr multiscales annotations ---
+    private String multiscaleName;            // default: null
+    private String downscalingType;           // e.g. "gaussian"; default: null
+    private Object downscalingMetadata;       // method version, args, kwargs; default: null
 
     /*
      * Intentionally no option for single-file OME-Zarr: single-file archives
@@ -184,12 +209,11 @@ public class OmeZarrWritingOptions
     .......
 
     // chaining-allowing setters
-    OmeZarrWritingOptions setShardSize(...);
-    OmeZarrWritingOptions setChunkSize(...);
+    OmeZarrWritingOptions setFillValue( Object value );
     .......
 
 
-    public void OmeZarrWritingOptions( PyramidContents pc )
+    public OmeZarrWritingOptions( PyramidContents pc )
     {
         ......
         // NB: PyramidContents is a mandatory input to give the implementations
