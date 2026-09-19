@@ -48,7 +48,7 @@ Description of the *writer objects*:
 
 The following is based on kind (spoken) discussions with @normanrz , @tpietzsch , and @stefanhahmann . Some materials were created during that, namely the [Zulip channel](https://imagesc.zulipchat.com/#narrow/channel/626210-.5B2026-09.5D-OME-Zarr-Java-Hackathon/topic/.22unanchored.22.20PyramidContents.20in.20Fiji/with/623140734) and the following *whiteboard picture*.
 
-<img width="4096" height="2304" alt="Image" src="https://www.fi.muni.cz/~xulman/files/progresive_writing_mockup_whiteboard.jpg"/>
+![Progressive writing mockup whiteboard](https://www.fi.muni.cz/~xulman/files/progresive_writing_mockup_whiteboard.jpg)
 
 ### Remarks : Philosophy of the new proposed classes
 
