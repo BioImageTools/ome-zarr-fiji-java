@@ -109,18 +109,20 @@ Analog to `BdvOptions`. The list of writing parameters is likely incomplete.
 ```java
 public class OmeZarrWritingOptions
 {
-    // analogy to BdvOptions in how it is used;
-    // the purpose is that PyramidContents prescribe only the shape/geometry
-    // of the images and their pyramid levels, it doesn't tell storage-focused
-    // technical details such as chunks sizes, shards sizes, compression method
+    /*
+     * Used analogously to BdvOptions. PyramidContents prescribes only the
+     * shape/geometry of the pyramid levels, not storage-level details such
+     * as chunk sizes, shard sizes, or compression method.
+     */
     private shardSizePerLevel[]
     private chunkSizePerLevel[]
     private compressionPerLevel[]
     // TODO: check what everything OME-Zarr specs permits to set
 
-    // intentionally no option to choose single-file OME-Zarr
-    // as this one is hard to create __progressively__, which
-    // is the main theme of this package
+    /*
+     * Intentionally no option for single-file OME-Zarr: single-file archives
+     * are hard to create progressively, which is the central theme of this package.
+     */
 
     // getters (return copies, make this obj truly immutable)
     .......
@@ -154,32 +156,39 @@ The main API for progressive writing.
 ```java
 interface PyramidSaver
 {
-    // When an implementing object is constructed, it is probably done with
-    // a URL parameter (if that makes sense for the implementing class); that
-    // said, implementing object is created for a particular URL, and another
-    // one for another URL...
-    // much like we are currently doing it with ZarrReaders backends
+    /*
+     * Implementing objects are constructed with a URL parameter (where applicable):
+     * one instance per target URL, analogous to the existing backend reader:
+     * ZarrJavaPyramidBackend.java#readPyramid(URI),
+     * N5PyramidBackend.java#readPyramid(URI).
+     */
 
 
-    // Write a skeleton OME-Zarr, only all metadata, no pixel data at all.
-    // (There's anyway no pixel data provided to the PyramidSaver at this moment.)
-    // (initContainer(URL) in the "whiteboard picture")
+    /*
+     * Writes a skeleton OME-Zarr with all metadata but no pixel data.
+     * (No pixel data is available to PyramidSaver at this point.)
+     * (initContainer(URL) in the whiteboard)
+     */
     void initEmptyContainer() throws IOException, "AlreadyOccupiedException";
-    // NB: No URL provided! See above.
-    // TODO Is this really a part of the _Pyramid_Saver?
-    //      ...it cares only about the top-level OME-Zarr metadata
+    /*
+     * NB: No URL provided — see above.
+     * TODO: Is this really part of PyramidSaver? It only concerns
+     *       the top-level OME-Zarr metadata.
+     */
 
-    // Since Vlado thinks it is NOT possible to recover/configure PyramidSaver from
-    // a partially written OME-Zarr, the following interface methods are commented out.
-    //
+    /*
+     * Recovering or reconfiguring a PyramidSaver from a partially written OME-Zarr
+     * is not supported; the following interface methods are therefore commented out.
+     */
     /* void initFromExistingContainer( URL ) throws IOException; */
     /* void initFromExistingMultiscales( String path ) throws IOException; */
 
 
-    // write a skeleton group for OME-Zarr 'multiscales', only all metadata, no pixel data yet
-    // this assures that the below writeRegion() can work; in another words,
-    // if this one method is skipped, the below writeRegion() will fail
-    // (setupPyramid() in the "whiteboard picture")
+    /*
+     * Writes a skeleton OME-Zarr 'multiscales' group — metadata only, no pixel data.
+     * writeRegion() requires this to be called first; skipping it will cause writeRegion() to fail.
+     * (setupPyramid() in the whiteboard)
+     */
     void initEmptyMultiscales( String path, PyramidContents pc, OmeZarrWritingOptions opts ) throws IOException, "AlreadyOccupiedException";
 
     void initEmptyMultiscales( String path, PyramidContents pc ) throws IOException, "AlreadyOccupiedException"
@@ -188,39 +197,40 @@ interface PyramidSaver
         initEmptyMultiscales( path, pc, OmeZarrWritingOptions.defaultOptionsFor(pc) );
     }
 
-    // The implementing class learns the data shape, pyramids and writing options
-    // (chunks, compression) only via initEmptyMultiscales(); in fact, this is the
-    // only way to change the OmeZarrWritingOptions et al.; therefore, these parameters
-    // are firmly fixed during consecutive writeRegion() (so, e.g., it cannot happen
-    // that some chunks are written with compression A and others with B).
+    /*
+     * Shape, pyramid layout, and writing options (chunks, compression) are communicated
+     * solely through initEmptyMultiscales(); there is no other way to set them. These
+     * parameters are therefore fixed for all subsequent writeRegion() calls — it cannot
+     * happen that some chunks are written with compression A and others with B.
+     */
 
-    // write RAI, a region, imglib2's Interval with __proper__ min,max!
-    // (no zero-based Interval that represents only size/diagonal
-    //  with no "offset" of the interval shall be used,
-    //  except for the single one, truly zero-based one)
-    // (writeRegion() in the "whiteboard picture")
+    /*
+     * Writes a region given as an imglib2 RAI with correct min/max coordinates.
+     * A zero-based Interval (min == 0, encoding only the size) is valid only for
+     * a single full-image write covering the entire array.
+     * (writeRegion() in the whiteboard)
+     */
     void writeRegion( RAI, level ) throws IOException;
     // TODO assume RAI is only spatial coords? add parameters for time point and channel?
 
-    // NB: all methods write immediately; there's
-    //     no explicit intermediate memory and no flush();
-    //     the memory with pixels is thus handled (and allocated)
-    //     solely by the caller
+    /*
+     * All methods write immediately. There is no intermediate buffer and no flush().
+     * Pixel memory is allocated and owned entirely by the caller.
+     */
 
-    // NB: the PyramidSaver __does not__ provide any downsampling routine;
-    //     caller knows the best
-    //     a) how to handle lower-res versions of the data,
-    //     b) when to write lower-res versions of the data.
-    //
-    // For the "how": There shall be prepared Util functions for the usual
-    // downsampling that will heavily utilize the imglib's Views.resample().
-    //
-    // For the "when": It is desired to implement this in another layer above,
-    // which would took care of work planning, workers communication, etc.
-    //
-    // For the "how & when": I could imagine an util method to write
-    // the whole time point (of a particular channel) of raw/mask data
-    // incl. all resolution levels, for example.
+    /*
+     * PyramidSaver provides no downsampling: the caller is responsible for both
+     * how (which interpolation) and when to produce lower-resolution levels.
+     *
+     * For the "how": PyramidSaverUtils will provide utility functions for the
+     * common case, using imglib2's Views.resample().
+     *
+     * For the "when": scheduling belongs in a layer above, handling work
+     * planning and worker coordination.
+     *
+     * For the "how & when": a convenience method covering a full time point
+     * (single channel, all resolution levels) is a plausible addition to PyramidSaverUtils.
+     */
 }
 ```
 
@@ -246,9 +256,11 @@ public class N5PyramidSaver implements PyramidSaver
     void writeRegion( RAI, level );
     { .......... }
 
-    // shortcut convenience method, outside the PyramidSaver interface, so that
-    // the implementation can ask for implementation-specific additional parameters;
-    // the method assumes PyramidContents __has valid pixel__ arrays and writes it fully
+    /*
+     * Convenience shortcut outside the PyramidSaver interface, allowing
+     * implementation-specific parameters. Assumes PyramidContents contains
+     * valid pixel arrays and writes all resolution levels in full.
+     */
     public static PyramidSaver write( URL url, String path, PyramidContents pc, OmeZarrWritingOptions opts )
     {
         PyramidSaver saver = new N5PyramidSaver( url );
@@ -280,9 +292,11 @@ public class ZarrJavaPyramidSaver implements PyramidSaver
     void writeRegion( RAI, level );
     { .......... }
 
-    // shortcut convenience method, outside the PyramidSaver interface, so that
-    // the implementation can ask for implementation-specific additional parameters;
-    // the method assumes PyramidContents __has valid pixel__ arrays and writes it fully
+    /*
+     * Convenience shortcut outside the PyramidSaver interface, allowing
+     * implementation-specific parameters. Assumes PyramidContents contains
+     * valid pixel arrays and writes all resolution levels in full.
+     */
     public static PyramidSaver write( URL url, String path, PyramidContents pc, OmeZarrWritingOptions opts )
     { .......... }
 }
@@ -311,9 +325,11 @@ public class InMemoryPyramidSaver implements PyramidSaver, Pyramidal
     void initEmptyContainer()
     {
         /* empty */
-        // TODO Should it throw IllegalUse-alike exception?
-        // Vlado votes to only silently log/info only, while doing nothing; switching
-        // to this saver then requires no modifications in the caller's pipeline
+        /*
+         * TODO: Should this throw an IllegalStateException?
+         * Current preference: silently log and do nothing, so switching to this
+         * saver requires no changes in the caller's pipeline.
+         */
     }
 
     @Override
@@ -334,8 +350,10 @@ public class InMemoryPyramidSaver implements PyramidSaver, Pyramidal
         LoopBuilder over RAI and Views.Interval(this.data.asImg(level), RAI)...
     }
 
-    // Notice the absence of the convenience write() method !
-    // (which is another reason why the write() is not part of the interface PyramidSaver)
+    /*
+     * Note the absence of a convenience write() method — another reason why
+     * write() is not part of the PyramidSaver interface.
+     */
 
     // this is the store into which RAIs are written
     private final PyramidContents data;
@@ -345,8 +363,10 @@ public class InMemoryPyramidSaver implements PyramidSaver, Pyramidal
     {
         return this.data;
     }
-    // NB: This can be used to wrap into PyramidalDataset or PyramidalBdv
-    // NB: Direct writing is also possible, avoiding this.writeRegion()
+    /*
+     * The returned PyramidContents can be wrapped into PyramidalDataset or PyramidalBdv.
+     * Direct writing to its pixel arrays is also possible, bypassing writeRegion().
+     */
 }
 ```
 
@@ -355,8 +375,9 @@ public class InMemoryPyramidSaver implements PyramidSaver, Pyramidal
 ```java
 public static class PyramidSaverUtils
 {
-    // Example Util class, subject to discussion and changes !! 
-    // only method signatures are listed below
+    /*
+     * Example utility class — signatures only; subject to discussion and change.
+     */
 
     public static void writeRawImagePyramid( RAI, timePoint, channel, PyramidSaver )
     public static void writeMaskImagePyramid( RAI, timePoint, channel, PyramidSaver )
