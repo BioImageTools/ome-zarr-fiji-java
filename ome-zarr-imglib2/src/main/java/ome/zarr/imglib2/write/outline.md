@@ -1,3 +1,25 @@
+### Claude's executive summary
+
+**Goal:** Write `PyramidContents` to OME-Zarr in multiple steps, with arbitrary delays between steps, always leaving valid (partially filled) OME-Zarr in storage.
+
+**Key design decisions:**
+- One unified API via *writer objects* (`PyramidSaver` interface)
+- Writers hold no pixel data, write immediately, blocking API (no `flush()`)
+- In-memory writer uses `DiskCachedCellImg` as backing store and exposes `PyramidContents`
+
+**Proposed classes:**
+
+| Class | Purpose |
+|---|---|
+| `OmeZarrWritingOptions` | Chunk/shard/compression config, analog to `BdvOptions` |
+| `PyramidSaver` (interface) | `initEmptyContainer()` → `initEmptyMultiscales()` → `writeRegion()` |
+| `N5PyramidSaver` | Persistent storage via N5 |
+| `ZarrJavaPyramidSaver` | Persistent storage via zarr-java |
+| `InMemoryPyramidSaver` | RAM writer, also implements `Pyramidal` to expose contents |
+| `PyramidSaverUtils` | Downsampling helpers (`writeRawImagePyramid`, `writeMaskImagePyramid`, etc.) |
+
+---
+
 ### The goal: Progressive writing
 
 This issue aims to outline/frame how progressive writing could be implemented. The subject of the writing for now shall be the `PyramidContents`, a holder of lazily-loaded pixel data (images) at decreasing spatial resolutions (pyramids), with a couple of additional metadata such as transforms, axes information, or display settings.
