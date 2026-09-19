@@ -22,71 +22,71 @@
 
 ### The goal: Progressive writing
 
-This issue aims to outline/frame how progressive writing could be implemented. The subject of the writing for now shall be the `PyramidContents`, a holder of lazily-loaded pixel data (images) at decreasing spatial resolutions (pyramids), with a couple of additional metadata such as transforms, axes information, or display settings.
+This document outlines how progressive writing could be implemented. The source for the writing is `PyramidContents` — a holder of lazily-loaded pixel data at decreasing spatial resolutions, with additional metadata such as transforms, axis information, and display settings.
 
 *Progressive writing* means here that
 
-- **Writing** of final OME-Zarr is **realized over multiple smaller steps**, API calls.
+- **Writing** is **realized over multiple discrete API calls**.
 
-- There can be **arbitrary time delays in between the steps**. They can even be realized by different processes. Nevertheless, their order is important.
+- Steps may be separated by **arbitrary delays** and can even be executed by different processes. Order matters.
 
-- The steps are not meant to be atomic, to temporarily lock the output storage. Yet, the steps are expected (provided they don't break during their operation) to always leave the storage with a valid OME-Zarr, albeit partially filled.
+- Steps are not atomic and do not lock the storage. Each step, barring errors, leaves the store in a valid (though partially filled) OME-Zarr state.
 
-- Writing is thus **not state-less**. Writing methods cannot be called/executed in any arbitrary order.
+- Writing is therefore **stateful**: method call order is significant.
 
 ### Requirements : Design decisions
 
-A few more deliberate design decisions:
+Additional design decisions:
 
-- There shall be just **one, unified API for writing** `PyramidContents`, implemented by means of *writer objects*.
+- A **single unified API** writes `PyramidContents`, implemented through *writer objects*.
 
-- *Writer objects* shall not keep any pixel data, shall not cache/buffer anything beyond the usual I/O low-level business. The `imglib2` **pixel data shall be only with the caller**, not also (in full or in part) at the writer. Consequently, writer objects should write immediately.
+- *Writer objects* hold **no pixel data** and buffer nothing beyond low-level I/O. All pixel data stays with the caller; writers write immediately.
 
-- *Writer objects* **API** should be **blocking**. There's no need for `flush()` in their API.
+- The writer API is **blocking**; no `flush()` is needed.
 
 ### Requirements : Writer objects
 
-Description of the *writer objects*: 
+The *writer objects* in detail:
 
-- Writer objects for persistent local or remote storage are expected to write into an OME-Zarr format. They point to their storage space with a URI/URL.
+- Persistent-storage writers target a local or remote OME-Zarr store identified by URI/URL.
 
-- For temporary (not persistent), yet progressively constructed `PyramidContents`, a writer object that "writes only to RAM" shall be used. That way, the same *writers API* is always used.
+- For temporary (non-persistent) use, an in-memory writer is provided, keeping the API uniform.
   
-  - Notice the wording: This writer is filling and is backed by the `PyramidContents`, which it **can expose** (otherwise this writer would be of any use if one wouldn't be able to consume the written pixels).
+  - This writer is backed by a `PyramidContents` it **can expose** — without exposure, the written pixels would be inaccessible and the writer pointless.
     
-  - Notice, and in contrast, writers for persistent storage shall not expose `PyramidContents` because they shall not keep any pixel data themselves.
+  - Persistent writers, by contrast, do **not** expose `PyramidContents` as they retain no pixel data.
   
-- There's a subtle detail in the behavior of `PyramidContents` when keeping pixel values written to their underlying pixel arrays.
+- There is a subtle difference in how `PyramidContents` retains written pixel values depending on its origin:
   
-  - `PyramidContents` obtained from backend readers is backed by `CachedCellImg` that allows writing. When the cells (chunks) are evicted from RAM, their rewritten new content is lost (behavior of the `CachedCellImg`), re-visiting the cell (chunk) brings back the original data. This is correct behavior because a *reader* is not expected to modify its source data, and thus the `PyramidContents` is expected to expose the source data.
+  - A reader-backed `PyramidContents` uses `CachedCellImg`: evicted chunks revert to their original content. This is correct — a reader is not expected to persist modifications.
 
-    - It is, however, a nice design "flaw" that *reader*'s `PyramidContents` still permits changing its content. That's perfect for in-place (memory saving) image processing. Only the caller must be careful...
+    - As a useful side effect, reader-backed `PyramidContents` still permits in-place modification — handy for memory-efficient processing, though the caller must account for the eviction behaviour.
 
-  - `PyramidContents` provided to the writers need not hold any pixel data; see below. Setting up the writers cares only about metadata such as image arrays' shape/geometry.
+  - `PyramidContents` passed to a writer need not contain pixel data. Writer setup reads only shape/geometry metadata.
 
-  - `PyramidContents` exposed from the *in-memory writers* are backed by `DiskCachedCellImg` that allows writing. But when the cells (chunks) are evicted from RAM, their content is stored, and retrieved when the cell is accessed again; basically a swapping mechanism comes with the `DiskCachedCellImg`. It is correct that they are not losing written data, as this is precisely their job (again, the `PyramidContents` came from a *writer object* and serves here as target storage).
+  - Writer-backed `PyramidContents` uses `DiskCachedCellImg`: evicted chunks are swapped to disk and restored on re-access, so written data is never lost — correct behaviour for a write target.
 
 ### Remarks : Background developers' discussions
 
-The following is based on kind (spoken) discussions with @normanrz , @tpietzsch , and @stefanhahmann . Some materials were created during that, namely the [Zulip channel](https://imagesc.zulipchat.com/#narrow/channel/626210-.5B2026-09.5D-OME-Zarr-Java-Hackathon/topic/.22unanchored.22.20PyramidContents.20in.20Fiji/with/623140734) and the following *whiteboard picture*.
+Based on discussions with @normanrz, @tpietzsch, and @stefanhahmann; see also the [Zulip channel](https://imagesc.zulipchat.com/#narrow/channel/626210-.5B2026-09.5D-OME-Zarr-Java-Hackathon/topic/.22unanchored.22.20PyramidContents.20in.20Fiji/with/623140734) and the whiteboard below.
 
 ![Progressive writing mockup whiteboard](https://www.fi.muni.cz/~xulman/files/progresive_writing_mockup_whiteboard.jpg)
 
 ### Remarks : Philosophy of the new proposed classes
 
-It is natural to associate any *existing* `PyramidContents` object with the writer objects, and aim to write it. In the end, this is easily possible in the proposed code below. However, writer objects during their construction consider from `PyramidContents` **only its shape/geometry** of the multi-resolution pyramidal data; pixel arrays are never considered for the writer objects construction, and thus may be unavailable. `PyramidContents` is considered as a convenient compact holder of some defining parameters of the future OME-Zarr. Nevertheless, `PyramidContents` doesn't hold everything needed to write OME-Zarr, and that justifies the proposed `OmeZarrWritingOptions` class; see below.
+Although it is natural to pass an existing `PyramidContents` to a writer, writers consult **only its shape/geometry** during construction — pixel arrays are never accessed and need not be present. `PyramidContents` is treated (only) as a compact description of the target structure (and nothing beyond this is consumed from `PyramidContents`). Because it does not cover storage-level details (chunk sizes, compression), `OmeZarrWritingOptions` fills that gap.
 
-In an attempt to unify the *writer objects* API, an interface `PyramidSaver` has been introduced that explicitly mentions the steps:
+The `PyramidSaver` interface unifies the writer API around three explicit steps:
 
 - create top-level OME-Zarr scaffold
-  - only metadata, no pixels
-  - missing here: start writing HCS, labels, bf2raw specs for multi-images
-- create group to hold one piece of OME-Zarr multiscales
-  - only metadata, no pixels
-  - if HCS path to a multiscale is somehow known, this can interface method can be used
-- write (most of the time: repeatedly!) region
+  - metadata only, no pixels
+  - not yet covered: HCS, labels, bf2raw specs for multi-image datasets
+- create group to hold one OME-Zarr multiscales entry
+  - metadata only, no pixels
+  - if the HCS path to a multiscale is known, this method can be called directly
+- write a region (typically called repeatedly)
 
-Finally, two persistent-storage writer objects are proposed, as well as one in-memory writer. The former two could be instantiated from the already existing `PyramidBackend` interface, which enables the caller to choose a backing I/O library using the already existing codebase.
+Two persistent-storage writers and one in-memory writer are proposed. The persistent writers can be obtained via the existing `PyramidBackend` interface, letting the caller select the backing I/O library through the existing backend mechanism.
 
 ```java
 // this is already existing in the codebase
@@ -104,7 +104,7 @@ public class PyramidBackend
 
 ### OmeZarrWritingOptions
 
-...as an analog to `BdvOptions`. The list of OME-Zarr writing parameters is currently (probably) incomplete.
+Analog to `BdvOptions`. The list of writing parameters is likely incomplete.
 
 ```java
 public class OmeZarrWritingOptions
@@ -149,7 +149,7 @@ public class OmeZarrWritingOptions
 
 ### interface PyramidSaver
 
-... the main API for the progressive writing.
+The main API for progressive writing.
 
 ```java
 interface PyramidSaver
@@ -226,7 +226,7 @@ interface PyramidSaver
 
 ### Implementations : Persistent-storage writers
 
-... that could probably be realized commonly in an abstract class; especially when, for example, the ZarrJava API could be matched to that of N5.
+These could share an abstract base class, particularly if the ZarrJava API aligns closely enough with N5.
 
 ```java
 public class N5PyramidSaver implements PyramidSaver
