@@ -121,6 +121,7 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 		transforms[ 1 ] = new AffineTransform3D();
 		transforms[ 2 ] = new AffineTransform3D();
 
+/*
 		LazyCellImg baseImg = getLazyCellImg( baseCellGrid );
 		LazyCellImg[] imgs = new LazyCellImg[ 3 ];
 		imgs[ 0 ] = baseImg;
@@ -132,8 +133,10 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 				.cachedCellImgs( imgs )
 				.name( name )
 				.build();
+*/
 	}
 
+/*
 	private @NonNull LazyCellImg getLazyCellImg(
 			final long[] wholeGridSize,
 			final int[] oneCellSize,
@@ -148,14 +151,15 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 		LazyCellImg.Get< Cell< ? > > emptyCellProvider = index -> {
 			final long[] cellMin = new long[ 5 ];
 			final int[] cellDims = new int[ 5 ];
-			baseCellGrid.getCellDimensions( index, cellMin, cellDims );
+			cellGrid.getCellDimensions( index, cellMin, cellDims );
 			return new Cell<>( cellDims, cellMin,
 					getBackingArray( typeAsStr, ( int ) Intervals.numElements( cellDims ) ) );
 		};
 		NativeType< ? > type = getType( typeAsStr );
-		LazyCellImg baseImg = new LazyCellImg<>( baseCellGrid, type, emptyCellProvider );
+		LazyCellImg baseImg = new LazyCellImg<>( cellGrid, type, emptyCellProvider );
 		return baseImg;
 	}
+*/
 
 	private AxisCalibration[] downScaledAxes( AxisCalibration[] axes, double downSizeFactor )
 	{
