@@ -14,8 +14,6 @@ import java.util.Arrays;
 
 public class PyramidContentsUtils
 {
-	//TODO: the class is silently assuming x,y[,z] to be the first in the AxisCalibration arrays
-
 	public static boolean isSpatialAxis( final AxisCalibration axis )
 	{
 		return ( axis.name.equals( AxisCalibration.X ) )
@@ -26,43 +24,47 @@ public class PyramidContentsUtils
 	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > create(
 			String name,
 			T pixelType,
-			long[] baseLayerDims,
-			AxisCalibration[] baseLayerAxes,
+			long[] baseLevelXYZdims,
+			long channels,
+			long timePoints,
+			AxisCalibration[] baseLevelAxes,
 			double[] spatialIsotropicDownScales )
 	{
 		int spatialDimsCnt = 0;
-		for ( AxisCalibration axis : baseLayerAxes )
+		for ( AxisCalibration axis : baseLevelAxes )
 			spatialDimsCnt += isSpatialAxis( axis ) ? 1 : 0;
-		assert spatialDimsCnt > 0: "No spatial axis discovered in baseLayerAxes definition.";
+		assert spatialDimsCnt > 0: "No spatial axis discovered in baseLevelAxes definition.";
 
 		double[][] spatialDownScales = new double[ spatialIsotropicDownScales.length ][ spatialDimsCnt ];
 		for ( int l = 0; l < spatialIsotropicDownScales.length; l++ )
 			Arrays.fill( spatialDownScales[ l ], spatialIsotropicDownScales[ l ] );
 
-		return create( name, pixelType, baseLayerDims, baseLayerAxes, spatialDownScales );
+		return create( name, pixelType, baseLevelXYZdims, channels, timePoints, baseLevelAxes, spatialDownScales );
 	}
 
 	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > create(
 			String name,
 			T pixelType,
-			long[] baseLayerDims,
-			AxisCalibration[] baseLayerAxes,
+			long[] baseLevelXYZdims,
+			long channels,
+			long timePoints,
+			AxisCalibration[] baseLevelAxes,
 			double[][] spatialDownScales ) //x,y[,z] order of axis is assumed
 	{
-		AxisCalibration[][] axes = new AxisCalibration[ spatialDownScales.length + 1 ][ baseLayerAxes.length ];
+		AxisCalibration[][] axes = new AxisCalibration[ spatialDownScales.length + 1 ][ baseLevelAxes.length ];
 		//
-		//copy the base layer as is
-		for ( int i = 0; i < baseLayerAxes.length; ++i )
+		//copy the base level as is
+		for ( int i = 0; i < baseLevelAxes.length; ++i )
 		{
-			final AxisCalibration a = baseLayerAxes[ i ];
+			final AxisCalibration a = baseLevelAxes[ i ];
 			axes[ 0 ][ i ] = new AxisCalibration( a.name, a.unit, a.scale );
 		}
-		//create the downscaled layers
+		//create the downscaled levels
 		for ( int l = 1; l < axes.length; l++ )
 		{
-			for ( int i = 0; i < baseLayerAxes.length; ++i )
+			for ( int i = 0; i < baseLevelAxes.length; ++i )
 			{
-				final AxisCalibration a = baseLayerAxes[ i ];
+				final AxisCalibration a = baseLevelAxes[ i ];
 				if ( a.name.equals( AxisCalibration.X ) )
 				{
 					axes[ l ][ i ] = new AxisCalibration( a.name, a.unit, a.scale * spatialDownScales[ l - 1 ][ 0 ] );
@@ -77,34 +79,42 @@ public class PyramidContentsUtils
 				}
 				else
 				{
-					//re-use the base layer definition of the (non-spatial) axis (as here happens no down-scaling)
+					//re-use the base level definition of the (non-spatial) axis (as here happens no down-scaling)
 					axes[ l ][ i ] = axes[ 0 ][ i ];
 				}
 			}
 		}
 
-		AffineTransform3D baseLayerTransform = new AffineTransform3D(); //identity matrix
-		return create( name, pixelType, baseLayerDims, axes, spatialDownScales, baseLayerTransform, null );
+		AffineTransform3D baseLevelTransform = new AffineTransform3D(); //identity matrix
+		return create( name, pixelType, baseLevelXYZdims, channels, timePoints, axes, spatialDownScales, baseLevelTransform, null );
 	}
 
 	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > create(
 			String name,
 			T pixelType,
-			long[] dimsAtBaseLevel,
+			long[] xyzDimsAtBaseLevel,
+			long channels,
+			long timePoints,
 			AxisCalibration[][] axesPerLevel,
 			double[][] spatialDownScalesPerLevel, //x,y[,z] order of axis is assumed
 			AffineTransform3D transformAtBaseLevel,
 			Omero omero ) // can be null
 	{
+		assert axesPerLevel.length >= 1: "There has to be at least one definition of axes.";
+
+		assert xyzDimsAtBaseLevel.length >= 2: "Only (spatial) 2D or 3D images are supported, timePoints and channel are not counted here.";
+		assert channels >= 0: "Number of channels cannot be negative.";
+		assert timePoints >= 0: "Number of time points cannot be negative.";
+
 		assert axesPerLevel.length == spatialDownScalesPerLevel.length + 1
 				: "Number of spatialDownScales must be one less than number of axes calibrations.";
 
 		AffineTransform3D[] transforms = new AffineTransform3D[ axesPerLevel.length ];
 		//
-		//copy the base layer as is
+		//copy the base level as is
 		transforms[ 0 ] = transformAtBaseLevel.copy();
 		//
-		//create the downscaled layers
+		//create the downscaled levels
 		for ( int l = 0; l < spatialDownScalesPerLevel.length; l++ )
 		{
 			AffineTransform3D levelT = new AffineTransform3D();
@@ -125,6 +135,42 @@ public class PyramidContentsUtils
 		final int[] cellsSizes = new int[ axesPerLevel[ 0 ].length ];
 		for ( int i = 0; i < cellsSizes.length; i++ )
 			cellsSizes[ i ] = isSpatialAxis( axesPerLevel[ 0 ][ i ] ) ? 100 : 1;
+
+		int dims = xyzDimsAtBaseLevel.length;
+		dims += channels >= 1 ? 1 : 0;
+		dims += timePoints >= 1 ? 1 : 0;
+		assert dims == axesPerLevel[ 0 ].length
+				: "The number of defined axes must correspond to spatial dimensions, and presence of channels and/or time points.";
+		final long[] dimsAtBaseLevel = new long[ dims ];
+
+		dims = 0;
+		for ( AxisCalibration axis : axesPerLevel[ 0 ] )
+		{
+			if ( axis.name.equals( AxisCalibration.X ) )
+			{
+				dimsAtBaseLevel[ dims++ ] = xyzDimsAtBaseLevel[ 0 ];
+			}
+			else if ( axis.name.equals( AxisCalibration.Y ) )
+			{
+				dimsAtBaseLevel[ dims++ ] = xyzDimsAtBaseLevel[ 1 ];
+			}
+			else if ( axis.name.equals( AxisCalibration.Z ) )
+			{
+				dimsAtBaseLevel[ dims++ ] = xyzDimsAtBaseLevel[ 2 ];
+			}
+			else if ( axis.name.equals( AxisCalibration.C ) )
+			{
+				dimsAtBaseLevel[ dims++ ] = channels;
+			}
+			else if ( axis.name.equals( AxisCalibration.T ) )
+			{
+				dimsAtBaseLevel[ dims++ ] = timePoints;
+			}
+			else
+			{
+				assert 1 == 0: "Detected unknow axis specification.";
+			}
+		}
 
 		//final CellLoader<T> cellLoader = cell -> { /* no change to zero-initiated memory */ };
 		CachedCellImg< T, ? > baseImg = new ReadOnlyCachedCellImgFactory().create(
