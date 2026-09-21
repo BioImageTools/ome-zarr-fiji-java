@@ -435,13 +435,22 @@ public class InMemoryPyramidSaver implements PyramidSaver, Pyramidal
     @Override
     void initEmptyMultiscales( String path, PyramidContents pc, OmeZarrWritingOptions opts )
     {
-          final var imgFactory = new DiskCachedCellImgFactory( pc.type );
+        /*
+         * TODO: What should happen when this function is called again?
+         * Should this writer support an array of multiscales?
+         * Should this writer be a writer of exactly one multiscale?
+         * Current preference:
+         *   Throw an exception on an attempt to create another multiscale. That is also
+         *   because of getPyramidContents(), which is designed for exactly one multiscale.
+         */
 
-          // iterate over pc.numResolutionLevels() and for each 'level':
-          var img = imgFactory.create( pc.asImg(level).dimensions() );
+        final var imgFactory = new DiskCachedCellImgFactory( pc.type );
 
-          // to eventually set up a fresh new local data
-          this.data = ....
+        // iterate over pc.numResolutionLevels() and for each 'level':
+        var img = imgFactory.create( pc.asImg(level).dimensions() );
+
+        // to eventually set up a fresh new local data
+        this.data = ....
     }
 
     @Override
@@ -482,9 +491,14 @@ public static class PyramidSaverUtils
     public static void writeRawImagePyramid( RAI, timePoint, channel, PyramidSaver )
     public static void writeMaskImagePyramid( RAI, timePoint, channel, PyramidSaver )
     // NB: raw and mask differ in the downsampling method (interpolation vs. nearest-neighbor)
+    // NB: notice the PyramidSaver, which must had been set up from some PyramidContents,
+    //     which told it axes info, resolution pyramids setup, etc.
+
 
     public static RAI rawImageDownsampledView( RAI, float downScaleFactors[] )
     public static RAI maskImageDownsampledView( RAI, float downScaleFactors[] )
+    // NB: This is targeted on RAI for a particular timePoint and channel,
+    //     this is not targeted on a general tensor (with all axes).
 
     public static float[] downScaleFactors( PyramidContents, fromLevel, toLevel )
     // NB: assert(fromLevel < toLevel)  (0 = highest res level)
