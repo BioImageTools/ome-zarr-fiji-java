@@ -329,6 +329,47 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		return NO_MATCHING_LEVEL;
 	}
 
+	@Override
+	public String toString()
+	{
+		final StringBuilder sb = new StringBuilder();
+		sb.append( "PyramidContents \"" ).append( name ).append( "\"" )
+				.append( " (" ).append( type.getClass().getSimpleName() ).append( ")" )
+				.append( ", " ).append( numResolutionLevels() ).append( " resolution level" )
+				.append( numResolutionLevels() == 1 ? "" : "s" );
+		if ( hasPlaceholderCalibration )
+			sb.append( " [placeholder calibration]" );
+		if ( omero != null )
+			sb.append( " [OMERO metadata present]" );
+		sb.append( "\n" );
+
+		sb.append( "  internal axes order: " );
+		for ( AxisCalibration axes : axesPerLevel[ 0 ] )
+		{
+			sb.append( axes.name ).append( ", " );
+		}
+		sb.append( "\n" );
+
+		for ( int level = 0; level < numResolutionLevels(); level++ )
+		{
+			final Img< T > img = asImg( level );
+			final AxisCalibration[] axes = axesPerLevel[ level ];
+			sb.append( "  level " ).append( level ).append( ": " );
+			for ( int d = 0; d < axes.length; d++ )
+			{
+				if ( d > 0 )
+					sb.append( "  " );
+				sb.append( axes[ d ].name ).append( "=" ).append( img.dimension( d ) );
+				if ( !axes[ d ].unit.isEmpty() )
+					sb.append( " [" ).append( axes[ d ].scale ).append( " " ).append( axes[ d ].unit ).append( "]" );
+				else
+					sb.append( " [scale=" ).append( axes[ d ].scale ).append( "]" );
+			}
+			sb.append( "\n" );
+		}
+		return sb.toString();
+	}
+
 	public static < T extends NativeType< T > & RealType< T > > Builder< T > builder()
 	{
 		return new Builder<>();
