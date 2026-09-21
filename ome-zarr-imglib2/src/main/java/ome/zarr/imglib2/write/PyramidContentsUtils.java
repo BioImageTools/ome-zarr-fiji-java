@@ -1,5 +1,6 @@
 package ome.zarr.imglib2.write;
 
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
@@ -7,9 +8,11 @@ import net.imglib2.cache.img.optional.CacheOptions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
+
 import java.util.Arrays;
 
 public class PyramidContentsUtils
@@ -227,5 +230,105 @@ public class PyramidContentsUtils
 		builder.cachedCellImgs( imgs );
 
 		return builder.build();
+	}
+
+	/**
+	 * Return axes/dimensions permutation that would re-order the {@link PyramidContents#cachedCellImgs}
+	 * to start with axis X, then Y, then possibly Z if present, then C (channel)
+	 * if present, and then T (time) if present.
+	 * <p>
+	 * The method requires that XY axes are always present -- the images are at least 2D.
+	 *
+	 * @param pc Input with {@link PyramidContents#axesPerLevel} from which the axes names are discovered.
+	 * @return Permutation as array: Source dimension 't' should be moved to 'permutation[t]'.
+	 */
+	public static < T extends NativeType< T > & RealType< T > > int[] axesPermutationForXYZCT(
+			final PyramidContents< T > pc )
+	{
+		//check axes presence and possible positions within the pixel array/tensor
+		final int axisIndexX = pc.axisIndex( AxisCalibration.X );
+		final int axisIndexY = pc.axisIndex( AxisCalibration.Y );
+		final int axisIndexZ = pc.axisIndex( AxisCalibration.Z );
+		final int axisIndexChannel = pc.axisIndex( AxisCalibration.C );
+		final int axisIndexTime = pc.axisIndex( AxisCalibration.T );
+
+		// arbitrary decision to request 2D as minimum, but on the other hand,
+		// it warrants that there are always at least two dimensions...
+		assert axisIndexX != -1: "The x-axis must be present.";
+		assert axisIndexY != -1: "The y-axis must be present.";
+
+		final int[] axesPermutation = new int[ pc.asImg().numDimensions() ];
+		axesPermutation[ axisIndexX ] = 0;
+		axesPermutation[ axisIndexY ] = 1;
+		int nextFreeDim = 2;
+		if ( axisIndexZ > -1 )
+			axesPermutation[ axisIndexZ ] = nextFreeDim++;
+		if ( axisIndexChannel > -1 )
+			axesPermutation[ axisIndexChannel ] = nextFreeDim++;
+		if ( axisIndexTime > -1 )
+			axesPermutation[ axisIndexTime ] = nextFreeDim++;
+
+		assert nextFreeDim == axesPermutation.length: "Encountered unrecognized axis.";
+		return axesPermutation;
+	}
+
+	/**
+	 * Source dimension index 't' should land at 'permutation[t]'. Or, said differently,
+	 * 'permutation[x]' is the target position for the axis currently at source position 'x'.
+	 */
+	public static < T extends NativeType< T > & RealType< T > > RandomAccessibleInterval< T > permutatedAxesView(
+			RandomAccessibleInterval< T > img,
+			int[] permutation )
+	{
+		assert permutation.length == img.numDimensions(): "Permutation length is different from image's number of dimensions.";
+
+		RandomAccessibleInterval< T > out = img;
+		int[] p = permutation.clone();
+		for ( int i = 0; i < p.length; i++ )
+		{
+			// skip when the dimension happens to be where it is expected to be
+			if ( p[ i ] == i )
+				continue;
+			// seek the axis that belongs at slot i
+			int x = i;
+			while ( p[ x ] != i )
+				x++;
+			out = Views.permute( out, i, x );
+			// update the permutation to keep it synchronized with the current order of dimensions
+			int tmp = p[ i ];
+			p[ i ] = p[ x ];
+			p[ x ] = tmp;
+		}
+		return out;
+	}
+
+	public static < T extends NativeType< T > & RealType< T > > RandomAccessibleInterval< T > xyzReducedView(
+			PyramidContents< T > pc,
+			int resolutionLevel,
+			int channel,
+			int timepoint )
+	{
+		assert resolutionLevel >= 0: "Resolution level cannot be negative.";
+		assert resolutionLevel < pc.numResolutionLevels(): "Resolution level cannot exceed available levels.";
+		assert channel >= 0: "Channel position cannot be negative.";
+		assert timepoint >= 0: "Time point cannot be negative.";
+
+		// re-order first
+		final int[] permutation = axesPermutationForXYZCT( pc );
+		RandomAccessibleInterval< T > view = permutatedAxesView( pc.asImg( resolutionLevel ), permutation );
+
+		// extract the channel and timepoint
+		final int axisIndexChannel = pc.axisIndex( AxisCalibration.C );
+		if ( axisIndexChannel > -1 )
+		{
+			view = Views.hyperSlice( view, permutation[ axisIndexChannel ], channel );
+		}
+
+		final int axisIndexTime = pc.axisIndex( AxisCalibration.T );
+		if ( axisIndexTime > -1 )
+		{
+			view = Views.hyperSlice( view, permutation[ axisIndexTime ], timepoint );
+		}
+		return view;
 	}
 }
