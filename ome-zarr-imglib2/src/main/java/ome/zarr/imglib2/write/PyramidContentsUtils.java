@@ -21,6 +21,30 @@ public class PyramidContentsUtils
 				|| ( axis.name.equals( AxisCalibration.Z ) );
 	}
 
+	/**
+	 * Constructs a scaffold/skeleton {@link PyramidContents} to define everything but the
+	 * actual (pixel) data. The returned objects are pre-fated for the {@link PyramidSaver}s.
+	 * <p>
+	 * The returned objects offer pixel data whenever the underlying {@link CachedCellImg} pixel
+	 * arrays are touched. On the other hand, as long as the pixels are not touched, the returned
+	 * objects are true scaffolds with no allocated pixels (since the pixels arrays are only
+	 * allocated on-demand). It is, however, not practical to use the returned objects for any
+	 * serious work because only a small number of pixel arrays is allowed to exist in the main
+	 * memory, and eviction leads to data loss (which, again, would deliberately and unchangeably
+	 * happen very early).
+	 * <p>
+	 * This is a convenience short-cut for the {@link #create(String, NativeType, long[], long, long, AxisCalibration[][], double[][], AffineTransform3D, Omero)}
+	 * that assumes the same downscaling factors (per pyramidal level) for all spatial axes.
+	 *
+	 * @param name                       Name for the created {@link PyramidContents#name}.
+	 * @param pixelType                  Pixel type for the constructed {@link PyramidContents#cachedCellImgs}
+	 * @param baseLevelXYZdims           Co-defines the pixel array {@link PyramidContents#cachedCellImgs} geometry/shape.
+	 * @param channels                   Co-defines the pixel array geometry/shape.
+	 * @param timePoints                 Co-defines the pixel array geometry/shape.
+	 * @param baseLevelAxes              Defines the axes, the pixel array's "axes"/dimensions will be in the same order as this array.
+	 * @param spatialIsotropicDownScales List of down-scaling factors for all spatial axes.
+	 * @return Scaffold/skeleton content with no sensible pixels.
+	 */
 	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > create(
 			String name,
 			T pixelType,
@@ -42,6 +66,12 @@ public class PyramidContentsUtils
 		return create( name, pixelType, baseLevelXYZdims, channels, timePoints, baseLevelAxes, spatialDownScales );
 	}
 
+	/**
+	 * See {@link #create(String, NativeType, long[], long, long, AxisCalibration[], double[])}.
+	 * <p>
+	 * This is a convenience short-cut for the {@link #create(String, NativeType, long[], long, long, AxisCalibration[][], double[][], AffineTransform3D, Omero)}
+	 * that defines the downscaling factors (per pyramidal level) per spatial axes.
+	 */
 	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > create(
 			String name,
 			T pixelType,
@@ -89,6 +119,13 @@ public class PyramidContentsUtils
 		return create( name, pixelType, baseLevelXYZdims, channels, timePoints, axes, spatialDownScales, baseLevelTransform, null );
 	}
 
+	/**
+	 * See {@link #create(String, NativeType, long[], long, long, AxisCalibration[], double[])}.
+	 * <p>
+	 * This is the fully-configurable workhorse that defines everything for the {@link PyramidContents}
+	 * except for (sensible) pixels. An initial transformation is assumed that gets copied, one for each
+	 * pyramidal level, and adjusted accordingly to 'spatialDownScalesPerLevel'.
+	 */
 	public static < T extends NativeType< T > & RealType< T > > PyramidContents< T > create(
 			String name,
 			T pixelType,
