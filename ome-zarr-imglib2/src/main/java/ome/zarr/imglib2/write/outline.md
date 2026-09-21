@@ -117,55 +117,66 @@ Sources: [OME-Zarr dev spec](https://ngff.openmicroscopy.org/specifications/dev/
 Collected by Claude.
 
 **OME-Zarr group / multiscales metadata**
+
 - Spec version (`ome.version`, e.g. `"0.9.dev1"`)
 - Multiscale name (`multiscales[].name`, optional)
 - Downsampling method label (`multiscales[].type`, optional, e.g. `"gaussian"`)
 - Downsampling method detail (`multiscales[].metadata` — version, args, kwargs; optional)
 
 **Axes (coordinate system, one definition shared across all levels)**
+
 - Number of axes (= array rank)
 - Per axis: name (e.g. `"t"`, `"c"`, `"z"`, `"y"`, `"x"`), type (`"time"`, `"channel"`, `"space"`, `"array"`), unit (UDUNITS-2 string, e.g. `"micrometer"`, `"millisecond"`; omit for channel/array axes)
 
 **Per-level entries (same structure repeated for each resolution level)**
+
 - Relative path (`datasets[].path`, e.g. `"s0"`, `"s1"`, …); must be ordered highest → lowest resolution
 - Scale transform: one float per axis encoding physical voxel size in axis units (`coordinateTransformations[].scale`)
 - Translation transform: one float per axis for physical offset (`coordinateTransformations[].translation`; optional, zero by default)
 
 **Array properties (uniform across all levels)**
+
 - Array shape (`shape`): one integer per axis
 - Data type (`data_type` / `dtype`): e.g. `uint8`, `float32`; labels must use integer types
-- Fill value (`fill_value`): default for unwritten chunks; must be compatible with dtype
 - Zarr format version (`zarr_format`): `2` or `3`
 - Memory order (`order`): `"C"` (row-major) or `"F"` (column-major); Zarr v2 only
 - Dimension names (`dimension_names`): optional labels per axis, should match axis names
+- ❗ Fill value (`fill_value`): default for unwritten chunks; must be compatible with dtype
 
 **Chunking**
-- Chunk shape (`chunks` in v2 / `chunk_grid.configuration.chunk_shape` in v3): one integer per axis
+
+- ❗ Chunk shape (`chunks` in v2 / `chunk_grid.configuration.chunk_shape` in v3): one integer per axis
 - Chunk key separator (`chunk_key_encoding`): `"/"` (v3 default) or `"."` (v2 style)
 
 **Sharding (Zarr v3 only, optional layer above chunks)**
-- Shard shape (coarse grid)
-- Inner chunk shape (fine grid within each shard)
-- Index location (`"start"` or `"end"`)
+
+- ❗ Shard shape (coarse grid)
+- ❗ Inner chunk shape (fine grid within each shard)
+- ❗ Index location (`"start"` or `"end"`)
 - Index codec pipeline (codecs used to compress the shard index itself)
 
 **Codec pipeline (compression; applies per chunk or per inner chunk inside a shard)**
+
 - Byte order / endianness (`"bytes"` codec: `"little"` or `"big"`)
-- Compression codec (choose one):
+- ❗ Compression codec (choose one):
   - GZip: `level` (1–9)
   - Zstd: `level` (negative = faster, higher = better ratio)
   - Blosc: codec name (`"lz4"`, `"zstd"`, `"zlib"`, …), compression level (0–9), shuffle mode (`"noshuffle"`, `"shuffle"`, `"bitshuffle"`), block size
   - CRC32C: checksum only, no compression
 
 **Pyramid structure (drives the above; not stored as a standalone field)**
+
 - Number of resolution levels (determines how many `datasets` entries there are)
 - Downsampling factors per axis per level (drives the `scale` values at each level)
 - Downsampling method: nearest-neighbour for labels/masks, interpolating for raw images
 
 **Optional OMERO display metadata (per channel)**
+
 - Color (6-digit hex RGB, e.g. `"FF0000"`), label string, visibility (`active` boolean)
 - Display range: `window.start`, `window.end`, `window.min`, `window.max`
 - Invert LUT (`inverted` boolean)
+
+Items marked with (red exclamation sign) ❗ are either not available in (or derivable from) the `PyramidContents`, nor can be hard-coded (e.g., "Spec version", "Zarr format", "Chunk key separator", "Shard index codec", or "Byte order" can be hard-coded).
 
 ### OmeZarrWritingOptions
 
