@@ -6,6 +6,9 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.view.Views;
 import ome.zarr.fiji.Pyramidal;
+import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.write.PyramidContentsUtils;
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
@@ -16,7 +19,7 @@ import org.scijava.plugin.Plugin;
 public class PluginToCreateImagePlus extends DynamicCommand
 {
 	@Parameter
-	Pyramidal p;
+	Pyramidal pyramidal;
 
 	@Parameter
 	int resolutionLevel = 0;
@@ -33,10 +36,10 @@ public class PluginToCreateImagePlus extends DynamicCommand
 	@Override
 	public void run()
 	{
-		final Img< ? extends NumericType > img = p.getPyramidContents().asImg( resolutionLevel );
-		final String name = p.getPyramidContents().name + " (R=" + resolutionLevel + ",C=" + channel + ",T=" + timepoint + ")";
-		//TODO make sure the channel and time are 4th and 5th dimension, respectively
-		imagePlus = ImageJFunctions.wrap( Views.hyperSlice(
-				Views.hyperSlice( img, 3, channel ), 4, timepoint ), name );
+		final PyramidContents< ? > pc = pyramidal.getPyramidContents();
+		final String name = pc.name + " (R=" + resolutionLevel + ",C=" + channel + ",T=" + timepoint + ")";
+
+		imagePlus = ImageJFunctions.wrap( PyramidContentsUtils.xyzReducedView(
+				pc, resolutionLevel, channel, timepoint ), name );
 	}
 }
