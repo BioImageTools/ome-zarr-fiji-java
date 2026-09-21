@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -107,6 +107,9 @@ public final class ClipboardUtils
 	 *   <li>plain filesystem paths &ndash; converted with
 	 *       {@link Paths#get(String, String...)}{@code .toUri()}</li>
 	 * </ul>
+	 * A space is accepted in either form, although it is illegal in URI syntax:
+	 * in a URL it is percent-encoded, in a path it is left to
+	 * {@link java.nio.file.Path#toUri()}.
 	 * Reports a user-facing error via {@code errorHandler} and returns
 	 * {@code null} when {@code possibleUri} is blank, uses an unsupported scheme,
 	 * or cannot be interpreted as a path.
@@ -124,15 +127,7 @@ public final class ClipboardUtils
 		}
 		final String text = possibleUri.trim();
 
-		URI parsed = null;
-		try
-		{
-			parsed = new URI( text );
-		}
-		catch ( URISyntaxException e )
-		{
-			logger.debug( "Text is not valid URI syntax, will try as a local path: {}", e.getMessage() );
-		}
+		final URI parsed = parseTolerantly( text );
 
 		// If parsing succeeded, check whether the scheme is one we support.
 		if ( parsed != null )
@@ -144,8 +139,7 @@ public final class ClipboardUtils
 						+ "Use file:///path/to/data.zarr (three slashes) for a local path." );
 				return null;
 			}
-			if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme )
-					|| "file".equalsIgnoreCase( scheme ) || "s3".equalsIgnoreCase( scheme ) )
+			if ( isSupportedScheme( scheme ) )
 				return parsed;
 			if ( scheme != null )
 			{
@@ -164,5 +158,57 @@ public final class ClipboardUtils
 			errorHandler.accept( "Could not interpret the clipboard contents as a URL or path:\n" + text );
 			return null;
 		}
+	}
+
+	/**
+	 * Parses {@code text} into a URI, accepting a space although URI syntax
+	 * forbids one. Pasted URLs sometimes do contain them.
+	 * <p>
+	 * Only text that already names a supported scheme ({@code http},
+	 * {@code https}, {@code file}, {@code s3}) gets a second attempt with its
+	 * spaces percent-encoded. Anything else is considered a filesystem path, left to
+	 * {@link Paths#get(String, String...)}: it encodes spaces itself, and reads
+	 * {@code C:/my data} as a Windows path rather than as an unsupported
+	 * {@code C:} scheme.
+	 *
+	 * @param text the trimmed input
+	 * @return the URI, or {@code null} if {@code text} is not one
+	 */
+	private static URI parseTolerantly( final String text )
+	{
+		final URI parsed = tryParseUri( text );
+		if ( parsed != null || !isSupportedScheme( schemeOf( text ) ) )
+			return parsed;
+		return tryParseUri( text.replace( " ", "%20" ) );
+	}
+
+	/** {@code text} as a URI, or {@code null} if it is not valid URI syntax. */
+	private static URI tryParseUri( final String text )
+	{
+		try
+		{
+			return new URI( text );
+		}
+		catch ( URISyntaxException e )
+		{
+			logger.debug( "Text is not valid URI syntax: {}", e.getMessage() );
+			return null;
+		}
+	}
+
+	/**
+	 * Scheme prefix of {@code text}, i.e., what precedes its first colon, or
+	 * {@code null} if there is none.
+	 */
+	private static String schemeOf( final String text )
+	{
+		final int colon = text.indexOf( ':' );
+		return colon < 0 ? null : text.substring( 0, colon );
+	}
+
+	private static boolean isSupportedScheme( final String scheme )
+	{
+		return "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme )
+				|| "file".equalsIgnoreCase( scheme ) || "s3".equalsIgnoreCase( scheme );
 	}
 }
