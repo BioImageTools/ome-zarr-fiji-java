@@ -118,7 +118,7 @@ Collected by Claude.
 
 **OME-Zarr group / multiscales metadata**
 
-- Spec version (`ome.version`, e.g. `"0.9.dev1"`)
+- 📌 Spec version (`ome.version`, e.g. `"0.9.dev1"`)
 - Multiscale name (`multiscales[].name`, optional)
 - Downsampling method label (`multiscales[].type`, optional, e.g. `"gaussian"`)
 - Downsampling method detail (`multiscales[].metadata` — version, args, kwargs; optional)
@@ -138,22 +138,22 @@ Collected by Claude.
 
 - Array shape (`shape`): one integer per axis
 - Data type (`data_type` / `dtype`): e.g. `uint8`, `float32`; labels must use integer types
-- Zarr format version (`zarr_format`): `2` or `3`
-- Memory order (`order`): `"C"` (row-major) or `"F"` (column-major); Zarr v2 only
+- 📌 Zarr format version (`zarr_format`): `2` or `3`
+- 📌 Memory order (`order`): `"C"` (row-major) or `"F"` (column-major); Zarr v2 only
 - Dimension names (`dimension_names`): optional labels per axis, should match axis names
 - ❗ Fill value (`fill_value`): default for unwritten chunks; must be compatible with dtype
 
 **Chunking**
 
 - ❗ Chunk shape (`chunks` in v2 / `chunk_grid.configuration.chunk_shape` in v3): one integer per axis
-- Chunk key separator (`chunk_key_encoding`): `"/"` (v3 default) or `"."` (v2 style)
+- 📌 Chunk key separator (`chunk_key_encoding`): `"/"` (v3 default) or `"."` (v2 style)
 
 **Sharding (Zarr v3 only, optional layer above chunks)**
 
 - ❗ Shard shape (coarse grid)
 - ❗ Inner chunk shape (fine grid within each shard)
 - ❗ Index location (`"start"` or `"end"`)
-- Index codec pipeline (codecs used to compress the shard index itself)
+- 📌 Index codec pipeline (codecs used to compress the shard index itself)
 
 **Codec pipeline (compression; applies per chunk or per inner chunk inside a shard)**
 
@@ -176,7 +176,7 @@ Collected by Claude.
 - Display range: `window.start`, `window.end`, `window.min`, `window.max`
 - Invert LUT (`inverted` boolean)
 
-Items marked with (red exclamation sign) ❗ are either not available in (or derivable from) the `PyramidContents`, nor can be hard-coded (e.g., "Spec version", "Zarr format", "Chunk key separator", "Shard index codec", or "Byte order" can be hard-coded).
+Items marked with (red exclamation sign) ❗ are either not available in (or derivable from) the `PyramidContents`, nor can be hard-coded. Items marked with (red push pin) 📌 can be hard-coded.
 
 ### OmeZarrWritingOptions
 
