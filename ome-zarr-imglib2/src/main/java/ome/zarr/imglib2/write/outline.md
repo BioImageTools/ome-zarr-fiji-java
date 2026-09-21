@@ -20,6 +20,10 @@
 
 ---
 
+The document was Claude-edited from [the original text by @xulman](https://gist.github.com/xulman/d84f8d7827197dc6d24cfa20704f3ae8).
+
+---
+
 ### The goal: Progressive writing
 
 This document outlines how progressive writing could be implemented. The source for the writing is `PyramidContents` — a holder of lazily-loaded pixel data at decreasing spatial resolutions, with additional metadata such as transforms, axis information, and display settings.
@@ -38,11 +42,11 @@ This document outlines how progressive writing could be implemented. The source 
 
 Additional design decisions:
 
-- A **single unified API** writes `PyramidContents`, implemented through *writer objects*.
+- A **single unified API** is writing `PyramidContents`, doesn't matter to where it is writing, implemented through *writer objects*.
 
-- *Writer objects* hold **no pixel data** and buffer nothing beyond low-level I/O. All pixel data stays with the caller; writers write immediately.
+- *Writer objects* hold **no pixel data** and buffer nothing beyond low-level I/O. All pixel data stays with the caller.
 
-- The writer API is **blocking**; no `flush()` is needed.
+- Writers write immediately; the writer API is **blocking**; no `flush()` is needed.
 
 ### Requirements : Writer objects
 
@@ -56,15 +60,15 @@ The *writer objects* in detail:
     
   - Persistent writers, by contrast, do **not** expose `PyramidContents` as they retain no pixel data.
   
-- There is a subtle difference in how `PyramidContents` retains written pixel values depending on its origin:
+- <mark>ⓘ NOTE:</mark> There is a subtle difference in how `PyramidContents` retains written pixel values depending on its origin:
   
-  - A reader-backed `PyramidContents` uses `CachedCellImg`: evicted chunks revert to their original content. This is correct — a reader is not expected to persist modifications.
+  - A <u>reader-backed</u> `PyramidContents` uses `CachedCellImg`: <u>evicted chunks revert</u> to their original content. This is correct — a reader is not expected to persist modifications.
 
-    - As a useful side effect, reader-backed `PyramidContents` still permits in-place modification — handy for memory-efficient processing, though the caller must account for the eviction behaviour.
+    - As a useful side effect, reader-backed `PyramidContents` still permits in-place modification (can write to the `PyramidContents` own memory) — handy for memory-efficient processing, though the caller must account for the eviction behaviour.
 
-  - `PyramidContents` passed to a writer need not contain pixel data. Writer setup reads only shape/geometry metadata.
+  - `PyramidContents` passed to a <u>*writer object* need not contain pixel data</u>. Writer setup cares/reads only shape/geometry metadata and resolution levels.
 
-  - Writer-backed `PyramidContents` uses `DiskCachedCellImg`: evicted chunks are swapped to disk and restored on re-access, so written data is never lost — correct behaviour for a write target.
+  - <u>Writer-backed</u> `PyramidContents` uses `DiskCachedCellImg`: <u>evicted chunks are swapped</u> to disk and restored on re-access, so written data is never lost — correct behaviour for a write target.
 
 ### Remarks : Background developers' discussions
 
@@ -72,9 +76,13 @@ Based on discussions with @normanrz, @tpietzsch, and @stefanhahmann; see also th
 
 ![Progressive writing mockup whiteboard](https://www.fi.muni.cz/~xulman/files/progresive_writing_mockup_whiteboard.jpg)
 
-### Remarks : Philosophy of the new proposed classes
+### Remarks : The philosophy behind, motivation and recap
 
-Although it is natural to pass an existing `PyramidContents` to a writer, writers consult **only its shape/geometry** during construction — pixel arrays are never accessed and need not be present. `PyramidContents` is treated (only) as a compact description of the target structure (and nothing beyond this is consumed from `PyramidContents`). Because it does not cover storage-level details (chunk sizes, compression), `OmeZarrWritingOptions` fills that gap.
+###### To start writing, pixels are not needed, but chunks params are.
+
+Although it is natural to pass an existing `PyramidContents` to a writer, writers consult **only its shape/geometry** during construction — pixel arrays are never accessed and need not be present. `PyramidContents` is treated (only) as a compact description of the target structure (and nothing beyond this is consumed from `PyramidContents`). Because it does not cover storage-level details (chunk sizes, compression), `OmeZarrWritingOptions` fills that gap (but this is, for example, not required for the in-memory writer).
+
+###### Writing API is not designed for all-in-one writing.
 
 The `PyramidSaver` interface unifies the writer API around three explicit steps:
 
@@ -86,7 +94,9 @@ The `PyramidSaver` interface unifies the writer API around three explicit steps:
   - if the HCS path to a multiscale is known, this method can be called directly
 - write a region (typically called repeatedly)
 
-Two persistent-storage writers and one in-memory writer are proposed. The persistent writers can be obtained via the existing `PyramidBackend` interface, letting the caller select the backing I/O library through the existing backend mechanism.
+###### Two persistent-storage writers and one in-memory writer are proposed.
+
+The persistent writers can be obtained via the existing `PyramidBackend` interface, letting the caller select the backing I/O library through the existing backend mechanism.
 
 ```java
 // this is already existing in the codebase
@@ -96,7 +106,6 @@ public class PyramidBackend
     PyramidContents read( URL );
 
     // the new stuff:
-    //
     // create an object that is backed by the store/container at URL
     PyramidSaver createWriter( URL );
 }
@@ -245,9 +254,9 @@ interface PyramidSaver
 
 
     /*
-     * Writes a skeleton OME-Zarr with all metadata but no pixel data.
+     * Writes a skeleton OME-Zarr with most metadata but no pixel data.
      * (No pixel data is available to PyramidSaver at this point.)
-     * (initContainer(URL) in the whiteboard)
+     * (initContainer(URL) on the whiteboard)
      */
     void initEmptyContainer() throws IOException, "AlreadyOccupiedException";
     /*
@@ -267,7 +276,7 @@ interface PyramidSaver
     /*
      * Writes a skeleton OME-Zarr 'multiscales' group — metadata only, no pixel data.
      * writeRegion() requires this to be called first; skipping it will cause writeRegion() to fail.
-     * (setupPyramid() in the whiteboard)
+     * (setupPyramid() on the whiteboard)
      */
     void initEmptyMultiscales( String path, PyramidContents pc, OmeZarrWritingOptions opts ) throws IOException, "AlreadyOccupiedException";
 
@@ -288,7 +297,7 @@ interface PyramidSaver
      * Writes a region given as an imglib2 RAI with correct min/max coordinates.
      * A zero-based Interval (min == 0, encoding only the size) is valid only for
      * a single full-image write covering the entire array.
-     * (writeRegion() in the whiteboard)
+     * (writeRegion() on the whiteboard)
      */
     void writeRegion( RAI, level ) throws IOException;
     // TODO assume RAI is only spatial coords? add parameters for time point and channel?
