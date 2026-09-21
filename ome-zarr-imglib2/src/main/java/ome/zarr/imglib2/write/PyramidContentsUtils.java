@@ -159,9 +159,10 @@ public class PyramidContentsUtils
 					spatialDownScalesPerLevel[ l ].length > 2 ? spatialDownScalesPerLevel[ l ][ 2 ] : 1.0 );
 			//TODO: apply translate!!
 			transforms[ l + 1 ] = transformAtBaseLevel.copy().concatenate( levelT );
+			//TODO: check how transforms are prepared for BDV
 		}
 
-		PyramidContents.Builder< T > builder = PyramidContents.builder();
+		final PyramidContents.Builder< T > builder = PyramidContents.builder();
 		builder.name( name )
 				.type( pixelType )
 				.axesPerLevel( axesPerLevel )
@@ -169,17 +170,13 @@ public class PyramidContentsUtils
 				.omero( omero );
 
 		//create only the base-level image
-		final int[] cellsSizes = new int[ axesPerLevel[ 0 ].length ];
-		for ( int i = 0; i < cellsSizes.length; i++ )
-			cellsSizes[ i ] = isSpatialAxis( axesPerLevel[ 0 ][ i ] ) ? 100 : 1;
-
 		int dims = xyzDimsAtBaseLevel.length;
 		dims += channels >= 1 ? 1 : 0;
 		dims += timePoints >= 1 ? 1 : 0;
 		assert dims == axesPerLevel[ 0 ].length
 				: "The number of defined axes must correspond to spatial dimensions, and presence of channels and/or time points.";
-		final long[] dimsAtBaseLevel = new long[ dims ];
 
+		final long[] dimsAtBaseLevel = new long[ dims ];
 		dims = 0;
 		for ( AxisCalibration axis : axesPerLevel[ 0 ] )
 		{
@@ -205,9 +202,13 @@ public class PyramidContentsUtils
 			}
 			else
 			{
-				assert 1 == 0: "Detected unknow axis specification.";
+				assert false: "Detected unknow axis specification.";
 			}
 		}
+
+		final int[] cellsSizes = new int[ axesPerLevel[ 0 ].length ];
+		for ( int i = 0; i < cellsSizes.length; i++ )
+			cellsSizes[ i ] = isSpatialAxis( axesPerLevel[ 0 ][ i ] ) ? 100 : 1;
 
 		//final CellLoader<T> cellLoader = cell -> { /* no change to zero-initiated memory */ };
 		CachedCellImg< T, ? > baseImg = new ReadOnlyCachedCellImgFactory().create(
