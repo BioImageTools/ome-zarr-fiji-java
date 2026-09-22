@@ -303,6 +303,7 @@ backend is selected.
 * [one read, two views](doc/DEVELOPERS.md#one-read-two-views) — the same pyramid in ImageJ and in BigDataViewer
 * [opening with the user's settings](doc/DEVELOPERS.md#opening-the-way-the-user-configured-it) from your own plugin
 * [registering your own opener](doc/DEVELOPERS.md#registering-your-own-opener)
+* [comparing the two backends](doc/DEVELOPERS.md#comparing-the-two-backends) with `BackendBenchmark`
 
 # History
 

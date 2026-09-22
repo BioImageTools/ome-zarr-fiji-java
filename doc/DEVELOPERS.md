@@ -19,6 +19,7 @@ Everything below is the state of **0.9.0**.
 - [One read, two views](#one-read-two-views)
 - [Opening the way the user configured it](#opening-the-way-the-user-configured-it)
 - [Registering your own opener](#registering-your-own-opener)
+- [Comparing the two backends](#comparing-the-two-backends)
 
 # Which module do I depend on?
 
@@ -285,3 +286,51 @@ Registering an opener may also get you into the shared-window story, e.g.
 `Open Resolution Level...` act on that dataset **without reading it again** (see
 [One read, two views](#one-read-two-views)).
 
+
+# Comparing the two backends
+
+`BackendBenchmark` times the same datasets through `N5PyramidBackend` and `ZarrJavaPyramidBackend`, and — for
+comparison — through the N5-universe and zarr-java libraries directly, so a difference can be attributed to a backend
+or to the library underneath it. It lives in `ome-zarr-fiji-ui/src/test/java/ome/zarr/examples/demo/`, has a `main`
+rather than a `@Test`, and is never run by `mvn test`.
+
+```bash
+mvn -pl ome-zarr-fiji-ui -am -DskipTests test-compile
+
+MAVEN_OPTS="--add-opens=java.base/java.lang=ALL-UNNAMED" \
+mvn -q -pl ome-zarr-fiji-ui -Dexec.classpathScope=test \
+    -Dexec.mainClass=ome.zarr.examples.demo.BackendBenchmark exec:java
+```
+
+Both parts of that are load-bearing:
+
+* `-pl ome-zarr-fiji-ui` — `exec:java` invoked at the reactor root runs for *every* module, and this is the only one
+  with both backends on its test classpath. `exec:java` is also not bound to a lifecycle phase, so it compiles nothing:
+  the `test-compile` above is what builds the class.
+* `MAVEN_OPTS` — `exec:java` runs inside the Maven JVM, and on Java 9+ ij1-patcher cannot rewrite the ImageJ 1.x
+  classes that `new Context()` pulls in without that open (JEP 396). The `zarr.test.addOpens` profiles in the root pom
+  supply it to *surefire*, which is a different JVM and does not help here.
+
+It prints one row per dataset × operation × backend, with the voxel count each row actually read and the min, median
+and max over the measured rounds:
+
+```
+Dataset                  Operation  Backend        voxels       min    median       max
+2d_dataset_v4.ome.zarr   open       N5                  -      1.50      1.86      2.49
+2d_dataset_v4.ome.zarr   open       zarr-java           -      5.11      5.61      7.38
+```
+
+`open` reads metadata and builds the lazy cell images, touching no pixels; `read` walks every voxel of resolution
+level 0. The `-pure` rows bypass this project and call the reader library directly. **min** is the most reliable
+figure, since noise only ever adds time; a **max** far above **min** means the run was disturbed — typically a GC
+pause, or imglib2 clearing its `SoftReference`-held cells under heap pressure and turning a cached round back into a
+decompressing one.
+
+Read the numbers only down a column, never across unrelated ones, and keep in mind what the harness does *not*
+control:
+
+* **The bundled datasets are about 1 MB in total** and sit in the OS page cache, so nothing here measures storage or
+  network. Point `DATASETS` at something large, or at an `http(s):` URL, to exercise that.
+* **`read-pure` with zarr-java is a single bulk `Array.read`**, while every other read row walks voxels through an
+  imglib2 cursor. Per-voxel traversal dominates those rows, so they say more about imglib2 than about the backend.
+* **No heap size is pinned.** The run keeps four copies of the data alive at once, so results shift with `-Xmx`.

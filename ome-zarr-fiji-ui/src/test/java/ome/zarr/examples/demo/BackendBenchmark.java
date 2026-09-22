@@ -28,6 +28,7 @@
  */
 package ome.zarr.examples.demo;
 
+import bdv.viewer.SourceAndConverter;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import dev.zarr.zarrjava.ZarrException;
@@ -37,6 +38,7 @@ import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.StoreHandle;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.util.Intervals;
 
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadataParser;
 import org.scijava.Context;
@@ -60,8 +62,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -71,56 +75,146 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
- * Simple backend benchmark without extra dependencies.
- * Run with:
- * mvn -q -DskipTests -Dexec.classpathScope=test -Dexec.mainClass=ome.zarr.examples.demo.BackendBenchmark exec:java
+ * Simple backend benchmark without extra dependencies: times the same OME-Zarr
+ * datasets through both {@code PyramidBackend} implementations and, for
+ * comparison, through the underlying reader libraries directly.
+ * <p>
+ * Run from the repository root with:
+ *
+ * <pre>
+ * mvn -pl ome-zarr-fiji-ui -am -DskipTests test-compile
+ * MAVEN_OPTS="--add-opens=java.base/java.lang=ALL-UNNAMED" \
+ * mvn -q -pl ome-zarr-fiji-ui -Dexec.classpathScope=test \
+ *     -Dexec.mainClass=ome.zarr.examples.demo.BackendBenchmark exec:java
+ * </pre>
+ *
+ * The {@code -pl} is required (at the reactor root the goal runs for every
+ * module, and only this one has the class on its test classpath), and
+ * {@code exec:java} runs inside the Maven JVM, so the JPMS open that ij1-patcher
+ * needs on Java 9+ has to come from {@code MAVEN_OPTS} — the {@code
+ * zarr.test.addOpens} profiles in the root pom only reach surefire.
  */
 public class BackendBenchmark
 {
-	private static final int WARMUP_ROUNDS = 2;
+	/**
+	 * Untimed rounds run before any measurement, to let the JIT compile the
+	 * reader paths. Deliberately generous: the point of a warmup round is that
+	 * it is cheap compared to being wrong.
+	 */
+	private static final int WARMUP_ROUNDS = 10;
 
-	private static final int MEASURE_ROUNDS = 5;
+	private static final int MEASURE_ROUNDS = 15;
 
 	private static final List< String > DATASETS = Arrays.asList(
-			"/Users/hahmann/Data/omev5/3.66.9-6.141020_15-41-29.00.ome.zarr/0", // download with aws cli from: https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0026/3.66.9-6.141020_15-41-29.00.ome.zarr
 			"ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr",
 			"ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr",
 			"ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr",
 			"ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr"
 	);
 
-	public static void main( final String[] args ) throws Exception
+	public static void main( final String[] args )
 	{
-		disableAllLogs();
-		System.out.println( "Backend benchmark (times in ms, mean over " + MEASURE_ROUNDS + " rounds)" );
-		System.out.println( "Warmup rounds: " + WARMUP_ROUNDS );
-		System.out.println();
-		System.out.printf( Locale.ROOT, "%-48s %10s %10s %12s %12s %10s %10s %12s %12s%n",
-				"Dataset", "N5 open", "ZJ open", "PureN5 open", "PureZJ open", "N5 read", "ZJ read", "PureN5 read",
-				"PureZJ read" );
-		System.out.println( divider( 146 ) );
-
-		for ( final String resource : DATASETS )
+		// Keep the real stderr before disableAllLogs() swallows it, so a failure
+		// reports itself instead of vanishing. Without the explicit exit the JVM
+		// would also hang on the failure path: the SciJava Context and BDV's
+		// SharedQueue keep non-daemon threads alive.
+		final PrintStream realErr = System.err;
+		try
 		{
-			final Path datasetPath = resourcePath( resource );
+			run();
+			System.exit( 0 );
+		}
+		catch ( final Throwable t )
+		{
+			t.printStackTrace( realErr );
+			System.exit( 1 );
+		}
+	}
+
+	private static void run() throws Exception
+	{
+		final List< Path > datasets = resolveDatasets();
+		disableAllLogs();
+
+		// Warm up over every dataset before timing any of them. The JIT compiles
+		// per JVM, not per dataset, so warming inside the measurement loop leaves
+		// the first dataset measuring class loading and compilation rather than
+		// the reader — which made it look ~5x slower per voxel than an identical
+		// dataset later in the list.
+		for ( final Path dataset : datasets )
+			warmup( dataset.toString() );
+
+		System.out.println( "Backend benchmark (times in ms over " + MEASURE_ROUNDS + " measured rounds, "
+				+ WARMUP_ROUNDS + " warmup rounds per dataset)" );
+		System.out.println( "min is the truest speed (noise only ever adds time); a max far above min means the "
+				+ "measurement is unstable." );
+		System.out.println();
+		System.out.printf( Locale.ROOT, "%-24s %-10s %-10s %10s %9s %9s %9s%n",
+				"Dataset", "Operation", "Backend", "voxels", "min", "median", "max" );
+		System.out.println( divider( 87 ) );
+
+		for ( final Path datasetPath : datasets )
+		{
 			final String dataset = datasetPath.toString();
+			final String name = datasetPath.getFileName().toString();
 			final OpenedReadContexts opened = openReadContexts( dataset );
-			warmup( dataset );
 
-			final double n5Open = measure( () -> benchN5Open( dataset ) );
-			final double zjOpen = measure( () -> benchZarrJavaOpen( dataset ) );
-			final double pureN5Open = measure( () -> benchPureN5Open( dataset ) );
-			final double pureZjOpen = measure( () -> benchPureZarrJavaOpen( dataset ) );
-			final double n5OpenRead = measure( () -> readWholeImage( opened.n5WrappedLevel0 ) );
-			final double zjOpenRead = measure( () -> readWholeImage( opened.zjWrappedLevel0 ) );
-			final double pureN5Read = measure( () -> readWholeImage( opened.pureN5Level0 ) );
-			final double pureZjRead = measure( () -> readWholePureZarr( opened.pureZjLevel0 ) );
+			final long wrappedVoxels = countVoxels( opened.n5WrappedLevel0 );
+			final long pureN5Voxels = Intervals.numElements( opened.pureN5Level0 );
+			final long pureZjVoxels = countVoxels( opened.pureZjLevel0 );
 
-			System.out.printf( Locale.ROOT, "%-48s %10.2f %10.2f %12.2f %12.2f %10.2f %10.2f %12.2f %12.2f%n",
-					shortName( resource ), n5Open, zjOpen, pureN5Open, pureZjOpen, n5OpenRead, zjOpenRead, pureN5Read, pureZjRead );
+			row( name, "open", "N5", NO_VOXELS, measure( () -> benchN5Open( dataset ) ) );
+			row( name, "open", "zarr-java", NO_VOXELS, measure( () -> benchZarrJavaOpen( dataset ) ) );
+			row( name, "open-pure", "N5", NO_VOXELS, measure( () -> benchPureN5Open( dataset ) ) );
+			row( name, "open-pure", "zarr-java", NO_VOXELS, measure( () -> benchPureZarrJavaOpen( dataset ) ) );
+			row( name, "read", "N5", wrappedVoxels, measure( () -> readVolumes( opened.n5WrappedLevel0 ) ) );
+			row( name, "read", "zarr-java", countVoxels( opened.zjWrappedLevel0 ),
+					measure( () -> readVolumes( opened.zjWrappedLevel0 ) ) );
+			row( name, "read-pure", "N5", pureN5Voxels,
+					measure( () -> readWholeImage( opened.pureN5Level0 ) ) );
+			row( name, "read-pure", "zarr-java", pureZjVoxels,
+					measure( () -> readWholePureZarr( opened.pureZjLevel0 ) ) );
+
 			opened.close();
 		}
-		System.exit( 0 );
+	}
+
+	/**
+	 * Resolves every configured dataset up front and fails with the offending
+	 * path when one is missing. {@link #resourcePath} passes absolute paths
+	 * through unchecked, so without this an unreachable dataset only surfaces
+	 * deep inside a backend.
+	 */
+	private static List< Path > resolveDatasets() throws URISyntaxException, IOException
+	{
+		final List< Path > paths = new ArrayList<>( DATASETS.size() );
+		for ( final String resource : DATASETS )
+		{
+			final Path path = resourcePath( resource );
+			if ( !Files.exists( path ) )
+				throw new IOException( "Dataset not found: " + path + " (from '" + resource + "')" );
+			paths.add( path );
+		}
+		return paths;
+	}
+
+	/** Marks a row whose operation reads no pixels, so no voxel count applies. */
+	private static final long NO_VOXELS = -1L;
+
+	private static void row( final String dataset, final String operation, final String backend,
+			final long voxels, final Stats stats )
+	{
+		System.out.printf( Locale.ROOT, "%-24s %-10s %-10s %10s %9.2f %9.2f %9.2f%n",
+				dataset, operation, backend, voxels == NO_VOXELS ? "-" : Long.toString( voxels ),
+				stats.min, stats.median, stats.max );
+	}
+
+	private static long countVoxels( final Array array )
+	{
+		long voxels = 1;
+		for ( final long dim : array.metadata().shape )
+			voxels *= dim;
+		return voxels;
 	}
 
 	private static void warmup( final String dataset ) throws Exception
@@ -132,24 +226,48 @@ public class BackendBenchmark
 			benchZarrJavaOpen( dataset );
 			benchPureN5Open( dataset );
 			benchPureZarrJavaOpen( dataset );
-			readWholeImage( opened.n5WrappedLevel0 );
-			readWholeImage( opened.zjWrappedLevel0 );
+			readVolumes( opened.n5WrappedLevel0 );
+			readVolumes( opened.zjWrappedLevel0 );
 			readWholeImage( opened.pureN5Level0 );
 			readWholePureZarr( opened.pureZjLevel0 );
 		}
 		opened.close();
 	}
 
-	private static double measure( final ThrowingRunnable benchmark ) throws Exception
+	/**
+	 * Times {@code benchmark} {@link #MEASURE_ROUNDS} times and reports the
+	 * distribution rather than a mean. A mean is actively misleading for the read
+	 * operations, where the first round loads and decompresses and the rest hit
+	 * an already-populated cache: averaging 40ms with four times 1ms yields 8.8ms,
+	 * a figure no round ever took. min/median/max keeps that split visible.
+	 */
+	private static Stats measure( final ThrowingRunnable benchmark ) throws Exception
 	{
-		long totalNanos = 0L;
+		final double[] millis = new double[ MEASURE_ROUNDS ];
 		for ( int i = 0; i < MEASURE_ROUNDS; i++ )
 		{
 			final long t0 = System.nanoTime();
 			benchmark.run();
-			totalNanos += ( System.nanoTime() - t0 );
+			millis[ i ] = ( System.nanoTime() - t0 ) / 1_000_000.0;
 		}
-		return ( totalNanos / ( double ) MEASURE_ROUNDS ) / 1_000_000.0;
+		Arrays.sort( millis );
+		return new Stats( millis[ 0 ], millis[ millis.length / 2 ], millis[ millis.length - 1 ] );
+	}
+
+	private static final class Stats
+	{
+		private final double min;
+
+		private final double median;
+
+		private final double max;
+
+		private Stats( final double min, final double median, final double max )
+		{
+			this.min = min;
+			this.median = median;
+			this.max = max;
+		}
 	}
 
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
@@ -210,15 +328,13 @@ public class BackendBenchmark
 		final Context n5Context = new Context();
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
 		final PyramidContents< ? > n5Wrapped = new N5PyramidBackend().read( Paths.get( dataset ).toUri() );
-		final RandomAccessibleInterval< ? > n5WrappedLevel0 =
-				new PyramidalBdv<>( n5Context, n5Wrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
+		final List< RandomAccessibleInterval< ? > > n5WrappedLevel0 = allLevel0Volumes( n5Context, n5Wrapped );
 
 		final Context zjContext = new Context();
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
 		final PyramidContents< ? > zjWrapped =
 				new ZarrJavaPyramidBackend().read( Paths.get( dataset ).toUri() );
-		final RandomAccessibleInterval< ? > zjWrappedLevel0 =
-				new PyramidalBdv<>( zjContext, zjWrapped ).asSources().get( 0 ).getSpimSource().getSource( 0, 0 );
+		final List< RandomAccessibleInterval< ? > > zjWrappedLevel0 = allLevel0Volumes( zjContext, zjWrapped );
 
 		final N5OpenContext n5Pure = openN5Context( Paths.get( dataset ) );
 		final String level0Path = resolveN5Level0Path( n5Pure );
@@ -236,6 +352,48 @@ public class BackendBenchmark
 				n5Pure.reader );
 	}
 
+	/**
+	 * Every (channel, timepoint) volume of resolution level 0, as the BDV source
+	 * stack exposes them.
+	 * <p>
+	 * Taking only {@code asSources().get( 0 ).getSpimSource().getSource( 0, 0 )}
+	 * — channel 0 at timepoint 0 — would cover a twelfth of a 4t x 3c dataset,
+	 * while the two {@code *-pure} paths read the array whole. That made
+	 * {@code read-pure} look an order of magnitude slower when it was simply
+	 * reading an order of magnitude more data. Iterating every channel and
+	 * timepoint puts all four read paths over the same voxels without assuming
+	 * anything about axis order: {@link PyramidContents#numChannels()} and
+	 * {@link PyramidContents#numTimepoints()} both report 1 when the axis is
+	 * absent, so a 2D dataset yields exactly one volume.
+	 */
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	private static List< RandomAccessibleInterval< ? > > allLevel0Volumes(
+			final Context context, final PyramidContents contents )
+	{
+		final List< SourceAndConverter > sources = new PyramidalBdv( context, contents ).asSources();
+		final int numTimepoints = contents.numTimepoints();
+		final List< RandomAccessibleInterval< ? > > volumes =
+				new ArrayList<>( sources.size() * numTimepoints );
+		for ( final SourceAndConverter sac : sources )
+			for ( int t = 0; t < numTimepoints; t++ )
+				volumes.add( sac.getSpimSource().getSource( t, 0 ) );
+		return volumes;
+	}
+
+	private static void readVolumes( final List< RandomAccessibleInterval< ? > > volumes )
+	{
+		for ( final RandomAccessibleInterval< ? > volume : volumes )
+			readWholeImage( volume );
+	}
+
+	private static long countVoxels( final List< RandomAccessibleInterval< ? > > volumes )
+	{
+		long voxels = 0;
+		for ( final RandomAccessibleInterval< ? > volume : volumes )
+			voxels += Intervals.numElements( volume );
+		return voxels;
+	}
+
 	private static void readWholeImage( final RandomAccessibleInterval< ? > img )
 	{
 		final Cursor< ? > cursor = net.imglib2.view.Views.flatIterable( img ).cursor();
@@ -248,12 +406,6 @@ public class BackendBenchmark
 		final long[] origin = new long[ array.metadata().shape.length ];
 		final long[] shape = array.metadata().shape.clone();
 		array.read( origin, shape );
-	}
-
-	private static String shortName( final String resource )
-	{
-		final int idx = resource.lastIndexOf( '/' );
-		return idx >= 0 ? resource.substring( idx + 1 ) : resource;
 	}
 
 	private static String divider( final int n )
@@ -277,9 +429,13 @@ public class BackendBenchmark
 		// Mute System.err to suppress noisy plugin/framework startup logs.
 		System.setErr( new PrintStream( new ByteArrayOutputStream() ) );
 
-		// Force Logback root logger OFF.
+		// Force Logback root logger OFF. The shared logback-test.xml also pins
+		// ome.zarr to DEBUG, and an explicit level on a logger is not overridden
+		// by the root's, so that one has to be silenced by name or its output
+		// lands in the middle of the table.
 		final LoggerContext context = ( LoggerContext ) LoggerFactory.getILoggerFactory();
 		context.getLogger( org.slf4j.Logger.ROOT_LOGGER_NAME ).setLevel( Level.OFF );
+		context.getLogger( "ome.zarr" ).setLevel( Level.OFF );
 
 		final LogManager logManager = LogManager.getLogManager();
 		final Logger rootLogger = logManager.getLogger( "" );
@@ -312,9 +468,9 @@ public class BackendBenchmark
 
 	private static final class OpenedReadContexts implements AutoCloseable
 	{
-		private final RandomAccessibleInterval< ? > n5WrappedLevel0;
+		private final List< RandomAccessibleInterval< ? > > n5WrappedLevel0;
 
-		private final RandomAccessibleInterval< ? > zjWrappedLevel0;
+		private final List< RandomAccessibleInterval< ? > > zjWrappedLevel0;
 
 		private final RandomAccessibleInterval< ? > pureN5Level0;
 
@@ -327,8 +483,8 @@ public class BackendBenchmark
 		private final N5Reader pureN5Reader;
 
 		private OpenedReadContexts(
-				final RandomAccessibleInterval< ? > n5WrappedLevel0,
-				final RandomAccessibleInterval< ? > zjWrappedLevel0,
+				final List< RandomAccessibleInterval< ? > > n5WrappedLevel0,
+				final List< RandomAccessibleInterval< ? > > zjWrappedLevel0,
 				final RandomAccessibleInterval< ? > pureN5Level0,
 				final Array pureZjLevel0,
 				final Context n5Context,
