@@ -29,7 +29,6 @@ graph TD
     ZJ["ome-zarr-zarrjava: zarr-java backend (default), v0.4 - v0.5, .ozx"]
     FIJI["ome-zarr-fiji: ImageJ + BigDataViewer, no UI sugar"]
     CORE["ome-zarr-imglib2: backend-agnostic core"]
-
     UI --> N5
     UI --> ZJ
     UI --> FIJI
@@ -117,24 +116,19 @@ URI uri = URI.create( "https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR
 
 // one-call entry point; N5PyramidBackend.readPyramid( uri ) is the other backend
 PyramidContents< UnsignedByteType > contents = ZarrJavaPyramidBackend.readPyramid( uri );
-
 Img< UnsignedByteType > img = contents.asImg();                  // full resolution, still lazy
 
 long width = contents.sizeAlongAxis( AxisCalibration.X );
-
 int level = contents.suggestResolutionLevel( 1000 );             // may be NO_MATCHING_LEVEL
-if(level !=PyramidContents.NO_MATCHING_LEVEL )
-img =contents.
-
-asImg( level );
+if ( level != PyramidContents.NO_MATCHING_LEVEL )
+	img = contents.asImg( level );
 ```
 
 Instantiating the backend does the same and lets you keep it around:
 
 ```java
 PyramidBackend backend = new ZarrJavaPyramidBackend();           // or new N5PyramidBackend()
-
-PyramidContents< UnsignedByteType > contents = backend.read( uri );
+PyramidContents< ? > contents = backend.read( uri );
 ```
 
 # One read, two views
@@ -153,7 +147,6 @@ graph TD
     P["interface Pyramidal: getPyramidContents()"]
     SVC["PyramidalService: tracks the focused Pyramidal window"]
     PRE["PyramidalPreprocessor: auto-fills Pyramidal parameters"]
-
     PC --> DS
     PC --> BDV
     DS --> P
@@ -167,29 +160,35 @@ a non-interactive one for headless use).
 
 ```java
 Context context = new Context();   // in a plugin, get it injected instead
-
 URI uri = URI.create( "https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0" );
-
 OmeZarr omeZarr = new OmeZarr( uri, context, new ZarrJavaPyramidBackend(), 1000 );
 
 // the direct ways — both return what they showed, or null if it failed / the user declined
 PyramidalDataset dataset = omeZarr.showInImageJ();
-
 BdvHandle bdv = omeZarr.showInBdv();
 
 // or read without showing anything
 PyramidalDataset ds = omeZarr.readPyramidalDataset();
-
 PyramidContents< ? > contents = omeZarr.readContents();   // read once, then cached
 
 // or build the BDV sources yourself
 PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, omeZarr.readContents() );
-
 List< ? extends SourceAndConverter< ? > > sources = pyramidal.asSources();
 ```
 
 Because `omeZarr.readContents()` caches, sharing one `OmeZarr` instance means the pyramid is read once no matter how
 many views you build from it.
+
+To get a **single resolution level** out of an `OmeZarr` as a plain ImgLib2 image, without opening a window, go through
+`readContents()`:
+
+```java
+OmeZarr omeZarr = new OmeZarr( uri, context, backend );
+PyramidContents< ? > contents = omeZarr.readContents();
+Img< ? > img = contents.asImg( level );   // 0 = full resolution
+```
+
+`numResolutionLevels()`, `smallestResolutionLevel()` and `suggestResolutionLevel( preferredMaxWidth )` pick `level`.
 
 # Opening the way the user configured it
 
@@ -216,9 +215,7 @@ Reading the settings without opening anything:
 
 ```java
 OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-
 PyramidBackend backend = settings.getBackend().createBackend();
-
 int preferredWidth = settings.getPreferredMaxWidth();
 ```
 
