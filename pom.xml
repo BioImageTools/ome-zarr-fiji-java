@@ -145,7 +145,7 @@
 		<bigdataviewer-core.version>10.6.8</bigdataviewer-core.version>
 		<scifio.version>0.48.0</scifio.version>
 
-		<zarr-java.version>0.3.0</zarr-java.version>
+		<zarr-java.version>0.3.1</zarr-java.version>
 		<jacoco.version>0.8.13</jacoco.version>
 		<zarr.test.addOpens />
 		<zarr.test.addOpensX11 />
