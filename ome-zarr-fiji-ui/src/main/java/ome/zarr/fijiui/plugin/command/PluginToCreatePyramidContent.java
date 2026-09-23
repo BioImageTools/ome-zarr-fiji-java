@@ -21,6 +21,7 @@ import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import org.jspecify.annotations.NonNull;
+import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.plugin.Parameter;
@@ -99,7 +100,7 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 	@Parameter
 	PyramidalService pyramidalService;
 
-	@Parameter
+	@Parameter( type = ItemIO.OUTPUT )
 	PyramidContents< ? > pyramidContents;
 
 	@Override
