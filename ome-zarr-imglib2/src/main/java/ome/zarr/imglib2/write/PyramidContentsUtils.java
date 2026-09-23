@@ -99,22 +99,21 @@ public class PyramidContentsUtils
 			for ( int i = 0; i < baseLevelAxes.length; ++i )
 			{
 				final AxisCalibration a = baseLevelAxes[ i ];
-				if ( a.name.equals( AxisCalibration.X ) )
+				switch ( a.name )
 				{
+				case AxisCalibration.X:
 					axes[ l ][ i ] = new AxisCalibration( a.name, a.unit, a.scale * spatialDownScales[ l - 1 ][ 0 ] );
-				}
-				else if ( a.name.equals( AxisCalibration.Y ) )
-				{
+					break;
+				case AxisCalibration.Y:
 					axes[ l ][ i ] = new AxisCalibration( a.name, a.unit, a.scale * spatialDownScales[ l - 1 ][ 1 ] );
-				}
-				else if ( a.name.equals( AxisCalibration.Z ) )
-				{
+					break;
+				case AxisCalibration.Z:
 					axes[ l ][ i ] = new AxisCalibration( a.name, a.unit, a.scale * spatialDownScales[ l - 1 ][ 2 ] );
-				}
-				else
-				{
+					break;
+				default:
 					//re-use the base level definition of the (non-spatial) axis (as here happens no down-scaling)
 					axes[ l ][ i ] = axes[ 0 ][ i ];
+					break;
 				}
 			}
 		}
@@ -184,29 +183,26 @@ public class PyramidContentsUtils
 		dims = 0;
 		for ( AxisCalibration axis : axesPerLevel[ 0 ] )
 		{
-			if ( axis.name.equals( AxisCalibration.X ) )
+			switch ( axis.name )
 			{
+			case AxisCalibration.X:
 				dimsAtBaseLevel[ dims++ ] = xyzDimsAtBaseLevel[ 0 ];
-			}
-			else if ( axis.name.equals( AxisCalibration.Y ) )
-			{
+				break;
+			case AxisCalibration.Y:
 				dimsAtBaseLevel[ dims++ ] = xyzDimsAtBaseLevel[ 1 ];
-			}
-			else if ( axis.name.equals( AxisCalibration.Z ) )
-			{
+				break;
+			case AxisCalibration.Z:
 				dimsAtBaseLevel[ dims++ ] = xyzDimsAtBaseLevel[ 2 ];
-			}
-			else if ( axis.name.equals( AxisCalibration.C ) )
-			{
+				break;
+			case AxisCalibration.C:
 				dimsAtBaseLevel[ dims++ ] = channels;
-			}
-			else if ( axis.name.equals( AxisCalibration.T ) )
-			{
+				break;
+			case AxisCalibration.T:
 				dimsAtBaseLevel[ dims++ ] = timePoints;
-			}
-			else
-			{
+				break;
+			default:
 				assert false: "Detected unknow axis specification.";
+				break;
 			}
 		}
 
@@ -226,8 +222,11 @@ public class PyramidContentsUtils
 		);
 
 		CachedCellImg< T, ? >[] imgs = new CachedCellImg[ axesPerLevel.length ];
-		for ( int l = 0; l < imgs.length; l++ )
-			imgs[ l ] = baseImg;
+		Arrays.fill( imgs, baseImg );
+		// NB: all resolution levels are filled with the same backing images, which
+		//     may be tolerated as the purpose of the built PyramidContents is only
+		//     to represent the shape/geometry of the Pyramidal (for PyramidSavers);
+		//     this object is not meant to keep any resonable image data
 		builder.cachedCellImgs( imgs );
 
 		return builder.build();
@@ -281,7 +280,12 @@ public class PyramidContentsUtils
 			RandomAccessibleInterval< T > img,
 			int[] permutation )
 	{
-		assert permutation.length == img.numDimensions(): "Permutation length is different from image's number of dimensions.";
+		if ( permutation.length != img.numDimensions() )
+		{
+			throw new IllegalArgumentException(
+					"Length (" + permutation.length + ") of the provided permutation is different from image's number of dimensions ("
+							+ img.numDimensions() + ")." );
+		}
 
 		RandomAccessibleInterval< T > out = img;
 		int[] p = permutation.clone();
@@ -299,6 +303,9 @@ public class PyramidContentsUtils
 			int tmp = p[ i ];
 			p[ i ] = p[ x ];
 			p[ x ] = tmp;
+			//could also have been shorter:
+			//p[ x ] = p[ i ]
+			//p[ i ] = i
 		}
 		return out;
 	}
@@ -307,18 +314,29 @@ public class PyramidContentsUtils
 			PyramidContents< T > pc,
 			int resolutionLevel,
 			int channel,
-			int timepoint )
+			int timePoint )
 	{
-		assert resolutionLevel >= 0: "Resolution level cannot be negative.";
-		assert resolutionLevel < pc.numResolutionLevels(): "Resolution level cannot exceed available levels.";
-		assert channel >= 0: "Channel position cannot be negative.";
-		assert timepoint >= 0: "Time point cannot be negative.";
+		if ( resolutionLevel < 0 || resolutionLevel >= pc.numResolutionLevels() )
+		{
+			throw new IllegalArgumentException(
+					"Resolution level (" + resolutionLevel + ") out of bounds [0, " + pc.numResolutionLevels() + "]." );
+		}
+		if ( channel < 0 || channel >= pc.numChannels() )
+		{
+			throw new IllegalArgumentException(
+					"Channel (" + channel + ") out of bounds [0, " + pc.numChannels() + "]." );
+		}
+		if ( timePoint < 0 || timePoint >= pc.numTimepoints() )
+		{
+			throw new IllegalArgumentException(
+					"Time point (" + timePoint + ") out of bounds [0, " + pc.numTimepoints() + "]." );
+		}
 
 		// re-order first
 		final int[] permutation = axesPermutationForXYZCT( pc );
 		RandomAccessibleInterval< T > view = permutatedAxesView( pc.asImg( resolutionLevel ), permutation );
 
-		// extract the channel and timepoint
+		// extract the channel and timePoint
 		final int axisIndexChannel = pc.axisIndex( AxisCalibration.C );
 		if ( axisIndexChannel > -1 )
 		{
@@ -333,42 +351,8 @@ public class PyramidContentsUtils
 			//    and the Views.hyperSlice() must account for that
 			if ( axisIndexChannel > -1 && dimIdx > permutation[ axisIndexChannel ] )
 				dimIdx -= 1;
-			view = Views.hyperSlice( view, dimIdx, timepoint );
+			view = Views.hyperSlice( view, dimIdx, timePoint );
 		}
 		return view;
-	}
-
-	public static void main( String[] args )
-	{
-		AxisCalibration[] axes = new AxisCalibration[] {
-				new AxisCalibration( AxisCalibration.T, "seconds", 1 ),
-				new AxisCalibration( AxisCalibration.Y, "microns", 1.6 ),
-				new AxisCalibration( AxisCalibration.X, "microns", 1.2 ),
-		};
-
-		PyramidContents< UnsignedShortType > p = PyramidContentsUtils.create(
-				"empty pyramidal",
-				new UnsignedShortType(),
-				new long[] { 512, 1024 },
-				0,
-				5,
-				axes,
-				new double[][] {
-						{ 2.0, 4.1 },
-						{ 10.0, 1.0 },
-						{ 2.2, 4.3 }
-				}
-		);
-
-		System.out.println( p );
-
-		CachedCellImg< UnsignedShortType, ? > ccimg = ( CachedCellImg< UnsignedShortType, ? > ) p.asLargestImg();
-		System.out.print( "grid sizes: " );
-		for ( int d : ccimg.getCellGrid().getCellDimensions() )
-			System.out.print( d + " px, " );
-		System.out.println();
-
-		RandomAccessibleInterval< UnsignedShortType > newImg = xyzReducedView( p, 0, 3, 3 );
-		System.out.println( newImg );
 	}
 }
