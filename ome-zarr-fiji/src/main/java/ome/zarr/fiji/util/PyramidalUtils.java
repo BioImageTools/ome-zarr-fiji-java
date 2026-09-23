@@ -6,6 +6,8 @@ import net.imglib2.type.numeric.RealType;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.write.PyramidContentsUtils;
+import ij.ImagePlus;
+import org.scijava.convert.ConvertService;
 
 public class PyramidalUtils
 {
@@ -42,5 +44,20 @@ public class PyramidalUtils
 				ImgPlus.wrapRAI( PyramidContentsUtils.xyzReducedView( pyramidContents, resolutionLevel, channel, timePoint ) );
 		imgPlus.setName( pyramidContents.name + " (R=" + resolutionLevel + ",C=" + channel + ",T=" + timePoint + ")" );
 		return imgPlus;
+	}
+
+	public static ImagePlus asImagePlusForResLevelAt(
+			final Pyramidal pyramidal,
+			final int resolutionLevel,
+			final int channel,
+			final int timePoint )
+	{
+		ConvertService cs = pyramidal.getContext().getService( ConvertService.class );
+		assert cs != null: "The available Context is missing the ConvertService.";
+		return cs.convert(
+				wrapResLevelAt( pyramidal.getPyramidContents(), resolutionLevel, channel, timePoint ),
+				ImagePlus.class );
+		// BTW: The conversion created a (not-displayed) Dataset along the way,
+		//      which can be reached via the DatasetService
 	}
 }
