@@ -28,6 +28,9 @@
  */
 package ome.zarr.fiji;
 
+import ij.ImagePlus;
+import net.imagej.Dataset;
+import net.imagej.DefaultDataset;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
@@ -38,8 +41,10 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 
+import ome.zarr.fiji.util.PyramidalUtils;
 import org.scijava.AbstractContextual;
 import org.scijava.Context;
+import org.scijava.convert.ConvertService;
 import org.scijava.object.ObjectService;
 import org.scijava.plugin.Parameter;
 import org.slf4j.Logger;
@@ -80,6 +85,35 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	public PyramidContents< T > getPyramidContents()
 	{
 		return contents;
+	}
+
+	/**
+	 * Convenience method to convert this {@code PyramidalBDV}'s particular resolutionLevel
+	 * to an IJ2 {@link net.imagej.Dataset}, using the {@link DefaultDataset}.
+	 *
+	 * The convenience lies especially in fixing a particular channel and timepoint,
+	 * which reduces the amount of exposed data/memory, and also in the assured order
+	 * of dimensions to x,y and z (if present).
+	 */
+	public Dataset asXyzDatasetAt( final int resolutionLevel, final int channel, final int timePoint )
+	{
+		return new DefaultDataset( getContext(), PyramidalUtils.wrapResLevelAt( contents, resolutionLevel, channel, timePoint ) );
+	}
+
+	/**
+	 * Convenience method to convert this {@code PyramidalBDV}'s particular resolutionLevel
+	 * to an IJ1 {@link ij.ImagePlus} via SciJava's {@link org.scijava.convert.ConvertService}.
+	 *
+	 * The convenience lies especially in fixing a particular channel and timepoint,
+	 * which reduces the amount of exposed data/memory. Furthermore, the {@link ImagePlus}
+	 * mandates x,y planes/slices along z.
+	 */
+	public ImagePlus asImagePlusAt( final int resolutionLevel, final int channel, final int timePoint )
+	{
+		final ConvertService cs = getContext().service( ConvertService.class );
+		assert cs != null: "The available Context is missing the ConvertService.";
+
+		return cs.convert( asXyzDatasetAt( resolutionLevel, channel, timePoint ), ImagePlus.class );
 	}
 
 	/**

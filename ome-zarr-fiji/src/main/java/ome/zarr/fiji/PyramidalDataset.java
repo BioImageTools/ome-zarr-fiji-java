@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.imagej.Dataset;
+import ome.zarr.fiji.util.PyramidalUtils;
 import org.scijava.Context;
 import org.scijava.convert.ConvertService;
 
@@ -98,12 +100,32 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 	}
 
 	/**
-	 * Convenience method to convert this {@code PyramidalDataset} to an IJ1
-	 * {@link ij.ImagePlus} via SciJava's {@link org.scijava.convert.ConvertService}
+	 * Convenience method to convert this {@code PyramidalDataset} to an IJ2
+	 * {@link net.imagej.Dataset}, using the {@link DefaultDataset}.
+	 *
+	 * The convenience lies especially in fixing a particular channel and timepoint,
+	 * which reduces the amount of exposed data/memory, and also in the assured order
+	 * of dimensions to x,y and z (if present).
 	 */
-	public ImagePlus asImagePlus()
+	public Dataset asXyzDatasetAt( final int channel, final int timePoint )
 	{
-		return getContext().service( ConvertService.class ).convert( this, ImagePlus.class );
+		return new DefaultDataset( getContext(), PyramidalUtils.wrapResLevelAt( contents, resolutionLevel, channel, timePoint ) );
+	}
+
+	/**
+	 * Convenience method to convert this {@code PyramidalDataset} to an IJ1
+	 * {@link ij.ImagePlus} via SciJava's {@link org.scijava.convert.ConvertService}.
+	 *
+	 * The convenience lies especially in fixing a particular channel and timepoint,
+	 * which reduces the amount of exposed data/memory. Furthermore, the {@link ImagePlus}
+	 * mandates x,y planes/slices along z.
+	 */
+	public ImagePlus asImagePlusAt( final int channel, final int timePoint )
+	{
+		final ConvertService cs = getContext().service( ConvertService.class );
+		assert cs != null: "The available Context is missing the ConvertService.";
+
+		return cs.convert( asXyzDatasetAt( channel, timePoint ), ImagePlus.class );
 	}
 
 	private static final Map< String, AxisType > AXIS_TYPE_MAP;
