@@ -10,6 +10,8 @@ Scratch material for a repository logo.
 | `logo-plane.png`           | variant: "zarr" in front of the glyph, lower right                        |
 | `logo-big-z.png`           | variant: a large "z" showing through the cubes from behind                |
 | `logo-pink.png`            | variant: the plain glyph, cubes in Zarr pink                              |
+| `logo-z-behind.png`        | variant: a pink "z" of cubes one layer behind the glyph                   |
+| `logo-z-in-plane.png`      | variant: the "z" in the glyph plane, pink and half-pink cubes among blue  |
 | `zarr-pink-horizontal.svg` | the Zarr logo, verbatim from https://github.com/zarr-developers/zarr-logo |
 | `pixi.toml`                | pixi environment for running the script                                   |
 

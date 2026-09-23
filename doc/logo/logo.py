@@ -16,19 +16,20 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 
 def make_cube_faces(origin, size=1.0):
-    """Return the 6 faces of a cube as a list of 4-vertex polygons."""
+    """Return the 6 faces of a cube as a list of 4-vertex polygons. `size` is an edge
+    length, or one per axis for a box, e.g. half of a split cube."""
     x0, y0, z0 = origin
-    s = size
+    w, d, h = np.broadcast_to(size, 3)
     # 8 corners
     c = np.array([
         [x0,     y0,     z0    ],
-        [x0 + s, y0,     z0    ],
-        [x0 + s, y0 + s, z0    ],
-        [x0,     y0 + s, z0    ],
-        [x0,     y0,     z0 + s],
-        [x0 + s, y0,     z0 + s],
-        [x0 + s, y0 + s, z0 + s],
-        [x0,     y0 + s, z0 + s],
+        [x0 + w, y0,     z0    ],
+        [x0 + w, y0 + d, z0    ],
+        [x0,     y0 + d, z0    ],
+        [x0,     y0,     z0 + h],
+        [x0 + w, y0,     z0 + h],
+        [x0 + w, y0 + d, z0 + h],
+        [x0,     y0 + d, z0 + h],
     ])
     faces = [
         [c[0], c[1], c[2], c[3]],  # bottom
@@ -134,6 +135,8 @@ VARIANTS = {
     "logo-plane":      (False, WORDMARK,  upright(WORDMARK, 5.5, 0.05, 0, 3.0),  True),
     "logo-big-z":      (False, Z,         upright(Z, 2.05, 1.05, 0, 3.7),       False),
     "logo-pink":       (False, None,      None,                                  False),
+    "logo-z-behind":   (False, None,      None,                                  False),
+    "logo-z-in-plane": (False, None,      None,                                  False),
 }
 variant = sys.argv[1] if len(sys.argv) > 1 else "logo"
 with_room, ART, art_quad, art_in_front = VARIANTS[variant]
@@ -141,7 +144,43 @@ with_room, ART, art_quad, art_in_front = VARIANTS[variant]
 # Artwork behind the cubes shows through only as far as they are transparent.
 FIJI_FACE = mcolors.to_rgba(ZARR_PINK if variant == "logo-pink" else FIJI_BLUE,
                             0.55 if variant == "logo-big-z" else 0.85)
-origins = [o + (SIZE,) for o in origins]   # (x, y, z) -> (x, y, z, cube edge)
+face = {}   # cell -> colour, where it is not FIJI_FACE
+z_cells = {(x, y) for x in range(7) for y in (0, 6)} | {(k, k) for k in range(1, 6)}
+
+if variant == "logo-z-behind":
+    # A pink "z" on its own layer, one cell behind the glyph, so neither hides the other.
+    Z_DEPTH = 1
+    face = {(x, y, Z_DEPTH): mcolors.to_rgba(ZARR_PINK, FIJI_FACE[3]) for x, y in z_cells}
+    origins += sorted(face)
+elif variant == "logo-z-in-plane":
+    # The "z" in the glyph plane: its missing cubes added in pink, and where it shares
+    # cubes with the glyph, pink picks out enough of them to trace it.
+    shared_pink = {(1, 6), (3, 6), (5, 6)}
+    pink = z_cells - {o[:2] for o in origins} | shared_pink
+    face = {(x, y, 0): mcolors.to_rgba(ZARR_PINK, FIJI_FACE[3]) for x, y in pink}
+    origins += sorted(set(face) - set(origins))
+
+# (x, y, z) -> (x, y, z, (width along x, height along y), colour)
+origins = [o + ((SIZE, SIZE), face.get(o, FIJI_FACE)) for o in origins]
+
+if variant == "logo-z-in-plane":
+    # Where the "z" turns or crosses the glyph, the cube is split in two:
+    # cell -> (split along, left/bottom half, right/top half).
+    blue, pink = FIJI_FACE, mcolors.to_rgba(ZARR_PINK, FIJI_FACE[3])
+    splits = {
+        (0, 6, 0): ("x", blue, pink),
+        (6, 6, 0): ("x", pink, blue),
+        (4, 4, 0): ("x", pink, blue),
+        (2, 2, 0): ("x", blue, pink),
+        (0, 0, 0): ("x", blue, pink),
+        (3, 0, 0): ("y", blue, pink),
+    }
+    half = SIZE/2
+    origins = [o for o in origins if o[:3] not in splits]
+    for (x, y, z), (along, first, second) in splits.items():
+        size = (half, SIZE) if along == "x" else (SIZE, half)
+        dx, dy = (half/step, 0) if along == "x" else (0, half/step)
+        origins += [(x, y, z, size, first), (x + dx, y + dy, z, size, second)]
 
 SIDE = 1024   # final logo is SIDE x SIDE px
 DPI  = 150    # only sets the first pass; the second one derives its own, see below
@@ -200,19 +239,19 @@ def render(dpi):
     ax  = fig.add_subplot(111, projection="3d")
 
     # Cell (x, y) -> data (x, 0, y): the glyph stands up, depth goes into the screen.
-    for x, y, z, s in origins:
+    for x, y, z, (w, h), colour in origins:
         ax.add_collection3d(Poly3DCollection(
-            make_cube_faces((step*x, step*z, step*y), s),
+            make_cube_faces((step*x, step*z, step*y), (w, SIZE, h)),
             alpha=None,             # in the colours
-            facecolor=FIJI_FACE,
+            facecolor=colour,
             edgecolor=FIJI_EDGE,
-            linewidths=dpi*s/150,   # points, so scale with the DPI
+            linewidths=dpi*SIZE/150,   # points, so scale with the DPI
         ))
 
     # add_collection3d() does not autoscale.
-    width  = max(step*o[0] + o[3] for o in origins)
-    height = max(step*o[1] + o[3] for o in origins)
-    depth  = max(step*o[2] + o[3] for o in origins)
+    width  = max(step*o[0] + o[3][0] for o in origins)
+    height = max(step*o[1] + o[3][1] for o in origins)
+    depth  = max(step*o[2] + SIZE for o in origins)
     x0, y0, z0 = 0.0, min(step*o[2] for o in origins), 0.0
     if art_quad:   # the wordmark may stick out of the glyph
         x0     = min([x0]     + [step*p[0] for p in art_quad])
