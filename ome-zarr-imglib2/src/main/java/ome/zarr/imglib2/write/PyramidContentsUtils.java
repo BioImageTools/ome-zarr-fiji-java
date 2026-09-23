@@ -328,11 +328,15 @@ public class PyramidContentsUtils
 		final int axisIndexTime = pc.axisIndex( AxisCalibration.T );
 		if ( axisIndexTime > -1 )
 		{
-			view = Views.hyperSlice( view, permutation[ axisIndexTime ], timepoint );
+			int dimIdx = permutation[ axisIndexTime ];
+			//NB: if the previous if-branch was active, the 'view' img is now one dimension shorter,
+			//    and the Views.hyperSlice() must account for that
+			if ( axisIndexChannel > -1 && dimIdx > permutation[ axisIndexChannel ] )
+				dimIdx -= 1;
+			view = Views.hyperSlice( view, dimIdx, timepoint );
 		}
 		return view;
 	}
-
 
 	public static void main( String[] args )
 	{
