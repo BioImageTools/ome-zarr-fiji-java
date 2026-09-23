@@ -9,6 +9,7 @@ Scratch material for a repository logo.
 | `logo-room-wall.png`       | variant: the glyph in Zarr's room, "zarr" on its back wall                |
 | `logo-plane.png`           | variant: "zarr" in front of the glyph, lower right                        |
 | `logo-big-z.png`           | variant: a large "z" showing through the cubes from behind                |
+| `logo-pink.png`            | variant: the plain glyph, cubes in Zarr pink                              |
 | `zarr-pink-horizontal.svg` | the Zarr logo, verbatim from https://github.com/zarr-developers/zarr-logo |
 | `pixi.toml`                | pixi environment for running the script                                   |
 
@@ -36,6 +37,6 @@ it takes the camera's angle. A `VARIANTS` entry's last field composites it over 
 instead of under, and under is what puts it behind the cubes.
 
 Knobs: `SIZE`/`GAP` for the cubes, `ROOM_*` and the `lw` in `draw_room` for the room,
-`ART_ALPHA` for the Zarr part, `FIJI_FACE` for how transparent the cubes are.
+`ART_ALPHA` for the Zarr part, `FIJI_FACE` for the cubes' colour and transparency.
 
 The view is pinned with `ax.view_init(elev=28, azim=-56)`.

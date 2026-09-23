@@ -133,12 +133,14 @@ VARIANTS = {
     "logo-room-wall":  (True,  WORDMARK,  upright(WORDMARK, 4.2, 5.85, ROOM_DEPTH, 2.2), False),
     "logo-plane":      (False, WORDMARK,  upright(WORDMARK, 5.5, 0.05, 0, 3.0),  True),
     "logo-big-z":      (False, Z,         upright(Z, 2.05, 1.05, 0, 3.7),       False),
+    "logo-pink":       (False, None,      None,                                  False),
 }
 variant = sys.argv[1] if len(sys.argv) > 1 else "logo"
 with_room, ART, art_quad, art_in_front = VARIANTS[variant]
 
 # Artwork behind the cubes shows through only as far as they are transparent.
-FIJI_FACE = mcolors.to_rgba(FIJI_BLUE, 0.55 if variant == "logo-big-z" else 0.85)
+FIJI_FACE = mcolors.to_rgba(ZARR_PINK if variant == "logo-pink" else FIJI_BLUE,
+                            0.55 if variant == "logo-big-z" else 0.85)
 origins = [o + (SIZE,) for o in origins]   # (x, y, z) -> (x, y, z, cube edge)
 
 SIDE = 1024   # final logo is SIDE x SIDE px
