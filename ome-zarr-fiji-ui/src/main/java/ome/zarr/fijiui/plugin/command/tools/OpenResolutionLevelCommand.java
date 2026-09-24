@@ -52,7 +52,7 @@ import ome.zarr.imglib2.ImageSizes;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Resolution Level..." )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in ImageJ...", description = "Open the current OME-Zarr image in ImageJ at a chosen resolution level" )
 public class OpenResolutionLevelCommand extends DynamicCommand
 {
 	@Parameter

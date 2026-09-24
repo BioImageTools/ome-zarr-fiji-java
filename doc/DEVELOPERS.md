@@ -280,6 +280,6 @@ say so rather than throw:
 
 Registering an opener may also get you into the shared-window story, e.g.
 `Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer` and
-`Open Resolution Level...` act on that dataset **without reading it again** (see
+`Open Current OME-Zarr Image in ImageJ (Choose Level)...` act on that dataset **without reading it again** (see
 [One read, two views](#one-read-two-views)).
 
