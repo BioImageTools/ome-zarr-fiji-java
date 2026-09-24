@@ -321,6 +321,19 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
+	 * Number of pixels of a single XY plane (one z, one channel, one timepoint) of
+	 * the image at the given resolution level. See {@link ImageSizes#numPixels}.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public long numXYSlicePixels( final int resolutionLevel )
+	{
+		return ImageSizes.numPixels( sizeAlongAxis( AxisCalibration.X, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.Y, resolutionLevel ), 1, 1, 1 );
+	}
+
+	/**
 	 * Uncompressed size in bytes of the image at the given resolution level, over
 	 * all axes. See {@link ImageSizes#uncompressedBytes}.
 	 *

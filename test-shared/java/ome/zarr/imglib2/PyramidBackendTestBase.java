@@ -402,6 +402,7 @@ public interface PyramidBackendTestBase
 
 			// level 0: 64 x 64 x 16, 3 channels, 4 timepoints, uint8
 			assertEquals( 786_432, contents.numPixels( 0 ) );
+			assertEquals( 4_096, contents.numXYSlicePixels( 0 ) );
 			assertEquals( 786_432, contents.uncompressedBytes( 0 ) );
 			assertEquals( 4_096, contents.uncompressedXYSliceBytes( 0 ) );
 			assertEquals( "786.4 kpx", ImageSizes.formatPixels( contents.numPixels( 0 ) ) );
@@ -410,6 +411,7 @@ public interface PyramidBackendTestBase
 
 			// level 1: 32 x 32 x 8, 3 channels, 4 timepoints, uint8
 			assertEquals( 98_304, contents.numPixels( 1 ) );
+			assertEquals( 1_024, contents.numXYSlicePixels( 1 ) );
 			assertEquals( "96.0 KB", ImageSizes.formatBytes( contents.uncompressedBytes( 1 ) ) );
 			assertEquals( "1.0 KB", ImageSizes.formatBytes( contents.uncompressedXYSliceBytes( 1 ) ) );
 		}
