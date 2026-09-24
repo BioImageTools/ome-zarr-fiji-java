@@ -365,7 +365,8 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 				else
 					sb.append( " [scale=" ).append( axes[ d ].scale ).append( "]" );
 			}
-			sb.append( "\n" );
+			sb.append( "\n           " );
+			sb.append( transforms[ level ] ).append( "\n" );
 		}
 		return sb.toString();
 	}
