@@ -28,17 +28,20 @@
  */
 package ome.zarr.imglib2.exceptions;
 
-import java.io.IOException;
-
 /**
  * Thrown when {@code initEmptyContainer()} or {@code initEmptyMultiscales()}
  * finds the target location already occupied by existing OME-Zarr content.
  * Writers refuse to overwrite existing data rather than silently corrupting it.
  */
-public class AlreadyOccupiedException extends IOException
+public class AlreadyOccupiedException extends RuntimeException
 {
 	public AlreadyOccupiedException( final String path )
 	{
 		super( "Target location already contains OME-Zarr data: " + path );
+	}
+
+	public AlreadyOccupiedException( final String path, final Throwable cause )
+	{
+		super( "Target location already contains OME-Zarr data: " + path, cause );
 	}
 }

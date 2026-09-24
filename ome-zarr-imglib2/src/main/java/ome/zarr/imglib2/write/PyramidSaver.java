@@ -33,6 +33,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.exceptions.AlreadyOccupiedException;
+import ome.zarr.imglib2.exceptions.StoreAccessException;
 
 import java.io.IOException;
 
@@ -82,16 +83,16 @@ public interface PyramidSaver< T extends NativeType< T > & RealType< T > >
 	 * to keep the full write sequence in one interface.
 	 *
 	 * @throws AlreadyOccupiedException if the target location already contains OME-Zarr data
-	 * @throws IOException on any other storage error
+	 * @throws StoreAccessException if the accessing or writing to the store experienced any issue
 	 */
-	void initEmptyContainer() throws IOException;
+	void initEmptyContainer();
 
 	/*
 	 * Recovering or reconfiguring a PyramidSaver from a partially written OME-Zarr
 	 * is not supported; the following interface methods are therefore commented out.
 	 *
-	 * void initFromExistingContainer( URI ) throws IOException;
-	 * void initFromExistingMultiscales( String path ) throws IOException;
+	 * void initFromExistingContainer( URI );
+	 * void initFromExistingMultiscales( String path );
 	 */
 
 	/**
@@ -112,10 +113,9 @@ public interface PyramidSaver< T extends NativeType< T > & RealType< T > >
 	 *             use {@link OmeZarrWritingOptions#defaultOptionsFor(PyramidContents)}
 	 *             for auto-computed defaults
 	 * @throws AlreadyOccupiedException if {@code path} already exists in the container
-	 * @throws IOException on any other storage error
+	 * @throws StoreAccessException if the accessing or writing to the store experienced any issue
 	 */
-	void initEmptyMultiscales( String path, PyramidContents< T > pc, OmeZarrWritingOptions opts )
-			throws IOException;
+	void initEmptyMultiscales( String path, PyramidContents< T > pc, OmeZarrWritingOptions opts );
 
 	/**
 	 * Convenience overload using {@link OmeZarrWritingOptions#defaultOptionsFor(PyramidContents)}.
@@ -123,7 +123,6 @@ public interface PyramidSaver< T extends NativeType< T > & RealType< T > >
 	 * @see #initEmptyMultiscales(String, PyramidContents, OmeZarrWritingOptions)
 	 */
 	default void initEmptyMultiscales( final String path, final PyramidContents< T > pc )
-			throws IOException
 	{
 		initEmptyMultiscales( path, pc, OmeZarrWritingOptions.defaultOptionsFor( pc ) );
 	}
@@ -141,7 +140,8 @@ public interface PyramidSaver< T extends NativeType< T > & RealType< T > >
 	 * @param region pixel data to write, with correct min/max coordinates;
 	 *               all dimensions (including time and channel) are encoded in the interval
 	 * @param level  resolution level index (0 = highest resolution)
-	 * @throws IOException on any storage error
+	 * @throws IllegalStateException if {@link #initEmptyMultiscales} has not been called already
+	 * @throws StoreAccessException if the accessing or writing to the store experienced any issue
 	 */
-	void writeRegion( RandomAccessibleInterval< T > region, int level ) throws IOException;
+	void writeRegion( RandomAccessibleInterval< T > region, int level );
 }

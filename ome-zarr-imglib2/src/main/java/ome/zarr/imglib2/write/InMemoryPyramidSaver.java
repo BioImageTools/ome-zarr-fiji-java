@@ -142,7 +142,7 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	public void initEmptyMultiscales(
 			final String path,
 			final PyramidContents< T > pyramidContents,
-			final OmeZarrWritingOptions opts ) throws IOException
+			final OmeZarrWritingOptions opts )
 	{
 		if ( data != null )
 			throw new AlreadyOccupiedException( "This saver cannot store more than one multiscales (PyramidContents)." );
@@ -182,7 +182,6 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	 */
 	@Override
 	public void writeRegion( final RandomAccessibleInterval< T > region, final int level )
-			throws IOException
 	{
 		if ( data == null )
 			throw new IllegalStateException( "initEmptyMultiscales() must be called before writeRegion()." );
