@@ -17,9 +17,14 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
+import ome.zarr.fiji.Pyramidal;
+import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.write.InMemoryPyramidSaver;
+import ome.zarr.imglib2.write.OmeZarrWritingOptions;
+import ome.zarr.imglib2.write.PyramidContentsUtils;
 import org.jspecify.annotations.NonNull;
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
@@ -28,6 +33,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import net.imglib2.img.basictypeaccess.array.ByteArray;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -97,82 +103,74 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 	@Parameter
 	String tUnit = "second";
 
-	@Parameter
-	PyramidalService pyramidalService;
-
 	@Parameter( type = ItemIO.OUTPUT )
-	PyramidContents< ? > pyramidContents;
+	Pyramidal pyramidal;
 
 	@Override
 	public void run()
 	{
-		AxisCalibration[] baseResAxes = new AxisCalibration[] {
-				new AxisCalibration( AxisCalibration.X, xyzUnit, xScale ),
-				new AxisCalibration( AxisCalibration.Y, xyzUnit, yScale ),
-				new AxisCalibration( AxisCalibration.Z, xyzUnit, zScale ),
-				new AxisCalibration( AxisCalibration.C, cUnit, cScale ),
-				new AxisCalibration( AxisCalibration.T, tUnit, tScale ) };
-		AxisCalibration[][] axes = new AxisCalibration[ 3 ][];
-		axes[ 0 ] = baseResAxes;
-		axes[ 1 ] = downScaledAxes( baseResAxes, 2.0 );
-		axes[ 2 ] = downScaledAxes( baseResAxes, 4.0 );
+		InMemoryPyramidSaver< ? > saver = create();
+		pyramidal = new PyramidalDataset( context(), saver.getPyramidContents(), 0 );
 
-		AffineTransform3D[] transforms = new AffineTransform3D[ 3 ];
-		transforms[ 0 ] = new AffineTransform3D();
-		transforms[ 1 ] = new AffineTransform3D();
-		transforms[ 2 ] = new AffineTransform3D();
-
-/*
-		LazyCellImg baseImg = getLazyCellImg( baseCellGrid );
-		LazyCellImg[] imgs = new LazyCellImg[ 3 ];
-		imgs[ 0 ] = baseImg;
-
-		PyramidContents.Builder< ? > q = builderForType( getType( typeAsStr ) );
-		pyramidContents = builderForType( getType( typeAsStr ) )
-				.axesPerLevel( axes )
-				.transforms( transforms )
-				.cachedCellImgs( imgs )
-				.name( name )
-				.build();
-*/
+		//REMOVE LATER TODO
+		System.out.println( saver.getPyramidContents() );
+		System.out.println( pyramidal );
+		//
+		saver.getPyramidContents().asImg( 0 ).forEach( px -> px.setReal( 100 ) );
+		//saver.getPyramidContents().asImg( 1 ).forEach( px -> px.set( 150 ) );
+		//saver.getPyramidContents().asImg( 2 ).forEach( px -> px.set( 200 ) );
 	}
 
-/*
-	private @NonNull LazyCellImg getLazyCellImg(
-			final long[] wholeGridSize,
-			final int[] oneCellSize,
-			double downScaleFactor )
+	private < T extends NativeType< T > & RealType< T > > InMemoryPyramidSaver< T > create()
 	{
-		assert wholeGridSize.length == oneCellSize.length;
+		List< AxisCalibration > laxes = new ArrayList<>( 5 );
+		laxes.add( new AxisCalibration( AxisCalibration.X, xyzUnit, xScale ) );
+		laxes.add( new AxisCalibration( AxisCalibration.Y, xyzUnit, yScale ) );
+		if ( zSize > 0 )
+			laxes.add( new AxisCalibration( AxisCalibration.Z, xyzUnit, zScale ) );
+		if ( numChannels > 0 )
+			laxes.add( new AxisCalibration( AxisCalibration.C, cUnit, cScale ) );
+		if ( numTimepoints > 0 )
+			laxes.add( new AxisCalibration( AxisCalibration.T, tUnit, tScale ) );
+		AxisCalibration[] axes = laxes.toArray( new AxisCalibration[ 0 ] );
 
-		final CellGrid cellGrid = new CellGrid(
-				new long[] { xSize, ySize, zSize, numChannels, numTimepoints },
-				new int[] { 256, 256, 256, 1, 1 } ); //chunks size basically...
+		long[] dims = zSize > 0 ? new long[] { xSize, ySize, zSize } : new long[] { xSize, ySize };
 
-		LazyCellImg.Get< Cell< ? > > emptyCellProvider = index -> {
-			final long[] cellMin = new long[ 5 ];
-			final int[] cellDims = new int[ 5 ];
-			cellGrid.getCellDimensions( index, cellMin, cellDims );
-			return new Cell<>( cellDims, cellMin,
-					getBackingArray( typeAsStr, ( int ) Intervals.numElements( cellDims ) ) );
-		};
-		NativeType< ? > type = getType( typeAsStr );
-		LazyCellImg baseImg = new LazyCellImg<>( cellGrid, type, emptyCellProvider );
-		return baseImg;
-	}
-*/
-
-	private AxisCalibration[] downScaledAxes( AxisCalibration[] axes, double downSizeFactor )
-	{
-		AxisCalibration[] newAxes = new AxisCalibration[ axes.length ];
-		for ( int i = 0; i < newAxes.length; ++i )
+		//primitive logic for now the downScaling:
+		long frontViewSize = xSize * ySize * 2; //ad hoc factor mimicking 16bit data
+		long topViewSize = xSize * zSize * 2;
+		long sideViewSize = ySize * zSize * 2;
+		long largestViewSize = Math.max( Math.max( frontViewSize, topViewSize ), sideViewSize );
+		final long niceMaxViewSize = 1 << 20; // 1 MB
+		int factors = 0;
+		while ( largestViewSize > niceMaxViewSize )
 		{
-			double scale = axes[ i ].name.equals( AxisCalibration.C ) ||
-					axes[ i ].name.equals( AxisCalibration.T ) ? axes[ i ].scale
-							: axes[ i ].scale / downSizeFactor;
-			newAxes[ i ] = new AxisCalibration( axes[ i ].name, axes[ i ].unit, scale );
+			largestViewSize /= 2;
+			factors++;
 		}
-		return newAxes;
+
+		double[] xyzIsoDownScales = new double[ factors ];
+		for ( int i = 0; i < factors; i++ )
+			xyzIsoDownScales[ i ] = Math.pow( 2.0, i + 1 );
+
+		final T type = getType( typeAsStr );
+		PyramidContents< T > p = PyramidContentsUtils.create(
+				"skeleton pyramidal for " + name,
+				type,
+				dims,
+				numChannels,
+				numTimepoints,
+				axes,
+				xyzIsoDownScales
+		);
+		//System.out.println( p );
+
+		InMemoryPyramidSaver< T > saver = new InMemoryPyramidSaver<>( name );
+		assert saver.getPyramidContents() == null: "Found data in not-yet-initialized InMemorySaver.";
+		//saver.initEmptyContainer();
+		saver.initEmptyMultiscales( null, p, OmeZarrWritingOptions.defaultOptionsFor( p ) );
+
+		return saver;
 	}
 
 	private < T extends RealType< T > & NativeType< T > > T getType( String type )
@@ -202,42 +200,5 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 		}
 		//a terrible default....
 		return ( T ) new UnsignedShortType();
-	}
-
-	private < A extends DataAccess > A getBackingArray(
-			String type, int numEntities )
-	{
-		if ( type.startsWith( "uint" ) )
-		{
-			if ( type.endsWith( "8" ) )
-			{
-				return ( A ) new ByteArray( numEntities );
-			}
-			else if ( type.endsWith( "16" ) )
-			{
-				return ( A ) new ShortArray( numEntities );
-			}
-			else if ( type.endsWith( "32" ) )
-			{
-				return ( A ) new IntArray( numEntities );
-			}
-		}
-		else if ( "float".equals( type ) )
-		{
-			return ( A ) new FloatArray( numEntities );
-		}
-		else if ( "double".equals( type ) )
-		{
-			return ( A ) new DoubleArray( numEntities );
-		}
-		//a terrible default....
-		return ( A ) new ShortArray( numEntities );
-	}
-
-	private < T extends RealType< T > & NativeType< T > > PyramidContents.Builder< T > builderForType( T type )
-	{
-		final PyramidContents.Builder< T > b = PyramidContents.builder();
-		b.type( type );
-		return b;
 	}
 }
