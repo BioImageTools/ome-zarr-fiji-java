@@ -25,14 +25,21 @@ public class PyramidSaverTest
 				5,
 				axes,
 				new double[][] {
-						{ 2.0, 4.1 },
-						{ 10.0, 1.0 },
-						{ 2.2, 4.3 }
+						{ 2.2, 2.1 },
+						{ 3.3, 3.5 },
+						{ 4.4, 4.8 }
 				}
 		);
-
 		System.out.println( p );
 
+		InMemoryPyramidSaver< UnsignedShortType > saver = new InMemoryPyramidSaver<>( "fully in-mem PyramidalContents" );
+		assert saver.getPyramidContents() == null: "Found data in not-yet-initialized InMemorySaver.";
+		saver.initEmptyContainer();
+		saver.initEmptyMultiscales( null, p, OmeZarrWritingOptions.defaultOptionsFor( p ) );
+
+		System.out.println( saver.getPyramidContents() );
+
+/*
 		CachedCellImg< UnsignedShortType, ? > ccimg = ( CachedCellImg< UnsignedShortType, ? > ) p.asLargestImg();
 		System.out.print( "grid sizes: " );
 		for ( int d : ccimg.getCellGrid().getCellDimensions() )
@@ -41,5 +48,6 @@ public class PyramidSaverTest
 
 		RandomAccessibleInterval< UnsignedShortType > newImg = PyramidContentsUtils.xyzReducedView( p, 0, 3, 3 );
 		System.out.println( newImg );
+*/
 	}
 }
