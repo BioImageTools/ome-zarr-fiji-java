@@ -75,11 +75,11 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
- * Simple backend benchmark without extra dependencies: times the same OME-Zarr
- * datasets through both {@code PyramidBackend} implementations and, for
- * comparison, through the underlying reader libraries directly.
- * <p>
- * Run from the repository root with:
+ * Times the same OME-Zarr datasets through both {@code PyramidBackend}
+ * implementations and, as {@code -pure} rows, through the reader libraries
+ * directly, so a difference can be pinned on a backend or on the library under
+ * it. One row per dataset, operation and backend, with the voxels each row read
+ * and the min, median and max of the measured rounds.
  *
  * <pre>
  * mvn -pl ome-zarr-fiji-ui -am -DskipTests test-compile
@@ -88,11 +88,23 @@ import java.util.logging.Logger;
  *     -Dexec.mainClass=ome.zarr.examples.demo.BackendBenchmark exec:java
  * </pre>
  *
- * The {@code -pl} is required (at the reactor root the goal runs for every
- * module, and only this one has the class on its test classpath), and
- * {@code exec:java} runs inside the Maven JVM, so the JPMS open that ij1-patcher
- * needs on Java 9+ has to come from {@code MAVEN_OPTS} — the {@code
- * zarr.test.addOpens} profiles in the root pom only reach surefire.
+ * {@code -pl} because at the reactor root the goal runs for every module and
+ * only this one has both backends on its test classpath; {@code MAVEN_OPTS}
+ * because {@code exec:java} runs in the Maven JVM, which the root pom's
+ * {@code zarr.test.addOpens} profiles do not reach — they configure surefire.
+ * <p>
+ * <b>Treat the numbers as indicative only</b>, and deliberately not documented
+ * outside this class: the harness has not been studied closely enough to claim
+ * the figures mean what they appear to. Known to distort them:
+ * <ul>
+ *   <li>the bundled datasets total ~1 MB and stay in the page cache, so nothing
+ *       here measures storage or network;</li>
+ *   <li>{@code read-pure} on zarr-java is one bulk {@code Array.read}, while
+ *       every other read row walks voxels through an imglib2 cursor, and that
+ *       traversal dominates them;</li>
+ *   <li>no heap is pinned, so a {@code max} far above {@code min} is usually GC
+ *       or imglib2 dropping softly-held cells, not the backend.</li>
+ * </ul>
  */
 public class BackendBenchmark
 {
