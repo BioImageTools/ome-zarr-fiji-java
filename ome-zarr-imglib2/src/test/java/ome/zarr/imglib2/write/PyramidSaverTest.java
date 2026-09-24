@@ -37,6 +37,10 @@ public class PyramidSaverTest
 		saver.initEmptyContainer();
 		saver.initEmptyMultiscales( null, p, OmeZarrWritingOptions.defaultOptionsFor( p ) );
 
+		saver.getPyramidContents().asImg( 0 ).forEach( px -> px.set( 100 ) );
+		saver.getPyramidContents().asImg( 1 ).forEach( px -> px.set( 150 ) );
+		saver.getPyramidContents().asImg( 2 ).forEach( px -> px.set( 200 ) );
+
 		System.out.println( saver.getPyramidContents() );
 
 /*
