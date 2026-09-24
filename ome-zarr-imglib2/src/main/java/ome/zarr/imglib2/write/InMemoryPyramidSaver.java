@@ -81,6 +81,8 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	private final String name;
+
 	private final DiskCachedCellImgOptions diskOpts;
 
 	/*
@@ -89,13 +91,14 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	 */
 	private PyramidContents< T > data;
 
-	public InMemoryPyramidSaver()
+	public InMemoryPyramidSaver( final String name )
 	{
-		this( DiskCachedCellImgOptions.options() );
+		this( name, DiskCachedCellImgOptions.options() );
 	}
 
-	public InMemoryPyramidSaver( final DiskCachedCellImgOptions diskOpts )
+	public InMemoryPyramidSaver( final String name, final DiskCachedCellImgOptions diskOpts )
 	{
+		this.name = name;
 		this.diskOpts = diskOpts;
 	}
 
@@ -161,7 +164,7 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 		}
 
 		data = PyramidContents.< T >builder()
-				.name( pyramidContents.name )
+				.name( this.name )
 				.type( pyramidContents.type )
 				.transforms( pyramidContents.transforms )
 				.cachedCellImgs( Cast.unchecked( imgs ) )
