@@ -2,6 +2,7 @@ package ome.zarr.imglib2.write;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.CachedCellImg;
+import net.imglib2.cache.img.CellLoader;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.cache.img.optional.CacheOptions;
@@ -9,12 +10,11 @@ import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
-
 import java.util.Arrays;
+import static java.lang.Math.round;
 
 public class PyramidContentsUtils
 {
@@ -150,48 +150,55 @@ public class PyramidContentsUtils
 				: "Number of spatialDownScales must be one less than number of axes calibrations.";
 
 		AffineTransform3D[] transforms = new AffineTransform3D[ axesPerLevel.length ];
-		//
+		double[][] xyzDownScales = new double[ spatialDownScalesPerLevel.length ][ 3 ]; //for transforms here and for pyramid images later
+
 		//copy the base level as is
 		transforms[ 0 ] = transformAtBaseLevel.copy();
-		//
+		//levelT (see below) would be an identity matrix at this level; that's scale = (1,1,1) (see below again)
+
 		//create the downscaled levels
 		for ( int l = 0; l < spatialDownScalesPerLevel.length; l++ )
 		{
+			xyzDownScales[ l ][ 0 ] = spatialDownScalesPerLevel[ l ][ 0 ];
+			xyzDownScales[ l ][ 1 ] = spatialDownScalesPerLevel[ l ][ 1 ];
+			xyzDownScales[ l ][ 2 ] = spatialDownScalesPerLevel[ l ].length > 2 ? spatialDownScalesPerLevel[ l ][ 2 ] : 1.0;
+
 			AffineTransform3D levelT = new AffineTransform3D();
-			levelT.scale( spatialDownScalesPerLevel[ l ][ 0 ], spatialDownScalesPerLevel[ l ][ 1 ],
-					spatialDownScalesPerLevel[ l ].length > 2 ? spatialDownScalesPerLevel[ l ][ 2 ] : 1.0 );
-			//TODO: apply translate!!
+			levelT.scale( xyzDownScales[ l ][ 0 ], xyzDownScales[ l ][ 1 ], xyzDownScales[ l ][ 2 ] );
+			levelT.translate( //formula according to the NGFF spec 0.6
+					( xyzDownScales[ l ][ 0 ] - 1.0 ) / 2.0, ( xyzDownScales[ l ][ 1 ] - 1.0 ) / 2.0,
+					spatialDownScalesPerLevel[ l ].length > 2 ? ( xyzDownScales[ l ][ 2 ] - 1.0 ) / 2.0 : 0.0 );
 			transforms[ l + 1 ] = transformAtBaseLevel.copy().concatenate( levelT );
 			//TODO: check how transforms are prepared for BDV
 		}
 
-		final PyramidContents.Builder< T > builder = PyramidContents.builder();
-		builder.name( name )
-				.type( pixelType )
-				.axesPerLevel( axesPerLevel )
-				.transforms( transforms )
-				.omero( omero );
+		//finally, the images...
+		CachedCellImg< T, ? >[] imgs = new CachedCellImg[ axesPerLevel.length ];
 
-		//create only the base-level image
 		int dims = xyzDimsAtBaseLevel.length;
 		dims += channels >= 1 ? 1 : 0;
 		dims += timePoints >= 1 ? 1 : 0;
 		assert dims == axesPerLevel[ 0 ].length
-				: "The number of defined axes must correspond to spatial dimensions, and presence of channels and/or time points.";
+				: "The number of defined axes must correspond to the number of spatial dimensions, and presence of channels and/or time points.";
 
+		//shape (pixel geometry) of the base-level (the highest resolution) image
 		final long[] dimsAtBaseLevel = new long[ dims ];
+		final int[] xyzDimsIndices = new int[] { -1, -1, -1 }; //will hold indices of the x,y,z dimensions
 		dims = 0;
 		for ( AxisCalibration axis : axesPerLevel[ 0 ] )
 		{
 			switch ( axis.name )
 			{
 			case AxisCalibration.X:
+				xyzDimsIndices[ 0 ] = dims; //memorize at which index is the x-axis
 				dimsAtBaseLevel[ dims++ ] = xyzDimsAtBaseLevel[ 0 ];
 				break;
 			case AxisCalibration.Y:
+				xyzDimsIndices[ 1 ] = dims;
 				dimsAtBaseLevel[ dims++ ] = xyzDimsAtBaseLevel[ 1 ];
 				break;
 			case AxisCalibration.Z:
+				xyzDimsIndices[ 2 ] = dims;
 				dimsAtBaseLevel[ dims++ ] = xyzDimsAtBaseLevel[ 2 ];
 				break;
 			case AxisCalibration.C:
@@ -206,30 +213,53 @@ public class PyramidContentsUtils
 			}
 		}
 
+		//the same chunk sizes will be used everywhere in this PyramidContents
 		final int[] cellsSizes = new int[ axesPerLevel[ 0 ].length ];
 		for ( int i = 0; i < cellsSizes.length; i++ )
 			cellsSizes[ i ] = isSpatialAxis( axesPerLevel[ 0 ][ i ] ) ? 100 : 1;
 
-		//final CellLoader<T> cellLoader = cell -> { /* no change to zero-initiated memory */ };
-		CachedCellImg< T, ? > baseImg = new ReadOnlyCachedCellImgFactory().create(
+		//base level image
+		final CellLoader< T > emptyCellLoader = cell -> { /* no change to zero-initiated memory */ };
+		imgs[ 0 ] = new ReadOnlyCachedCellImgFactory().create(
 				dimsAtBaseLevel,
 				pixelType,
-				cell -> { /* no change to zero-initiated memory */ },
+				emptyCellLoader,
 				ReadOnlyCachedCellImgOptions.options()
 						.cellDimensions( cellsSizes )
 						.cacheType( CacheOptions.CacheType.BOUNDED )
 						.maxCacheSize( 10 ) //keep only up to 10 cells, otherwise use the (empty cell) loader
 		);
 
-		CachedCellImg< T, ? >[] imgs = new CachedCellImg[ axesPerLevel.length ];
-		Arrays.fill( imgs, baseImg );
-		// NB: all resolution levels are filled with the same backing images, which
-		//     may be tolerated as the purpose of the built PyramidContents is only
-		//     to represent the shape/geometry of the Pyramidal (for PyramidSavers);
-		//     this object is not meant to keep any resonable image data
-		builder.cachedCellImgs( imgs );
+		//images for down-scaled levels
+		for ( int l = 0; l < spatialDownScalesPerLevel.length; l++ )
+		{
+			long[] dimsAtLevel = dimsAtBaseLevel.clone();
+			//update the shape only for spatial axes
+			dimsAtLevel[ xyzDimsIndices[ 0 ] ] = round( dimsAtLevel[ xyzDimsIndices[ 0 ] ] / xyzDownScales[ l ][ 0 ] );
+			dimsAtLevel[ xyzDimsIndices[ 1 ] ] = round( dimsAtLevel[ xyzDimsIndices[ 1 ] ] / xyzDownScales[ l ][ 1 ] );
+			if ( xyzDimsIndices[ 2 ] > -1 ) //the array was initialized with -1 everywhere...
+				dimsAtLevel[ xyzDimsIndices[ 2 ] ] = round( dimsAtLevel[ xyzDimsIndices[ 2 ] ] / xyzDownScales[ l ][ 2 ] );
 
-		return builder.build();
+			imgs[ l + 1 ] = new ReadOnlyCachedCellImgFactory().create(
+					dimsAtLevel,
+					pixelType,
+					emptyCellLoader,
+					ReadOnlyCachedCellImgOptions.options()
+							.cellDimensions( cellsSizes )
+							.cacheType( CacheOptions.CacheType.BOUNDED )
+							.maxCacheSize( 10 ) //keep only up to 10 cells, otherwise use the (empty cell) loader
+			);
+		}
+
+		final PyramidContents.Builder< T > builder = PyramidContents.builder(); //explicitly because of 'T'
+		return builder
+				.name( name )
+				.type( pixelType )
+				.transforms( transforms )
+				.cachedCellImgs( imgs )
+				.axesPerLevel( axesPerLevel )
+				.omero( omero )
+				.build();
 	}
 
 	/**
