@@ -80,7 +80,10 @@ class OpenResolutionLevelCommandTest
 		}
 	}
 
-	/** A 2-level pyramid produces exactly the choices ["Resolution 0", "Resolution 1"]. */
+	/**
+	 * A 2-level pyramid produces one choice per level, each describing that level's extents and sizes, and a legend
+	 * naming the axes the choices show.
+	 */
 	@Test
 	void initializeCreatesOneChoicePerResolutionLevel() throws URISyntaxException
 	{
@@ -92,7 +95,12 @@ class OpenResolutionLevelCommandTest
 			cmd.initialize();
 			assertFalse( cmd.isCanceled() );
 			final MutableModuleItem< ? > item = assertInstanceOf( MutableModuleItem.class, cmd.getInfo().getInput( "resolutionLevel" ) );
-			assertEquals( Arrays.asList( "Resolution 0", "Resolution 1" ), item.getChoices() );
+			assertEquals( Arrays.asList(
+					"<html><b>1</b>&nbsp; (64×64×16, c=3, t=4, uint8, slice 4.1 kpx ~ 4.0 KB, total 768.0 KB)</html>",
+					"<html><b>2</b>&nbsp; (32×32×8, c=3, t=4, uint8, slice 1.0 kpx ~ 1.0 KB, total 96.0 KB)</html>" ),
+					item.getChoices() );
+			assertEquals( "Extents in x×y×z order, c = channels, t = time points; slice = one XY plane",
+					cmd.getInput( "legend" ) );
 		}
 	}
 
@@ -106,7 +114,7 @@ class OpenResolutionLevelCommandTest
 			new OmeZarrOpenActions( path.toUri(), context ).showInBdv();
 
 			final Map< String, Object > inputs = new HashMap<>();
-			inputs.put( "resolutionLevel", "Resolution 1" );
+			inputs.put( "resolutionLevel", level1Choice( context ) );
 			runCommand( context, inputs );
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
@@ -127,7 +135,7 @@ class OpenResolutionLevelCommandTest
 			new OmeZarrOpenActions( path.toUri(), context ).showInImageJ();
 
 			final Map< String, Object > inputs = new HashMap<>();
-			inputs.put( "resolutionLevel", "Resolution 1" );
+			inputs.put( "resolutionLevel", level1Choice( context ) );
 			runCommand( context, inputs );
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
@@ -152,7 +160,7 @@ class OpenResolutionLevelCommandTest
 			final Pyramidal bdvPyramidal = pyramidalService.getPyramidals().get( 0 );
 
 			final Map< String, Object > inputs = new HashMap<>();
-			inputs.put( "resolutionLevel", "Resolution 1" );
+			inputs.put( "resolutionLevel", level1Choice( context ) );
 			runCommand( context, inputs );
 
 			assertEquals( 2, pyramidalService.getPyramidals().size() );
@@ -182,7 +190,7 @@ class OpenResolutionLevelCommandTest
 			final Pyramidal ij2Dataset = pyramidalService.getPyramidals().get( 0 );
 
 			final Map< String, Object > inputs = new HashMap<>();
-			inputs.put( "resolutionLevel", "Resolution 1" );
+			inputs.put( "resolutionLevel", level1Choice( context ) );
 			runCommand( context, inputs );
 
 			assertEquals( 2, datasetService.getDatasets().size() );
@@ -208,7 +216,7 @@ class OpenResolutionLevelCommandTest
 			new OmeZarrOpenActions( path2d.toUri(), context ).showInBdv();
 
 			final Map< String, Object > inputs = new HashMap<>();
-			inputs.put( "resolutionLevel", "Resolution 1" );
+			inputs.put( "resolutionLevel", level1Choice( context ) );
 			runCommand( context, inputs );
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
@@ -233,6 +241,13 @@ class OpenResolutionLevelCommandTest
 		final OpenResolutionLevelCommand cmd = new OpenResolutionLevelCommand();
 		cmd.setContext( context );
 		return cmd;
+	}
+
+	/** The dialog choice for level 1 of the pyramid the command acts on, i.e. the active one. */
+	private static String level1Choice( final Context context )
+	{
+		return OpenResolutionLevelCommand.describeLevel(
+				context.getService( PyramidalService.class ).getActivePyramidal().getPyramidContents(), 1 );
 	}
 
 	private static void runCommand( final Context context, final Map< String, Object > inputs )
