@@ -97,7 +97,7 @@ public interface PyramidalDatasetTestBase
 			assertEquals( 64, imgPlus.dimension( 1 ) );
 			if ( is3D )
 				assertEquals( 16, imgPlus.dimension( 2 ) );
-			assertEquals( ZarrTestUtils.IMAGE_NAME + " (R)", imgPlus.getName() );
+			assertEquals( ZarrTestUtils.IMAGE_NAME + " (R=1/2)", imgPlus.getName() );
 		}
 	}
 
@@ -144,8 +144,8 @@ public interface PyramidalDatasetTestBase
 	}
 
 	/**
-	 * A multi-resolution image gets a {@code " (R)"} suffix in its name (at any
-	 * resolution level).
+	 * A multi-resolution image gets a {@code " (R=l/n)"} suffix in its name, l
+	 * being its level and n its number of resolution levels.
 	 */
 	@Test
 	default void multiResolutionImageNameEndsWithR() throws URISyntaxException
@@ -154,13 +154,13 @@ public interface PyramidalDatasetTestBase
 		{
 			final PyramidContents< ? > contents =
 					read( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr", context );
-			assertTrue( new PyramidalDataset( context, contents, 0 ).getName().endsWith( " (R)" ) );
-			assertTrue( new PyramidalDataset( context, contents, 1 ).getName().endsWith( " (R)" ) );
+			assertTrue( new PyramidalDataset( context, contents, 0 ).getName().endsWith( " (R=1/2)" ) );
+			assertTrue( new PyramidalDataset( context, contents, 1 ).getName().endsWith( " (R=2/2)" ) );
 		}
 	}
 
 	/**
-	 * A single-resolution image does not get a {@code "(R)"} suffix in its name.
+	 * A single-resolution image does not get a {@code "(R=l/n)"} suffix in its name.
 	 */
 	@Test
 	default void singleResolutionImageNameHasNoR() throws URISyntaxException
@@ -170,7 +170,7 @@ public interface PyramidalDatasetTestBase
 			final PyramidContents< ? > contents = read(
 					"ome/zarr/testdata/single_resolution_testing/single_resolution_dataset_v5.ome.zarr", context );
 			final String name = new PyramidalDataset( context, contents, 0 ).getName();
-			assertFalse( name.contains( "(R)" ), "expected no '(R)' in name but was: " + name );
+			assertFalse( name.contains( "(R" ), "expected no '(R=l/n)' in name but was: " + name );
 		}
 	}
 }

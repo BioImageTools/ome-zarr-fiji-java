@@ -246,7 +246,7 @@ class OmeZarrOpenActionsTest
 
 				DatasetService datasetService = context.getService( DatasetService.class );
 				assertEquals( 1, datasetService.getDatasets().size() );
-				assertEquals( IMAGE_NAME + " (R)", datasetService.getDatasets().get( 0 ).getName() );
+				assertEquals( IMAGE_NAME + " (R=1/2)", datasetService.getDatasets().get( 0 ).getName() );
 				SwingUtilities.invokeAndWait( () -> {} );
 				DisplayService displayService = context.getService( DisplayService.class );
 				assertNotNull( displayService.getActiveDisplay() );
@@ -363,7 +363,7 @@ class OmeZarrOpenActionsTest
 			{
 				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, dimensions ); // highest resolution
 			}
-			assertEquals( IMAGE_NAME + " (R)", dataset.getName() );
+			assertEquals( IMAGE_NAME + " (R=1/2)", dataset.getName() );
 			DisplayService displayService = context.getService( DisplayService.class );
 			assertNotNull( displayService );
 			SwingUtilities.invokeAndWait( () -> {} ); // wait until all Swing events are processed
@@ -434,7 +434,7 @@ class OmeZarrOpenActionsTest
 			{
 				assertArrayEquals( new long[] { 64, 64, 16, 3, 4 }, dimensions );
 			}
-			// One level, so no "(R)" multi-resolution suffix is appended to the name.
+			// One level, so no "(R=l/n)" multi-resolution suffix is appended to the name.
 			assertEquals( IMAGE_NAME, dataset.getName() );
 			DisplayService displayService = context.getService( DisplayService.class );
 			assertNotNull( displayService );

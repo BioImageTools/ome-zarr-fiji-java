@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -78,7 +78,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 		this.contents = contents;
 		this.resolutionLevel = resolutionLevel;
 		if ( contents.numResolutionLevels() > 1 )
-			setName( multiResolutionName( contents.name ) );
+			setName( multiResolutionName( contents.name, resolutionLevel, contents.numResolutionLevels() ) );
 	}
 
 	public int resolutionLevel()
@@ -86,9 +86,16 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 		return resolutionLevel;
 	}
 
-	private static String multiResolutionName( final String baseName )
+	/**
+	 * {@code baseName} with the resolution level, counted from 1 as in the level
+	 * dialog, and the number of levels appended, e.g. {@code "image (R=3/6)"} for
+	 * the 0-based {@code resolutionLevel} 2.
+	 */
+	private static String multiResolutionName( final String baseName, final int resolutionLevel,
+			final int numResolutionLevels )
 	{
-		return ( baseName != null && !baseName.isEmpty() ) ? baseName + " (R)" : "(R)";
+		final String suffix = "(R=" + ( resolutionLevel + 1 ) + "/" + numResolutionLevels + ")";
+		return ( baseName != null && !baseName.isEmpty() ) ? baseName + " " + suffix : suffix;
 	}
 
 	@Override
