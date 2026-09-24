@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -78,7 +78,7 @@ class ClipboardUtilsTest
 	@MethodSource( "clipboardContents" )
 	void clipboardReportsError( String clipboardContents )
 	{
-		assertNull( ClipboardUtils.stringToUri(clipboardContents, errorHandler ) );
+		assertNull( ClipboardUtils.stringToUri( clipboardContents, errorHandler ) );
 		assertEquals( 1, errors.size() );
 		assertTrue( errors.get( 0 ).contains( "clipboard" ) );
 	}
@@ -87,7 +87,7 @@ class ClipboardUtilsTest
 	void localZarrPathYieldsFileUri() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr" );
-		final URI result = ClipboardUtils.stringToUri(path.toString(), errorHandler );
+		final URI result = ClipboardUtils.stringToUri( path.toString(), errorHandler );
 		assertNotNull( result );
 		assertEquals( path.toUri(), result );
 		assertTrue( errors.isEmpty(), "Unexpected errors: " + errors );
@@ -97,7 +97,7 @@ class ClipboardUtilsTest
 	void localZarrFileUriIsAcceptedAsIs() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr" );
-		final URI result = ClipboardUtils.stringToUri(path.toUri().toString(), errorHandler );
+		final URI result = ClipboardUtils.stringToUri( path.toUri().toString(), errorHandler );
 		assertNotNull( result );
 		assertEquals( path.toUri(), result );
 		assertTrue( errors.isEmpty(), "Unexpected errors: " + errors );
@@ -107,7 +107,7 @@ class ClipboardUtilsTest
 	void leadingAndTrailingWhitespaceIsTrimmed() throws URISyntaxException
 	{
 		final Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr" );
-		final URI result = ClipboardUtils.stringToUri("  " + path + "  \n", errorHandler );
+		final URI result = ClipboardUtils.stringToUri( "  " + path + "  \n", errorHandler );
 		assertNotNull( result );
 	}
 
@@ -121,9 +121,27 @@ class ClipboardUtilsTest
 	}
 
 	@Test
+	void urlWithSpaceIsEncoded()
+	{
+		assertEquals( URI.create( "file:///data/my%20img.ome.zarr" ),
+				ClipboardUtils.stringToUri( "file:///data/my img.ome.zarr", errorHandler ) );
+		assertEquals( URI.create( "https://example.com/my%20img.ome.zarr" ),
+				ClipboardUtils.stringToUri( "https://example.com/my img.ome.zarr", errorHandler ) );
+		assertTrue( errors.isEmpty(), "Unexpected errors: " + errors );
+	}
+
+	@Test
+	void windowsPathWithSpaceStaysAPath()
+	{
+		assertNotNull( ClipboardUtils.stringToUri( "C:/my data/img.ome.zarr", errorHandler ) );
+		assertNotNull( ClipboardUtils.stringToUri( "C:\\my data\\img.ome.zarr", errorHandler ) );
+		assertTrue( errors.isEmpty(), "Unexpected errors: " + errors );
+	}
+
+	@Test
 	void unsupportedSchemeReportsError()
 	{
-		assertNull( ClipboardUtils.stringToUri("ftp://example.com/foo.zarr", errorHandler ) );
+		assertNull( ClipboardUtils.stringToUri( "ftp://example.com/foo.zarr", errorHandler ) );
 		assertEquals( 1, errors.size() );
 		assertTrue( errors.get( 0 ).contains( "ftp" ) );
 	}
@@ -204,7 +222,7 @@ class ClipboardUtilsTest
 		// A null byte is rejected by Paths.get() on all platforms with an
 		// InvalidPathException; the string is also not a valid URI so
 		// tryParseUri() returns null first, reaching the Paths.get() call.
-		assertNull( ClipboardUtils.stringToUri("invalid\0path", errorHandler ) );
+		assertNull( ClipboardUtils.stringToUri( "invalid\0path", errorHandler ) );
 		assertEquals( 1, errors.size() );
 		assertTrue( errors.get( 0 ).contains( "Could not interpret" ) );
 	}
