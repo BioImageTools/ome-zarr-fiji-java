@@ -307,6 +307,49 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
+	 * Number of pixels (voxels) of the image at the given resolution level, over
+	 * all axes. See {@link ImageSizes#numPixels}.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public long numPixels( final int resolutionLevel )
+	{
+		return ImageSizes.numPixels( sizeAlongAxis( AxisCalibration.X, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.Y, resolutionLevel ), sizeAlongAxis( AxisCalibration.Z, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.C, resolutionLevel ), sizeAlongAxis( AxisCalibration.T, resolutionLevel ) );
+	}
+
+	/**
+	 * Uncompressed size in bytes of the image at the given resolution level, over
+	 * all axes. See {@link ImageSizes#uncompressedBytes}.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public long uncompressedBytes( final int resolutionLevel )
+	{
+		return ImageSizes.uncompressedBytes( sizeAlongAxis( AxisCalibration.X, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.Y, resolutionLevel ), sizeAlongAxis( AxisCalibration.Z, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.C, resolutionLevel ), sizeAlongAxis( AxisCalibration.T, resolutionLevel ),
+				type );
+	}
+
+	/**
+	 * Uncompressed size in bytes of a single XY plane (one z, one channel, one
+	 * timepoint) of the image at the given resolution level. See
+	 * {@link ImageSizes#uncompressedBytes}.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public long uncompressedXYSliceBytes( final int resolutionLevel )
+	{
+		return ImageSizes.uncompressedBytes( sizeAlongAxis( AxisCalibration.X, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.Y, resolutionLevel ), 1, 1, 1, type );
+	}
+
+	/**
 	 * Returns the index of the highest-resolution level that is still no wider
 	 * than {@code preferredMaxWidth}, or {@code 0} when {@code preferredMaxWidth}
 	 * is {@code null}.

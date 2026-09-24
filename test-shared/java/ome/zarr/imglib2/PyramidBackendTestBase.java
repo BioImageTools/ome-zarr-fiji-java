@@ -392,6 +392,29 @@ public interface PyramidBackendTestBase
 		}
 	}
 
+	/** Pixel counts and uncompressed sizes from the per-level extents and pixel type the backend read. */
+	@Test
+	default void testImageSizes() throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			PyramidContents< ? > contents = this.read( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr", context );
+
+			// level 0: 64 x 64 x 16, 3 channels, 4 timepoints, uint8
+			assertEquals( 786_432, contents.numPixels( 0 ) );
+			assertEquals( 786_432, contents.uncompressedBytes( 0 ) );
+			assertEquals( 4_096, contents.uncompressedXYSliceBytes( 0 ) );
+			assertEquals( "786.4 kpx", ImageSizes.formatPixels( contents.numPixels( 0 ) ) );
+			assertEquals( "768.0 KB", ImageSizes.formatBytes( contents.uncompressedBytes( 0 ) ) );
+			assertEquals( "4.0 KB", ImageSizes.formatBytes( contents.uncompressedXYSliceBytes( 0 ) ) );
+
+			// level 1: 32 x 32 x 8, 3 channels, 4 timepoints, uint8
+			assertEquals( 98_304, contents.numPixels( 1 ) );
+			assertEquals( "96.0 KB", ImageSizes.formatBytes( contents.uncompressedBytes( 1 ) ) );
+			assertEquals( "1.0 KB", ImageSizes.formatBytes( contents.uncompressedXYSliceBytes( 1 ) ) );
+		}
+	}
+
 	@ParameterizedTest
 	@MethodSource( "ome.zarr.imglib2.PyramidBackendTestBase#omeZarrExamples" )
 	default void testGetName( String resource ) throws URISyntaxException
