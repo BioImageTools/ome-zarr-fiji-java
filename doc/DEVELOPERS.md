@@ -136,8 +136,9 @@ PyramidContents< ? > contents = backend.read( uri );
 `ome-zarr-fiji` reads **once** and wraps the same `PyramidContents` into either view. Both implement `Pyramidal`, which
 is what lets an image travel between ImageJ and BigDataViewer with no second read and no second copy in RAM.
 
-Such an image is marked as `(R)` in its name — `R` for the **resolution levels** it still carries, and hence for being
-able to switch between them (`PyramidalDataset.getName()` appends it).
+Such an image is marked as `(R=l/n)` in its name — `R` for the `n` **resolution levels** it still carries, and hence for
+being able to switch between them; `l` is the level shown, counted from 1 as in the level dialog (the `PyramidalDataset`
+constructor appends it).
 
 ```mermaid
 graph TD
@@ -279,6 +280,6 @@ say so rather than throw:
 
 Registering an opener may also get you into the shared-window story, e.g.
 `Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer` and
-`Open Resolution Level...` act on that dataset **without reading it again** (see
+`Open Current OME-Zarr Image in ImageJ (Choose Level)...` act on that dataset **without reading it again** (see
 [One read, two views](#one-read-two-views)).
 

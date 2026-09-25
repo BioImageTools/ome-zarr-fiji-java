@@ -196,8 +196,9 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
   opened as a particular resolution in ImageJ via drag & drop / copy & paste, one can still open it in BigDataViewer
   using all resolution pyramids (via `Plugins -> OME-Zarr -> Open Current Zarr Image in BigDataViewer`).
 * Or the opposite, even if the dropped / pasted OME-Zarr has right away landed in BigDataViewer, it is possible to
-  display a particular resolution of it as Dataset in ImageJ (via `Plugins > OME-Zarr > Open Resolution Level...`).
-  Images which support swithing resolutions are displayed carry `(R)` in their name to indicate this property.
+  display a particular resolution of it as Dataset in ImageJ (via `Plugins > OME-Zarr > Open Current OME-Zarr Image in ImageJ (Choose Level)...`).
+  Images which support swithing resolutions are displayed carry `(R=l/n)` in their name to indicate this property, `l`
+  being the shown resolution level (1 = highest resolution) and `n` the number of resolution levels.
 * To sum it up, once OME-Zarr is in Fiji, users don't have to drop / paste it again to display it differently. This is a
   great way to save RAM (memory) on your computer.
 

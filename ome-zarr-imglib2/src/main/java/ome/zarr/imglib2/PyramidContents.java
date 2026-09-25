@@ -307,6 +307,62 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
+	 * Number of pixels (voxels) of the image at the given resolution level, over
+	 * all axes. See {@link ImageSizes#numPixels}.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public long numPixels( final int resolutionLevel )
+	{
+		return ImageSizes.numPixels( sizeAlongAxis( AxisCalibration.X, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.Y, resolutionLevel ), sizeAlongAxis( AxisCalibration.Z, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.C, resolutionLevel ), sizeAlongAxis( AxisCalibration.T, resolutionLevel ) );
+	}
+
+	/**
+	 * Number of pixels of a single XY plane (one z, one channel, one timepoint) of
+	 * the image at the given resolution level. See {@link ImageSizes#numPixels}.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public long numXYSlicePixels( final int resolutionLevel )
+	{
+		return ImageSizes.numPixels( sizeAlongAxis( AxisCalibration.X, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.Y, resolutionLevel ), 1, 1, 1 );
+	}
+
+	/**
+	 * Uncompressed size in bytes of the image at the given resolution level, over
+	 * all axes. See {@link ImageSizes#uncompressedBytes}.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public long uncompressedBytes( final int resolutionLevel )
+	{
+		return ImageSizes.uncompressedBytes( sizeAlongAxis( AxisCalibration.X, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.Y, resolutionLevel ), sizeAlongAxis( AxisCalibration.Z, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.C, resolutionLevel ), sizeAlongAxis( AxisCalibration.T, resolutionLevel ),
+				type );
+	}
+
+	/**
+	 * Uncompressed size in bytes of a single XY plane (one z, one channel, one
+	 * timepoint) of the image at the given resolution level. See
+	 * {@link ImageSizes#uncompressedBytes}.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public long uncompressedXYSliceBytes( final int resolutionLevel )
+	{
+		return ImageSizes.uncompressedBytes( sizeAlongAxis( AxisCalibration.X, resolutionLevel ),
+				sizeAlongAxis( AxisCalibration.Y, resolutionLevel ), 1, 1, 1, type );
+	}
+
+	/**
 	 * Returns the index of the highest-resolution level that is still no wider
 	 * than {@code preferredMaxWidth}, or {@code 0} when {@code preferredMaxWidth}
 	 * is {@code null}.
@@ -327,6 +383,48 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 				return level;
 		}
 		return NO_MATCHING_LEVEL;
+	}
+
+	@Override
+	public String toString()
+	{
+		final StringBuilder sb = new StringBuilder();
+		sb.append( "PyramidContents \"" ).append( name ).append( "\"" )
+				.append( " (" ).append( type.getClass().getSimpleName() ).append( ")" )
+				.append( ", " ).append( numResolutionLevels() ).append( " resolution level" )
+				.append( numResolutionLevels() == 1 ? "" : "s" );
+		if ( hasPlaceholderCalibration )
+			sb.append( " [placeholder calibration]" );
+		if ( omero != null )
+			sb.append( " [OMERO metadata present]" );
+		sb.append( "\n" );
+
+		sb.append( "  internal axes order: " );
+		for ( AxisCalibration axes : axesPerLevel[ 0 ] )
+		{
+			sb.append( axes.name ).append( ", " );
+		}
+		sb.append( "\n" );
+
+		for ( int level = 0; level < numResolutionLevels(); level++ )
+		{
+			final Img< T > img = asImg( level );
+			final AxisCalibration[] axes = axesPerLevel[ level ];
+			sb.append( "  level " ).append( level ).append( ": " );
+			for ( int d = 0; d < axes.length; d++ )
+			{
+				if ( d > 0 )
+					sb.append( "  " );
+				sb.append( axes[ d ].name ).append( "=" ).append( img.dimension( d ) );
+				if ( !axes[ d ].unit.isEmpty() )
+					sb.append( " [" ).append( axes[ d ].scale ).append( " " ).append( axes[ d ].unit ).append( "]" );
+				else
+					sb.append( " [scale=" ).append( axes[ d ].scale ).append( "]" );
+			}
+			sb.append( "\n           " );
+			sb.append( transforms[ level ] ).append( "\n" );
+		}
+		return sb.toString();
 	}
 
 	public static < T extends NativeType< T > & RealType< T > > Builder< T > builder()
