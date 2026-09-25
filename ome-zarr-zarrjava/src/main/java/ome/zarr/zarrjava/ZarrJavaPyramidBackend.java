@@ -232,7 +232,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	// Store / path helpers
 	// ---------------------------------------------------------------------
 
-	private static MultiscaleImage openMultiscaleImage( final URI uri )
+	private MultiscaleImage openMultiscaleImage( final URI uri )
 	{
 		// Ahead of the try: the catch clauses below dereference uri themselves.
 		if ( uri == null )
@@ -258,7 +258,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		}
 	}
 
-	private static StoreHandle resolveHandle( final URI uri )
+	private StoreHandle resolveHandle( final URI uri )
 	{
 		if ( uri == null )
 			throw new IllegalArgumentException( NO_LOCATION_MESSAGE );
@@ -276,7 +276,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	 * {@link HttpStore} appends a trailing slash to a root, and
 	 * {@code GET /path/img.ozx/} is a 404.
 	 */
-	private static StoreHandle archiveHandle( final URI uri )
+	private StoreHandle archiveHandle( final URI uri )
 	{
 		final URI parent = ZarrUtils.parentUri( uri );
 		final String name = ZarrUtils.lastSegment( uri );
@@ -285,7 +285,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		return storeFor( ZarrUtils.stripTrailingSlash( parent ) ).resolve( name );
 	}
 
-	private static Store storeFor( final URI uri )
+	private Store storeFor( final URI uri )
 	{
 		final String scheme = uri.getScheme();
 		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
@@ -297,11 +297,11 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		throw new IllegalArgumentException( "Unsupported URI scheme '" + scheme + "' for OME-Zarr location: " + uri );
 	}
 
-	private static Store createS3Store( final URI uri )
+	private Store createS3Store( final URI uri )
 	{
 		try
 		{
-			return S3StoreFactory.create( uri );
+			return S3StoreFactory.create( uri, getAwsProfile() );
 		}
 		catch ( NoClassDefFoundError e )
 		{

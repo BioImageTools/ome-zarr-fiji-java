@@ -80,6 +80,29 @@ and easily handles even the huge ones.
     * Private buckets use your ambient AWS credentials (environment variables, `~/.aws/credentials`,
       instance profile, etc.); if those are absent, access falls back to anonymous.
     * The AWS region defaults to `us-east-1`.
+    * S3 storage outside amazonaws.com and multiple accounts work through named AWS profiles, see below.
+
+#### AWS profiles (private buckets, non-AWS S3 endpoints)
+
+Credentials stay in the standard AWS files – Fiji never asks for or stores keys. Define a profile once:
+
+```
+# ~/.aws/config
+[profile my_profile]
+endpoint_url = https://s3.example.org
+region = us-east-1
+
+# ~/.aws/credentials
+[my_profile]
+aws_access_key_id = ...
+aws_secret_access_key = ...
+```
+
+Then choose `my_profile` as *AWS profile for s3:// locations* in `Plugins > OME-Zarr > Settings > Opening Behavior
+Settings`; the list shows every profile defined in these two files. The next pasted `s3://` URI uses its `endpoint_url`,
+`region` and keys – no restart needed. A profile without `region` uses `us-east-1`; one without keys falls back to
+anonymous access. *AWS default* uses the profile named by the `AWS_PROFILE` environment variable at Fiji start (e.g.
+`AWS_PROFILE=my_profile ./fiji`), else the `default` profile.
 * Three entry points:
     * Paste with `CTRL` / `CMD` / `SHIFT` + `V` (requires FIJI latest)
     * Paste via menu: Plugins -> OME-Zarr -> Paste OME-Zarr URI

@@ -39,6 +39,9 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+
+import ome.zarr.imglib2.AwsProfiles;
 
 /**
  * Builds the zarr-java {@link S3Store} for an {@code s3:} URI.
@@ -60,14 +63,22 @@ final class S3StoreFactory
 	 *
 	 * @param uri an {@code s3://bucket/key/prefix} URI; the bucket is its host, the
 	 *   key prefix its path
+	 * @param awsProfile the AWS profile to take region, {@code endpoint_url} and
+	 *   credentials from, or {@code null} for the SDK default
 	 */
-	static Store create( final URI uri )
+	static Store create( final URI uri, final String awsProfile )
 	{
-		final S3Client s3 = S3Client.builder().region( Region.US_EAST_1 )
+		final S3ClientBuilder builder = S3Client.builder()
 				.credentialsProvider( AwsCredentialsProviderChain.builder()
-						.credentialsProviders( DefaultCredentialsProvider.builder().build(), AnonymousCredentialsProvider.create() )
-						.build() )
-				.build();
+						.credentialsProviders( DefaultCredentialsProvider.builder().profileName( awsProfile ).build(),
+								AnonymousCredentialsProvider.create() )
+						.build() );
+		if ( awsProfile == null || !AwsProfiles.hasRegion( awsProfile ) )
+			builder.region( Region.US_EAST_1 );
+		// Makes the client read region and endpoint_url from that profile.
+		if ( awsProfile != null )
+			builder.overrideConfiguration( o -> o.defaultProfileName( awsProfile ) );
+		final S3Client s3 = builder.build();
 		final String bucket = uri.getHost();
 		final String rawPath = uri.getPath();
 		final String keyPrefix = rawPath == null ? "" : rawPath.replaceFirst( "^/", "" );

@@ -50,6 +50,7 @@ import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fiji.open.OmeZarrOpenerService;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.OmeZarrBackend;
+import ome.zarr.imglib2.AwsProfiles;
 
 /**
  * A FIJI/ImageJ command to select what to do when an OME-Zarr image is Drag &amp; Dropped into Fiji.
@@ -67,6 +68,9 @@ public class OpeningBehaviorSettings extends DynamicCommand
 
 	/** The choice that stands for {@link OmeZarrOpenerService#ASK} rather than for an opener. */
 	static final String ASK_LABEL = "Ask me every time";
+
+	/** The choice that stands for no named AWS profile, i.e. the AWS SDK default. */
+	static final String AWS_DEFAULT_LABEL = "AWS default";
 
 	@SuppressWarnings( "all" )
 	@Parameter
@@ -116,6 +120,20 @@ public class OpeningBehaviorSettings extends DynamicCommand
 			+ "</body>"
 			+ "</html>";
 
+	@SuppressWarnings( "all" )
+	@Parameter( label = "AWS profile for s3:// locations", description = "A profile from ~/.aws/config or ~/.aws/credentials", initializer = "initAwsProfiles" )
+	private String awsProfile;
+
+	@SuppressWarnings( "all" )
+	@Parameter( visibility = ItemVisibility.MESSAGE, required = false, persist = false )
+	private String awsProfileInfo = "<html>"
+			+ "<body width=" + WIDTH + "cm align=left>"
+			+ "Region, endpoint_url and credentials of pasted s3:// locations are taken from this profile in ~/.aws/config and ~/.aws/credentials.<br>"
+			+ "'" + AWS_DEFAULT_LABEL + "' uses the AWS_PROFILE environment variable, else the 'default' profile, else anonymous access.<br>"
+			+ "Profiles added to these files show up here the next time this dialog is opened."
+			+ "</body>"
+			+ "</html>";
+
 	private OmeZarrOpeningSettings settings;
 
 	/** Shown choice to the opener name (or {@link OmeZarrOpenerService#ASK}) it stands for. */
@@ -131,8 +149,9 @@ public class OpeningBehaviorSettings extends DynamicCommand
 			settings.setOpenerName( openerName );
 		settings.setPreferredMaxWidth( preferredWidth );
 		settings.setBackend( OmeZarrBackend.getByDescription( readerBackend ) );
-		logger.debug( "Now saving OME-Zarr settings to user preferences. Opener: {}, preferredWidth: {}, readerBackend: {}",
-				settings.getOpenerName(), preferredWidth, settings.getBackend() );
+		settings.setAwsProfile( AWS_DEFAULT_LABEL.equals( awsProfile ) ? null : awsProfile );
+		logger.debug( "Now saving OME-Zarr settings to user preferences. Opener: {}, preferredWidth: {}, readerBackend: {}, awsProfile: {}",
+				settings.getOpenerName(), preferredWidth, settings.getBackend(), settings.getAwsProfile() );
 		settings.saveSettingsToPreferences( prefService );
 	}
 
@@ -143,6 +162,33 @@ public class OpeningBehaviorSettings extends DynamicCommand
 		defaultOpener = choiceFor( openerService.effectiveOpenerName( settings.getOpenerName() ) );
 		preferredWidth = settings.getPreferredMaxWidth();
 		readerBackend = settings.getBackend().getDescription();
+		awsProfile = awsProfileChoiceFor( settings.getAwsProfile() );
+	}
+
+	@SuppressWarnings( "unused" )
+	private void initAwsProfiles()
+	{
+		getInfo().getMutableInput( "awsProfile", String.class ).setChoices( awsProfileChoices() );
+	}
+
+	/** {@link #AWS_DEFAULT_LABEL}, then the profiles defined in the AWS files, if any. */
+	static List< String > awsProfileChoices()
+	{
+		final List< String > choices = new ArrayList<>();
+		choices.add( AWS_DEFAULT_LABEL );
+		choices.addAll( AwsProfiles.names() );
+		return choices;
+	}
+
+	/** The choice standing for {@code awsProfile}, or the AWS default when it is unset or no longer defined. */
+	private static String awsProfileChoiceFor( final String awsProfile )
+	{
+		if ( awsProfile == null )
+			return AWS_DEFAULT_LABEL;
+		if ( AwsProfiles.names().contains( awsProfile ) )
+			return awsProfile;
+		logger.debug( "The configured AWS profile '{}' is no longer defined, offering '{}' instead.", awsProfile, AWS_DEFAULT_LABEL );
+		return AWS_DEFAULT_LABEL;
 	}
 
 	@SuppressWarnings( "unused" )

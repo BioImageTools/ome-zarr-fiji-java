@@ -135,6 +135,19 @@ and half-working link support is worse for users than a clear "not supported". R
 non-`java.net` schemes (e.g. falling back to `LocationService.resolve` when `new URL(p)` throws); links then get `s3:`
 for free, with no change here.
 
+**Named AWS profiles** (issue #82) are how private buckets and non-AWS endpoints are reached: credentials stay in
+`~/.aws/*` (no key fields in any dialog, nothing secret in `PrefService`), and the user only picks a profile *name* in
+`OpeningBehaviorSettings`. The name travels as `AbstractPyramidBackend.setAwsProfile` — a setter, not a constructor
+argument, because only `s3:` reads consult it — and both backends build a fresh `S3Client` per open, so a changed
+profile applies to the next open without a restart. `AwsProfiles` (in `ome-zarr-imglib2`) parses the two files itself
+rather than using the SDK's `ProfileFile`: the dialog lists the profiles, and it must not link AWS classes on
+Fiji-Stable. Do not "simplify" it back to the SDK parser; keep it agreeing with it instead (the SDK skips profile
+names outside `[A-Za-z0-9-/.%@_:+]` and merges `region` from both files). A chosen profile that has since vanished from
+the files makes `AbstractPyramidBackend.read` throw `AwsProfileNotFoundException`, which `OmeZarr` reports — left to the
+SDK, it would silently fall back to anonymous access on AWS. The remaining SDK wiring (`defaultProfileName` for region and
+`endpoint_url`, a profile-named credentials chain with anonymous fallback) is duplicated in `S3StoreFactory` and
+`N5PyramidBackend.configureS3`, because no module both backends share may depend on the AWS SDK.
+
 An installation without the AWS SDK on the classpath (Fiji-Stable) only notices when the first `s3:` URI is opened —
 see `S3StoreFactory` under `ome-zarr-zarrjava` for the lazy-loading rule and the `S3SupportUnavailableException` it
 throws so the user gets a "get Fiji-Latest" message instead of a linkage stack trace.

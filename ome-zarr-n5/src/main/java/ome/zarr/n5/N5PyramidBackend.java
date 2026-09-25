@@ -63,10 +63,15 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 import ome.zarr.imglib2.AbstractPyramidBackend;
 import ome.zarr.imglib2.Affine3DUtils;
+import ome.zarr.imglib2.AwsProfiles;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.ZarrUtils;
@@ -163,7 +168,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 				.build();
 	}
 
-	private static N5Reader openReader( final URI uri )
+	private N5Reader openReader( final URI uri )
 	{
 		if ( uri == null )
 			throw new IllegalArgumentException( "No OME-Zarr location given" );
@@ -173,10 +178,30 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 			throw new ZipArchiveUnsupportedException( uri.toString(), NAME );
 
 		final N5Factory factory = new N5Factory();
-		// The region default only matters for s3:// URIs.
 		if ( "s3".equalsIgnoreCase( uri.getScheme() ) )
-			factory.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) );
+			factory.s3Configuration( this::configureS3 );
 		return factory.openReader( uri.toString() );
+	}
+
+	/**
+	 * Without a profile only the region default is set, so N5 keeps its own
+	 * anonymous-first credentials probe. That probe falls back to the SDK default
+	 * profile, not to the configured one, so a named profile brings its own
+	 * credentials chain.
+	 */
+	private void configureS3( final S3ClientBuilder builder )
+	{
+		final String awsProfile = getAwsProfile();
+		if ( awsProfile == null || !AwsProfiles.hasRegion( awsProfile ) )
+			builder.region( Region.US_EAST_1 );
+		if ( awsProfile == null )
+			return;
+		// Makes the client read region and endpoint_url from that profile.
+		builder.overrideConfiguration( o -> o.defaultProfileName( awsProfile ) );
+		builder.credentialsProvider( AwsCredentialsProviderChain.builder()
+				.credentialsProviders( DefaultCredentialsProvider.builder().profileName( awsProfile ).build(),
+						AnonymousCredentialsProvider.create() )
+				.build() );
 	}
 
 	private OmeNgffMetadata readMetadata( final N5Reader reader, final N5TreeNode node, final URI inputUri )

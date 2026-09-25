@@ -41,7 +41,8 @@ import ome.zarr.fiji.open.OmeZarrOpenerService;
 
 /**
  * The user's OME-Zarr opening preferences: which {@link OmeZarrOpener} to use, up
- * to which width to open in ImageJ, and which library to read with.
+ * to which width to open in ImageJ, which library to read with, and which AWS
+ * profile to read {@code s3:} URIs with.
  * <p>
  * The opener is stored as its plugin name rather than as a fixed set of
  * choices, so a plugin that registers its own {@link OmeZarrOpener} can be selected
@@ -70,11 +71,16 @@ public class OmeZarrOpeningSettings
 
 	private OmeZarrBackend backend;
 
+	/** A profile name from {@code ~/.aws/config}, or {@code null} for the AWS SDK default. */
+	private String awsProfile;
+
 	private static final String ZARR_OPEN_BEHAVIOR_SETTING_NAME = "ZarrOpenBehavior";
 
 	private static final String ZARR_PREFERRED_WIDTH_SETTING_NAME = "ZarrPreferredWidth";
 
 	private static final String ZARR_BACKEND_SETTING_NAME = "OmeZarrBackend";
+
+	private static final String AWS_PROFILE_SETTING_NAME = "AwsProfile";
 
 	public OmeZarrOpeningSettings()
 	{
@@ -159,6 +165,27 @@ public class OmeZarrOpeningSettings
 	}
 
 	/**
+	 * Gets the AWS profile used for {@code s3:} URIs.
+	 *
+	 * @return a profile name from {@code ~/.aws/config}, or {@code null} for the
+	 *   AWS SDK default ({@code AWS_PROFILE}, else {@code default})
+	 */
+	public String getAwsProfile()
+	{
+		return awsProfile;
+	}
+
+	/**
+	 * Sets the AWS profile used for {@code s3:} URIs.
+	 *
+	 * @param awsProfile a profile name; {@code null} or blank for the AWS SDK default
+	 */
+	public void setAwsProfile( final String awsProfile )
+	{
+		this.awsProfile = awsProfile == null || awsProfile.trim().isEmpty() ? null : awsProfile.trim();
+	}
+
+	/**
 	 * Loads and returns the settings from the provided preference store.
 	 *
 	 * @param prefs If {@code null} is provided, default settings values from this class are used and returned.
@@ -180,10 +207,14 @@ public class OmeZarrOpeningSettings
 		{
 			backend = DEFAULT_BACKEND;
 		}
+		final OmeZarrOpeningSettings settings = new OmeZarrOpeningSettings( openerName, preferredWidth, backend );
+		if ( prefs != null )
+			settings.setAwsProfile( prefs.get( OmeZarrOpeningSettings.class, AWS_PROFILE_SETTING_NAME, null ) );
 		logger.debug( "Loaded OME-Zarr opener: {}", openerName );
 		logger.debug( "Loaded OME-Zarr preferred width: {}", preferredWidth );
 		logger.debug( "Loaded OME-Zarr default backend: {}", backend );
-		return new OmeZarrOpeningSettings( openerName, preferredWidth, backend );
+		logger.debug( "Loaded OME-Zarr AWS profile: {}", settings.getAwsProfile() );
+		return settings;
 	}
 
 	/**
@@ -199,9 +230,11 @@ public class OmeZarrOpeningSettings
 			prefs.put( OmeZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, openerName );
 		prefs.put( OmeZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
 		prefs.put( OmeZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, getBackend().name() );
+		prefs.put( OmeZarrOpeningSettings.class, AWS_PROFILE_SETTING_NAME, awsProfile == null ? "" : awsProfile );
 		logger.debug( "Saved OME-Zarr opener to preferences: {}", openerName );
 		logger.debug( "Saved OME-Zarr preferred width to preferences: {}", getPreferredMaxWidth() );
 		logger.debug( "Saved OME-Zarr backend to preferences: {}", getBackend() );
+		logger.debug( "Saved OME-Zarr AWS profile to preferences: {}", awsProfile );
 	}
 
 	@Override
@@ -209,6 +242,7 @@ public class OmeZarrOpeningSettings
 	{
 		return "OmeZarrOpeningSettings{openerName=" + openerName
 				+ ", preferredMaxWidth=" + preferredMaxWidth
-				+ ", backend=" + backend + "}";
+				+ ", backend=" + backend
+				+ ", awsProfile=" + awsProfile + "}";
 	}
 }

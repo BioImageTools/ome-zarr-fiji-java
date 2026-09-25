@@ -47,6 +47,7 @@ import ij.gui.YesNoCancelDialog;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.exceptions.AwsProfileNotFoundException;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
@@ -476,6 +477,10 @@ public class OmeZarr
 		{
 			showS3SupportUnavailable( e );
 		}
+		catch ( AwsProfileNotFoundException e )
+		{
+			showAwsProfileNotFound( e );
+		}
 		catch ( ReaderLibraryUnavailableException e )
 		{
 			showReaderLibraryUnavailable( e );
@@ -524,6 +529,16 @@ public class OmeZarr
 				+ "Please use Fiji-latest instead. Download at https://fiji.sc" );
 		final String cause = String.valueOf( e.getCause() );
 		logger.warn( "Cannot open {}: the AWS SDK is not on the classpath ({})", inputUri, cause );
+	}
+
+	private void showAwsProfileNotFound( final AwsProfileNotFoundException e )
+	{
+		errorHandler.accept( CANNOT_OPEN_MESSAGE_PREFIX + inputUri + "\n\r\n"
+				+ "The selected AWS profile '" + e.getProfile() + "' is not defined in ~/.aws/config or ~/.aws/credentials "
+				+ "(anymore).\n\r\n"
+				+ "Please define it there again, or choose another profile in "
+				+ "Plugins > OME-Zarr > Settings > Opening Behavior Settings." );
+		logger.warn( "Cannot open {}: AWS profile '{}' is not defined", inputUri, e.getProfile() );
 	}
 
 	private void showReaderLibraryUnavailable( final ReaderLibraryUnavailableException e )
