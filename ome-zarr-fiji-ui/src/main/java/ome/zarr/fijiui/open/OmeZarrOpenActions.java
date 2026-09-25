@@ -189,15 +189,16 @@ public class OmeZarrOpenActions
 	}
 
 	/**
-	 * Reader for {@code inputUri} using the backend and preferred width from
-	 * {@code settings}, or the defaults when no settings are given.
+	 * Reader for {@code inputUri} using the backend, AWS profile and preferred
+	 * width from {@code settings}, or the defaults when no settings are given.
 	 */
 	private static OmeZarr omeZarrFor( final URI inputUri, final Context context,
 			final OmeZarrOpeningSettings settings, final Consumer< String > errorHandler )
 	{
 		final OmeZarrBackend backend = settings == null ? OmeZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
+		final String awsProfile = settings == null ? null : settings.getAwsProfile();
 		final Integer preferredMaxWidth = settings == null ? null : settings.getPreferredMaxWidth();
-		return new OmeZarr( inputUri, context, backend.createBackend(), preferredMaxWidth, errorHandler );
+		return new OmeZarr( inputUri, context, backend.createBackend( awsProfile ), preferredMaxWidth, errorHandler );
 	}
 
 	/**

@@ -101,7 +101,7 @@ public class OpenOmeZarrAsDatasetCommand extends ContextCommand
 		}
 		final OmeZarrOpeningSettings settings =
 				OmeZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
-		final OmeZarr omeZarr = new OmeZarr( uri, context, settings.getBackend().createBackend(), null, errorHandler );
+		final OmeZarr omeZarr = new OmeZarr( uri, context, settings.getBackend().createBackend( settings.getAwsProfile() ), null, errorHandler );
 		return omeZarr.readPyramidalDataset();
 	}
 }
