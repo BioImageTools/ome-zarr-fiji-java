@@ -37,6 +37,7 @@ import net.imglib2.type.numeric.RealType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ome.zarr.imglib2.exceptions.AwsProfileNotFoundException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.ReaderLibraryUnavailableException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
@@ -99,6 +100,11 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	@Override
 	public final < T extends NativeType< T > & RealType< T > > PyramidContents< T > read( final URI inputUri )
 	{
+		// Checked here, once for every backend: otherwise the AWS SDK silently
+		// falls back to anonymous access on AWS.
+		if ( awsProfile != null && inputUri != null && "s3".equalsIgnoreCase( inputUri.getScheme() )
+				&& !AwsProfiles.names().contains( awsProfile ) )
+			throw new AwsProfileNotFoundException( inputUri.toString(), awsProfile );
 		try
 		{
 			return readMultiscaleOrSingleArray( inputUri );
