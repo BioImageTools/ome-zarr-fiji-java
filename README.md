@@ -176,10 +176,26 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 
 ### Supported OME-Zarr versions
 
-* [OME-Zarr v0.5](https://ngff.openmicroscopy.org/0.5/index.html) (Zarr v3)
-* [OME-Zarr v0.4](https://ngff.openmicroscopy.org/0.4/index.html) (Zarr v2)
-* [OME-Zarr v0.3](https://ngff.openmicroscopy.org/0.3/index.html) (Zarr v2)
-* Supports 2D (xy), 3D (xyc, xyt, xyz), 4D (xyct, xyzc, xyzt) and 5D (xyzct) images.
+| OME-Zarr                                               | Zarr | Supported                                              |
+|--------------------------------------------------------|------|--------------------------------------------------------|
+| [v0.5](https://ngff.openmicroscopy.org/0.5/index.html) | v3   | ✓                                                      |
+| [v0.4](https://ngff.openmicroscopy.org/0.4/index.html) | v2   | ✓                                                      |
+| [v0.3](https://ngff.openmicroscopy.org/0.3/index.html) | v2   | ✓ [N5 backend](#reader-backend) only, i.e. Fiji-Latest |
+| ≤ v0.2                                                 | v2   | ✗                                                      |
+
+Images may be 2D (xy), 3D (xyc, xyt, xyz), 4D (xyct, xyzc, xyzt) or 5D (xyzct).
+
+| Feature                                                                 | Supported                                                   |
+|-------------------------------------------------------------------------|-------------------------------------------------------------|
+| Multiscale images (resolution pyramids)                                 | ✓                                                           |
+| Single-scale images (one level of a pyramid, or a bare array)           | ✓ see [below](#multi-resolution-vs-single-resolution)       |
+| Zipped OME-Zarr archives (`.ozx`)                                       | ✓ zarr-java backend only                                    |
+| `multiscales` metadata: resolution levels, axis scales, units           | ✓                                                           |
+| `omero` metadata: channel names, colors, contrast limits, time point    | ✓ BigDataViewer only, see [below](#read-channel-information-from-ome-zarr-metadata) |
+| Labels                                                                  | ✗                                                           |
+| High-content screening (HCS): plates and wells                          | ✗                                                           |
+| bioformats2raw layout (several images in one Zarr)                      | ✗                                                           |
+| Scenes (OME-Zarr v0.6)                                                  | ✗                                                           |
 
 ### Read channel information from OME-Zarr metadata
 
@@ -206,15 +222,18 @@ We support two backends for reading OME-Zarrs. Users can choose between the two 
 
 * Reading of OME-Zarrs version <= 0.2 is not supported. With the zarr-java backend, only OME-Zarr v0.4 and v0.5 are
   supported, not v0.3.
-* In FIJI stable, the [N5 backend](#reader-backend) does not work: the N5 jars shipped there are older than this plugin
-  needs. Updating those jars by hand is possible (see [manual installation](#n5-backend)) but breaks other plugins
-  that depend on N5, e.g. **BigStitcher**. Use the default zarr-java backend, which also means no OME-Zarr v0.3 on FIJI
-  stable.
-* In FIJI stable, there is no support for s3 stores. Please use FIJI latest.
-* With FIJI stable, OME-Zarrs that use Blosc compression cannot be opened on MacOS. Please use FIJI latest, if you
-  encounter this issue. Cf. [FIJI downloads](https://imagej.net/software/fiji/downloads).
-* In FIJI stable, Pasting a URI via `CMD` / `SHIFT` / `CTRL` + `V` is not supported. Please use FIJI latest.
-* In FIJI stable, FIJI Links are not supported.
+* Several features need Fiji-Latest. If you hit one of them on Fiji-Stable, please switch to
+  [Fiji-Latest](https://imagej.net/software/fiji/downloads).
+
+| Feature                                        | Fiji-Latest | Fiji-Stable | Why                                                                                                                                                                     |
+|------------------------------------------------|:-----------:|:-----------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Drag & drop, dialogs, opening in ImageJ / BDV  |      ✓      |      ✓      |                                                                                                                                                                         |
+| zarr-java backend (the default)                |      ✓      |      ✓      | shipped via the OME-Zarr update site                                                                                                                                    |
+| N5 backend, and thus OME-Zarr v0.3             |      ✓      |      ✗      | Fiji-Stable's N5 jars are too old. Updating them by hand (see [manual installation](#n5-backend)) works but breaks other plugins that depend on N5, e.g. **BigStitcher** |
+| `s3://` URIs                                   |      ✓      |      ✗      | no AWS SDK in Fiji-Stable; reported as a message when you try                                                                                                           |
+| Paste with `CTRL` / `CMD` / `SHIFT` + `V`      |      ✓      |      ✗      | the keyboard hook needs a newer SciJava; use the menu or the toolbar button instead                                                                                     |
+| `fiji://` links                                |      ✓      |      ✗      | the handler (`fiji-links`) ships with Fiji-Latest only                                                                                                                  |
+| Blosc-compressed OME-Zarrs on macOS            |      ✓      |      ✗      | the older stack cannot load the native Blosc library                                                                                                                    |
 
 # Example data
 
