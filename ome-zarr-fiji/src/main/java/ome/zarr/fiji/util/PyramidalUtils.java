@@ -1,5 +1,7 @@
 package ome.zarr.fiji.util;
 
+import net.imagej.Dataset;
+import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -34,6 +36,15 @@ public class PyramidalUtils
 	}
 
 	public static < T extends NativeType< T > & RealType< T > > ImgPlus< T > wrapResLevelAt(
+			final Pyramidal pyramidal,
+			final int resolutionLevel,
+			final int channel,
+			final int timePoint )
+	{
+		return ( ImgPlus< T > ) wrapResLevelAt( pyramidal.getPyramidContents(), resolutionLevel, channel, timePoint );
+	}
+
+	public static < T extends NativeType< T > & RealType< T > > ImgPlus< T > wrapResLevelAt(
 			final PyramidContents< T > pyramidContents,
 			final int resolutionLevel,
 			final int channel,
@@ -44,6 +55,18 @@ public class PyramidalUtils
 				ImgPlus.wrapRAI( PyramidContentsUtils.xyzReducedView( pyramidContents, resolutionLevel, channel, timePoint ) );
 		imgPlus.setName( pyramidContents.name + " (R=" + resolutionLevel + ",C=" + channel + ",T=" + timePoint + ")" );
 		return imgPlus;
+	}
+
+	public static Dataset asDatasetForResLevelAt(
+			final Pyramidal pyramidal,
+			final int resolutionLevel,
+			final int channel,
+			final int timePoint )
+	{
+		DatasetService ds = pyramidal.getContext().getService( DatasetService.class );
+		assert ds != null: "The available Context is missing the DatasetService.";
+
+		return ds.create( wrapResLevelAt( pyramidal.getPyramidContents(), resolutionLevel, channel, timePoint ) );
 	}
 
 	public static ImagePlus asImagePlusForResLevelAt(
@@ -58,6 +81,6 @@ public class PyramidalUtils
 				wrapResLevelAt( pyramidal.getPyramidContents(), resolutionLevel, channel, timePoint ),
 				ImagePlus.class );
 		// BTW: The conversion created a (not-displayed) Dataset along the way,
-		//      which can be reached via the DatasetService
+		//      which can be reached via the DatasetService -- not sure this is entirely true!
 	}
 }
