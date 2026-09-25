@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.ReaderLibraryUnavailableException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
+import ome.zarr.imglib2.s3.exceptions.AwsProfileNotFoundException;
 import ome.zarr.imglib2.s3.AwsProfiles;
 
 /**
@@ -100,6 +101,10 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	@Override
 	public final < T extends NativeType< T > & RealType< T > > PyramidContents< T > read( final URI inputUri )
 	{
+		// Checked here so that it does not need to be repeated for all backends.
+		if ( awsProfile != null && inputUri != null && "s3".equalsIgnoreCase( inputUri.getScheme() )
+				&& !AwsProfiles.names().contains( awsProfile ) )
+			throw new AwsProfileNotFoundException( inputUri.toString(), awsProfile );
 		try
 		{
 			return readMultiscaleOrSingleArray( inputUri );
