@@ -97,7 +97,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	 */
 	public Dataset asXyzDatasetAt( final int resolutionLevel, final int channel, final int timePoint )
 	{
-		return new DefaultDataset( getContext(), PyramidalUtils.wrapResLevelAt( contents, resolutionLevel, channel, timePoint ) );
+		return PyramidalUtils.asDatasetForResLevelAt( this, resolutionLevel, channel, timePoint );
 	}
 
 	/**

@@ -109,7 +109,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 	 */
 	public Dataset asXyzDatasetAt( final int channel, final int timePoint )
 	{
-		return new DefaultDataset( getContext(), PyramidalUtils.wrapResLevelAt( contents, resolutionLevel, channel, timePoint ) );
+		return PyramidalUtils.asDatasetForResLevelAt( this, resolutionLevel, channel, timePoint );
 	}
 
 	/**

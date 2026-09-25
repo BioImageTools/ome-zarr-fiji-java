@@ -141,7 +141,7 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 		long topViewSize = xSize * zSize * 2;
 		long sideViewSize = ySize * zSize * 2;
 		long largestViewSize = Math.max( Math.max( frontViewSize, topViewSize ), sideViewSize );
-		final long niceMaxViewSize = 1 << 20; // 1 MB
+		final long niceMaxViewSize = 128 * 128 * 2;
 		int factors = 0;
 		while ( largestViewSize > niceMaxViewSize )
 		{
