@@ -48,7 +48,7 @@ import org.scijava.ui.UIService;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
-import ome.zarr.imglib2.ImageSizes;
+import ome.zarr.imglib2.util.ImageSizes;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 

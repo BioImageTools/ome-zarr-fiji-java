@@ -70,11 +70,11 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 import ome.zarr.imglib2.AbstractPyramidBackend;
-import ome.zarr.imglib2.Affine3DUtils;
+import ome.zarr.imglib2.util.Affine3DUtils;
 import ome.zarr.imglib2.s3.AwsProfiles;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.imglib2.ZarrUtils;
+import ome.zarr.imglib2.util.ZarrUtils;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;

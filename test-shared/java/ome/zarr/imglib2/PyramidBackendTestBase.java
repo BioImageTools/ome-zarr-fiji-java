@@ -57,6 +57,7 @@ import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
+import ome.zarr.imglib2.util.ImageSizes;
 
 /**
  * Shared parameterized tests for the backend-agnostic {@link PyramidContents}

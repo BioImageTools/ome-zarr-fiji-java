@@ -291,8 +291,8 @@ with `Namespace 'ome.zarr' is not allowed`. So going back to Central means switc
 `releaseProfiles`; an org-owned namespace (`io.github.bioimagetools`, or `org.bioimagetools` if the domain is ever
 registered) would be the alternative. Java package names stay `ome.zarr.*` through all of this.
 
-- **`ome-zarr-imglib2`** – package `ome.zarr.imglib2` (+`.metadata`, `.exceptions`, `.s3`); backend-agnostic core. No
-  Fiji or backend dependency.
+- **`ome-zarr-imglib2`** – package `ome.zarr.imglib2` (+`.metadata`, `.exceptions`, `.s3`, `.util`); backend-agnostic
+  core. No Fiji or backend dependency.
 - **`ome-zarr-n5`** – `ome.zarr.n5` (`N5PyramidBackend`, N5-universe, OME-NGFF v0.3–v0.5); depends on imglib2 +
   external N5-universe (codecs `n5-zarr`/`n5-blosc`/zstd arrive transitively via `n5-universe`).
 - **`ome-zarr-zarrjava`** – `ome.zarr.zarrjava` (`ZarrJavaPyramidBackend`, Zarr v2/v3); depends on imglib2 +

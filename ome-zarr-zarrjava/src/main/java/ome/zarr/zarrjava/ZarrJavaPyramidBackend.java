@@ -88,7 +88,7 @@ import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.AbstractPyramidBackend;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.imglib2.ZarrUtils;
+import ome.zarr.imglib2.util.ZarrUtils;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
 

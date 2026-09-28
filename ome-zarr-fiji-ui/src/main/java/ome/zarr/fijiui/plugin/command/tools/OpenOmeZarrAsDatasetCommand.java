@@ -43,7 +43,7 @@ import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.util.ClipboardUtils;
-import ome.zarr.imglib2.ZarrUtils;
+import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
  * Opens an OME-Zarr location given as a single line of text and hands it back as

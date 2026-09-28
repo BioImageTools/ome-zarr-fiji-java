@@ -42,6 +42,7 @@ import ome.zarr.imglib2.exceptions.ReaderLibraryUnavailableException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.imglib2.s3.exceptions.AwsProfileNotFoundException;
 import ome.zarr.imglib2.s3.AwsProfiles;
+import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
  * Base class for {@link PyramidBackend} implementations that owns the

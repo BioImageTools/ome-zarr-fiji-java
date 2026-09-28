@@ -42,7 +42,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 import ome.zarr.imglib2.s3.AwsProfiles;
-import ome.zarr.imglib2.ZarrUtils;
+import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
  * Builds the zarr-java {@link S3Store} for an {@code s3:} URI.
