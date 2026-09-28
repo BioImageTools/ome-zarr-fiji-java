@@ -83,7 +83,7 @@ import org.slf4j.LoggerFactory;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.PyramidLevelAccessException;
-import ome.zarr.imglib2.exceptions.S3SupportUnavailableException;
+import ome.zarr.imglib2.s3.exceptions.S3SupportUnavailableException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.AbstractPyramidBackend;
 import ome.zarr.imglib2.PyramidBackend;

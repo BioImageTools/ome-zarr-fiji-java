@@ -56,7 +56,7 @@ import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.read.exceptions.NonExistingResolutionLevelException;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.exceptions.ReaderLibraryUnavailableException;
-import ome.zarr.imglib2.exceptions.S3SupportUnavailableException;
+import ome.zarr.imglib2.s3.exceptions.S3SupportUnavailableException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
 
