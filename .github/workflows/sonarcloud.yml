@@ -48,6 +48,7 @@ jobs:
           distribution: 'zulu'
           cache: 'maven'
       - name: Jacoco Report and SonarCloud Analysis
+        id: analysis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # Generate a token on Sonarcloud.io, add it to the secrets of this repo with the name SONAR_TOKEN (Settings > Secrets > Actions > add new repository secret)
@@ -56,7 +57,34 @@ jobs:
           sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
           sudo apt-get update
           sudo apt-get install -y libblosc-dev
-          mvn -B -ntp verify --file pom.xml -Pcoverage sonar:sonar -Dsonar.projectKey=BioImageTools_ome-zarr-fiji-java -Dsonar.organization=bioimagetools
+          if [ -n "$SONAR_TOKEN" ]; then
+            mvn -B -ntp verify --file pom.xml -Pcoverage sonar:sonar -Dsonar.projectKey=BioImageTools_ome-zarr-fiji-java -Dsonar.organization=bioimagetools
+          else
+            # GitHub withholds secrets from pull_request runs of fork PRs. Build everything the scanner needs
+            # (classes, coverage, library jars) and hand it to sonarcloud-fork-pr.yml, which runs with secrets
+            # but never executes the fork's code.
+            # Library jars for sonar.java.libraries: all of compile scope, but only the direct test dependencies
+            # (the full test scope is ~400 MB). Both runs need a lifecycle phase, or the sibling ome.zarr modules
+            # would be looked up in the (empty) local repository instead of the reactor.
+            DEP="org.apache.maven.plugins:maven-dependency-plugin:copy-dependencies -DoutputDirectory=$PWD/target/sonar-libs -DexcludeGroupIds=ome.zarr"
+            mvn -B -ntp verify --file pom.xml -Pcoverage $DEP -DincludeScope=compile
+            mvn -B -ntp package --file pom.xml -DskipTests $DEP -DincludeScope=test -DexcludeTransitive=true
+            echo "${{ github.event.pull_request.number }}" > target/sonar-pr-number
+            echo "fork=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload build output for the fork PR SonarCloud analysis
+        if: steps.analysis.outputs.fork == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-fork-pr
+          retention-days: 1
+          path: |
+            target/sonar-pr-number
+            target/sonar-libs
+            ome-zarr-*/target/classes
+            ome-zarr-*/target/test-classes
+            ome-zarr-coverage-report/target/site/jacoco-aggregate/jacoco.xml
 
       - name: Upload artifacts for subsequent review
         uses: actions/upload-artifact@master

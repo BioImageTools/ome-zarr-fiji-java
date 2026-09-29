@@ -1,0 +1,95 @@
+# SonarCloud analysis for pull requests from forks.
+#
+# GitHub withholds secrets from `pull_request` runs of fork PRs, so sonarcloud.yml cannot upload their analysis. For
+# those it only builds (classes, JaCoCo report, library jars) and uploads the result as the `sonar-fork-pr` artifact.
+# This workflow runs afterwards in the context of the base repository, where SONAR_TOKEN is available.
+#
+# Security: everything from the fork – the checkout, the artifact, branch names – is untrusted, and this job holds
+# SONAR_TOKEN. It therefore never runs the fork's code: no Maven (a pom can run arbitrary plugins), only the
+# standalone scanner, which reads files. Its settings come from a file written here (`project.settings`), so a
+# sonar-project.properties in the fork is ignored, and untrusted values reach the shell only through env variables.
+
+name: SonarCloud analysis (fork PRs)
+
+on:
+  workflow_run:
+    workflows: [ "SonarCloud analysis" ]
+    types: [ completed ]
+
+permissions:
+  actions: read        # download the artifact of the triggering run
+  pull-requests: read  # verify the PR number from the artifact
+
+jobs:
+  Sonar-Analysis-Fork-PR:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name != github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.workflow_run.head_repository.full_name }}
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0  # blame and new-code detection
+          persist-credentials: false
+
+      - name: Download build output of the fork PR
+        uses: actions/download-artifact@v4
+        with:
+          name: sonar-fork-pr
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Write scanner settings
+        id: settings
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          # The PR number comes from the artifact, i.e. from the fork (workflow_run.pull_requests is empty for
+          # forks): accept it only if that PR really has the commit we analyse.
+          PR=$(cat target/sonar-pr-number)
+          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "::error::invalid PR number"; exit 1; }
+          PR_SHA=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq .head.sha)
+          if [ "$PR_SHA" != "$HEAD_SHA" ]; then
+            # also what happens when the fork pushed again meanwhile; the newer run analyses that commit
+            echo "::notice::PR #$PR is no longer at $HEAD_SHA - skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BASE=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq .base.ref)
+
+          MODULES="ome-zarr-imglib2 ome-zarr-n5 ome-zarr-zarrjava ome-zarr-fiji ome-zarr-fiji-ui"
+          join() { local out=""; for m in $MODULES; do out="$out,$m/$1"; done; echo "${out#,}"; }
+          # git ref names cannot contain newlines or backslashes, so HEAD_BRANCH cannot break out of its line
+          {
+            echo "sonar.projectKey=BioImageTools_ome-zarr-fiji-java"
+            echo "sonar.organization=bioimagetools"
+            echo "sonar.host.url=https://sonarcloud.io"
+            echo "sonar.projectBaseDir=$GITHUB_WORKSPACE"
+            echo "sonar.sources=$(join src/main/java)"
+            echo "sonar.tests=$(join src/test/java),test-shared/java"
+            echo "sonar.java.source=8"
+            echo "sonar.java.binaries=$(join target/classes)"
+            echo "sonar.java.test.binaries=$(join target/test-classes)"
+            echo "sonar.java.libraries=target/sonar-libs/*.jar"
+            echo "sonar.java.test.libraries=target/sonar-libs/*.jar"
+            echo "sonar.coverage.jacoco.xmlReportPaths=ome-zarr-coverage-report/target/site/jacoco-aggregate/jacoco.xml"
+            echo "sonar.scm.revision=$HEAD_SHA"
+            echo "sonar.pullrequest.key=$PR"
+            echo "sonar.pullrequest.branch=$HEAD_BRANCH"
+            echo "sonar.pullrequest.base=$BASE"
+          } > "$RUNNER_TEMP/sonar.properties"
+          cat "$RUNNER_TEMP/sonar.properties"
+
+      - name: SonarCloud analysis
+        if: steps.settings.outputs.skip != 'true'
+        uses: sonarsource/sonarqube-scan-action@v8.2.2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: -Dproject.settings=${{ runner.temp }}/sonar.properties
