@@ -35,10 +35,11 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -286,7 +287,7 @@ public class ZarrUtils
 		// slash (so the result is treated as a folder location), collapses
 		// doubled slashes, and leaves scheme and authority alone. A location
 		// already ending in a slash needs ".." to lose its last segment.
-		return rawPath.endsWith( "/" ) ? uri.resolve( ".." ) : uri.resolve( "." );
+		return uri.resolve( rawPath.endsWith( "/" ) ? ".." : "." );
 	}
 
 	/**
@@ -407,13 +408,9 @@ public class ZarrUtils
 	{
 		if ( path == null || path.isEmpty() )
 			return Collections.emptyList();
-		final List< String > segments = new ArrayList<>();
-		for ( final String segment : path.split( "/" ) )
-		{
-			if ( !segment.isEmpty() && !".".equals( segment ) )
-				segments.add( segment );
-		}
-		return segments;
+		return Arrays.stream( path.split( "/" ) )
+				.filter( segment -> !segment.isEmpty() && !".".equals( segment ) )
+				.collect( Collectors.toList() );
 	}
 
 	private static boolean isHttpAccessible( final URI uri )
