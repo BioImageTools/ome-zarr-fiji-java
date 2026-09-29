@@ -516,7 +516,8 @@ public class OmeZarr
 	private void showNotAMultiscaleError( final NotAMultiscaleImageException e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
-				+ "The location is not a readable OME-Zarr multiscale image and could not be opened as a single resolution level." );
+				+ "The location is not a readable OME-Zarr multiscale image and could not be opened as a single resolution level."
+				+ detailsParagraph( e ) );
 		logger.warn( "Not a multiscale image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
@@ -564,6 +565,15 @@ public class OmeZarr
 	}
 
 	/**
+	 * A "Details:" paragraph with {@link #details}, or nothing when {@code e} has
+	 * no cause, as its own message is then what the dialog already says.
+	 */
+	private static String detailsParagraph( final Throwable e )
+	{
+		return e.getCause() == null ? "" : "\n\nDetails: " + details( e );
+	}
+
+	/**
 	 * The first line of the innermost cause's message, which usually names what
 	 * actually went wrong (e.g. an HTTP status), or its class name if it has none.
 	 */
@@ -581,14 +591,17 @@ public class OmeZarr
 
 	private void showStoreAccessError( final Exception e )
 	{
-		errorHandler.accept( "Could not access the dataset at: " + inputUri + "\n\n" + e.getMessage() );
+		// The wrapper's own message only repeats the location; the cause says what failed.
+		errorHandler.accept( "Could not access the dataset at: " + inputUri
+				+ ( e.getCause() == null ? "\n\n" + e.getMessage() : detailsParagraph( e ) ) );
 		logger.warn( "Store access failed for {}: {}", inputUri, e.getMessage() );
 	}
 
 	private void showNonZarrError( final Exception e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
-				+ "The opener for OME-Zarr only supports locations that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
+				+ "The opener for OME-Zarr only supports locations that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files."
+				+ detailsParagraph( e ) );
 		logger.warn( "Could not open dataset image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
