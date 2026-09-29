@@ -1,14 +1,5 @@
 package ome.zarr.fijiui.plugin.command;
 
-import net.imglib2.img.basictypeaccess.DataAccess;
-import net.imglib2.img.basictypeaccess.array.DoubleArray;
-import net.imglib2.img.basictypeaccess.array.FloatArray;
-import net.imglib2.img.basictypeaccess.array.IntArray;
-import net.imglib2.img.basictypeaccess.array.ShortArray;
-import net.imglib2.img.cell.Cell;
-import net.imglib2.img.cell.CellGrid;
-import net.imglib2.img.cell.LazyCellImg;
-import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -16,22 +7,18 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.Intervals;
 import ome.zarr.fiji.Pyramidal;
-import ome.zarr.fiji.PyramidalDataset;
-import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fiji.PyramidalDatasetInMemory;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.write.InMemoryPyramidSaver;
 import ome.zarr.imglib2.write.OmeZarrWritingOptions;
 import ome.zarr.imglib2.write.PyramidContentsUtils;
-import org.jspecify.annotations.NonNull;
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import net.imglib2.img.basictypeaccess.array.ByteArray;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -110,7 +97,7 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 	public void run()
 	{
 		InMemoryPyramidSaver< ? > saver = create();
-		pyramidal = new PyramidalDataset( context(), saver.getPyramidContents(), 0 );
+		pyramidal = new PyramidalDatasetInMemory( context(), saver, 0 );
 
 		//REMOVE LATER TODO
 		System.out.println( saver.getPyramidContents() );
