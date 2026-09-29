@@ -20,4 +20,11 @@ public class PyramidalDatasetInMemory extends PyramidalDataset implements Pyrami
 	{
 		return saver;
 	}
+
+	public static PyramidalDatasetInMemory castFromOrNull( Pyramidal pyramidal )
+	{
+		if ( pyramidal instanceof PyramidalDatasetInMemory )
+			return ( PyramidalDatasetInMemory ) pyramidal;
+		return null;
+	}
 }
