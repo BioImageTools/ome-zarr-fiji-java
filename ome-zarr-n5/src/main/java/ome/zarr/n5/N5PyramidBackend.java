@@ -290,24 +290,22 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	@Override
 	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadArrayNodeOnly( final URI arrayUri )
 	{
-		final String[] axisNames;
-		final DataType dataType;
+		final DatasetAttributes attributes;
 		// The reader that backs the returned image is opened separately below and must stay open.
 		try (N5Reader metadataReader = openReader( arrayUri ))
 		{
-			final DatasetAttributes attributes = metadataReader.getDatasetAttributes( "" );
-			if ( attributes == null )
-				return null; // not an array (e.g. a group, or a plain directory)
-			axisNames = readAxisNames( attributes );
-			if ( axisNames.length == 0 )
-				return null;
-			dataType = attributes.getDataType();
+			attributes = metadataReader.getDatasetAttributes( "" );
 		}
 		catch ( RuntimeException e )
 		{
-			logger.debug( "Could not read {} as a plain array: {}", arrayUri, e.getMessage() );
-			return null;
+			throw new NotAMultiscaleImageException( arrayUri.toString(), e );
 		}
+		if ( attributes == null ) // not an array (e.g. a group, or a plain directory)
+			throw new NotAMultiscaleImageException( arrayUri.toString() );
+		final String[] axisNames = readAxisNames( attributes );
+		if ( axisNames.length == 0 )
+			return null;
+		final DataType dataType = attributes.getDataType();
 		final T type = N5Utils.type( dataType );
 		final AxisCalibration[] axes = AxisCalibration.createPlaceholderCalibration( axisNames );
 		final CachedCellImg< T, ? > img = N5Utils.openVolatile( openReader( arrayUri ), "" );

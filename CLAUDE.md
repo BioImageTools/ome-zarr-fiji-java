@@ -158,10 +158,12 @@ override with their library's display name (`"N5"`, `"zarr-java"`) for user-faci
 implements `read` as a template method – try the multiscales group, fall back to a single array (parent multiscales
 group first, then the array's own `dimension_names`) – and leaves three `protected abstract` hooks for the
 reader-specific steps: `readMultiscale`, `tryReadLevelFromParent` and `tryReadArrayNodeOnly` (the two `try*` hooks
-return `null` for "not applicable, try the next"). `read` and `readSingleArray` are `final`, so the order is fixed for
-every backend. Both `PyramidContents` and the per-level `CachedCellImg`s, transforms, calibration and optional OMERO
-metadata it holds are immutable. Each backend also exposes a static `readPyramid(URI)` convenience entry point for
-outside API users — not named `read`, because Java forbids a static method hiding an inherited instance method.
+return `null` for "not applicable, try the next"; the last one throws `NotAMultiscaleImageException` when there is no
+array at all, so a missing location is never reported as unknown axes). `read` and `readSingleArray` are `final`, so
+the order is fixed for every backend. Both `PyramidContents` and the per-level `CachedCellImg`s, transforms, calibration
+and optional OMERO metadata it holds are immutable. Each backend also exposes a static `readPyramid(URI)` convenience
+entry point for outside API users — not named `read`, because Java forbids a static method hiding an inherited instance
+method.
 
 **A too-old reader library is reported, not thrown at the console.** A Fiji-Stable installation whose N5 stack predates
 this plugin fails inside the backend with a `NoClassDefFoundError` (e.g. on `OmeNgffMetadataParser`), which is useless

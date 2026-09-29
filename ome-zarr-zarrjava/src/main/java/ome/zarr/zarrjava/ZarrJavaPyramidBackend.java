@@ -465,8 +465,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		}
 		catch ( ZarrException | IOException | RuntimeException e )
 		{
-			logger.debug( "Could not read {} as a plain array: {}", arrayUri, e.getMessage() );
-			return null;
+			throw new NotAMultiscaleImageException( arrayUri.toString(), e );
 		}
 		final String[] names = dimensionNames( arr );
 		if ( names.length == 0 )

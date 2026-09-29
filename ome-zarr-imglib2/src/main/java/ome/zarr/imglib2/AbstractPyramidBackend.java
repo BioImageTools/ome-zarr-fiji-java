@@ -160,6 +160,8 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	 * @param arrayUri location of the array node (a single resolution level)
 	 * @return the level as a one-level {@link PyramidContents}
 	 * @throws SingleArrayAxesUnknownException if neither hook can read the array
+	 * @throws NotAMultiscaleImageException if there is no readable array at
+	 *   {@code arrayUri} at all
 	 */
 	protected final < T extends NativeType< T > & RealType< T > > PyramidContents< T > readSingleArray( final URI arrayUri )
 	{
@@ -203,9 +205,10 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	 *
 	 * @param <T> pixel type
 	 * @param arrayUri location of the array node being read
-	 * @return the array as a one-level pyramid, or {@code null} when it cannot be
-	 *   read as an array or declares no usable axis names of its own (e.g. a
-	 *   Zarr v2 array)
+	 * @return the array as a one-level pyramid, or {@code null} when it declares
+	 *   no usable axis names of its own (e.g. a Zarr v2 array)
+	 * @throws NotAMultiscaleImageException if there is no readable array at
+	 *   {@code arrayUri} at all (e.g., a group, a wrong/missing location)
 	 */
 	protected abstract < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadArrayNodeOnly( URI arrayUri );
 }

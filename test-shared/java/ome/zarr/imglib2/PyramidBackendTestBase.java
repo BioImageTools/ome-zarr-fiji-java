@@ -53,6 +53,7 @@ import java.net.URISyntaxException;
 import java.util.stream.Stream;
 
 import ome.zarr.ZarrTestUtils;
+import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
@@ -197,7 +198,7 @@ public interface PyramidBackendTestBase
 	{
 		try (Context context = new Context())
 		{
-			assertThrows( SingleArrayAxesUnknownException.class, () -> this.read( resource + "/sub", context ) );
+			assertThrows( NotAMultiscaleImageException.class, () -> this.read( resource + "/sub", context ) );
 		}
 	}
 
