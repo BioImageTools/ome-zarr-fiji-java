@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -42,6 +42,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 import ome.zarr.imglib2.s3.AwsProfiles;
+import ome.zarr.imglib2.ZarrUtils;
 
 /**
  * Builds the zarr-java {@link S3Store} for an {@code s3:} URI.
@@ -80,7 +81,7 @@ final class S3StoreFactory
 			builder.overrideConfiguration( overrides -> overrides.defaultProfileName( awsProfile ) );
 		final S3Client s3 = builder.build();
 		final String bucket = uri.getHost();
-		final String rawPath = uri.getPath();
+		final String rawPath = ZarrUtils.stripTrailingSlash( uri ).getPath();
 		final String keyPrefix = rawPath == null ? "" : rawPath.replaceFirst( "^/", "" );
 		return new S3Store( s3, bucket, keyPrefix.isEmpty() ? null : keyPrefix );
 	}
