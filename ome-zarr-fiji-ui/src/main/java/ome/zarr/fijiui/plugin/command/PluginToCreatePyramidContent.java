@@ -100,10 +100,10 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 		pyramidal = new PyramidalDatasetInMemory( context(), saver, 0 );
 
 		//REMOVE LATER TODO
-		System.out.println( saver.getPyramidContents() );
-		System.out.println( pyramidal );
+		//System.out.println( saver.getPyramidContents() );
+		//System.out.println( pyramidal );
 		//
-		saver.getPyramidContents().asImg( 0 ).forEach( px -> px.setReal( 100 ) );
+		//saver.getPyramidContents().asImg( 0 ).forEach( px -> px.setReal( 100 ) );
 		//saver.getPyramidContents().asImg( 1 ).forEach( px -> px.set( 150 ) );
 		//saver.getPyramidContents().asImg( 2 ).forEach( px -> px.set( 200 ) );
 	}

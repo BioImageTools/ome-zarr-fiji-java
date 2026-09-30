@@ -179,6 +179,7 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	 * destination inside the level array.
 	 *
 	 * @throws IllegalStateException if {@link #initEmptyMultiscales} has not been called
+	 * @throws IllegalArgumentException when level is not within the range
 	 */
 	@Override
 	public void writeRegion( final RandomAccessibleInterval< T > region, final int level )
