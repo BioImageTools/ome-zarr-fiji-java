@@ -119,6 +119,8 @@ public class PyramidContentsUtils
 		}
 
 		AffineTransform3D baseLevelTransform = new AffineTransform3D(); //identity matrix
+		baseLevelTransform.scale( baseLevelAxes[ 0 ].scale, baseLevelAxes[ 1 ].scale,
+				baseLevelAxes.length > 2 ? baseLevelAxes[ 2 ].scale : 1.0 );
 		return create( name, pixelType, baseLevelXYZdims, channels, timePoints, axes, spatialDownScales, baseLevelTransform, null );
 	}
 
