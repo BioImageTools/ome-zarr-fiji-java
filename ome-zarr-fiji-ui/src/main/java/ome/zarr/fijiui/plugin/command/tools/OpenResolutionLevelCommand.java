@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -121,7 +121,7 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	/**
 	 * The line above the choices, naming only the axes {@link #describeLevel}
 	 * shows, e.g. {@code Extents in x×y×z order, c = channels, t = time points;
-	 * slice = one XY plane}.
+	 * slice = one xy-plane}.
 	 */
 	private static String describeAxes( final PyramidContents< ? > contents )
 	{
@@ -133,7 +133,7 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 			sb.append( ", c = channels" );
 		if ( contents.hasAxis( AxisCalibration.T ) )
 			sb.append( ", t = time points" );
-		return sb.append( "; slice = one XY plane" ).toString();
+		return sb.append( "; slice = one xy-plane" ).toString();
 	}
 
 	/**
