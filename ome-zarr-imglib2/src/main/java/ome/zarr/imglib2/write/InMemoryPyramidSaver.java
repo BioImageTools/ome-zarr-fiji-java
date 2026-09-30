@@ -191,6 +191,24 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	}
 
 	/**
+	 * Copies pixels from {@code region} into the backing store at the given
+	 * resolution level, channel and timePoint. The {@code Interval} placement
+	 * of the {@code region} (its min/max coordinates) is ignored.
+	 *
+	 * @throws IllegalStateException if {@link #initEmptyMultiscales} has not been called
+	 * @throws IllegalArgumentException when any of level, channel and/or timePoint is not within the respective range
+	 */
+	public void writeRegionToResLevelAt( final RandomAccessibleInterval< T > region, final int level,
+			final int channel, final int timePoint )
+	{
+		if ( data == null )
+			throw new IllegalStateException( "initEmptyMultiscales() must be called before writeRegion()." );
+
+		final RandomAccessibleInterval< T > view = PyramidContentsUtils.xyzReducedView( data, level, channel, timePoint );
+		LoopBuilder.setImages( region, view ).forEachPixel( ( src, tgt ) -> tgt.set( src ) );
+	}
+
+	/**
 	 * Returns the {@link PyramidContents} backed by the in-memory
 	 * {@link net.imglib2.cache.img.DiskCachedCellImg}s, or {@code null} if
 	 * {@link #initEmptyMultiscales} has not been called yet.
