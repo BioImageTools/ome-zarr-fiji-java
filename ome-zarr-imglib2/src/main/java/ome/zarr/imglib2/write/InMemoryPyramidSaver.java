@@ -199,14 +199,14 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	 * @throws IllegalStateException if {@link #initEmptyMultiscales} has not been called
 	 * @throws IllegalArgumentException when any of level, channel and/or timePoint is not within the respective range
 	 */
-	public void writeRegionToResLevelAt( final RandomAccessibleInterval< T > region, final int level,
+	public < R extends RealType< R > > void writeRegionToResLevelAt( final RandomAccessibleInterval< R > region, final int level,
 			final int channel, final int timePoint )
 	{
 		if ( data == null )
 			throw new IllegalStateException( "initEmptyMultiscales() must be called before writeRegion()." );
 
 		final RandomAccessibleInterval< T > view = PyramidContentsUtils.xyzReducedView( data, level, channel, timePoint );
-		LoopBuilder.setImages( region, view ).forEachPixel( ( src, tgt ) -> tgt.set( src ) );
+		LoopBuilder.setImages( region, view ).forEachPixel( ( src, tgt ) -> tgt.setReal( src.getRealDouble() ) );
 	}
 
 	/**
