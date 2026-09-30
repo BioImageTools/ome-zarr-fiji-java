@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -200,16 +200,9 @@ public class OmeZarrOpenActions
 		return new OmeZarr( inputUri, context, backend.createBackend(), preferredMaxWidth, errorHandler );
 	}
 
-	/**
-	 * String suitable for being shown to the user or pre-filled into a path
-	 * field: an OS-native path for {@code file:} URIs, the URI string otherwise.
-	 */
-	private String displayLocation()
+	private String uriFormattedForN5Dialog( final URI uri )
 	{
-		final URI inputUri = omeZarr.uri();
-		return "file".equalsIgnoreCase( inputUri.getScheme() )
-				? Paths.get( inputUri ).toString()
-				: inputUri.toString();
+		return "file".equalsIgnoreCase( uri.getScheme() ) ? Paths.get( uri ).toUri().toString() : uri.toString();
 	}
 
 	/**
@@ -218,7 +211,7 @@ public class OmeZarrOpenActions
 	 */
 	public void openImporterDialog()
 	{
-		new N5Importer().runWithDialog( displayLocation(), Collections.emptyList() );
+		new N5Importer().runWithDialog( uriFormattedForN5Dialog( omeZarr.uri() ), Collections.emptyList() );
 		if ( logger.isInfoEnabled() )
 			logger.info( "Opened Zarr/N5 importer dialog with location: {}.", omeZarr.uri() );
 	}
@@ -229,7 +222,7 @@ public class OmeZarrOpenActions
 	 */
 	public void openViewerDialog()
 	{
-		new N5ViewerCreator().runWithDialog( displayLocation(),
+		new N5ViewerCreator().runWithDialog( uriFormattedForN5Dialog( omeZarr.uri() ),
 				e -> logger.warn( "Could not open viewer selection dialog: {}", e.getMessage() ) );
 		if ( logger.isInfoEnabled() )
 			logger.info( "Opened Zarr/N5 viewer with location: {}.", omeZarr.uri() );

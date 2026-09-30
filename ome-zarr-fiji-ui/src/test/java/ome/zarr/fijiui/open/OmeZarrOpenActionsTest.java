@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
@@ -279,6 +280,37 @@ class OmeZarrOpenActionsTest
 		{
 			OmeZarrOpenActions actions = new OmeZarrOpenActions( path.toUri(), context );
 			assertDoesNotThrow( actions::openViewerDialog );
+		}
+	}
+
+	/** N5's dialog fields parse the pre-filled location with {@code new URI()}, which rejects a plain path holding a space. */
+	@Test
+	void n5DialogsGetAParsableLocationForAPathWithASpace()
+	{
+		URI uri = new File( "/data/6001240 labels.zarr" ).toURI();
+		try (Context context = new Context();
+				MockedConstruction< N5Importer > importers = mockConstruction( N5Importer.class );
+				MockedConstruction< N5ViewerCreator > viewers = mockConstruction( N5ViewerCreator.class ))
+		{
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( uri, context );
+			actions.openImporterDialog();
+			actions.openViewerDialog();
+
+			verify( importers.constructed().get( 0 ) ).runWithDialog( argThat( OmeZarrOpenActionsTest::isParsableUri ), any( List.class ) );
+			verify( viewers.constructed().get( 0 ) ).runWithDialog( argThat( OmeZarrOpenActionsTest::isParsableUri ), any( Consumer.class ) );
+		}
+	}
+
+	private static boolean isParsableUri( String location )
+	{
+		try
+		{
+			new URI( location );
+			return true;
+		}
+		catch ( URISyntaxException e )
+		{
+			return false;
 		}
 	}
 
