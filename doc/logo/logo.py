@@ -1,5 +1,6 @@
 """Repository logo: a glyph of cubes. `pixi run python logo.py [variant]` writes
-<variant>.png, 1024x1024 RGBA; variant is a key of VARIANTS.
+<variant>.png, 1024x1024 RGBA, and for logo-zarr also <variant>-<n>.png icons; variant
+is a key of VARIANTS.
 """
 
 import io
@@ -87,6 +88,7 @@ origins = [
 ZARR_PINK = "#E01073"
 FIJI_BLUE = "#65a4e3"
 FIJI_EDGE = mcolors.to_rgba("black", 0.85)   # alpha baked in, not passed per collection
+EDGE      = 0.039   # cube edge line width per cube edge length, as in logo-raw.png
 
 ROOM_DEPTH  = 3.0    # cells the floor and the left wall reach back from the glyph plane
 ROOM_MARGIN = 1.0    # cells of floor in front of and to the left of the glyph
@@ -128,21 +130,21 @@ def upright(art, x0, z0, depth, width):
 
 VARIANTS = {
     # name:             room?  artwork    where it goes                          in front?
-    "logo":            (False, None,      None,                                  False),
+    "logo-raw":        (False, None,      None,                                  False),
     "logo-room-wall":  (True,  WORDMARK,  upright(WORDMARK, 4.6, 5.7, 0, 3.4),  True),
-    "logo-plane-top":  (False, WORDMARK,  upright(WORDMARK, 4.6, 5.7, 0, 3.4),  True),
+    "logo-zarr":       (False, WORDMARK,  upright(WORDMARK, 4.6, 6.0, 0, 3.4),  True),
     "logo-plane":      (False, WORDMARK,  upright(WORDMARK, 5.5, 0.05, 0, 4.0),  True),
     "logo-big-z":      (False, Z,         upright(Z, 2.05, 1.05, 0, 3.7),       False),
     "logo-pink":       (False, None,      None,                                  False),
     "logo-z-behind":   (False, None,      None,                                  False),
     "logo-z-in-plane": (False, None,      None,                                  False),
 }
-variant = sys.argv[1] if len(sys.argv) > 1 else "logo"
+variant = sys.argv[1] if len(sys.argv) > 1 else "logo-raw"
 with_room, ART, art_quad, art_in_front = VARIANTS[variant]
 
-ART_ALPHA = 1.0 if variant in ("logo-plane", "logo-plane-top", "logo-room-wall") else 0.55   # opacity of the Zarr part
+ART_ALPHA = 1.0 if variant in ("logo-plane", "logo-zarr", "logo-room-wall") else 0.55   # opacity of the Zarr part
 
-if variant in ("logo-plane-top", "logo-room-wall"):
+if variant in ("logo-zarr", "logo-room-wall"):
     # The wordmark takes the place of the top edge's three rightmost cubes.
     origins = [o for o in origins if o not in {(4, 6, 0), (5, 6, 0), (6, 6, 0)}]
 
@@ -245,14 +247,14 @@ def render(dpi):
     ax  = fig.add_subplot(111, projection="3d")
 
     # Cell (x, y) -> data (x, 0, y): the glyph stands up, depth goes into the screen.
+    cubes = []
     for x, y, z, (w, h), colour in origins:
-        ax.add_collection3d(Poly3DCollection(
+        cubes.append(ax.add_collection3d(Poly3DCollection(
             make_cube_faces((step*x, step*z, step*y), (w, SIZE, h)),
             alpha=None,             # in the colours
             facecolor=colour,
             edgecolor=FIJI_EDGE,
-            linewidths=dpi*SIZE/150,   # points, so scale with the DPI
-        ))
+        )))
 
     # add_collection3d() does not autoscale.
     width  = max(step*o[0] + o[3][0] for o in origins)
@@ -284,6 +286,15 @@ def render(dpi):
     ax.set_facecolor("none")
     fig.patch.set_visible(False)
     fig.tight_layout()
+
+    # Edges a fixed fraction of a cube's drawn size, so a variant that needs more room
+    # around the glyph (smaller cubes, higher second-pass DPI) does not get thicker ones.
+    fig.canvas.draw()
+    ends = [ax.transData.transform(proj3d.proj_transform(x, 0, 0, ax.get_proj())[:2])
+            for x in (0, SIZE)]
+    cube_pt = np.hypot(*(ends[1] - ends[0]))/fig.dpi*72
+    for cube in cubes:
+        cube.set_linewidth(EDGE*cube_pt)
 
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=dpi)
@@ -320,5 +331,7 @@ if max(glyph.size) != SIDE:   # pixel rounding, never more than a few px
 canvas = Image.new("RGBA", (SIDE, SIDE), (255, 255, 255, 0))
 canvas.paste(glyph, ((SIDE - glyph.width)//2, (SIDE - glyph.height)//2))
 canvas.save(f"{variant}.png")
-canvas.resize((22, 22), Image.LANCZOS).save(f"{variant}-22.png")   # toolbar icon size
+if variant == "logo-zarr":   # icon sizes, from toolbar to launcher
+    for n in (22, 24, 32, 64):
+        canvas.resize((n, n), Image.LANCZOS).save(f"{variant}-{n}.png")
 plt.show()

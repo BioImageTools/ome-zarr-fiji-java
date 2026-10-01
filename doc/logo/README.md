@@ -4,11 +4,12 @@ Scratch material for a repository logo.
 
 | File                       | What it is                                                                |
 |----------------------------|---------------------------------------------------------------------------|
-| `logo.py`                  | matplotlib script; writes `<variant>.png`, 1024×1024 RGBA, transparent, and `<variant>-22.png`, a 22×22 icon |
-| `logo.png`                 | the plain glyph                                                           |
+| `logo.py`                  | matplotlib script; writes `<variant>.png`, 1024×1024 RGBA, transparent              |
+| `logo-raw.png`             | the plain glyph                                                           |
 | `logo-room-wall.png`       | variant: the glyph in Zarr's room, "zarr" replacing its top-right cubes   |
 | `logo-plane.png`           | variant: "zarr" in front of the glyph, lower right                        |
-| `logo-plane-top.png`       | variant: "zarr" replacing the glyph's top-right cubes                     |
+| `logo-zarr.png`            | variant: "zarr" replacing the glyph's top-right cubes                     |
+| `logo-zarr-<n>.png`        | `logo-zarr` downscaled to n×n icons, n = 22, 24, 32, 64                   |
 | `logo-big-z.png`           | variant: a large "z" showing through the cubes from behind                |
 | `logo-pink.png`            | variant: the plain glyph, cubes in Zarr pink                              |
 | `logo-z-behind.png`        | variant: a pink "z" of cubes one layer behind the glyph                   |
@@ -18,7 +19,7 @@ Scratch material for a repository logo.
 
 ```bash
 cd doc/logo
-pixi run python logo.py                  # writes logo.png and opens a window
+pixi run python logo.py                  # writes logo-raw.png and opens a window
 pixi run python logo.py logo-room-wall   # …and likewise for the other keys of VARIANTS
 ```
 
@@ -27,7 +28,7 @@ pixi run python logo.py logo-room-wall   # …and likewise for the other keys of
 The glyph is the `origins` list in `logo.py`: one `(x, y, z)` grid cell per cube,
 x to the right, y up. `SIZE`/`GAP` control cube size and spacing, `color` the fill.
 
-The axes and figure patch are hidden, so `logo.png` comes out RGBA with a fully
+The axes and figure patch are hidden, so `logo-raw.png` comes out RGBA with a fully
 transparent background. It is rendered twice: the first pass measures the glyph, the
 second re-renders at the DPI that makes it exactly 1024 px tall, so it touches the top and
 bottom edges and only the sides are padded.
