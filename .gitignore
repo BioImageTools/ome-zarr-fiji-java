@@ -65,3 +65,6 @@ build/
 .pixi
 pixi.lock
 /build_environments
+
+# Claude Code: machine-local MCP server config (e.g. IntelliJ's, on a per-machine port)
+.mcp.json
