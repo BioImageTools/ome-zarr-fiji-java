@@ -1,6 +1,6 @@
 """Repository logo: a glyph of cubes. `pixi run python logo.py [variant]` writes
 <variant>.png, 1024x1024 RGBA, and for logo-zarr also <variant>-<n>.png icons; variant
-is a key of VARIANTS.
+is a key of VARIANTS. Every variant but logo-zarr goes to drafts/.
 """
 
 import io
@@ -330,8 +330,9 @@ if max(glyph.size) != SIDE:   # pixel rounding, never more than a few px
 
 canvas = Image.new("RGBA", (SIDE, SIDE), (255, 255, 255, 0))
 canvas.paste(glyph, ((SIDE - glyph.width)//2, (SIDE - glyph.height)//2))
-canvas.save(f"{variant}.png")
+out = ZARR_SVG.parent if variant == "logo-zarr" else ZARR_SVG.parent/"drafts"
+canvas.save(out/f"{variant}.png")
 if variant == "logo-zarr":   # icon sizes, from toolbar to launcher
     for n in (22, 24, 32, 64):
-        canvas.resize((n, n), Image.LANCZOS).save(f"{variant}-{n}.png")
+        canvas.resize((n, n), Image.LANCZOS).save(out/f"{variant}-{n}.png")
 plt.show()
