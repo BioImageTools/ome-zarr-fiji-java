@@ -92,8 +92,6 @@ ROOM_DEPTH  = 3.0    # cells the floor and the left wall reach back from the gly
 ROOM_MARGIN = 1.0    # cells of floor in front of and to the left of the glyph
 ROOM_PITCH  = step   # grid spacing
 
-ART_ALPHA = 0.55     # opacity of the Zarr part
-
 ZARR_SVG = pathlib.Path(__file__).with_name("zarr-pink-horizontal.svg")
 
 
@@ -131,8 +129,9 @@ def upright(art, x0, z0, depth, width):
 VARIANTS = {
     # name:             room?  artwork    where it goes                          in front?
     "logo":            (False, None,      None,                                  False),
-    "logo-room-wall":  (True,  WORDMARK,  upright(WORDMARK, 4.2, 5.85, ROOM_DEPTH, 2.2), False),
-    "logo-plane":      (False, WORDMARK,  upright(WORDMARK, 5.5, 0.05, 0, 3.0),  True),
+    "logo-room-wall":  (True,  WORDMARK,  upright(WORDMARK, 4.6, 5.7, 0, 3.4),  True),
+    "logo-plane-top":  (False, WORDMARK,  upright(WORDMARK, 4.6, 5.7, 0, 3.4),  True),
+    "logo-plane":      (False, WORDMARK,  upright(WORDMARK, 5.5, 0.05, 0, 4.0),  True),
     "logo-big-z":      (False, Z,         upright(Z, 2.05, 1.05, 0, 3.7),       False),
     "logo-pink":       (False, None,      None,                                  False),
     "logo-z-behind":   (False, None,      None,                                  False),
@@ -140,6 +139,12 @@ VARIANTS = {
 }
 variant = sys.argv[1] if len(sys.argv) > 1 else "logo"
 with_room, ART, art_quad, art_in_front = VARIANTS[variant]
+
+ART_ALPHA = 1.0 if variant in ("logo-plane", "logo-plane-top", "logo-room-wall") else 0.55   # opacity of the Zarr part
+
+if variant in ("logo-plane-top", "logo-room-wall"):
+    # The wordmark takes the place of the top edge's three rightmost cubes.
+    origins = [o for o in origins if o not in {(4, 6, 0), (5, 6, 0), (6, 6, 0)}]
 
 # Artwork behind the cubes shows through only as far as they are transparent.
 FIJI_FACE = mcolors.to_rgba(ZARR_PINK if variant == "logo-pink" else FIJI_BLUE,
@@ -205,11 +210,12 @@ def warp(art, corners, size):
 
 def draw_room(ax, width, height, dpi):
     """Zarr's setting: a gridded floor and two walls, in data coordinates. Extents are
-    rounded out to whole squares — no wall ends on half a one — and returned."""
+    rounded to whole squares — no wall ends on half a one — and returned."""
     out = lambda v: np.ceil(v/ROOM_PITCH - 1e-9)*ROOM_PITCH
     back, front = out(ROOM_DEPTH*step), -out(ROOM_MARGIN*step)
-    left, right = -out(ROOM_MARGIN*step), out(width)
-    top = out(height)
+    # Two squares short at the top and right: the outermost rows and columns only framed air.
+    left, right = -out(ROOM_MARGIN*step), out(width) - 2*ROOM_PITCH
+    top = out(height) - 2*ROOM_PITCH
     line = dict(color=ZARR_PINK, alpha=0.22, lw=dpi/120)
 
     def span(a, b):
@@ -260,7 +266,8 @@ def render(dpi):
         depth  = max([depth]  + [step*p[1] for p in art_quad])
         height = max([height] + [step*p[2] for p in art_quad])
     if with_room:
-        y0, depth, x0, width, height = draw_room(ax, width, height, dpi)
+        y0, depth, x0, room_width, room_height = draw_room(ax, width, height, dpi)
+        width, height = max(width, room_width), max(height, room_height)   # nothing clipped
 
     ax.set_xlim(x0, width)
     ax.set_ylim(y0, depth)
@@ -313,4 +320,5 @@ if max(glyph.size) != SIDE:   # pixel rounding, never more than a few px
 canvas = Image.new("RGBA", (SIDE, SIDE), (255, 255, 255, 0))
 canvas.paste(glyph, ((SIDE - glyph.width)//2, (SIDE - glyph.height)//2))
 canvas.save(f"{variant}.png")
+canvas.resize((22, 22), Image.LANCZOS).save(f"{variant}-22.png")   # toolbar icon size
 plt.show()
