@@ -15,7 +15,7 @@ authors:
     - family-names: Tischer
       given-names: Christian
       orcid: https://orcid.org/0000-0003-4105-1990
-date-released: 2026-09-29
-version: 0.9.2
+date-released: 2026-10-02
+version: 0.9.3
 license: BSD-2-Clause
 repository-code: https://github.com/BioImageTools/ome-zarr-fiji-java
