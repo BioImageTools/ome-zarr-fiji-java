@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -99,7 +99,7 @@ class OpenResolutionLevelCommandTest
 					"<html><b>1</b>&nbsp; (64×64×16, c=3, t=4, uint8, slice 4.1 kpx ~ 4.0 KB, total 768.0 KB)</html>",
 					"<html><b>2</b>&nbsp; (32×32×8, c=3, t=4, uint8, slice 1.0 kpx ~ 1.0 KB, total 96.0 KB)</html>" ),
 					item.getChoices() );
-			assertEquals( "Extents in x×y×z order, c = channels, t = time points; slice = one XY plane",
+			assertEquals( "Extents in x×y×z order, c = channels, t = time points; slice = one xy-plane",
 					cmd.getInput( "legend" ) );
 		}
 	}

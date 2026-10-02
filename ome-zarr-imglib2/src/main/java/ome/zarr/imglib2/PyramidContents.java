@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
+import ome.zarr.imglib2.util.ImageSizes;
 
 /**
  * Immutable snapshot of everything a {@link PyramidBackend} produces when

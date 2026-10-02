@@ -16,6 +16,7 @@
         - [Open via menu (local folders)](#open-via-menu-local-folders)
         - [Open as `Dataset` (scripting)](#open-as-dataset-scripting)
         - [FIJI links (`fiji://`)](#fiji-links-fiji)
+        - [AWS profiles (private buckets, non-AWS S3 endpoints)](#aws-profiles-private-buckets-non-aws-s3-endpoints)
     - [Opening Behavior Settings](#opening-behavior-settings)
         - [Default opening behavior](#default-opening-behavior)
             - [Selection dialog (Ask me every time)](#selection-dialog-ask-me-every-time)
@@ -57,9 +58,10 @@ Drop a local OME-Zarr folder or an OME-Zarr URI onto Fiji. What happens next is 
 * Supports local paths, http(s) URLs, and `s3://` URIs
     * Public (anonymous) S3 buckets work out of the box, e.g.
       `s3://janelia-cosem-datasets/jrc_mus-choroid-plexus-3/jrc_mus-choroid-plexus-3.zarr/recon-1/em/fibsem-uint8`.
-    * Private buckets use your ambient AWS credentials (environment variables, `~/.aws/credentials`,
-      instance profile, etc.); if those are absent, access falls back to anonymous.
-    * The AWS region defaults to `us-east-1`.
+    * Private buckets, S3 storage outside amazonaws.com and multiple accounts: choose a
+      [named AWS profile](#aws-profiles-private-buckets-non-aws-s3-endpoints); region, endpoint and keys then come from it.
+    * Without a chosen profile, your ambient AWS credentials are used (environment variables, `~/.aws/credentials`,
+      instance profile, etc.), falling back to anonymous access; the region is then always `us-east-1`.
 * Three entry points:
     * Paste with `CTRL` / `CMD` / `SHIFT` + `V` (requires FIJI latest)
     * Paste via menu: Plugins -> OME-Zarr -> Paste OME-Zarr URI
@@ -115,6 +117,30 @@ This is a known `fiji-links` limitation. Making Windows and Linux reuse the runn
 
 See [doc/fiji-links-demo.html](https://htmlpreview.github.io/?https://raw.githubusercontent.com/BioImageTools/ome-zarr-fiji-java/main/doc/fiji-links-demo.html)
 for a page with clickable examples of each form.
+
+### AWS profiles (private buckets, non-AWS S3 endpoints)
+
+Credentials are expected to live in the standard AWS files. Define a profile like this:
+
+```
+# ~/.aws/config
+[profile my_profile]
+endpoint_url = https://s3.example.org
+region = us-east-1
+
+# ~/.aws/credentials
+[my_profile]
+aws_access_key_id = ...
+aws_secret_access_key = ...
+```
+
+Then choose `my_profile` as *AWS profile for s3:// locations* in `Plugins > OME-Zarr > Settings > S3 Settings`. The
+list shows every profile defined in these two files.
+The next pasted `s3://` URI uses its `endpoint_url`, `region` and keys without needing a restart of Fiji.
+A profile without `region` uses `us-east-1`.
+A profile without keys falls back to anonymous access. 
+*AWS default* uses the profile named by the `AWS_PROFILE` environment variable at Fiji start (e.g.
+`AWS_PROFILE=my_profile ./fiji`), else the `default` profile.
 
 ## Opening Behavior Settings
 

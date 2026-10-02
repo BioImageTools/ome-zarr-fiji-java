@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,7 +30,7 @@ package ome.zarr.fijiui.open.options;
 
 import java.util.NoSuchElementException;
 
-import ome.zarr.imglib2.PyramidBackend;
+import ome.zarr.imglib2.AbstractPyramidBackend;
 import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 
@@ -78,12 +78,11 @@ public enum OmeZarrBackend
 	}
 
 	/**
-	 * Creates a fresh {@link PyramidBackend} for the backend library this constant
-	 * represents.
+	 * Creates a fresh backend for the backend library this constant represents.
 	 *
 	 * @return a new backend instance, never {@code null}
 	 */
-	public PyramidBackend createBackend()
+	public AbstractPyramidBackend createBackend()
 	{
 		switch ( this )
 		{
