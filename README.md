@@ -93,9 +93,7 @@ settings. `s3://` is not supported here. The command opens no dialog of its own.
 ### FIJI links (`fiji://`)
 
 A `fiji://` link on a web page opens an OME-Zarr in Fiji, honoring the same
-[default opening behavior](#default-opening-behavior) as drag & drop and paste. It needs Fiji-Latest (the link handler,
-`fiji-links`, ships only there) with the [OME-Zarr update site](#fiji-update-site). No further setup was needed in our
-tests. A link such as
+[default opening behavior](#default-opening-behavior) as drag & drop and paste. It needs Fiji-Latest with the [OME-Zarr update site](#fiji-update-site). A link such as
 
 ```
 fiji://open/url?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0
@@ -111,7 +109,14 @@ What a click does currently depends on the operating system:
 | macOS          | starts Fiji, opens the image | opens the image in the running Fiji |
 | Windows, Linux | starts Fiji, opens the image | starts a **second** Fiji            |
 
-This is a known `fiji-links` limitation. Making Windows and Linux reuse the running Fiji, as macOS does, is planned. With several Fiji installations, the link goes to whichever one the OS has associated with `fiji://`.
+This is a known `fiji-links` limitation. Making Windows and Linux reuse the running Fiji, as macOS does, is planned.
+
+Fiji-Latest registers itself for Fiji links automatically. If you have several Fiji installations, or the links do not
+work, check the *Enable web links* setting in `Edit -> Options -> Desktop...`:
+
+* **Windows, Linux:** *Enable web links* is a checkbox. Tick it in the Fiji installation that should handle the links.
+* **macOS:** the dialog only reports that web links are always enabled. There is nothing to change. With several
+  installations, the link opens whichever one macOS has associated with `fiji://`.
 
 See [doc/fiji-links-demo.html](https://htmlpreview.github.io/?https://raw.githubusercontent.com/BioImageTools/ome-zarr-fiji-java/main/doc/fiji-links-demo.html)
 for a page with clickable examples of each form.
