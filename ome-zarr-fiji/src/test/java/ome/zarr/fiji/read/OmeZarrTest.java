@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.imagej.DatasetService;
@@ -45,15 +46,32 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
 import org.scijava.display.DisplayService;
 
+import org.scijava.convert.ConvertService;
+
+import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import bdv.cache.CacheControl;
 import bdv.util.BdvHandle;
+import bdv.viewer.BasicViewerState;
+import bdv.viewer.DisplayMode;
+import bdv.viewer.ViewerState;
+import bdv.viewer.render.MultiResolutionRenderer;
+import bdv.viewer.render.RenderTarget;
+import bdv.viewer.render.awt.BufferedImageRenderResult;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.Roi;
+import net.imagej.Dataset;
+import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.numeric.ARGBType;
 
 import javax.swing.SwingUtilities;
 
 import ome.zarr.ZarrTestUtils;
+import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidBackend;
@@ -361,6 +379,106 @@ class OmeZarrTest
 			bdvHandle.close();
 			SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the close
 		}
+	}
+
+	/**
+	 * A rectangle filled in the ImageJ window lands in the cell images of the shared
+	 * {@link PyramidContents}, so BigDataViewer, opened from the same {@link OmeZarr},
+	 * renders it too.
+	 * <p>
+	 * This needs {@code PyramidalDataset} to switch off ImageJ's RGB merge: a 3-channel
+	 * 8-bit dataset would otherwise open as one RGB image on a read-only virtual stack,
+	 * and the fill would never reach the cell images. OME-Zarr channels are not RGB
+	 * components anyway.
+	 */
+	@ParameterizedTest
+	@MethodSource( "backends" )
+	void rectangleFilledInImageJIsRenderedInBdv( PyramidBackend backend ) throws Exception
+	{
+		// channel 0 is never 0 in DATASET (see create_5d.py), so a 0-filled rectangle stands out
+		final int x = 10, y = 20, width = 15, height = 8, z = 4, t = 1;
+		Path path = ZarrTestUtils.resourcePath( DATASET );
+		try (Context context = new Context())
+		{
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend, null );
+			omeZarr.showInImageJ();
+			SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the show
+			ImagePlus imp = WindowManager.getCurrentImage();
+			PyramidalDataset dataset = assertInstanceOf( PyramidalDataset.class,
+					context.getService( ConvertService.class ).convert( imp, Dataset.class ) );
+
+			imp.setPosition( 1, z + 1, t + 1 );
+			imp.setRoi( new Roi( x, y, width, height ) );
+			imp.getProcessor().setValue( 0 );
+			imp.getProcessor().fill( imp.getRoi() );
+			imp.setPosition( 1, z + 2, t + 1 ); // the virtual stack writes a plane back when leaving it
+
+			BdvHandle bdvHandle = omeZarr.showInBdv();
+			PyramidalBdv< ? > pyramidalBdv = assertInstanceOf( PyramidalBdv.class,
+					context.getService( PyramidalService.class ).getActivePyramidal() );
+			assertSame( dataset.getPyramidContents(), pyramidalBdv.getPyramidContents() );
+
+			ViewerState state = new BasicViewerState( bdvHandle.getViewerPanel().state().snapshot() );
+			state.setDisplayMode( DisplayMode.SINGLE ); // channel 2 is green too
+			state.setCurrentSource( pyramidalBdv.asSources().get( 0 ) );
+			state.setCurrentTimepoint( t );
+			AffineTransform3D sliceZ = new AffineTransform3D();
+			sliceZ.translate( 0, 0, -z ); // one screen pixel per voxel, viewer plane through slice z
+			state.setViewerTransform( sliceZ );
+			BufferedImage frame = render( state, 64, 64 );
+
+			assertEquals( 0, ARGBType.green( frame.getRGB( x + 2, y + 2 ) ), "inside the rectangle" );
+			assertEquals( 0, ARGBType.green( frame.getRGB( x + width - 2, y + height - 2 ) ), "inside the rectangle" );
+			assertTrue( ARGBType.green( frame.getRGB( x - 2, y - 2 ) ) > 0, "outside the rectangle" );
+
+			bdvHandle.close();
+			SwingUtilities.invokeAndWait( () -> context.getService( DisplayService.class ).getActiveDisplay().close() );
+		}
+	}
+
+	/** Renders {@code state} offscreen the way a BigDataViewer window would, without volatile placeholders. */
+	private static BufferedImage render( final ViewerState state, final int width, final int height )
+	{
+		final AtomicReference< BufferedImageRenderResult > rendered = new AtomicReference<>();
+		final RenderTarget< BufferedImageRenderResult > target = new RenderTarget< BufferedImageRenderResult >()
+		{
+			private final BufferedImageRenderResult reusable = new BufferedImageRenderResult();
+
+			@Override
+			public BufferedImageRenderResult getReusableRenderResult()
+			{
+				return reusable;
+			}
+
+			@Override
+			public BufferedImageRenderResult createRenderResult()
+			{
+				return new BufferedImageRenderResult();
+			}
+
+			@Override
+			public void setRenderResult( final BufferedImageRenderResult renderResult )
+			{
+				rendered.set( renderResult );
+			}
+
+			@Override
+			public int getWidth()
+			{
+				return width;
+			}
+
+			@Override
+			public int getHeight()
+			{
+				return height;
+			}
+		};
+		final MultiResolutionRenderer renderer = new MultiResolutionRenderer( target, () -> {}, new double[] { 1 }, 0, 1,
+				null, false, new CacheControl.Dummy() );
+		renderer.requestRepaint();
+		renderer.paint( state );
+		return rendered.get().getBufferedImage();
 	}
 
 	/**
