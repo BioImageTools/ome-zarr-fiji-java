@@ -77,6 +77,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 		super( context, createImgPlus( contents, resolutionLevel ) );
 		this.contents = contents;
 		this.resolutionLevel = resolutionLevel;
+		setRGBMerged( false );
 		if ( contents.numResolutionLevels() > 1 )
 			setName( multiResolutionName( contents.name, resolutionLevel, contents.numResolutionLevels() ) );
 	}
