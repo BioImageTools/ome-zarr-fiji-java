@@ -16,12 +16,14 @@
         - [Open via menu (local folders)](#open-via-menu-local-folders)
         - [Open as `Dataset` (scripting)](#open-as-dataset-scripting)
         - [FIJI links (`fiji://`)](#fiji-links-fiji)
-    - [Choosing what happens on open](#choosing-what-happens-on-open)
-        - [Dialog options](#dialog-options)
-        - [Multi-resolution vs. single-resolution](#multi-resolution-vs-single-resolution)
-        - [Reader Backend](#reader-backend)
-        - [Scriplet support](#scriplet-support)
+    - [Opening Behavior Settings](#opening-behavior-settings)
+        - [Default opening behavior](#default-opening-behavior)
+            - [Selection dialog (Ask me every time)](#selection-dialog-ask-me-every-time)
+        - [Preferred width](#preferred-width)
+        - [Reader backend](#reader-backend)
+    - [Scriptlet support](#scriptlet-support)
     - [What is read and displayed](#what-is-read-and-displayed)
+        - [Multi-resolution vs. single-resolution](#multi-resolution-vs-single-resolution)
         - [Supported OME-Zarr versions](#supported-ome-zarr-versions)
         - [Read channel information from OME-Zarr metadata](#read-channel-information-from-ome-zarr-metadata)
         - [Dual dataset view](#dual-dataset-view)
@@ -47,30 +49,8 @@ If the dropped / pasted / linked target is not recognized as a **OME-Zarr v0.3 -
 
 ### Drag & Drop of local OME-Zarr folders and URIs
 
-There are several options for what Fiji can do after drag & drop / copy & paste:
-
-Users can select the **default opening behavior** via
-`Plugins -> OME-Zarr -> Settings -> Opening behavior settings`
-
-The options are:
-
-* Open the highest available single-resolution image in ImageJ.
-* Open a matching single-resolution image in ImageJ (**initial default**). Users can preset a maximum image width, and
-  Fiji will open the highest available single-resolution image that is not larger than the preset width. This is useful
-  for avoiding the loading and opening of excessively large images. Fiji simply chooses an appropriately sized level
-  from the resolution pyramids (multiscales) of the dropped OME-Zarr.
-* Open as a multi-resolution source in BigDataViewer. This is useful for large OME-Zarrs. Channel names, colors,
-  contrast limits, and the time point are automatically extracted from the OME-Zarr metadata, if available.
-* Show a [**dialog**](#dialog-options) with all available opening options.
-
-The list is not fixed: any Fiji plugin can
-[register its own opener](doc/DEVELOPERS.md#registering-your-own-opener), and it then appears
-here and in the dialog next to the built-in ones.
-
-Note: [BigDataViewer](https://imagej.net/plugins/bdv/) is part of Fiji, so there's no need to install anything extra. It
-is an image(s) viewer especially designed for chunk-based, multiresolution data, designed around the principle of
-loading only pixels that are needed for the current display of the image(s). It is thus suitable for OME-Zarr datasets
-and easily handles even the huge ones.
+Drop a local OME-Zarr folder or an OME-Zarr URI onto Fiji. What happens next is set in the
+[Opening Behavior Settings](#opening-behavior-settings).
 
 ### Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)
 
@@ -112,67 +92,92 @@ settings. `s3://` is not supported here. The command opens no dialog of its own.
 
 ### FIJI links (`fiji://`)
 
-A `fiji://` link on a web page opens an OME-Zarr straight in a (running) Fiji, honoring the same opening behavior as
-drag
-& drop and paste. Register the scheme once via `Edit -> Options -> Desktop...`, then a link such as
+A `fiji://` link on a web page opens an OME-Zarr in Fiji, honoring the same
+[default opening behavior](#default-opening-behavior) as drag & drop and paste. It needs Fiji-Latest (the link handler,
+`fiji-links`, ships only there) with the [OME-Zarr update site](#fiji-update-site). No further setup was needed in our
+tests. A link such as
 
 ```
 fiji://open/url?p=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0
 ```
 
-opens that IDR dataset. Use `open/file?p=` for a local path and `open/source?p=` to let Fiji detect the source type.
-`s3://` targets do **not** work through links — paste those instead (see above).
+opens that dataset. Use `open/file?p=` for a local path and `open/source?p=` to let Fiji detect the source type.
+`s3://` targets do **not** work through links — paste those instead ([see above](#copy--paste-of-ome-zarr-uris-local-folder-http-https-s3)).
+
+What a click does currently depends on the operating system:
+
+| OS             | Fiji not running             | Fiji already running                |
+|----------------|------------------------------|-------------------------------------|
+| macOS          | starts Fiji, opens the image | opens the image in the running Fiji |
+| Windows, Linux | starts Fiji, opens the image | starts a **second** Fiji            |
+
+This is a known `fiji-links` limitation. Making Windows and Linux reuse the running Fiji, as macOS does, is planned. With several Fiji installations, the link goes to whichever one the OS has associated with `fiji://`.
 
 See [doc/fiji-links-demo.html](https://htmlpreview.github.io/?https://raw.githubusercontent.com/BioImageTools/ome-zarr-fiji-java/main/doc/fiji-links-demo.html)
 for a page with clickable examples of each form.
 
-## Choosing what happens on open
+## Opening Behavior Settings
 
-### Dialog options
+`Plugins -> OME-Zarr -> Settings -> Opening Behavior Settings` sets three things, kept across Fiji sessions: the
+[default opening behavior](#default-opening-behavior), the [preferred width](#preferred-width) and the
+[reader backend](#reader-backend). They apply to drag & drop, copy & paste,
+`File -> Import -> OME-Zarr...` and `fiji://` links.
+
+### Default opening behavior
+
+What Fiji does with a dropped / pasted / linked OME-Zarr. The options shipped here are:
+
+* **ImageJ (preferred resolution)** (initial default): opens the highest single-resolution level that is not wider
+  than the [preferred width](#preferred-width). This avoids loading excessively large images.
+* **ImageJ (highest resolution)**: opens the highest-resolution level in ImageJ.
+* **BigDataViewer**: opens all resolution levels as a multi-resolution source. This is useful for large OME-Zarrs.
+  Channel names, colors, contrast limits, and the time point are
+  [taken from the OME-Zarr metadata](#read-channel-information-from-ome-zarr-metadata), if available.
+* **N5 importer dialog**: opens the N5 import dialog at the dropped OME-Zarr. It lists the resolution levels, lets you
+  choose one, possibly crop it, and opens it in ImageJ.
+* **N5 viewer dialog**: opens the N5 viewer dialog at the dropped OME-Zarr. It lists the resolution levels, lets you
+  choose one or the full pyramid, and opens it in BigDataViewer.
+* **Script editor**: runs a [user script](#scriptlet-support) (e.g., a macro) on the dropped OME-Zarr, so you can
+  define your own action.
+* **Ask me every time**: shows the [selection dialog](#selection-dialog-ask-me-every-time) instead.
+
+The list is not fixed: any Fiji plugin can [register its own opener](doc/DEVELOPERS.md#registering-your-own-opener),
+and it then appears here and in the dialog next to the built-in ones.
+
+#### Selection dialog (Ask me every time)
 
 <img src="doc/readme/dialog.png" width="120" alt="The opening-selection dialog with six openers and the help button">
 
-The dialog shows one icon button per registered opener, plus a help button; hovering a button explains what it does.
-The openers shipped here are:
+The dialog shows one icon button per registered opener, i.e., the options above, plus a help button.
 
-* Directly open a **single-resolution** image in **ImageJ**, which best matches the preferred width in the user
-  settings.
-* Directly open the **highest-resolution** image in **ImageJ**.
-* Directly open a **multi-resolution** image in **BigDataViewer**.
-* Open the N5 import dialog at the position of the dropped OME-Zarr. This lists resolution levels found in the OME-Zarr,
-  allowing users to choose one and possibly even crop it and finally open it in the ImageJ window.
-* Open the N5 viewer dialog at the position of the dropped OME-Zarr. This also lists resolution levels found in the
-  OME-Zarr, allowing users to choose one or the full pyramid and have it opened in the BigDataViewer.
-* Run a [pre-defined script](#scriplet-support) (e.g., a macro) while passing to it the path to the dropped OME-Zarr.
-  This way, the user can define her own action.
+### Preferred width
 
-The last button is not an opener: it opens a web browser pointing to this
-[Readme](https://github.com/BioImageTools/ome-zarr-fiji-java) file.
+The maximum image width, in pixels, for **ImageJ (preferred resolution)** (default: 1000). Fiji picks the highest
+resolution level of the pyramid whose width is below this value.
+
+### Reader backend
+
+We support two backends for reading OME-Zarrs:
+
+* [Zarr-java](https://github.com/zarr-developers/zarr-java) (default)
+    * may be a bit quicker when opening remote resources.
+    * only supports OME-Zarr v0.4 and v0.5, not v0.3.
+* [N5 library](https://github.com/saalfeldlab/n5)
+    * shipped with Fiji, and the only one that reads OME-Zarr v0.3.
+
+## Scriptlet support
+
+* Users can run a script on the OME-Zarr, via the **Script editor** opening behavior. The script resource can be a file
+  and can be set in the `Plugins -> OME-Zarr -> Settings -> User Script Settings` menu.
+* If no script is set, the script editor opens with a default script.
+
+## What is read and displayed
 
 ### Multi-resolution vs. single-resolution
 
 * Users can drag & drop / copy & paste a top-level OME-Zarr folder, which contains a multi-resolution dataset. It will
   be opened as multi-resolution data.
 * Users can also drag & drop / copy & paste a subfolder of the top-level OME-Zarr folder (i.e., single-resolution data).
-
-### Reader Backend
-
-We support two backends for reading OME-Zarrs. Users can choose between the two via the
-`Plugins -> OME-Zarr -> Settings -> Open Behavior settings` menu.
-
-* [Zarr-java](https://github.com/zarr-developers/zarr-java) (default)
-    * may be a bit quicker when opening remote resources.
-    * only supports OME-Zarr v0.4 and v0.5, not v0.3.
-* [N5 library](https://github.com/saalfeldlab/n5)
-    * alternative, and the only one that reads OME-Zarr v0.3.
-
-### Scriplet support
-
-* Users can run a script on the OME-Zarr. The script resource can be a file and can be set in the
-  `Plugins -> OME-Zarr -> Settings -> User Script Settings` menu.
-* If no script is set, the script editor opens with a default script.
-
-## What is read and displayed
 
 ### Supported OME-Zarr versions
 
@@ -309,7 +314,7 @@ On top of those five, a number of third-party `.jar` files are needed. Which one
 
 Delete older versions of an artifact when you add a newer one.
 
-Note that two options of the [dialog](#dialog-options) — the ones opening the **N5 Importer** and the **N5 Viewer** —
+Note that two options of the [dialog](#selection-dialog-ask-me-every-time) — the ones opening the **N5 Importer** and the **N5 Viewer** —
 are implemented using `n5-ij` and `n5-viewer_fiji`, so the N5 jars are also needed when the zarr-java
 backend is selected.
 
