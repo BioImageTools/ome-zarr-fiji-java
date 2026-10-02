@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -492,6 +492,10 @@ public class OmeZarr
 		{
 			showNonZarrError( e );
 		}
+		catch ( RuntimeException e )
+		{
+			showUnexpectedError( e );
+		}
 		return null;
 	}
 
@@ -512,7 +516,8 @@ public class OmeZarr
 	private void showNotAMultiscaleError( final NotAMultiscaleImageException e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
-				+ "The location is not a readable OME-Zarr multiscale image and could not be opened as a single resolution level." );
+				+ "The location is not a readable OME-Zarr multiscale image and could not be opened as a single resolution level."
+				+ detailsParagraph( e ) );
 		logger.warn( "Not a multiscale image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
@@ -550,16 +555,53 @@ public class OmeZarr
 		logger.info( "Cannot open {} with the {} backend: zipped archives are unsupported", inputUri, e.getBackendName() );
 	}
 
+	private void showUnexpectedError( final RuntimeException e )
+	{
+		errorHandler.accept( CANNOT_OPEN_MESSAGE_PREFIX + inputUri + "\n\r\n"
+				+ "An unexpected error occurred: " + details( e ) + "\n\r\n"
+				+ "Please report this, together with the Fiji log, at "
+				+ "https://github.com/BioImageTools/ome-zarr-fiji-java/issues" );
+		logger.error( "Unexpected error while opening {}", inputUri, e );
+	}
+
+	/**
+	 * A "Details:" paragraph with {@link #details}, or nothing when {@code e} has
+	 * no cause, as its own message is then what the dialog already says.
+	 */
+	private static String detailsParagraph( final Throwable e )
+	{
+		return e.getCause() == null ? "" : "\n\nDetails: " + details( e );
+	}
+
+	/**
+	 * The first line of the innermost cause's message, which usually names what
+	 * actually went wrong (e.g. an HTTP status), or its class name if it has none.
+	 */
+	private static String details( final Throwable e )
+	{
+		Throwable root = e;
+		// Bounded, as a cause chain can in principle form a cycle.
+		for ( int depth = 0; depth < 32 && root.getCause() != null; depth++ )
+			root = root.getCause();
+		final String message = root.getMessage();
+		if ( message == null || message.trim().isEmpty() )
+			return root.getClass().getSimpleName();
+		return message.trim().split( "\\R", 2 )[ 0 ];
+	}
+
 	private void showStoreAccessError( final Exception e )
 	{
-		errorHandler.accept( "Could not access the dataset at: " + inputUri + "\n\n" + e.getMessage() );
+		// The wrapper's own message only repeats the location; the cause says what failed.
+		errorHandler.accept( "Could not access the dataset at: " + inputUri
+				+ ( e.getCause() == null ? "\n\n" + e.getMessage() : detailsParagraph( e ) ) );
 		logger.warn( "Store access failed for {}: {}", inputUri, e.getMessage() );
 	}
 
 	private void showNonZarrError( final Exception e )
 	{
 		errorHandler.accept( "Could not open dataset as image: " + inputUri + "\n\n"
-				+ "The opener for OME-Zarr only supports locations that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files." );
+				+ "The opener for OME-Zarr only supports locations that contains OME-Zarr metadata, i.e. .zattrs, .zgroup, or zarr.json files."
+				+ detailsParagraph( e ) );
 		logger.warn( "Could not open dataset image: {}. Error message: {}", inputUri, e.getMessage() );
 	}
 
