@@ -139,8 +139,9 @@ list shows every profile defined in these two files.
 The next pasted `s3://` URI uses its `endpoint_url`, `region` and keys without needing a restart of Fiji.
 A profile without `region` uses `us-east-1`.
 A profile without keys falls back to anonymous access. 
-*AWS default* uses the profile named by the `AWS_PROFILE` environment variable at Fiji start (e.g.
-`AWS_PROFILE=my_profile ./fiji`), else the `default` profile.
+*No profile* uses the profile named by the `AWS_PROFILE` environment variable at Fiji start (e.g.
+`AWS_PROFILE=my_profile ./fiji`), else the `default` profile, always with region `us-east-1`. Choose `default` in the
+list to use its own `region`.
 
 ## Opening Behavior Settings
 

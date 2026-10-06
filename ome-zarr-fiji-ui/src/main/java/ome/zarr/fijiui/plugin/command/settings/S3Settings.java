@@ -56,7 +56,7 @@ public class S3Settings extends DynamicCommand
 	private static final Integer WIDTH = 20;
 
 	/** The choice that stands for no named AWS profile, i.e., the AWS SDK default. */
-	static final String AWS_DEFAULT_LABEL = "AWS default";
+	static final String NO_PROFILE_LABEL = "No profile";
 
 	@SuppressWarnings( "unused" )
 	@Parameter
@@ -71,8 +71,8 @@ public class S3Settings extends DynamicCommand
 	private String awsProfileInfo = "<html>"
 			+ "<body width=" + WIDTH + "cm align=left>"
 			+ "Region, endpoint_url and credentials of pasted s3:// locations are taken from this profile in ~/.aws/config and ~/.aws/credentials.<br>"
-			+ "'" + AWS_DEFAULT_LABEL
-			+ "' uses the AWS_PROFILE environment variable, else the 'default' profile, else anonymous access.<br>"
+			+ "'" + NO_PROFILE_LABEL
+			+ "' uses the profile named by the AWS_PROFILE environment variable, else the 'default' profile, else anonymous access, always with region us-east-1.<br>"
 			+ "Profiles added to these files show up here the next time this dialog is opened."
 			+ "</body>"
 			+ "</html>";
@@ -82,7 +82,7 @@ public class S3Settings extends DynamicCommand
 	@Override
 	public void run()
 	{
-		settings.setAwsProfile( AWS_DEFAULT_LABEL.equals( awsProfile ) ? null : awsProfile );
+		settings.setAwsProfile( NO_PROFILE_LABEL.equals( awsProfile ) ? null : awsProfile );
 		logger.debug( "Now saving OME-Zarr settings to user preferences. awsProfile: {}", settings.getAwsProfile() );
 		settings.saveSettingsToPreferences( prefService );
 	}
@@ -100,23 +100,23 @@ public class S3Settings extends DynamicCommand
 		getInfo().getMutableInput( "awsProfile", String.class ).setChoices( availableProfiles() );
 	}
 
-	/** {@link #AWS_DEFAULT_LABEL}, then the profiles defined in the AWS files, if any. */
+	/** {@link #NO_PROFILE_LABEL}, then the profiles defined in the AWS files, if any. */
 	static List< String > availableProfiles()
 	{
 		final List< String > choices = new ArrayList<>();
-		choices.add( AWS_DEFAULT_LABEL );
+		choices.add( NO_PROFILE_LABEL );
 		choices.addAll( AwsProfiles.names() );
 		return choices;
 	}
 
-	/** The choice standing for {@code awsProfile}, or the AWS default when it is unset or no longer defined. */
+	/** The choice standing for {@code awsProfile}, or {@link #NO_PROFILE_LABEL} when it is unset or no longer defined. */
 	private static String awsProfileChoiceFor( final String awsProfile )
 	{
 		if ( awsProfile == null )
-			return AWS_DEFAULT_LABEL;
+			return NO_PROFILE_LABEL;
 		if ( AwsProfiles.names().contains( awsProfile ) )
 			return awsProfile;
-		logger.debug( "The configured AWS profile '{}' is no longer defined, offering '{}' instead.", awsProfile, AWS_DEFAULT_LABEL );
-		return AWS_DEFAULT_LABEL;
+		logger.debug( "The configured AWS profile '{}' is no longer defined, offering '{}' instead.", awsProfile, NO_PROFILE_LABEL );
+		return NO_PROFILE_LABEL;
 	}
 }

@@ -111,9 +111,9 @@ class S3SettingsTest
 		}
 	}
 
-	/** Choosing {@link S3Settings#AWS_DEFAULT_LABEL} replaces a saved profile with none ({@code null}). */
+	/** Choosing {@link S3Settings#NO_PROFILE_LABEL} replaces a saved profile with none ({@code null}). */
 	@Test
-	void testRunWithAwsDefaultStoresNoProfile() throws ReflectiveOperationException
+	void testRunWithNoProfileStoresNull() throws ReflectiveOperationException
 	{
 		try (Context context = new Context())
 		{
@@ -122,7 +122,7 @@ class S3SettingsTest
 			saveProfile( prefService, "first" );
 
 			final S3Settings ui = initializedDialog( prefService );
-			setField( ui, "awsProfile", S3Settings.AWS_DEFAULT_LABEL );
+			setField( ui, "awsProfile", S3Settings.NO_PROFILE_LABEL );
 			ui.run();
 
 			assertNull( OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService ).getAwsProfile() );
@@ -143,32 +143,32 @@ class S3SettingsTest
 		}
 	}
 
-	/** A fresh preferences store preselects {@link S3Settings#AWS_DEFAULT_LABEL}. */
+	/** A fresh preferences store preselects {@link S3Settings#NO_PROFILE_LABEL}. */
 	@Test
-	void testInitPreselectsAwsDefaultWhenNothingIsSaved() throws ReflectiveOperationException
+	void testInitPreselectsNoProfileWhenNothingIsSaved() throws ReflectiveOperationException
 	{
 		try (Context context = new Context())
 		{
 			final PrefService prefService = context.getService( PrefService.class );
 			prefService.clearAll();
 
-			assertEquals( S3Settings.AWS_DEFAULT_LABEL, getProfileFieldValue( initializedDialog( prefService ) ) );
+			assertEquals( S3Settings.NO_PROFILE_LABEL, getProfileFieldValue( initializedDialog( prefService ) ) );
 		}
 	}
 
-	/** The choices are {@link S3Settings#AWS_DEFAULT_LABEL}, then the profiles in file order. */
+	/** The choices are {@link S3Settings#NO_PROFILE_LABEL}, then the profiles in file order. */
 	@Test
-	void testAvailableProfilesListsAwsDefaultFirst()
+	void testAvailableProfilesListsNoProfileFirst()
 	{
-		assertEquals( Arrays.asList( S3Settings.AWS_DEFAULT_LABEL, "first", "second" ), S3Settings.availableProfiles() );
+		assertEquals( Arrays.asList( S3Settings.NO_PROFILE_LABEL, "first", "second" ), S3Settings.availableProfiles() );
 	}
 
-	/** With no AWS files, only {@link S3Settings#AWS_DEFAULT_LABEL} is offered. */
+	/** With no AWS files, only {@link S3Settings#NO_PROFILE_LABEL} is offered. */
 	@Test
-	void testAvailableProfilesWithoutAwsFilesOffersOnlyAwsDefault()
+	void testAvailableProfilesWithoutAwsFilesOffersOnlyNoProfile()
 	{
 		System.setProperty( CONFIG_PROPERTY, tempDir.resolve( "missing-config" ).toString() );
-		assertEquals( Collections.singletonList( S3Settings.AWS_DEFAULT_LABEL ), S3Settings.availableProfiles() );
+		assertEquals( Collections.singletonList( S3Settings.NO_PROFILE_LABEL ), S3Settings.availableProfiles() );
 	}
 
 	private static void saveProfile( final PrefService prefService, final String awsProfile )
