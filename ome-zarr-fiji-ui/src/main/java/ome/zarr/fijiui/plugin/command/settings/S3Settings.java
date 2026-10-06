@@ -58,11 +58,11 @@ public class S3Settings extends DynamicCommand
 	/** The choice that stands for no named AWS profile, i.e., the AWS SDK default. */
 	static final String AWS_DEFAULT_LABEL = "AWS default";
 
-	@SuppressWarnings( "all" )
+	@SuppressWarnings( "unused" )
 	@Parameter
 	private PrefService prefService;
 
-	@SuppressWarnings( "all" )
+	@SuppressWarnings( "unused" )
 	@Parameter( label = "AWS profile for s3:// locations", description = "A profile from ~/.aws/config or ~/.aws/credentials", initializer = "initAwsProfiles" )
 	private String awsProfile;
 
