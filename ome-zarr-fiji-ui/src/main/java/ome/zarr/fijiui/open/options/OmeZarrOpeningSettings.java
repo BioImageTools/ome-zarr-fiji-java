@@ -47,6 +47,10 @@ import ome.zarr.fiji.open.OmeZarrOpenerService;
  * The opener is stored as its plugin name rather than as a fixed set of
  * choices, so a plugin that registers its own {@link OmeZarrOpener} can be selected
  * here like the built-in ones.
+ * <p>
+ * The constructors take the settings that every open needs (opener, preferred
+ * width, backend). Settings that only some opens need, currently the AWS
+ * profile for {@code s3:} URIs, are set afterwards with a setter.
  */
 public class OmeZarrOpeningSettings
 {
