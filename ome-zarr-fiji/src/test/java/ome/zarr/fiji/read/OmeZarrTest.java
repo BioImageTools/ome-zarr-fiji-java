@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,8 +32,10 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.imagej.DatasetService;
@@ -45,15 +47,32 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
 import org.scijava.display.DisplayService;
 
+import org.scijava.convert.ConvertService;
+
+import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import bdv.cache.CacheControl;
 import bdv.util.BdvHandle;
+import bdv.viewer.BasicViewerState;
+import bdv.viewer.DisplayMode;
+import bdv.viewer.ViewerState;
+import bdv.viewer.render.MultiResolutionRenderer;
+import bdv.viewer.render.RenderTarget;
+import bdv.viewer.render.awt.BufferedImageRenderResult;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.Roi;
+import net.imagej.Dataset;
+import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.numeric.ARGBType;
 
 import javax.swing.SwingUtilities;
 
 import ome.zarr.ZarrTestUtils;
+import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidBackend;
@@ -364,6 +383,59 @@ class OmeZarrTest
 	}
 
 	/**
+	 * A rectangle filled in the ImageJ window lands in the cell images of the shared
+	 * {@link PyramidContents}, so BigDataViewer, opened from the same {@link OmeZarr},
+	 * renders it too.
+	 */
+	@ParameterizedTest
+	@MethodSource( "backends" )
+	void rectangleFilledInImageJIsRenderedInBdv( PyramidBackend backend ) throws Exception
+	{
+		// channel 0 is never 0 in DATASET (see create_5d.py), so a 0-filled rectangle stands out
+		final int x = 10, y = 20, width = 15, height = 8, z = 1, c = 1, t = 1;
+		final int FILLED_VALUE = 0;
+		// x=64, y=64, z=16, c=3, t=4
+		Path path = ZarrTestUtils.resourcePath( DATASET );
+		try (Context context = new Context())
+		{
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend );
+			omeZarr.showInImageJ();
+			SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the show
+			ImagePlus imagePlus = WindowManager.getCurrentImage();
+			// check that the opened ImagePlus is a PyramidalDataset
+			PyramidalDataset dataset = assertInstanceOf( PyramidalDataset.class,
+					context.getService( ConvertService.class ).convert( imagePlus, Dataset.class ) );
+
+			imagePlus.setPosition( c, z, t );
+			imagePlus.setRoi( new Roi( x, y, width, height ) );
+			imagePlus.getProcessor().setValue( FILLED_VALUE );
+			imagePlus.getProcessor().fill( imagePlus.getRoi() );
+			imagePlus.setPosition( c, z + 1, t ); // NB: the virtual stack writes a plane back only when leaving it
+
+			BdvHandle bdvHandle = omeZarr.showInBdv();
+			PyramidalBdv< ? > pyramidalBdv =
+					assertInstanceOf( PyramidalBdv.class, context.getService( PyramidalService.class ).getActivePyramidal() );
+			assertSame( dataset.getPyramidContents(), pyramidalBdv.getPyramidContents() );
+
+			ViewerState state = new BasicViewerState( bdvHandle.getViewerPanel().state().snapshot() );
+			state.setDisplayMode( DisplayMode.SINGLE ); // channel 2 is green too
+			state.setCurrentSource( pyramidalBdv.asSources().get( c - 1 ) ); // zero-based channel index
+			state.setCurrentTimepoint( t - 1 ); // zero-based timepoint index
+			AffineTransform3D sliceZ = new AffineTransform3D();
+			sliceZ.translate( 0, 0, -( z - 1 ) ); // zero-based z index
+			state.setViewerTransform( sliceZ );
+			BufferedImage frame = render( state, 64, 64 );
+
+			assertEquals( FILLED_VALUE, ARGBType.green( frame.getRGB( x + 2, y + 2 ) ), "inside the rectangle" );
+			assertEquals( FILLED_VALUE, ARGBType.green( frame.getRGB( x + width - 2, y + height - 2 ) ), "inside the rectangle" );
+			assertNotEquals( FILLED_VALUE, ARGBType.green( frame.getRGB( x - 2, y - 2 ) ), "outside the rectangle" );
+
+			bdvHandle.close();
+			SwingUtilities.invokeAndWait( () -> context.getService( DisplayService.class ).getActiveDisplay().close() );
+		}
+	}
+
+	/**
 	 * With the N5 backend selected, the user is told the reader cannot read
 	 * {@code .ozx} and where to switch it.
 	 */
@@ -401,5 +473,50 @@ class OmeZarrTest
 			assertNotNull( dataset );
 			SwingUtilities.invokeAndWait( () -> context.getService( DisplayService.class ).getActiveDisplay().close() );
 		}
+	}
+
+	/** Renders {@code state} offscreen the way a BigDataViewer window would, without volatile placeholders. */
+	private static BufferedImage render( final ViewerState state, final int width, final int height )
+	{
+		final AtomicReference< BufferedImageRenderResult > rendered = new AtomicReference<>();
+		final RenderTarget< BufferedImageRenderResult > target = new RenderTarget< BufferedImageRenderResult >()
+		{
+			private final BufferedImageRenderResult reusable = new BufferedImageRenderResult();
+
+			@Override
+			public BufferedImageRenderResult getReusableRenderResult()
+			{
+				return reusable;
+			}
+
+			@Override
+			public BufferedImageRenderResult createRenderResult()
+			{
+				return new BufferedImageRenderResult();
+			}
+
+			@Override
+			public void setRenderResult( final BufferedImageRenderResult renderResult )
+			{
+				rendered.set( renderResult );
+			}
+
+			@Override
+			public int getWidth()
+			{
+				return width;
+			}
+
+			@Override
+			public int getHeight()
+			{
+				return height;
+			}
+		};
+		final MultiResolutionRenderer renderer = new MultiResolutionRenderer( target, () -> {}, new double[] { 1 }, 0, 1,
+				null, false, new CacheControl.Dummy() );
+		renderer.requestRepaint();
+		renderer.paint( state );
+		return rendered.get().getBufferedImage();
 	}
 }
