@@ -158,17 +158,17 @@ class S3SettingsTest
 
 	/** The choices are {@link S3Settings#AWS_DEFAULT_LABEL}, then the profiles in file order. */
 	@Test
-	void testAwsProfileChoicesListsAwsDefaultFirst()
+	void testAvailableProfilesListsAwsDefaultFirst()
 	{
-		assertEquals( Arrays.asList( S3Settings.AWS_DEFAULT_LABEL, "first", "second" ), S3Settings.awsProfileChoices() );
+		assertEquals( Arrays.asList( S3Settings.AWS_DEFAULT_LABEL, "first", "second" ), S3Settings.availableProfiles() );
 	}
 
 	/** With no AWS files, only {@link S3Settings#AWS_DEFAULT_LABEL} is offered. */
 	@Test
-	void testAwsProfileChoicesWithoutAwsFilesOffersOnlyAwsDefault()
+	void testAvailableProfilesWithoutAwsFilesOffersOnlyAwsDefault()
 	{
 		System.setProperty( CONFIG_PROPERTY, tempDir.resolve( "missing-config" ).toString() );
-		assertEquals( Collections.singletonList( S3Settings.AWS_DEFAULT_LABEL ), S3Settings.awsProfileChoices() );
+		assertEquals( Collections.singletonList( S3Settings.AWS_DEFAULT_LABEL ), S3Settings.availableProfiles() );
 	}
 
 	private static void saveProfile( final PrefService prefService, final String awsProfile )

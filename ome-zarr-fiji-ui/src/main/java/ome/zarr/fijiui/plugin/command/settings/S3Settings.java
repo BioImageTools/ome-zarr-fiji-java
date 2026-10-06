@@ -97,11 +97,11 @@ public class S3Settings extends DynamicCommand
 	@SuppressWarnings( "unused" )
 	private void initAwsProfiles()
 	{
-		getInfo().getMutableInput( "awsProfile", String.class ).setChoices( awsProfileChoices() );
+		getInfo().getMutableInput( "awsProfile", String.class ).setChoices( availableProfiles() );
 	}
 
 	/** {@link #AWS_DEFAULT_LABEL}, then the profiles defined in the AWS files, if any. */
-	static List< String > awsProfileChoices()
+	static List< String > availableProfiles()
 	{
 		final List< String > choices = new ArrayList<>();
 		choices.add( AWS_DEFAULT_LABEL );
