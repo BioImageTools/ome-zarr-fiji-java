@@ -80,7 +80,7 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	@Parameter
 	private ObjectService objectService;
 
-	/** Registered BDV windows and the dataset each one displays. */
+	/** Registered BDV windows, each with the dataset owning its current source. */
 	private final Map< Window, Pyramidal > bdvWindows = new ConcurrentHashMap<>();
 
 	/** ImagePlus instances known to wrap a {@link Pyramidal}, populated on IJ window focus. */
@@ -152,7 +152,8 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	}
 
 	/**
-	 * Registers a BDV {@code window} and the {@code dataset} it displays, and makes it the active pyramidal.
+	 * Registers a BDV {@code window} and the {@code dataset} owning its current source, replacing
+	 * the window's previous one, and makes it the active pyramidal.
 	 */
 	public void registerBdvWindow( final Window window, final Pyramidal dataset )
 	{
