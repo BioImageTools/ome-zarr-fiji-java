@@ -1,0 +1,68 @@
+{
+  "attributes": {
+    "ome": {
+      "omero": {
+        "channels": [
+          {
+            "label": "labels",
+            "color": "FF00FF",
+            "active": true,
+            "window": {
+              "start": 0,
+              "end": 1,
+              "min": 0,
+              "max": 27
+            }
+          }
+        ],
+        "rdefs": {
+          "model": "color"
+        }
+      },
+      "version": "0.5",
+      "multiscales": [
+        {
+          "datasets": [
+            {
+              "path": "s0",
+              "coordinateTransformations": [
+                {
+                  "type": "scale",
+                  "scale": [
+                    1.0,
+                    1.0
+                  ]
+                }
+              ]
+            },
+            {
+              "path": "s1",
+              "coordinateTransformations": [
+                {
+                  "type": "scale",
+                  "scale": [
+                    2.0,
+                    2.0
+                  ]
+                }
+              ]
+            }
+          ],
+          "name": "logo_labels",
+          "axes": [
+            {
+              "name": "y",
+              "type": "space"
+            },
+            {
+              "name": "x",
+              "type": "space"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}
