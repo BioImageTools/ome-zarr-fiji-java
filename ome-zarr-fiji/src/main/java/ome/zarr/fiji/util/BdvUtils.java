@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -51,6 +51,7 @@ import bdv.viewer.ConverterSetupBounds;
 import bdv.viewer.ConverterSetups;
 import bdv.viewer.SourceAndConverter;
 import bdv.viewer.ViewerState;
+import bdv.viewer.ViewerStateChange;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.metadata.Omero;
@@ -89,7 +90,7 @@ public class BdvUtils
 		if ( topLevelContainer instanceof Window )
 		{
 			final Window window = ( Window ) topLevelContainer;
-			registerBdvWindow( pyramidalBdv, window, pyramidalService );
+			registerBdvWindow( pyramidalBdv, window, bdvHandle, pyramidalService );
 		}
 		return bdvHandle;
 	}
@@ -99,18 +100,34 @@ public class BdvUtils
 	 * registers the BDV window with it for focus tracking. Also installs a listener to decrement the
 	 * reference count (and unregister the window) when the BDV window closes.
 	 * <p>
+	 * A BDV window can show several pyramidals.
+	 * The {@code pyramidalService} maps the BDV Window to the {@code pyramidal} owning BDV's current
+	 * source.
+	 * So {@code pyramidal} is registered now only if its source is current (BDV makes the
+	 * first source added to an empty viewer current). The {@code pyramidal} is updated whenever the user makes one of its
+	 * sources current.
+	 * <p>
 	 * Focus switches themselves are observed centrally by {@link PyramidalService} via the AWT
 	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
 	 * @param pyramidalBdv the {@link PyramidalBdv} the window displays
 	 * @param window the top-level window to track
+	 * @param bdvHandle the handle of the BDV in {@code window}
 	 * @param pyramidalService the service to register with, or {@code null} to only reference-count
 	 */
 	public static void registerBdvWindow( final PyramidalBdv< ? > pyramidalBdv, final Window window,
-			final PyramidalService pyramidalService )
+			final BdvHandle bdvHandle, final PyramidalService pyramidalService )
 	{
+		pyramidalBdv.setBdvHandle( bdvHandle );
 		pyramidalBdv.incrementReferences();
 		if ( pyramidalService != null )
-			pyramidalService.registerBdvWindow( window, pyramidalBdv );
+		{
+			if ( pyramidalBdv.isCurrentSource() )
+				pyramidalService.registerBdvWindow( window, pyramidalBdv );
+			bdvHandle.getViewerPanel().state().changeListeners().add( change -> {
+				if ( change == ViewerStateChange.CURRENT_SOURCE_CHANGED && pyramidalBdv.isCurrentSource() )
+					pyramidalService.registerBdvWindow( window, pyramidalBdv );
+			} );
+		}
 		window.addWindowListener( new WindowAdapter()
 		{
 			@Override
