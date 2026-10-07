@@ -102,6 +102,20 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 
 	private static final String NO_LOCATION_MESSAGE = "No OME-Zarr location given";
 
+	public ZarrJavaPyramidBackend()
+	{
+		super();
+	}
+
+	/**
+	 * @param awsProfile the AWS profile for {@code s3:} URIs, or {@code null} for
+	 *   the AWS SDK default; see {@link AbstractPyramidBackend#AbstractPyramidBackend(String)}
+	 */
+	public ZarrJavaPyramidBackend( final String awsProfile )
+	{
+		super( awsProfile );
+	}
+
 	/**
 	 * Convenience entry point for reading an OME-Zarr image with the zarr-java
 	 * backend without first constructing a backend instance. Equivalent to

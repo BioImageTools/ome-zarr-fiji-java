@@ -69,17 +69,22 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private String awsProfile;
+	private final String awsProfile;
+
+	/** A backend that reads {@code s3:} URIs with the AWS SDK default profile. */
+	protected AbstractPyramidBackend()
+	{
+		this( null );
+	}
 
 	/**
-	 * Sets the AWS profile whose region, {@code endpoint_url} and credentials are
-	 * used for {@code s3:} URIs. Only {@code s3:} reads consult it.
-	 *
-	 * @param awsProfile a name from {@link AwsProfiles#names()}, or {@code null}
-	 *   (the default) for the AWS SDK default: {@code AWS_PROFILE}, else
-	 *   {@code default}
+	 * @param awsProfile the AWS profile whose region, {@code endpoint_url} and
+	 *   credentials are used for {@code s3:} URIs: a name from
+	 *   {@link AwsProfiles#names()}, or {@code null} for the AWS SDK default
+	 *   ({@code AWS_PROFILE}, else {@code default}). Only {@code s3:} reads
+	 *   consult it.
 	 */
-	public void setAwsProfile( final String awsProfile )
+	protected AbstractPyramidBackend( final String awsProfile )
 	{
 		this.awsProfile = awsProfile;
 	}
@@ -87,7 +92,7 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	/**
 	 * @return the AWS profile for {@code s3:} URIs, or {@code null} for the AWS SDK default
 	 */
-	public String getAwsProfile()
+	protected String getAwsProfile()
 	{
 		return awsProfile;
 	}

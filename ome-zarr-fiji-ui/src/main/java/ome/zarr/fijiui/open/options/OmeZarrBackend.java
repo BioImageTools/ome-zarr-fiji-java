@@ -30,7 +30,7 @@ package ome.zarr.fijiui.open.options;
 
 import java.util.NoSuchElementException;
 
-import ome.zarr.imglib2.AbstractPyramidBackend;
+import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 
@@ -78,19 +78,32 @@ public enum OmeZarrBackend
 	}
 
 	/**
-	 * Creates a fresh backend for the backend library this constant represents.
+	 * Creates a fresh backend for the backend library this constant represents,
+	 * reading {@code s3:} URIs with the AWS SDK default profile.
 	 *
 	 * @return a new backend instance, never {@code null}
 	 */
-	public AbstractPyramidBackend createBackend()
+	public PyramidBackend createBackend()
+	{
+		return createBackend( null );
+	}
+
+	/**
+	 * Creates a fresh backend for the backend library this constant represents.
+	 *
+	 * @param awsProfile the AWS profile for {@code s3:} URIs, or {@code null} for
+	 *   the AWS SDK default
+	 * @return a new backend instance, never {@code null}
+	 */
+	public PyramidBackend createBackend( final String awsProfile )
 	{
 		switch ( this )
 		{
 		case ZARR_JAVA:
-			return new ZarrJavaPyramidBackend();
+			return new ZarrJavaPyramidBackend( awsProfile );
 		case N5:
 		default:
-			return new N5PyramidBackend();
+			return new N5PyramidBackend( awsProfile );
 		}
 	}
 }

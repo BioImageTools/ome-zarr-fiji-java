@@ -53,7 +53,6 @@ import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.open.options.OmeZarrBackend;
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fijiui.util.ScriptUtils;
-import ome.zarr.imglib2.AbstractPyramidBackend;
 import ome.zarr.imglib2.PyramidBackend;
 
 /**
@@ -197,11 +196,9 @@ public class OmeZarrOpenActions
 			final OmeZarrOpeningSettings settings, final Consumer< String > errorHandler )
 	{
 		final OmeZarrBackend backend = settings == null ? OmeZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
-		final AbstractPyramidBackend pyramidBackend = backend.createBackend();
-		if ( settings != null )
-			pyramidBackend.setAwsProfile( settings.getAwsProfile() );
+		final String awsProfile = settings == null ? null : settings.getAwsProfile();
 		final Integer preferredMaxWidth = settings == null ? null : settings.getPreferredMaxWidth();
-		return new OmeZarr( inputUri, context, pyramidBackend, preferredMaxWidth, errorHandler );
+		return new OmeZarr( inputUri, context, backend.createBackend( awsProfile ), preferredMaxWidth, errorHandler );
 	}
 
 	private String uriFormattedForN5Dialog( final URI uri )

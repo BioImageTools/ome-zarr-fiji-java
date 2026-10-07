@@ -94,6 +94,20 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	/** Display name of this backend, used in user-facing messages. */
 	private static final String NAME = "N5";
 
+	public N5PyramidBackend()
+	{
+		super();
+	}
+
+	/**
+	 * @param awsProfile the AWS profile for {@code s3:} URIs, or {@code null} for
+	 *   the AWS SDK default; see {@link AbstractPyramidBackend#AbstractPyramidBackend(String)}
+	 */
+	public N5PyramidBackend( final String awsProfile )
+	{
+		super( awsProfile );
+	}
+
 	/**
 	 * Convenience entry point for reading an OME-Zarr image with the N5 backend
 	 * without first constructing a backend instance. Equivalent to
