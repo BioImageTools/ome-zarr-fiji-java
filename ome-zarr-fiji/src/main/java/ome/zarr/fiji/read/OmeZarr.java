@@ -439,14 +439,28 @@ public class OmeZarr
 	// NB: the return value is for API and script users
 	public BdvHandle showInBdv()
 	{
+		return showInBdv( null );
+	}
+
+	/**
+	 * Adds the {@link ome.zarr.fiji.Pyramidal} as a {@link PyramidalBdv} to the already open
+	 * BigDataViewer window of {@code bdvHandle}, and registers it with the {@link PyramidalService} lifecycle.
+	 * Unlike {@link #showInBdv()}, it does not change the viewer's timepoint.
+	 *
+	 * @param bdvHandle the BigDataViewer to add to, or {@code null} to open a new window like {@link #showInBdv()}
+	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed or
+	 *   the user declined to open the image.
+	 */
+	public BdvHandle showInBdv( final BdvHandle bdvHandle )
+	{
 		return openPyramidImage(
 				() -> {
 					if ( uncalibratedAndDeclined( readContents() ) )
 						return null;
 					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, readContents() );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
-					final BdvHandle result = BdvUtils.show( pyramidal, pyramidalService );
-					logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );
+					final BdvHandle result = BdvUtils.show( pyramidal, bdvHandle, pyramidalService );
+					logger.info( "{} pyramidal in BigDataViewer: {}", bdvHandle == null ? "Opened" : "Added", inputUri );
 					return result;
 				} );
 	}
