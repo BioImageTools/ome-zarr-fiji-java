@@ -52,6 +52,9 @@ If the dropped / pasted / linked target is not recognized as a **OME-Zarr v0.3 -
 Drop a local OME-Zarr folder or an OME-Zarr URI onto Fiji. What happens next is set in the
 [Opening Behavior Settings](#opening-behavior-settings).
 
+Dropping onto the image area of a BigDataViewer window opened by this plugin instead adds the OME-Zarr to that
+window, e.g., to overlay a segmentation on the raw data. This does not depend on the opening behavior settings.
+
 ### Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)
 
 * Supports local paths, http(s) URLs, and `s3://` URIs

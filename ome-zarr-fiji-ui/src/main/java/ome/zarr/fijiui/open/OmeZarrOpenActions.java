@@ -192,7 +192,7 @@ public class OmeZarrOpenActions
 	 * OmeZarr for {@code inputUri} using the backend and preferred width from
 	 * {@code settings}, or the defaults when no settings are given.
 	 */
-	private static OmeZarr omeZarrFor( final URI inputUri, final Context context,
+	static OmeZarr omeZarrFor( final URI inputUri, final Context context,
 			final OmeZarrOpeningSettings settings, final Consumer< String > errorHandler )
 	{
 		final OmeZarrBackend backend = settings == null ? OmeZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
@@ -269,7 +269,8 @@ public class OmeZarrOpenActions
 
 	/**
 	 * Adds the dataset to the open BigDataViewer of {@code bdvHandle}, or opens it in a new one if
-	 * {@code null}. Delegates to {@link OmeZarr#showInBdv(BdvHandle)}.
+	 * {@code null}. Delegates to {@link OmeZarr#showInBdv(BdvHandle)} and makes a new window
+	 * {@link OmeZarrDropListener#install accept dropped OME-Zarrs}.
 	 *
 	 * @param bdvHandle the BigDataViewer to add to, or {@code null} to open a new window
 	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
@@ -277,7 +278,10 @@ public class OmeZarrOpenActions
 	@SuppressWarnings( "UnusedReturnValue" )
 	public BdvHandle showInBdv( final BdvHandle bdvHandle )
 	{
-		return omeZarr.showInBdv( bdvHandle );
+		final BdvHandle result = omeZarr.showInBdv( bdvHandle );
+		if ( bdvHandle == null && result != null ) // NB: only install the drop target on a new window, not on an existing one
+			OmeZarrDropListener.install( result, omeZarr.context() );
+		return result;
 	}
 
 	/**
