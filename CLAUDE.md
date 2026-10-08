@@ -104,6 +104,14 @@ image: the
 `@Parameter( type = ItemIO.OUTPUT )` on the `dataset` field only hands it to the caller, and a script that captures it
 decides what to do with it. Being plain text rather than a chooser, it accepts `http(s):` too, but *not* `s3:`.
 
+A second one is dropping onto the image area of a BDV window this plugin opened: `OmeZarrDropListener.install`
+(called by `OmeZarrOpenActions.showInBdv` for a new window, and by `OpenInBDVCommand`) puts an AWT `DropTarget` on the
+viewer's image area, whose `OmeZarrDropListener` adds the dropped OME-Zarr to *that* window via
+`OmeZarr.showInBdv( BdvHandle )`, ignoring the configured opener — where it was dropped already says what the user wants. It validates with `isZarr` like every other route (so no `s3:`) and
+reads with the persisted backend and preferred width, loaded at drop time. It lives in `fiji-ui` because those settings
+do, so a script calling `OmeZarr.showInBdv()` directly gets a window without it. BDV windows opened by other tools get
+no drop target: see issue #127 and bigdataviewer/bigdataviewer-core#227.
+
 `OmeZarr.showInImageJ()`/`showInBdv()` return what they showed (`null` on failure or when the user
 declined) and `OmeZarrOpenActions` mirrors that; the plugin's own call sites want only the side effect, hence the
 `@SuppressWarnings( "UnusedReturnValue" )` — the values exist for API and script users.

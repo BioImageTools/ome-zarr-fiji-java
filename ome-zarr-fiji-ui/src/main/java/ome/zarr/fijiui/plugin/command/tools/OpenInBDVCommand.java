@@ -38,10 +38,12 @@ import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import bdv.util.BdvHandle;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.util.BdvUtils;
+import ome.zarr.fijiui.open.OmeZarrDropListener;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
@@ -71,6 +73,7 @@ public class OpenInBDVCommand implements Command
 			return;
 		}
 		final PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( this.pyramidal.getContext(), this.pyramidal.getPyramidContents() );
-		BdvUtils.show( pyramidalBdv, pyramidalService );
+		final BdvHandle bdvHandle = BdvUtils.show( pyramidalBdv, pyramidalService );
+		OmeZarrDropListener.install( bdvHandle, this.pyramidal.getContext() );
 	}
 }
