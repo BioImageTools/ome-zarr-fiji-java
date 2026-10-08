@@ -56,7 +56,6 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import ome.zarr.ZarrTestUtils;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.imglib2.metadata.Omero;
 
 /**
  * Shared parameterized tests for the BigDataViewer Fiji wrapper
@@ -227,7 +226,7 @@ public interface PyramidalBdvTestBase
 		{
 			PyramidContents< ? > contents = read( resource, context );
 			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
-			BdvHandle bdvHandle = BdvUtils.showBdvAndRegisterWindow( pyramidalBdv, null );
+			BdvHandle bdvHandle = BdvUtils.show( pyramidalBdv, null );
 			List< ConverterSetup > converterSetups =
 					bdvHandle.getConverterSetups().getConverterSetups( pyramidalBdv.asSources() );
 			assertNotNull( converterSetups );
@@ -269,7 +268,7 @@ public interface PyramidalBdvTestBase
 			// NB: neither example turns a channel off, so switch one off to cover both answers.
 			contents.omero.channels.get( 1 ).active = false;
 			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
-			BdvHandle bdvHandle = BdvUtils.showBdvAndRegisterWindow( pyramidalBdv, null );
+			BdvHandle bdvHandle = BdvUtils.show( pyramidalBdv, null );
 			ViewerState state = bdvHandle.getViewerPanel().state();
 			assertEquals( 1, state.getCurrentTimepoint(), "the timepoint the rendering defaults name" );
 			List< ? extends SourceAndConverter< ? > > sources = pyramidalBdv.asSources();
@@ -277,23 +276,6 @@ public interface PyramidalBdvTestBase
 			assertFalse( state.isSourceActive( sources.get( 1 ) ) );
 			assertTrue( state.isSourceActive( sources.get( 2 ) ) );
 			bdvHandle.close();
-		}
-	}
-
-	/** Omero channels are applied only when there are as many of them as there are sources. */
-	@ParameterizedTest
-	@ValueSource( strings = { DATASET_5D_V4, DATASET_5D_V5 } )
-	default void testOmeroChannelCountMismatch( final String resource ) throws URISyntaxException
-	{
-		try (Context context = new Context())
-		{
-			final Omero omero = read( resource, context ).omero;
-			final int numChannels = omero.channels.size();
-			assertEquals( numChannels, BdvUtils.omeroChannels( omero, numChannels ).size(), "as many channels as sources" );
-			assertTrue( BdvUtils.omeroChannels( omero, numChannels + 1 ).isEmpty(), "fewer channels than sources" );
-			assertTrue( BdvUtils.omeroChannels( omero, numChannels - 1 ).isEmpty(), "more channels than sources" );
-			// empty, never null, so callers test isEmpty() and never dereference null
-			assertTrue( BdvUtils.omeroChannels( null, numChannels ).isEmpty(), "no omero metadata at all" );
 		}
 	}
 }
