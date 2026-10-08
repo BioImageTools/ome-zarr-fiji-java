@@ -80,7 +80,7 @@ class ClipboardUtilsTest
 	{
 		assertNull( ClipboardUtils.stringToUri( clipboardContents, errorHandler ) );
 		assertEquals( 1, errors.size() );
-		assertTrue( errors.get( 0 ).contains( "clipboard" ) );
+		assertTrue( errors.get( 0 ).contains( "no text" ) );
 	}
 
 	@Test
@@ -180,7 +180,7 @@ class ClipboardUtilsTest
 		setClipboard( "" );
 		assertNull( ClipboardUtils.readClipboardAsUri( errorHandler ) );
 		assertEquals( 1, errors.size() );
-		assertTrue( errors.get( 0 ).contains( "clipboard" ) );
+		assertTrue( errors.get( 0 ).contains( "no text" ) );
 	}
 
 	@Test
@@ -211,7 +211,7 @@ class ClipboardUtilsTest
 				}, null );
 		assertNull( ClipboardUtils.readClipboardAsUri( errorHandler ) );
 		assertEquals( 1, errors.size() );
-		assertTrue( errors.get( 0 ).contains( "clipboard" ) );
+		assertTrue( errors.get( 0 ).contains( "no text" ) );
 	}
 
 	// --- InvalidPathException branch in stringToUri() ---
