@@ -71,6 +71,6 @@ public class OpenInBDVCommand implements Command
 			return;
 		}
 		final PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( this.pyramidal.getContext(), this.pyramidal.getPyramidContents() );
-		BdvUtils.showBdvAndRegisterWindow( pyramidalBdv, pyramidalService );
+		BdvUtils.show( pyramidalBdv, pyramidalService );
 	}
 }
