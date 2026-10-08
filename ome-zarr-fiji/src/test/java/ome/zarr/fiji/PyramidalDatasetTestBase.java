@@ -119,7 +119,7 @@ public interface PyramidalDatasetTestBase
 
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
-			assertArrayEquals( new int[] { 64, 64, 1, 16, 4 }, imagePlus.getDimensions() );
+			assertArrayEquals( new int[] { 64, 64, 3, 16, 4 }, imagePlus.getDimensions() );
 			assertEquals( dataset.getName(), imagePlus.getTitle() );
 		}
 	}
@@ -135,11 +135,11 @@ public interface PyramidalDatasetTestBase
 
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
-			assertArrayEquals( new int[] { 64, 64, 1, 16, 4 }, imagePlus.getDimensions() );
+			assertArrayEquals( new int[] { 64, 64, 3, 16, 4 }, imagePlus.getDimensions() );
 			imagePlus = new PyramidalDataset( context, contents, 1 ).asImagePlus();
 			assertNotNull( imagePlus );
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
-			assertArrayEquals( new int[] { 32, 32, 1, 8, 4 }, imagePlus.getDimensions() );
+			assertArrayEquals( new int[] { 32, 32, 3, 8, 4 }, imagePlus.getDimensions() );
 		}
 	}
 
