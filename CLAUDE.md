@@ -221,8 +221,8 @@ i.e. a SciJava plugin anyway.
   what
   a persisted setting means (`effectiveOpenerName`).
 - Shipped openers – `imagej-preferred-resolution`, `imagej-highest-resolution`, `bdv-multi-resolution`,
-  `n5-importer-dialog`, `n5-viewer-dialog`, `script-editor` – are one class each, next to the `OmeZarrOpenActions` they
-  drive. Only the extension point itself sits in `ome-zarr-fiji`: that is the artifact a downstream opener compiles
+  `bdv-add-to-active`, `n5-importer-dialog`, `n5-viewer-dialog`, `script-editor` – are one class each, next to the
+  `OmeZarrOpenActions` they drive. Only the extension point itself sits in `ome-zarr-fiji`: that is the artifact a downstream opener compiles
   against, and it stays free of concrete openers. Help is a plain button, not an opener.
 
 The selection dialog (`OmeZarrOpenActionChooser`, one icon button per offered opener) is **not** an opener: it opens
@@ -310,7 +310,7 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   pyramids).
 - **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.openers`, `.open.options`, `.plugin`,
   `.plugin.command.*`, `.dialog`, `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`,
-  Swing dialogs in `.dialog`, the six built-in `OmeZarrOpener`s in `.open.openers`. The SciJava commands sit in three
+  Swing dialogs in `.dialog`, the seven built-in `OmeZarrOpener`s in `.open.openers`. The SciJava commands sit in three
   sibling packages under `.plugin.command`, one per menu location: `.fileimport` for the two `File > Import` entries
   plus their shared `FileImportHelper` (package-private, so its tests live there too), `.tools` for the
   `Plugins > OME-Zarr` entries, and `.settings` for `OpeningBehaviorSettings` and `UserScriptSettings`. Commands are

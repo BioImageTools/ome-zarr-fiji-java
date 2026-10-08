@@ -139,6 +139,9 @@ What Fiji does with a dropped / pasted / linked OME-Zarr. The options shipped he
   window. This is useful for large OME-Zarrs.
   Channel names, colors, contrast limits, and the time point are
   [taken from the OME-Zarr metadata](#read-channel-information-from-ome-zarr-metadata), if available.
+* **BigDataViewer (add to active window)**: adds the image as a multi-resolution source to the BigDataViewer
+  window that had focus most recently, e.g., to overlay a segmentation on the raw data. Opens a new BigDataViewer
+  window if none is open, or if an ImageJ image window had focus after it.
 * **N5 importer dialog**: opens the N5 import dialog at the dropped OME-Zarr. It lists the resolution levels, lets you
   choose one, possibly crop it, and opens it in ImageJ.
 * **N5 viewer dialog**: opens the N5 viewer dialog at the dropped OME-Zarr. It lists the resolution levels, lets you
