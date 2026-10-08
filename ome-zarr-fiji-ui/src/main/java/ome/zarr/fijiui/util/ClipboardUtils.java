@@ -122,7 +122,7 @@ public final class ClipboardUtils
 	{
 		if ( possibleUri == null || possibleUri.trim().isEmpty() )
 		{
-			errorHandler.accept( "The clipboard does not contain any text." );
+			errorHandler.accept( "There is no text to interpret as a URL or path." );
 			return null;
 		}
 		final String text = possibleUri.trim();
@@ -155,7 +155,7 @@ public final class ClipboardUtils
 		}
 		catch ( InvalidPathException e )
 		{
-			errorHandler.accept( "Could not interpret the clipboard contents as a URL or path:\n" + text );
+			errorHandler.accept( "Could not interpret the text as a URL or path:\n" + text );
 			return null;
 		}
 	}
