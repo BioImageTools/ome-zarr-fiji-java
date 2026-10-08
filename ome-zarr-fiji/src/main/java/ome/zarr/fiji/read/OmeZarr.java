@@ -444,7 +444,7 @@ public class OmeZarr
 						return null;
 					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, readContents() );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
-					final BdvHandle result = BdvUtils.showBdvAndRegisterWindow( pyramidal, pyramidalService );
+					final BdvHandle result = BdvUtils.show( pyramidal, pyramidalService );
 					logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );
 					return result;
 				} );
