@@ -33,6 +33,7 @@ import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fijiui.open.OmeZarrOpenActions;
 
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
@@ -59,6 +60,6 @@ public class BdvAddToActiveOpener implements OmeZarrOpener
 	{
 		final Pyramidal active = omeZarr.context().getService( PyramidalService.class ).getActivePyramidal();
 		final BdvHandle bdvHandle = active instanceof PyramidalBdv ? ( ( PyramidalBdv< ? > ) active ).getBdvHandle() : null;
-		omeZarr.showInBdv( bdvHandle );
+		new OmeZarrOpenActions( omeZarr ).showInBdv( bdvHandle );
 	}
 }

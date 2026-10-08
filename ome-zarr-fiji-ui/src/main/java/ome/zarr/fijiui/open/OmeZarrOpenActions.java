@@ -189,7 +189,7 @@ public class OmeZarrOpenActions
 	}
 
 	/**
-	 * Reader for {@code inputUri} using the backend, AWS profile and preferred
+	 * OmeZarr for {@code inputUri} using the backend, AWS profile and preferred
 	 * width from {@code settings}, or the defaults when no settings are given.
 	 */
 	private static OmeZarr omeZarrFor( final URI inputUri, final Context context,
@@ -262,11 +262,23 @@ public class OmeZarrOpenActions
 	 *
 	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
 	 */
-	// UnusedReturnValue: the dataset is returned for API and script users
 	@SuppressWarnings( "UnusedReturnValue" )
 	public BdvHandle showInBdv()
 	{
-		return omeZarr.showInBdv();
+		return showInBdv( null );
+	}
+
+	/**
+	 * Adds the dataset to the open BigDataViewer of {@code bdvHandle}, or opens it in a new one if
+	 * {@code null}. Delegates to {@link OmeZarr#showInBdv(BdvHandle)}.
+	 *
+	 * @param bdvHandle the BigDataViewer to add to, or {@code null} to open a new window
+	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
+	 */
+	@SuppressWarnings( "UnusedReturnValue" )
+	public BdvHandle showInBdv( final BdvHandle bdvHandle )
+	{
+		return omeZarr.showInBdv( bdvHandle );
 	}
 
 	/**
