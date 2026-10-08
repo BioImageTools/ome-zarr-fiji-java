@@ -435,7 +435,6 @@ public class OmeZarr
 	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed or
 	 *   the user declined to open the image
 	 */
-	// NB: the return value is for API and script users
 	public BdvHandle showInBdv()
 	{
 		return showInBdv( null );

@@ -183,7 +183,7 @@ class OmeZarrOpenActionsTest
 				// OmeZarr reads nothing, the omeZarr it hands the reader to does.
 				final List< OmeZarr > readers = readerConstruction.constructed();
 				assertEquals( 4, readers.size() );
-				verify( readers.get( 0 ), times( 1 ) ).showInBdv();
+				verify( readers.get( 0 ), times( 1 ) ).showInBdv( null );
 				verify( readers.get( 1 ), times( 1 ) ).showInImageJ( 0 );
 				verify( readers.get( 2 ), times( 1 ) ).showInImageJ();
 				verifyNoInteractions( readers.get( 3 ) );

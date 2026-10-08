@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -189,7 +189,7 @@ public class OmeZarrOpenActions
 	}
 
 	/**
-	 * Reader for {@code inputUri} using the backend and preferred width from
+	 * OmeZarr for {@code inputUri} using the backend and preferred width from
 	 * {@code settings}, or the defaults when no settings are given.
 	 */
 	private static OmeZarr omeZarrFor( final URI inputUri, final Context context,
@@ -261,11 +261,23 @@ public class OmeZarrOpenActions
 	 *
 	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
 	 */
-	// UnusedReturnValue: the dataset is returned for API and script users
 	@SuppressWarnings( "UnusedReturnValue" )
 	public BdvHandle showInBdv()
 	{
-		return omeZarr.showInBdv();
+		return showInBdv( null );
+	}
+
+	/**
+	 * Adds the dataset to the open BigDataViewer of {@code bdvHandle}, or opens it in a new one if
+	 * {@code null}. Delegates to {@link OmeZarr#showInBdv(BdvHandle)}.
+	 *
+	 * @param bdvHandle the BigDataViewer to add to, or {@code null} to open a new window
+	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
+	 */
+	@SuppressWarnings( "UnusedReturnValue" )
+	public BdvHandle showInBdv( final BdvHandle bdvHandle )
+	{
+		return omeZarr.showInBdv( bdvHandle );
 	}
 
 	/**
