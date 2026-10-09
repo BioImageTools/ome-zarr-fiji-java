@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -435,8 +435,21 @@ public class OmeZarr
 	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed or
 	 *   the user declined to open the image
 	 */
-	// NB: the return value is for API and script users
 	public BdvHandle showInBdv()
+	{
+		return showInBdv( null );
+	}
+
+	/**
+	 * Adds the {@link ome.zarr.fiji.Pyramidal} as a {@link PyramidalBdv} to the already open
+	 * BigDataViewer window of {@code bdvHandle}, and registers it with the {@link PyramidalService} lifecycle.
+	 * Unlike {@link #showInBdv()}, it does not change the viewer's timepoint.
+	 *
+	 * @param bdvHandle the BigDataViewer to add to, or {@code null} to open a new window like {@link #showInBdv()}
+	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed or
+	 *   the user declined to open the image.
+	 */
+	public BdvHandle showInBdv( final BdvHandle bdvHandle )
 	{
 		return openPyramidImage(
 				() -> {
@@ -444,8 +457,8 @@ public class OmeZarr
 						return null;
 					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, readContents() );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
-					final BdvHandle result = BdvUtils.showBdvAndRegisterWindow( pyramidal, pyramidalService );
-					logger.info( "Opened pyramidal in BigDataViewer: {}", inputUri );
+					final BdvHandle result = BdvUtils.show( pyramidal, bdvHandle, pyramidalService );
+					logger.info( "{} pyramidal in BigDataViewer: {}", bdvHandle == null ? "Opened" : "Added", inputUri );
 					return result;
 				} );
 	}

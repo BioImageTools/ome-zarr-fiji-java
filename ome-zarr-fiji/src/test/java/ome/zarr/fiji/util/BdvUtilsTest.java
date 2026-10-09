@@ -1,18 +1,18 @@
 /*-
  * #%L
- * OME-Zarr integration into FIJI
+ * OME-Zarr extras for Fiji
  * %%
  * Copyright (C) 2022 - 2026 SciJava developers
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,31 +26,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fijiui.open.openers;
+package ome.zarr.fiji.util;
 
-import ome.zarr.fiji.read.OmeZarr;
-import ome.zarr.fiji.open.OmeZarrOpener;
-import ome.zarr.fijiui.open.OmeZarrOpenActions;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.scijava.Priority;
-import org.scijava.plugin.Plugin;
+import java.util.Arrays;
 
-/**
- * Opens the whole resolution pyramid as a multi-resolution source in a new
- * BigDataViewer window, so it does not have to pick a single level.
- */
-@Plugin( type = OmeZarrOpener.class, name = BdvMultiResolutionOpener.NAME,
-		label = "BigDataViewer (new window)",
-		description = "Open as a multi-resolution source in a new BigDataViewer window",
-		iconPath = "/ome/zarr/fijiui/dialog/bdv_icon.png", priority = Priority.NORMAL )
-public class BdvMultiResolutionOpener implements OmeZarrOpener
+import org.junit.jupiter.api.Test;
+
+import ome.zarr.imglib2.metadata.Omero;
+
+class BdvUtilsTest
 {
-	/** The stable identifier this opener is persisted under. */
-	public static final String NAME = "bdv-multi-resolution";
-
-	@Override
-	public void open( final OmeZarr omeZarr )
+	/** Omero channels are applied only when there are as many of them as there are sources. */
+	@Test
+	void testOmeroChannelCountMismatch()
 	{
-		new OmeZarrOpenActions( omeZarr ).showInBdv();
+		final Omero omero = new Omero();
+		omero.channels = Arrays.asList( new Omero.Channel(), new Omero.Channel(), new Omero.Channel() );
+		final int numChannels = omero.channels.size();
+		assertEquals( numChannels, BdvUtils.omeroChannels( omero, numChannels ).size(), "as many channels as sources" );
+		assertTrue( BdvUtils.omeroChannels( omero, numChannels + 1 ).isEmpty(), "fewer channels than sources" );
+		assertTrue( BdvUtils.omeroChannels( omero, numChannels - 1 ).isEmpty(), "more channels than sources" );
+		// empty, never null, so callers test isEmpty() and never dereference null
+		assertTrue( BdvUtils.omeroChannels( null, numChannels ).isEmpty(), "no omero metadata at all" );
 	}
 }

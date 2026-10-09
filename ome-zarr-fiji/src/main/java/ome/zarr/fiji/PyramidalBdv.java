@@ -52,6 +52,7 @@ import java.util.List;
 
 import bdv.BigDataViewer;
 import bdv.cache.SharedQueue;
+import bdv.util.BdvHandle;
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.SourceAndConverter;
@@ -68,6 +69,8 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	private final PyramidContents< T > contents;
 
 	private final List< SourceAndConverter< T > > sources;
+
+	private BdvHandle bdvHandle;
 
 	public PyramidalBdv( final Context context, final PyramidContents< T > contents )
 	{
@@ -95,6 +98,31 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	public String getName()
 	{
 		return contents.name;
+	}
+
+	/**
+	 * @return the BDV showing this pyramidal, or {@code null} if it is not shown yet
+	 */
+	public BdvHandle getBdvHandle()
+	{
+		return bdvHandle;
+	}
+
+	/**
+	 * Records the BDV showing this pyramidal. One per pyramidal: showing the same instance in a
+	 * second BDV replaces the first.
+	 */
+	public void setBdvHandle( final BdvHandle bdvHandle )
+	{
+		this.bdvHandle = bdvHandle;
+	}
+
+	/**
+	 * @return whether the current source of the BDV showing this pyramidal is one of its sources
+	 */
+	public boolean isCurrentSource()
+	{
+		return bdvHandle != null && sources.contains( bdvHandle.getViewerPanel().state().getCurrentSource() );
 	}
 
 	@SuppressWarnings( "unchecked" )

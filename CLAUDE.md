@@ -104,6 +104,14 @@ comes from the `@Parameter( type = ItemIO.OUTPUT )` on the `dataset` field, whic
 displays after the command runs — so that annotation, not any call in this repo, is what makes the command usable from
 the menu and recordable as a macro. Being plain text rather than a chooser, it accepts `http(s):` too, but *not* `s3:`.
 
+A second one is dropping onto the image area of a BDV window this plugin opened: `OmeZarrDropListener.install`
+(called by `OmeZarrOpenActions.showInBdv` for a new window, and by `OpenInBDVCommand`) puts an AWT `DropTarget` on the
+viewer's image area, whose `OmeZarrDropListener` adds the dropped OME-Zarr to *that* window via
+`OmeZarr.showInBdv( BdvHandle )`, ignoring the configured opener — where it was dropped already says what the user wants. It validates with `isZarr` like every other route (so no `s3:`) and
+reads with the persisted backend and preferred width, loaded at drop time. It lives in `fiji-ui` because those settings
+do, so a script calling `OmeZarr.showInBdv()` directly gets a window without it. BDV windows opened by other tools get
+no drop target: see issue #127 and bigdataviewer/bigdataviewer-core#227.
+
 `OmeZarr.showInImageJ()`/`showInBdv()` return what they showed (`null` on failure or when the user
 declined) and `OmeZarrOpenActions` mirrors that; the plugin's own call sites want only the side effect, hence the
 `@SuppressWarnings( "UnusedReturnValue" )` — the values exist for API and script users.
@@ -221,8 +229,8 @@ i.e. a SciJava plugin anyway.
   what
   a persisted setting means (`effectiveOpenerName`).
 - Shipped openers – `imagej-preferred-resolution`, `imagej-highest-resolution`, `bdv-multi-resolution`,
-  `n5-importer-dialog`, `n5-viewer-dialog`, `script-editor` – are one class each, next to the `OmeZarrOpenActions` they
-  drive. Only the extension point itself sits in `ome-zarr-fiji`: that is the artifact a downstream opener compiles
+  `bdv-add-to-active`, `n5-importer-dialog`, `n5-viewer-dialog`, `script-editor` – are one class each, next to the
+  `OmeZarrOpenActions` they drive. Only the extension point itself sits in `ome-zarr-fiji`: that is the artifact a downstream opener compiles
   against, and it stays free of concrete openers. Help is a plain button, not an opener.
 
 The selection dialog (`OmeZarrOpenActionChooser`, one icon button per offered opener) is **not** an opener: it opens
@@ -310,7 +318,7 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   pyramids).
 - **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.openers`, `.open.options`, `.plugin`,
   `.plugin.command.*`, `.dialog`, `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`,
-  Swing dialogs in `.dialog`, the six built-in `OmeZarrOpener`s in `.open.openers`. The SciJava commands sit in three
+  Swing dialogs in `.dialog`, the seven built-in `OmeZarrOpener`s in `.open.openers`. The SciJava commands sit in three
   sibling packages under `.plugin.command`, one per menu location: `.fileimport` for the two `File > Import` entries
   plus their shared `FileImportHelper` (package-private, so its tests live there too), `.tools` for the
   `Plugins > OME-Zarr` entries, and `.settings` for `OpeningBehaviorSettings` and `UserScriptSettings`. Commands are

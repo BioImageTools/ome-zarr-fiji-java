@@ -52,6 +52,9 @@ If the dropped / pasted / linked target is not recognized as a **OME-Zarr v0.3 -
 Drop a local OME-Zarr folder or an OME-Zarr URI onto Fiji. What happens next is set in the
 [Opening Behavior Settings](#opening-behavior-settings).
 
+Dropping onto the image area of a BigDataViewer window opened by this plugin instead adds the OME-Zarr to that
+window, e.g., to overlay a segmentation on the raw data. This does not depend on the opening behavior settings.
+
 ### Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)
 
 * Supports local paths, http(s) URLs, and `s3://` URIs
@@ -135,9 +138,13 @@ What Fiji does with a dropped / pasted / linked OME-Zarr. The options shipped he
 * **ImageJ (preferred resolution)** (initial default): opens the highest single-resolution level that is not wider
   than the [preferred width](#preferred-width). This avoids loading excessively large images.
 * **ImageJ (highest resolution)**: opens the highest-resolution level in ImageJ.
-* **BigDataViewer**: opens all resolution levels as a multi-resolution source. This is useful for large OME-Zarrs.
+* **BigDataViewer (new window)**: opens all resolution levels as a multi-resolution source in a new BigDataViewer
+  window. This is useful for large OME-Zarrs.
   Channel names, colors, contrast limits, and the time point are
   [taken from the OME-Zarr metadata](#read-channel-information-from-ome-zarr-metadata), if available.
+* **BigDataViewer (add to active window)**: adds the image as a multi-resolution source to the BigDataViewer
+  window that had focus most recently, e.g., to overlay a segmentation on the raw data. Opens a new BigDataViewer
+  window if none is open, or if an ImageJ image window had focus after it.
 * **N5 importer dialog**: opens the N5 import dialog at the dropped OME-Zarr. It lists the resolution levels, lets you
   choose one, possibly crop it, and opens it in ImageJ.
 * **N5 viewer dialog**: opens the N5 viewer dialog at the dropped OME-Zarr. It lists the resolution levels, lets you

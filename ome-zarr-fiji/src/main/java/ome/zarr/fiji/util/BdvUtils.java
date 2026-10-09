@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -51,8 +51,10 @@ import bdv.viewer.ConverterSetupBounds;
 import bdv.viewer.ConverterSetups;
 import bdv.viewer.SourceAndConverter;
 import bdv.viewer.ViewerState;
+import bdv.viewer.ViewerStateChange;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.Omero;
 
 public class BdvUtils
@@ -65,33 +67,52 @@ public class BdvUtils
 	}
 
 	/**
-	 * Displays the given pyramidal in a BigDataViewer (BDV) window and registers
-	 * it with {@code pyramidalService} for focus tracking.<br>
-	 * Increments the pyramidal's reference count and decrements it when the window closes.
-	 * If {@code pyramidalService} is non-null, the pyramidal is immediately marked as active.
-	 * Later focus changes are picked up centrally by {@link PyramidalService}.
+	 * Displays the given pyramidal in a new BigDataViewer (BDV) window, see
+	 * {@link #show(PyramidalBdv, BdvHandle, PyramidalService)}.
 	 *
 	 * @param pyramidalBdv the input {@link PyramidalBdv} to be displayed in BDV
 	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking
-	 * @return a {@code BdvHandle} instance representing the BDV window
+	 * @return the {@code BdvHandle} of the new window
 	 */
-	public static BdvHandle showBdvAndRegisterWindow( final PyramidalBdv< ? > pyramidalBdv, final PyramidalService pyramidalService )
+	public static BdvHandle show( final PyramidalBdv< ? > pyramidalBdv, final PyramidalService pyramidalService )
 	{
-		BdvHandle bdvHandle = BdvFunctions.show( pyramidalBdv.asSources(), pyramidalBdv.getPyramidContents().numTimepoints(),
-				BdvOptions.options().frameTitle( pyramidalBdv.getName() ) ).getBdvHandle();
+		return show( pyramidalBdv, null, pyramidalService );
+	}
 
-		final Omero omero = pyramidalBdv.getPyramidContents().omero;
-		final List< Omero.Channel > omeroChannels = omeroChannels( omero, pyramidalBdv.asSources().size() );
-		setTimepoint( omero, bdvHandle.getViewerPanel().state() );
-		setChannelProperties( omeroChannels, pyramidalBdv.asSources(), bdvHandle.getConverterSetups(), bdvHandle.getViewerPanel().state() );
+	/**
+	 * Displays the given pyramidal in a new BigDataViewer (BDV) window, or adds it to the open one of
+	 * {@code bdvHandle}, applies its OMERO channel properties and registers it with
+	 * {@code pyramidalService} for focus tracking.<br>
+	 * Increments the pyramidal's reference count and decrements it when the window closes.
+	 * Only a new window is moved to the timepoint the OMERO metadata names. When adding, the
+	 * viewer's timepoint is left alone, so the images already shown do not jump.
+	 *
+	 * @param pyramidalBdv the input {@link PyramidalBdv} to be displayed in BDV
+	 * @param bdvHandle the BDV to add it to, or {@code null} to open a new window
+	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking
+	 * @return the {@code BdvHandle} of the window showing the pyramidal
+	 */
+	public static BdvHandle show( final PyramidalBdv< ? > pyramidalBdv, final BdvHandle bdvHandle,
+			final PyramidalService pyramidalService )
+	{
+		final PyramidContents< ? > pyramidContents = pyramidalBdv.getPyramidContents();
+		final BdvOptions options = bdvHandle == null
+				? BdvOptions.options().frameTitle( pyramidalBdv.getName() )
+				: BdvOptions.options().addTo( bdvHandle );
+		final BdvHandle shownIn = BdvFunctions.show( pyramidalBdv.asSources(), pyramidContents.numTimepoints(), options ).getBdvHandle();
 
-		Container topLevelContainer = bdvHandle.getViewerPanel().getRootPane().getParent();
+		if ( bdvHandle == null )
+			setTimepoint( pyramidContents.omero, shownIn.getViewerPanel().state() );
+		final List< Omero.Channel > omeroChannels = omeroChannels( pyramidContents.omero, pyramidalBdv.asSources().size() );
+		setChannelProperties( omeroChannels, pyramidalBdv.asSources(), shownIn.getConverterSetups(), shownIn.getViewerPanel().state() );
+
+		Container topLevelContainer = shownIn.getViewerPanel().getRootPane().getParent();
 		if ( topLevelContainer instanceof Window )
 		{
 			final Window window = ( Window ) topLevelContainer;
-			registerBdvWindow( pyramidalBdv, window, pyramidalService );
+			registerWindow( pyramidalBdv, window, shownIn, pyramidalService );
 		}
-		return bdvHandle;
+		return shownIn;
 	}
 
 	/**
@@ -99,18 +120,34 @@ public class BdvUtils
 	 * registers the BDV window with it for focus tracking. Also installs a listener to decrement the
 	 * reference count (and unregister the window) when the BDV window closes.
 	 * <p>
+	 * A BDV window can show several pyramidals.
+	 * The {@code pyramidalService} maps the BDV Window to the {@code pyramidal} owning BDV's current
+	 * source.
+	 * So {@code pyramidal} is registered now only if its source is current (BDV makes the
+	 * first source added to an empty viewer current). The {@code pyramidal} is updated whenever the user makes one of its
+	 * sources current.
+	 * <p>
 	 * Focus switches themselves are observed centrally by {@link PyramidalService} via the AWT
 	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
 	 * @param pyramidalBdv the {@link PyramidalBdv} the window displays
 	 * @param window the top-level window to track
+	 * @param bdvHandle the handle of the BDV in {@code window}
 	 * @param pyramidalService the service to register with, or {@code null} to only reference-count
 	 */
-	public static void registerBdvWindow( final PyramidalBdv< ? > pyramidalBdv, final Window window,
-			final PyramidalService pyramidalService )
+	private static void registerWindow( final PyramidalBdv< ? > pyramidalBdv, final Window window,
+			final BdvHandle bdvHandle, final PyramidalService pyramidalService )
 	{
+		pyramidalBdv.setBdvHandle( bdvHandle );
 		pyramidalBdv.incrementReferences();
 		if ( pyramidalService != null )
-			pyramidalService.registerBdvWindow( window, pyramidalBdv );
+		{
+			if ( pyramidalBdv.isCurrentSource() )
+				pyramidalService.registerBdvWindow( window, pyramidalBdv );
+			bdvHandle.getViewerPanel().state().changeListeners().add( change -> {
+				if ( change == ViewerStateChange.CURRENT_SOURCE_CHANGED && pyramidalBdv.isCurrentSource() )
+					pyramidalService.registerBdvWindow( window, pyramidalBdv );
+			} );
+		}
 		window.addWindowListener( new WindowAdapter()
 		{
 			@Override
@@ -132,7 +169,7 @@ public class BdvUtils
 	 * @param converterSetups the viewer's converter setups, to look {@code sources} up in
 	 * @param state the viewer state that decides which sources are visible
 	 */
-	public static void setChannelProperties( final List< Omero.Channel > omeroChannels,
+	private static void setChannelProperties( final List< Omero.Channel > omeroChannels,
 			final List< ? extends SourceAndConverter< ? > > sources,
 			final ConverterSetups converterSetups, final ViewerState state )
 	{
@@ -181,7 +218,7 @@ public class BdvUtils
 	 * @param numChannels the number of display sources to be configured
 	 * @return the channels to apply, empty if they cannot be applied
 	 */
-	public static List< Omero.Channel > omeroChannels( final Omero omero, final int numChannels )
+	static List< Omero.Channel > omeroChannels( final Omero omero, final int numChannels )
 	{
 		if ( omero == null || omero.channels == null || omero.channels.isEmpty() )
 			return Collections.emptyList();
