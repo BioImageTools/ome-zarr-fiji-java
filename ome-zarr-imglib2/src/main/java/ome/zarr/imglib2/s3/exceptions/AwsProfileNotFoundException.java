@@ -26,20 +26,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.imglib2;
+package ome.zarr.imglib2.s3.exceptions;
+
+import ome.zarr.imglib2.exceptions.StoreAccessException;
 
 /**
- * Kept only so that code compiled against the old location keeps working: every
- * static member is inherited from {@link ome.zarr.imglib2.util.ZarrUtils}.
- *
- * @deprecated moved to {@link ome.zarr.imglib2.util.ZarrUtils}; this class will
- *   be removed in version 0.11.
+ * Thrown when an {@code s3:} dataset is to be read with a named AWS profile
+ * that neither {@code ~/.aws/config} nor {@code ~/.aws/credentials} defines,
+ * e.g. because it was removed after the user had chosen it. Raised instead of
+ * letting the AWS SDK fall back to anonymous access on AWS, which would only
+ * surface as a misleading "access denied" or "no such bucket".
  */
-@Deprecated
-public final class ZarrUtils extends ome.zarr.imglib2.util.ZarrUtils
+public class AwsProfileNotFoundException extends StoreAccessException
 {
-	private ZarrUtils()
+	private final String profile;
+
+	public AwsProfileNotFoundException( final String path, final String profile )
 	{
-		// prevent instantiation
+		super( path + " – AWS profile '" + profile + "' is not defined", null );
+		this.profile = profile;
+	}
+
+	public String getProfile()
+	{
+		return profile;
 	}
 }

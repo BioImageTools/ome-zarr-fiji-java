@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -39,6 +39,10 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+
+import ome.zarr.imglib2.s3.AwsProfiles;
+import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
  * Builds the zarr-java {@link S3Store} for an {@code s3:} URI.
@@ -60,16 +64,24 @@ final class S3StoreFactory
 	 *
 	 * @param uri an {@code s3://bucket/key/prefix} URI; the bucket is its host, the
 	 *   key prefix its path
+	 * @param awsProfile the AWS profile to take region, {@code endpoint_url} and
+	 *   credentials from, or {@code null} for the SDK default
 	 */
-	static Store create( final URI uri )
+	static Store create( final URI uri, final String awsProfile )
 	{
-		final S3Client s3 = S3Client.builder().region( Region.US_EAST_1 )
+		final S3ClientBuilder builder = S3Client.builder()
 				.credentialsProvider( AwsCredentialsProviderChain.builder()
-						.credentialsProviders( DefaultCredentialsProvider.builder().build(), AnonymousCredentialsProvider.create() )
-						.build() )
-				.build();
+						.credentialsProviders( DefaultCredentialsProvider.builder().profileName( awsProfile ).build(),
+								AnonymousCredentialsProvider.create() )
+						.build() );
+		if ( awsProfile == null || !AwsProfiles.hasRegion( awsProfile ) )
+			builder.region( Region.US_EAST_1 );
+		// Makes the client read region and endpoint_url from that profile.
+		if ( awsProfile != null )
+			builder.overrideConfiguration( overrides -> overrides.defaultProfileName( awsProfile ) );
+		final S3Client s3 = builder.build();
 		final String bucket = uri.getHost();
-		final String rawPath = uri.getPath();
+		final String rawPath = ZarrUtils.stripTrailingSlash( uri ).getPath();
 		final String keyPrefix = rawPath == null ? "" : rawPath.replaceFirst( "^/", "" );
 		return new S3Store( s3, bucket, keyPrefix.isEmpty() ? null : keyPrefix );
 	}

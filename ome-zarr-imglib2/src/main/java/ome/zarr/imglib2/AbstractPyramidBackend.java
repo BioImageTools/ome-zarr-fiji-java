@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -40,6 +40,9 @@ import org.slf4j.LoggerFactory;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.ReaderLibraryUnavailableException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
+import ome.zarr.imglib2.s3.exceptions.AwsProfileNotFoundException;
+import ome.zarr.imglib2.s3.AwsProfiles;
+import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
  * Base class for {@link PyramidBackend} implementations that owns the
@@ -66,6 +69,34 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	private final String awsProfile;
+
+	/** A backend that reads {@code s3:} URIs with the AWS SDK default profile. */
+	protected AbstractPyramidBackend()
+	{
+		this( null );
+	}
+
+	/**
+	 * @param awsProfile the AWS profile whose region, {@code endpoint_url} and
+	 *   credentials are used for {@code s3:} URIs: a name from
+	 *   {@link AwsProfiles#names()}, or {@code null} for the AWS SDK default
+	 *   ({@code AWS_PROFILE}, else {@code default}). Only {@code s3:} reads
+	 *   consult it.
+	 */
+	protected AbstractPyramidBackend( final String awsProfile )
+	{
+		this.awsProfile = awsProfile;
+	}
+
+	/**
+	 * @return the AWS profile for {@code s3:} URIs, or {@code null} for the AWS SDK default
+	 */
+	protected String getAwsProfile()
+	{
+		return awsProfile;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * <p>
@@ -76,6 +107,10 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	@Override
 	public final < T extends NativeType< T > & RealType< T > > PyramidContents< T > read( final URI inputUri )
 	{
+		// Checked here so that it does not need to be repeated for all backends.
+		if ( awsProfile != null && inputUri != null && "s3".equalsIgnoreCase( inputUri.getScheme() )
+				&& !AwsProfiles.names().contains( awsProfile ) )
+			throw new AwsProfileNotFoundException( inputUri.toString(), awsProfile );
 		try
 		{
 			return readMultiscaleOrSingleArray( inputUri );
@@ -136,6 +171,8 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	 * @param arrayUri location of the array node (a single resolution level)
 	 * @return the level as a one-level {@link PyramidContents}
 	 * @throws SingleArrayAxesUnknownException if neither hook can read the array
+	 * @throws NotAMultiscaleImageException if there is no readable array at
+	 *   {@code arrayUri} at all
 	 */
 	protected final < T extends NativeType< T > & RealType< T > > PyramidContents< T > readSingleArray( final URI arrayUri )
 	{
@@ -179,9 +216,10 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	 *
 	 * @param <T> pixel type
 	 * @param arrayUri location of the array node being read
-	 * @return the array as a one-level pyramid, or {@code null} when it cannot be
-	 *   read as an array or declares no usable axis names of its own (e.g. a
-	 *   Zarr v2 array)
+	 * @return the array as a one-level pyramid, or {@code null} when it declares
+	 *   no usable axis names of its own (e.g. a Zarr v2 array)
+	 * @throws NotAMultiscaleImageException if there is no readable array at
+	 *   {@code arrayUri} at all (e.g., a group, a wrong/missing location)
 	 */
 	protected abstract < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadArrayNodeOnly( URI arrayUri );
 }

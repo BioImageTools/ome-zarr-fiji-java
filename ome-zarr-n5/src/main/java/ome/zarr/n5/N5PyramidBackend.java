@@ -63,13 +63,18 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 import ome.zarr.imglib2.AbstractPyramidBackend;
-import ome.zarr.imglib2.Affine3DUtils;
+import ome.zarr.imglib2.util.Affine3DUtils;
+import ome.zarr.imglib2.s3.AwsProfiles;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.imglib2.ZarrUtils;
+import ome.zarr.imglib2.util.ZarrUtils;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
@@ -88,6 +93,20 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 
 	/** Display name of this backend, used in user-facing messages. */
 	private static final String NAME = "N5";
+
+	public N5PyramidBackend()
+	{
+		super();
+	}
+
+	/**
+	 * @param awsProfile the AWS profile for {@code s3:} URIs, or {@code null} for
+	 *   the AWS SDK default; see {@link AbstractPyramidBackend#AbstractPyramidBackend(String)}
+	 */
+	public N5PyramidBackend( final String awsProfile )
+	{
+		super( awsProfile );
+	}
 
 	/**
 	 * Convenience entry point for reading an OME-Zarr image with the N5 backend
@@ -163,7 +182,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 				.build();
 	}
 
-	private static N5Reader openReader( final URI uri )
+	private N5Reader openReader( final URI uri )
 	{
 		if ( uri == null )
 			throw new IllegalArgumentException( "No OME-Zarr location given" );
@@ -173,10 +192,30 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 			throw new ZipArchiveUnsupportedException( uri.toString(), NAME );
 
 		final N5Factory factory = new N5Factory();
-		// The region default only matters for s3:// URIs.
 		if ( "s3".equalsIgnoreCase( uri.getScheme() ) )
-			factory.s3Configuration( builder -> builder.region( Region.US_EAST_1 ) );
+			factory.s3Configuration( this::configureS3 );
 		return factory.openReader( uri.toString() );
+	}
+
+	/**
+	 * Without a profile only the region default is set, so N5 keeps its own
+	 * anonymous-first credentials probe. That probe falls back to the SDK default
+	 * profile, not to the configured one, so a named profile brings its own
+	 * credentials chain.
+	 */
+	private void configureS3( final S3ClientBuilder builder )
+	{
+		final String awsProfile = getAwsProfile();
+		if ( awsProfile == null || !AwsProfiles.hasRegion( awsProfile ) )
+			builder.region( Region.US_EAST_1 );
+		if ( awsProfile == null )
+			return;
+		// Makes the client read region and endpoint_url from that profile.
+		builder.overrideConfiguration( overrides -> overrides.defaultProfileName( awsProfile ) );
+		builder.credentialsProvider( AwsCredentialsProviderChain.builder()
+				.credentialsProviders( DefaultCredentialsProvider.builder().profileName( awsProfile ).build(),
+						AnonymousCredentialsProvider.create() )
+				.build() );
 	}
 
 	private OmeNgffMetadata readMetadata( final N5Reader reader, final N5TreeNode node, final URI inputUri )
@@ -265,24 +304,22 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 	@Override
 	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadArrayNodeOnly( final URI arrayUri )
 	{
-		final String[] axisNames;
-		final DataType dataType;
+		final DatasetAttributes attributes;
 		// The reader that backs the returned image is opened separately below and must stay open.
 		try (N5Reader metadataReader = openReader( arrayUri ))
 		{
-			final DatasetAttributes attributes = metadataReader.getDatasetAttributes( "" );
-			if ( attributes == null )
-				return null; // not an array (e.g. a group, or a plain directory)
-			axisNames = readAxisNames( attributes );
-			if ( axisNames.length == 0 )
-				return null;
-			dataType = attributes.getDataType();
+			attributes = metadataReader.getDatasetAttributes( "" );
 		}
 		catch ( RuntimeException e )
 		{
-			logger.debug( "Could not read {} as a plain array: {}", arrayUri, e.getMessage() );
-			return null;
+			throw new NotAMultiscaleImageException( arrayUri.toString(), e );
 		}
+		if ( attributes == null ) // not an array (e.g. a group, or a plain directory)
+			throw new NotAMultiscaleImageException( arrayUri.toString() );
+		final String[] axisNames = readAxisNames( attributes );
+		if ( axisNames.length == 0 )
+			return null;
+		final DataType dataType = attributes.getDataType();
 		final T type = N5Utils.type( dataType );
 		final AxisCalibration[] axes = AxisCalibration.createPlaceholderCalibration( axisNames );
 		final CachedCellImg< T, ? > img = N5Utils.openVolatile( openReader( arrayUri ), "" );
