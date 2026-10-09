@@ -162,7 +162,8 @@ What Fiji does with a dropped / pasted / linked OME-Zarr. The options shipped he
 * **ImageJ (matching resolution)** (initial default): opens the highest single-resolution level that is not wider
   than the [maximum width](#maximum-width). This avoids loading excessively large images.
 * **ImageJ (highest resolution)**: opens the highest-resolution level in ImageJ.
-* **BigDataViewer**: opens all resolution levels as a multi-resolution source. This is useful for large OME-Zarrs.
+* **BigDataViewer (new window)**: opens all resolution levels as a multi-resolution source in a new BigDataViewer
+  window. This is useful for large OME-Zarrs.
   Channel names, colors, contrast limits, and the time point are
   [taken from the OME-Zarr metadata](#read-channel-information-from-ome-zarr-metadata), if available.
 * **N5 importer dialog**: opens the N5 import dialog at the dropped OME-Zarr. It lists the resolution levels, lets you
