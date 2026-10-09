@@ -35,13 +35,12 @@ import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
 /**
- * Opens the whole resolution pyramid as a multi-resolution source in
- * BigDataViewer, which is the only opener here that does not have to pick a
- * single level.
+ * Opens the whole resolution pyramid as a multi-resolution source in a new
+ * BigDataViewer window, so it does not have to pick a single level.
  */
 @Plugin( type = OmeZarrOpener.class, name = BdvMultiResolutionOpener.NAME,
-		label = "BigDataViewer",
-		description = "Open as a multi-resolution source in BigDataViewer",
+		label = "BigDataViewer (new window)",
+		description = "Open as a multi-resolution source in a new BigDataViewer window",
 		iconPath = "/ome/zarr/fijiui/dialog/bdv_icon.png", priority = Priority.NORMAL )
 public class BdvMultiResolutionOpener implements OmeZarrOpener
 {
