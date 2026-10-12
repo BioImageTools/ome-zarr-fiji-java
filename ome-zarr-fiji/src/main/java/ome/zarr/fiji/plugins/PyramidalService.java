@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import net.imagej.Dataset;
 import net.imagej.patcher.LegacyInjector;
 import org.scijava.convert.ConvertService;
@@ -50,6 +51,7 @@ import org.scijava.service.SciJavaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ome.zarr.fiji.Pyramidal;
+import ome.zarr.imglib2.PyramidContents;
 
 /**
  * Tracks which BDV or ImageJ window holding a {@link Pyramidal} was most recently focused.
@@ -241,5 +243,15 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	public List< Pyramidal > getPyramidals()
 	{
 		return objectService.getObjects( Pyramidal.class );
+	}
+
+	/**
+	 * Returns the {@link PyramidContents} of all registered {@link Pyramidal}s, each once however
+	 * many of them show it. Distinct means the same read, not the same location: an OME-Zarr opened
+	 * twice is read twice and listed twice.
+	 */
+	public List< PyramidContents< ? > > getPyramidContents()
+	{
+		return getPyramidals().stream().map( Pyramidal::getPyramidContents ).distinct().collect( Collectors.toList() );
 	}
 }
