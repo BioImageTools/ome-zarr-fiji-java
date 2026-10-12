@@ -135,6 +135,23 @@ and half-working link support is worse for users than a clear "not supported". R
 non-`java.net` schemes (e.g. falling back to `LocationService.resolve` when `new URL(p)` throws); links then get `s3:`
 for free, with no change here.
 
+**Named AWS profiles** (issue #82) are how private buckets and non-AWS endpoints are reached: credentials stay in
+`~/.aws/*` (no key fields in any dialog, nothing secret in `PrefService`), and the user only picks a profile *name* in
+`S3Settings` — a dialog of its own, since most users never need it and it means nothing on Fiji-Stable, but stored in
+`OmeZarrOpeningSettings` next to the backend, so each open reads one settings object. The name travels as a
+constructor argument of the backend (`OmeZarrBackend.createBackend( awsProfile )`), so callers only need
+`PyramidBackend`. A setter on `AbstractPyramidBackend` forced callers onto the abstract class, and a setter on the
+interface would have to throw for every backend that cannot read `s3:` (PR #139 review). Both backends build a fresh
+`S3Client` per open, so a changed profile applies to the next open without a restart.
+`AwsProfiles` (in `ome-zarr-imglib2`) parses the two files itself rather than using the SDK's `ProfileFile`: the dialog
+lists the profiles, and it must not link AWS classes on Fiji-Stable. Do not "simplify" it back to the SDK parser; keep
+it agreeing with it instead (the SDK skips profile names outside `[A-Za-z0-9-/.%@_:+]` and merges `region` from both
+files). A chosen profile that has since vanished from the files makes `AbstractPyramidBackend.read` throw
+`AwsProfileNotFoundException`, which `OmeZarr` reports — left to the SDK, it would silently fall back to anonymous
+access on AWS. The remaining SDK wiring (`defaultProfileName` for region and `endpoint_url`, a profile-named credentials
+chain with anonymous fallback) is duplicated in `S3StoreFactory` and `N5PyramidBackend.configureS3`, because no module
+both backends share may depend on the AWS SDK.
+
 An installation without the AWS SDK on the classpath (Fiji-Stable) only notices when the first `s3:` URI is opened —
 see `S3StoreFactory` under `ome-zarr-zarrjava` for the lazy-loading rule and the `S3SupportUnavailableException` it
 throws so the user gets a "get Fiji-Latest" message instead of a linkage stack trace.
@@ -158,10 +175,12 @@ override with their library's display name (`"N5"`, `"zarr-java"`) for user-faci
 implements `read` as a template method – try the multiscales group, fall back to a single array (parent multiscales
 group first, then the array's own `dimension_names`) – and leaves three `protected abstract` hooks for the
 reader-specific steps: `readMultiscale`, `tryReadLevelFromParent` and `tryReadArrayNodeOnly` (the two `try*` hooks
-return `null` for "not applicable, try the next"). `read` and `readSingleArray` are `final`, so the order is fixed for
-every backend. Both `PyramidContents` and the per-level `CachedCellImg`s, transforms, calibration and optional OMERO
-metadata it holds are immutable. Each backend also exposes a static `readPyramid(URI)` convenience entry point for
-outside API users — not named `read`, because Java forbids a static method hiding an inherited instance method.
+return `null` for "not applicable, try the next"; the last one throws `NotAMultiscaleImageException` when there is no
+array at all, so a missing location is never reported as unknown axes). `read` and `readSingleArray` are `final`, so
+the order is fixed for every backend. Both `PyramidContents` and the per-level `CachedCellImg`s, transforms, calibration
+and optional OMERO metadata it holds are immutable. Each backend also exposes a static `readPyramid(URI)` convenience
+entry point for outside API users — not named `read`, because Java forbids a static method hiding an inherited instance
+method.
 
 **A too-old reader library is reported, not thrown at the console.** A Fiji-Stable installation whose N5 stack predates
 this plugin fails inside the backend with a `NoClassDefFoundError` (e.g. on `OmeNgffMetadataParser`), which is useless
@@ -274,8 +293,8 @@ with `Namespace 'ome.zarr' is not allowed`. So going back to Central means switc
 `releaseProfiles`; an org-owned namespace (`io.github.bioimagetools`, or `org.bioimagetools` if the domain is ever
 registered) would be the alternative. Java package names stay `ome.zarr.*` through all of this.
 
-- **`ome-zarr-imglib2`** – package `ome.zarr.imglib2` (+`.metadata`, `.exceptions`); backend-agnostic core. No Fiji or
-  backend dependency.
+- **`ome-zarr-imglib2`** – package `ome.zarr.imglib2` (+`.metadata`, `.exceptions`, `.s3`, `.util`); backend-agnostic
+  core. No Fiji or backend dependency.
 - **`ome-zarr-n5`** – `ome.zarr.n5` (`N5PyramidBackend`, N5-universe, OME-NGFF v0.3–v0.5); depends on imglib2 +
   external N5-universe (codecs `n5-zarr`/`n5-blosc`/zstd arrive transitively via `n5-universe`).
 - **`ome-zarr-zarrjava`** – `ome.zarr.zarrjava` (`ZarrJavaPyramidBackend`, Zarr v2/v3); depends on imglib2 +
@@ -313,9 +332,9 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   Swing dialogs in `.dialog`, the six built-in `OmeZarrOpener`s in `.open.openers`. The SciJava commands sit in three
   sibling packages under `.plugin.command`, one per menu location: `.fileimport` for the two `File > Import` entries
   plus their shared `FileImportHelper` (package-private, so its tests live there too), `.tools` for the
-  `Plugins > OME-Zarr` entries, and `.settings` for `OpeningBehaviorSettings` and `UserScriptSettings`. Commands are
-  discovered through the `@Plugin` annotation index, not by package, so moving one between these packages does not
-  touch its menu path – but `PrefService` keys off **both** the package and the simple class name
+  `Plugins > OME-Zarr` entries, and `.settings` for `OpeningBehaviorSettings`, `S3Settings` and `UserScriptSettings`.
+  Commands are discovered through the `@Plugin` annotation index, not by package, so moving one between these
+  packages does not touch its menu path – but `PrefService` keys off **both** the package and the simple class name
   (`DefaultPrefService.prefs(Class)` is `userNodeForPackage( c ).node( c.getSimpleName() )`), so *moving or renaming* a
   class used as a preference key (as `ScriptUtils` uses `UserScriptSettings`) resets that stored setting. Renaming
   `ZarrOpeningSettings` to `OmeZarrOpeningSettings` in 0.9 did exactly that, deliberately: opener, preferred width and

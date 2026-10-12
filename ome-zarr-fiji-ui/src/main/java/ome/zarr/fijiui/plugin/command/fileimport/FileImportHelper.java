@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 import org.scijava.Context;
 
 import ome.zarr.fijiui.open.OmeZarrOpenActions;
-import ome.zarr.imglib2.ZarrUtils;
+import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
  * Checks a selected location and hands it to the opening pipeline, for both

@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.imglib2;
+package ome.zarr.imglib2.util;
 
 import net.imglib2.realtransform.AffineTransform3D;
 

@@ -42,7 +42,7 @@ import java.net.URI;
 import java.util.ArrayList;
 
 import ome.zarr.fijiui.open.OmeZarrOpenActions;
-import ome.zarr.imglib2.ZarrUtils;
+import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
  * SciJava {@link IOPlugin} that claims OME-Zarr locations and opens them via

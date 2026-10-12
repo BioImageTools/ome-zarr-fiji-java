@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -78,20 +78,32 @@ public enum OmeZarrBackend
 	}
 
 	/**
-	 * Creates a fresh {@link PyramidBackend} for the backend library this constant
-	 * represents.
+	 * Creates a fresh backend for the backend library this constant represents,
+	 * reading {@code s3:} URIs with the AWS SDK default profile.
 	 *
 	 * @return a new backend instance, never {@code null}
 	 */
 	public PyramidBackend createBackend()
 	{
+		return createBackend( null );
+	}
+
+	/**
+	 * Creates a fresh backend for the backend library this constant represents.
+	 *
+	 * @param awsProfile the AWS profile for {@code s3:} URIs, or {@code null} for
+	 *   the AWS SDK default
+	 * @return a new backend instance, never {@code null}
+	 */
+	public PyramidBackend createBackend( final String awsProfile )
+	{
 		switch ( this )
 		{
 		case ZARR_JAVA:
-			return new ZarrJavaPyramidBackend();
+			return new ZarrJavaPyramidBackend( awsProfile );
 		case N5:
 		default:
-			return new N5PyramidBackend();
+			return new N5PyramidBackend( awsProfile );
 		}
 	}
 }

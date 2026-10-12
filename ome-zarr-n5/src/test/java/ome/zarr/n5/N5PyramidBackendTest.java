@@ -42,7 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.imglib2.ZarrUtils;
+import ome.zarr.imglib2.util.ZarrUtils;
 import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
 import ome.zarr.imglib2.PyramidBackendTestBase;
 import ome.zarr.ZarrTestUtils;

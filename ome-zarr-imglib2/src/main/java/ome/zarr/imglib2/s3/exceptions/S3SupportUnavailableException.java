@@ -26,7 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.imglib2.exceptions;
+package ome.zarr.imglib2.s3.exceptions;
+
+import ome.zarr.imglib2.exceptions.StoreAccessException;
 
 /**
  * Thrown when an {@code s3:} dataset cannot be opened because the AWS SDK is
