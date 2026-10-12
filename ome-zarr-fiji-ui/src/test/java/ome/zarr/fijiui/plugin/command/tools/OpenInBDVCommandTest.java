@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,6 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingUtilities;
@@ -49,9 +50,11 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 import org.scijava.command.CommandService;
+import org.scijava.ui.UIService;
 
 import ome.zarr.fijiui.open.OmeZarrOpenActions;
 import ome.zarr.fiji.Pyramidal;
+import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.ZarrTestUtils;
 
@@ -75,6 +78,10 @@ class OpenInBDVCommandTest
 			throw new IllegalStateException( e );
 		}
 	}
+
+	private static final String SPOTS = "ome/zarr/testdata/bdv_testing/logo_spots.ome.zarr";
+
+	private static final String LABELS = "ome/zarr/testdata/bdv_testing/logo_labels.ome.zarr";
 
 	// 2 resolution levels: level 0 = 64x64x16, level 1 = 32x32x8
 	private static final String PYRAMID_RESOURCE = "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr";
@@ -145,5 +152,35 @@ class OpenInBDVCommandTest
 			assertNotSame( firstBdvPyramidal, secondBdvPyramidal );
 			assertSame( firstBdvPyramidal.getPyramidContents(), secondBdvPyramidal.getPyramidContents() );
 		}
+	}
+
+	/**
+	 * Headless, there is no dialog: with two OME-Zarrs open, only the active one is shown.
+	 */
+	@Test
+	void runHeadlessWithTwoOpenShowsOnlyTheActiveOne() throws Exception
+	{
+		try (Context context = new Context())
+		{
+			new OmeZarrOpenActions( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context ).showInImageJ();
+			new OmeZarrOpenActions( ZarrTestUtils.resourcePath( LABELS ).toUri(), context ).showInImageJ();
+			flushEventQueue();
+			Pyramidal active = context.getService( PyramidalService.class ).getActivePyramidal();
+			context.getService( UIService.class ).setHeadless( true );
+
+			context.getService( CommandService.class ).run( OpenInBDVCommand.class, true ).get();
+
+			List< PyramidalBdv< ? > > shown = bdvPyramidals( context );
+			assertEquals( 1, shown.size() );
+			assertSame( active.getPyramidContents(), shown.get( 0 ).getPyramidContents() );
+		}
+	}
+
+	private static List< PyramidalBdv< ? > > bdvPyramidals( final Context context )
+	{
+		return context.getService( PyramidalService.class ).getPyramidals().stream()
+				.filter( PyramidalBdv.class::isInstance )
+				.map( pyramidal -> ( PyramidalBdv< ? > ) pyramidal )
+				.collect( Collectors.toList() );
 	}
 }
