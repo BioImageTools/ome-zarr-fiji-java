@@ -39,6 +39,7 @@ import java.util.List;
 
 import net.imglib2.type.numeric.ARGBType;
 
+import org.scijava.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +78,24 @@ public class BdvUtils
 	public static BdvHandle show( final PyramidalBdv< ? > pyramidalBdv, final PyramidalService pyramidalService )
 	{
 		return show( pyramidalBdv, null, pyramidalService );
+	}
+
+	/**
+	 * Displays each of {@code contents} as a new {@link PyramidalBdv}, all in one new BigDataViewer
+	 * (BDV) window, see {@link #show(PyramidalBdv, BdvHandle, PyramidalService)}.
+	 *
+	 * @param contents the OME-Zarrs to display, in the order their sources are added
+	 * @param context the SciJava context of the new pyramidals
+	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking
+	 * @return the {@code BdvHandle} of the new window, or {@code null} if {@code contents} is empty
+	 */
+	public static BdvHandle showInOneWindow( final List< PyramidContents< ? > > contents, final Context context,
+			final PyramidalService pyramidalService )
+	{
+		BdvHandle bdvHandle = null;
+		for ( final PyramidContents< ? > pyramidContents : contents )
+			bdvHandle = show( new PyramidalBdv<>( context, pyramidContents ), bdvHandle, pyramidalService );
+		return bdvHandle;
 	}
 
 	/**
