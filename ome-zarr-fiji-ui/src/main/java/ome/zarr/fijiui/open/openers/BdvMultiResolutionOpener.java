@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,18 +30,18 @@ package ome.zarr.fijiui.open.openers;
 
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fijiui.open.OmeZarrOpenActions;
 
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
 /**
- * Opens the whole resolution pyramid as a multi-resolution source in
- * BigDataViewer, which is the only opener here that does not have to pick a
- * single level.
+ * Opens the whole resolution pyramid as a multi-resolution source in a new
+ * BigDataViewer window, so it does not have to pick a single level.
  */
 @Plugin( type = OmeZarrOpener.class, name = BdvMultiResolutionOpener.NAME,
-		label = "BigDataViewer",
-		description = "Open as a multi-resolution source in BigDataViewer",
+		label = "BigDataViewer (new window)",
+		description = "Open as a multi-resolution source in a new BigDataViewer window",
 		iconPath = "/ome/zarr/fijiui/dialog/bdv_icon.png", priority = Priority.NORMAL )
 public class BdvMultiResolutionOpener implements OmeZarrOpener
 {
@@ -51,6 +51,6 @@ public class BdvMultiResolutionOpener implements OmeZarrOpener
 	@Override
 	public void open( final OmeZarr omeZarr )
 	{
-		omeZarr.showInBdv();
+		new OmeZarrOpenActions( omeZarr ).showInBdv();
 	}
 }
