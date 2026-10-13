@@ -29,16 +29,64 @@
 package ome.zarr.fiji.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collections;
+
+import javax.swing.SwingUtilities;
 
 import org.junit.jupiter.api.Test;
+import org.scijava.Context;
 
+import bdv.util.BdvHandle;
+import ome.zarr.ZarrTestUtils;
+import ome.zarr.fiji.Pyramidal;
+import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.Omero;
+import ome.zarr.n5.N5PyramidBackend;
 
 class BdvUtilsTest
 {
+	private static final String SPOTS = "ome/zarr/testdata/bdv_testing/logo_spots.ome.zarr";
+
+	private static final String LABELS = "ome/zarr/testdata/bdv_testing/logo_labels.ome.zarr";
+
+	/** Two OME-Zarrs end up in one BDV window, as one pyramidal each. */
+	@Test
+	void showInOneWindowShowsAllInOneWindow() throws Exception
+	{
+		PyramidContents< ? > spots = N5PyramidBackend.readPyramid( ZarrTestUtils.resourcePath( SPOTS ).toUri() );
+		PyramidContents< ? > labels = N5PyramidBackend.readPyramid( ZarrTestUtils.resourcePath( LABELS ).toUri() );
+		try (Context context = new Context())
+		{
+			PyramidalService pyramidalService = context.getService( PyramidalService.class );
+			BdvHandle bdvHandle = BdvUtils.showInOneWindow( Arrays.asList( spots, labels ), context, pyramidalService );
+			try
+			{
+				assertEquals( 2, bdvHandle.getViewerPanel().state().getSources().size() );
+				assertEquals( 2, pyramidalService.getPyramidals().size() );
+				for ( Pyramidal pyramidal : pyramidalService.getPyramidals() )
+					assertSame( bdvHandle, ( ( PyramidalBdv< ? > ) pyramidal ).getBdvHandle() );
+			}
+			finally
+			{
+				bdvHandle.close();
+				SwingUtilities.invokeAndWait( () -> {} );
+			}
+		}
+	}
+
+	@Test
+	void showInOneWindowOpensNoWindowForNothing()
+	{
+		assertNull( BdvUtils.showInOneWindow( Collections.emptyList(), null, null ) );
+	}
+
 	/** Omero channels are applied only when there are as many of them as there are sources. */
 	@Test
 	void testOmeroChannelCountMismatch()
