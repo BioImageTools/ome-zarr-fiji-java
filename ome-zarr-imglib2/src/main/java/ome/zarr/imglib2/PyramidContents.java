@@ -98,8 +98,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 */
 	public final AxisCalibration[][] axesPerLevel;
 
-	/** OMERO rendering metadata, or {@code null} if unavailable. */
-	public final Omero omero;
+	private final Omero omero;
 
 	private final boolean hasPlaceholderCalibration;
 
@@ -136,6 +135,12 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	public boolean hasPlaceholderCalibration()
 	{
 		return hasPlaceholderCalibration;
+	}
+
+	/** OMERO rendering metadata, or {@code null} if unavailable. */
+	public Omero omero()
+	{
+		return omero;
 	}
 
 	/**
@@ -246,7 +251,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	public String[] channelLabels()
 	{
 		final int numChannels = numChannels();
-		final boolean omeroValid = omero != null && omero.channels != null && omero.channels.size() == numChannels;
+		final boolean omeroValid = omero != null && omero.channels() != null && omero.channels().size() == numChannels;
 		if ( omeroValid )
 			logger.trace( "Creating with OMERO metadata: {}", omero );
 		else
@@ -254,7 +259,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 		final String[] labels = new String[ numChannels ];
 		for ( int i = 0; i < numChannels; i++ )
-			labels[ i ] = omeroValid ? omero.channels.get( i ).label : name;
+			labels[ i ] = omeroValid ? omero.channels().get( i ).label() : name;
 		return labels;
 	}
 

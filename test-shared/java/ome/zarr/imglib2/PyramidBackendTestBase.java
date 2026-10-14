@@ -152,7 +152,7 @@ public interface PyramidBackendTestBase
 			assertEquals( 1, contents.numResolutionLevels() );
 			assertEquals( 2, contents.numDimensions() );
 			assertEquals( "0", contents.name(), "Without a multiscales name, the array node name is used" );
-			assertNull( contents.omero );
+			assertNull( contents.omero() );
 			assertTrue( contents.hasPlaceholderCalibration(),
 					"An array read from its own axis names has no real scale or unit, and must say so" );
 
@@ -242,11 +242,11 @@ public interface PyramidBackendTestBase
 			assertFalse( contents.hasPlaceholderCalibration(),
 					"The scale and unit come from the parent multiscales group, so they are real" );
 
-			Omero omero = contents.omero;
+			Omero omero = contents.omero();
 			assertNotNull( omero, "OMERO metadata is inherited from the parent group" );
-			assertEquals( 3, omero.channels.size() );
-			assertEquals( "lynEGFP", omero.channels.get( 0 ).label );
-			assertEquals( "00FF00", omero.channels.get( 0 ).color );
+			assertEquals( 3, omero.channels().size() );
+			assertEquals( "lynEGFP", omero.channels().get( 0 ).label() );
+			assertEquals( "00FF00", omero.channels().get( 0 ).color() );
 		}
 	}
 
@@ -438,7 +438,7 @@ public interface PyramidBackendTestBase
 		{
 			PyramidContents< ? > contents = this.read( resource, context );
 			if ( resource.contains( "5d_testing" ) ) // dataset with omero properties
-				assertEquals( 1, contents.omero.rdefs.defaultT );
+				assertEquals( 1, contents.omero().rdefs().defaultT() );
 		}
 	}
 
