@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,58 +28,186 @@
  */
 package ome.zarr.imglib2.metadata;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.gson.Gson;
 
 /**
- * The class is used to represent omero metadata.
+ * The class is used to represent omero metadata. Immutable.
  */
 @SuppressWarnings( "all" )
-public class Omero
+public final class Omero
 {
-	public int id;
+	private final int id;
 
-	public String name;
+	private final String name;
 
-	public Rdefs rdefs;
+	private final Rdefs rdefs;
 
-	public List< Channel > channels;
+	private final List< Channel > channels;
 
-	public static class Rdefs
+	public Omero( final int id, final String name, final Rdefs rdefs, final List< Channel > channels )
 	{
-		public int defaultT;
-
-		public int defaultZ;
-
-		public String model;
+		this.id = id;
+		this.name = name;
+		this.rdefs = rdefs;
+		this.channels = channels == null ? null : new ArrayList<>( channels );
 	}
 
-	public static class Channel
+	public int id()
 	{
-		public boolean active;
+		return id;
+	}
 
-		public double coefficient;
+	public String name()
+	{
+		return name;
+	}
 
-		public String color;
+	public Rdefs rdefs()
+	{
+		return rdefs;
+	}
 
-		public String family;
+	/** Unmodifiable, or {@code null} if the metadata lists no channels. */
+	public List< Channel > channels()
+	{
+		return channels == null ? null : Collections.unmodifiableList( channels );
+	}
 
-		public boolean inverted;
+	public static final class Rdefs
+	{
+		private final int defaultT;
 
-		public String label;
+		private final int defaultZ;
 
-		public Window window;
+		private final String model;
 
-		public static class Window
+		public Rdefs( final int defaultT, final int defaultZ, final String model )
 		{
-			public double start;
+			this.defaultT = defaultT;
+			this.defaultZ = defaultZ;
+			this.model = model;
+		}
 
-			public double end;
+		public int defaultT()
+		{
+			return defaultT;
+		}
 
-			public double min;
+		public int defaultZ()
+		{
+			return defaultZ;
+		}
 
-			public double max;
+		public String model()
+		{
+			return model;
+		}
+	}
+
+	public static final class Channel
+	{
+		private final boolean active;
+
+		private final double coefficient;
+
+		private final String color;
+
+		private final String family;
+
+		private final boolean inverted;
+
+		private final String label;
+
+		private final Window window;
+
+		public Channel( final boolean active, final double coefficient, final String color, final String family,
+				final boolean inverted, final String label, final Window window )
+		{
+			this.active = active;
+			this.coefficient = coefficient;
+			this.color = color;
+			this.family = family;
+			this.inverted = inverted;
+			this.label = label;
+			this.window = window;
+		}
+
+		public boolean active()
+		{
+			return active;
+		}
+
+		public double coefficient()
+		{
+			return coefficient;
+		}
+
+		public String color()
+		{
+			return color;
+		}
+
+		public String family()
+		{
+			return family;
+		}
+
+		public boolean inverted()
+		{
+			return inverted;
+		}
+
+		public String label()
+		{
+			return label;
+		}
+
+		public Window window()
+		{
+			return window;
+		}
+
+		public static final class Window
+		{
+			private final double start;
+
+			private final double end;
+
+			private final double min;
+
+			private final double max;
+
+			public Window( final double start, final double end, final double min, final double max )
+			{
+				this.start = start;
+				this.end = end;
+				this.min = min;
+				this.max = max;
+			}
+
+			public double start()
+			{
+				return start;
+			}
+
+			public double end()
+			{
+				return end;
+			}
+
+			public double min()
+			{
+				return min;
+			}
+
+			public double max()
+			{
+				return max;
+			}
 		}
 	}
 

@@ -64,7 +64,7 @@ public class OmeroMetadataDemo
 
 	private static void printInfo( final PyramidContents< ? > contents )
 	{
-		final Omero omero = contents.omero;
+		final Omero omero = contents.omero();
 		if ( omero == null )
 		{
 			System.out.println( "OMERO metadata    : not available" );
@@ -72,27 +72,27 @@ public class OmeroMetadataDemo
 		else
 		{
 			System.out.println( "--- OMERO metadata ---" );
-			System.out.println( "  id              : " + omero.id );
-			System.out.println( "  name            : " + omero.name );
+			System.out.println( "  id              : " + omero.id() );
+			System.out.println( "  name            : " + omero.name() );
 
-			if ( omero.rdefs != null )
+			if ( omero.rdefs() != null )
 			{
-				System.out.println( "  rdefs.defaultT  : " + omero.rdefs.defaultT );
-				System.out.println( "  rdefs.defaultZ  : " + omero.rdefs.defaultZ );
-				System.out.println( "  rdefs.model     : " + omero.rdefs.model );
+				System.out.println( "  rdefs.defaultT  : " + omero.rdefs().defaultT() );
+				System.out.println( "  rdefs.defaultZ  : " + omero.rdefs().defaultZ() );
+				System.out.println( "  rdefs.model     : " + omero.rdefs().model() );
 			}
 
-			if ( omero.channels != null )
+			if ( omero.channels() != null )
 			{
-				System.out.println( "  channels (" + omero.channels.size() + "):" );
-				for ( int i = 0; i < omero.channels.size(); i++ )
+				System.out.println( "  channels (" + omero.channels().size() + "):" );
+				for ( int i = 0; i < omero.channels().size(); i++ )
 				{
-					final Omero.Channel ch = omero.channels.get( i );
+					final Omero.Channel ch = omero.channels().get( i );
 					System.out.printf( "    [%d] label=%-20s active=%-5b color=%s%n",
-							i, ch.label, ch.active, ch.color );
-					if ( ch.window != null )
+							i, ch.label(), ch.active(), ch.color() );
+					if ( ch.window() != null )
 						System.out.printf( "        window: start=%.1f end=%.1f  min=%.1f max=%.1f%n",
-								ch.window.start, ch.window.end, ch.window.min, ch.window.max );
+								ch.window().start(), ch.window().end(), ch.window().min(), ch.window().max() );
 				}
 			}
 		}

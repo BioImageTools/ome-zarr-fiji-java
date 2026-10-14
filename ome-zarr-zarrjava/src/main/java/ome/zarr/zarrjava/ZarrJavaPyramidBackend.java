@@ -190,56 +190,49 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	{
 		if ( source == null )
 			return null;
-		final Omero omero = new Omero();
-		omero.id = source.id != null ? source.id : 0;
-		omero.name = source.name;
-		omero.rdefs = convertRdefs( source.rdefs );
+		List< Omero.Channel > channels = null;
 		if ( source.channels != null )
 		{
-			final List< Omero.Channel > channels = new ArrayList<>( source.channels.size() );
+			channels = new ArrayList<>( source.channels.size() );
 			for ( final OmeroChannel channel : source.channels )
 				channels.add( convertChannel( channel ) );
-			omero.channels = channels;
 		}
-		return omero;
+		return new Omero( source.id != null ? source.id : 0, source.name, convertRdefs( source.rdefs ), channels );
 	}
 
 	private static Omero.Rdefs convertRdefs( final OmeroRdefs source )
 	{
 		if ( source == null )
 			return null;
-		final Omero.Rdefs rdefs = new Omero.Rdefs();
-		rdefs.defaultT = source.defaultT != null ? source.defaultT : 0;
-		rdefs.defaultZ = source.defaultZ != null ? source.defaultZ : 0;
-		rdefs.model = source.model;
-		return rdefs;
+		return new Omero.Rdefs(
+				source.defaultT != null ? source.defaultT : 0,
+				source.defaultZ != null ? source.defaultZ : 0,
+				source.model );
 	}
 
 	private static Omero.Channel convertChannel( final OmeroChannel source )
 	{
 		if ( source == null )
 			return null;
-		final Omero.Channel channel = new Omero.Channel();
-		channel.active = source.active != null && source.active;
-		channel.coefficient = source.coefficient != null ? source.coefficient : 0.0;
-		channel.color = source.color;
-		channel.family = source.family;
-		channel.inverted = source.inverted != null && source.inverted;
-		channel.label = source.label;
-		channel.window = convertWindow( source.window );
-		return channel;
+		return new Omero.Channel(
+				source.active != null && source.active,
+				source.coefficient != null ? source.coefficient : 0.0,
+				source.color,
+				source.family,
+				source.inverted != null && source.inverted,
+				source.label,
+				convertWindow( source.window ) );
 	}
 
 	private static Omero.Channel.Window convertWindow( final OmeroWindow source )
 	{
 		if ( source == null )
 			return null;
-		final Omero.Channel.Window window = new Omero.Channel.Window();
-		window.start = source.start != null ? source.start : 0.0;
-		window.end = source.end != null ? source.end : 0.0;
-		window.min = source.min != null ? source.min : 0.0;
-		window.max = source.max != null ? source.max : 0.0;
-		return window;
+		return new Omero.Channel.Window(
+				source.start != null ? source.start : 0.0,
+				source.end != null ? source.end : 0.0,
+				source.min != null ? source.min : 0.0,
+				source.max != null ? source.max : 0.0 );
 	}
 
 	// ---------------------------------------------------------------------
