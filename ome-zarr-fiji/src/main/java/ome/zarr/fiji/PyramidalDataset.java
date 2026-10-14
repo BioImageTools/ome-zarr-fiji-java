@@ -79,7 +79,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 		this.resolutionLevel = resolutionLevel;
 		setRGBMerged( false );
 		if ( contents.numResolutionLevels() > 1 )
-			setName( multiResolutionName( contents.name, resolutionLevel, contents.numResolutionLevels() ) );
+			setName( multiResolutionName( contents.name(), resolutionLevel, contents.numResolutionLevels() ) );
 	}
 
 	public int resolutionLevel()
@@ -137,7 +137,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 		}
 
 		final AxisCalibration[] selectedAxes = contents.axesPerLevel[ resolutionLevel ];
-		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.cachedCellImgs[ resolutionLevel ], contents.name );
+		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.cachedCellImgs[ resolutionLevel ], contents.name() );
 		for ( int i = 0; i < selectedAxes.length; i++ )
 		{
 			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( selectedAxes[ i ].name, Axes.unknown() );

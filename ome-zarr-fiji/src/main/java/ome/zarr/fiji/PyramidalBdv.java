@@ -94,7 +94,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 
 	public String getName()
 	{
-		return contents.name;
+		return contents.name();
 	}
 
 	@SuppressWarnings( "unchecked" )

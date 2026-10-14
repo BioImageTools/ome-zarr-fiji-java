@@ -73,7 +73,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 */
 	public static final int NO_MATCHING_LEVEL = -1;
 
-	public final String name;
+	private final String name;
 
 	public final T type;
 
@@ -101,15 +101,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	/** OMERO rendering metadata, or {@code null} if unavailable. */
 	public final Omero omero;
 
-	/**
-	 * Whether the scale and unit in {@link #axesPerLevel} are placeholders that no
-	 * part of the dataset states, rather than real calibration (see
-	 * {@link AxisCalibration#createPlaceholderCalibration}).
-	 * <p>
-	 * {@code true} only for a single array read from its own axis names alone,
-	 * with no parent multiscales group to supply a scale or unit.
-	 */
-	public final boolean hasPlaceholderCalibration;
+	private final boolean hasPlaceholderCalibration;
 
 	private PyramidContents( final Builder< T > b )
 	{
@@ -125,6 +117,25 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		if ( axesPerLevel[ 0 ].length != numDimensions )
 			throw new IllegalArgumentException( "Full-resolution axis count (" + axesPerLevel[ 0 ].length
 					+ ") does not match the number of image dimensions (" + numDimensions + ")." );
+	}
+
+	/** Dataset name. */
+	public String name()
+	{
+		return name;
+	}
+
+	/**
+	 * Whether the scale and unit in {@link #axesPerLevel} are placeholders that no
+	 * part of the dataset states, rather than real calibration (see
+	 * {@link AxisCalibration#createPlaceholderCalibration}).
+	 * <p>
+	 * {@code true} only for a single array read from its own axis names alone,
+	 * with no parent multiscales group to supply a scale or unit.
+	 */
+	public boolean hasPlaceholderCalibration()
+	{
+		return hasPlaceholderCalibration;
 	}
 
 	/**
@@ -230,7 +241,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	/**
 	 * One label per channel.
 	 * Derived from the OMERO channel metadata when available and consistent with
-	 * {@link #numChannels()}, otherwise falling back to the dataset {@link #name}.
+	 * {@link #numChannels()}, otherwise falling back to the dataset {@link #name()}.
 	 */
 	public String[] channelLabels()
 	{
@@ -466,7 +477,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * Factory for one case where a level's calibration has to be made up: a bare
 	 * array node read from its own axis names alone, with no parent multiscales
 	 * group to state a scale or unit. The result has
-	 * {@link #hasPlaceholderCalibration} set.
+	 * {@link #hasPlaceholderCalibration()} set.
 	 *
 	 * @param <T> pixel type
 	 * @param name dataset name
@@ -540,7 +551,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 			return this;
 		}
 
-		/** See {@link PyramidContents#hasPlaceholderCalibration}. Defaults to {@code false}. */
+		/** See {@link PyramidContents#hasPlaceholderCalibration()}. Defaults to {@code false}. */
 		public Builder< T > hasPlaceholderCalibration( final boolean h )
 		{
 			this.hasPlaceholderCalibration = h;
