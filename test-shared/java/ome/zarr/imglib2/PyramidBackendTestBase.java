@@ -151,9 +151,9 @@ public interface PyramidBackendTestBase
 			assertNotNull( contents );
 			assertEquals( 1, contents.numResolutionLevels() );
 			assertEquals( 2, contents.numDimensions() );
-			assertEquals( "0", contents.name, "Without a multiscales name, the array node name is used" );
+			assertEquals( "0", contents.name(), "Without a multiscales name, the array node name is used" );
 			assertNull( contents.omero );
-			assertTrue( contents.hasPlaceholderCalibration,
+			assertTrue( contents.hasPlaceholderCalibration(),
 					"An array read from its own axis names has no real scale or unit, and must say so" );
 
 			// dimension_names are y, x; the imglib2 image is in F-order, so x comes first.
@@ -219,7 +219,7 @@ public interface PyramidBackendTestBase
 			assertNotNull( contents );
 			assertEquals( 1, contents.numResolutionLevels(), "A single level is a one-level pyramid" );
 			assertEquals( 5, contents.numDimensions() );
-			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name, "The name comes from the parent multiscales entry" );
+			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name(), "The name comes from the parent multiscales entry" );
 
 			// Level 1 of the 5d dataset: zarr [t, c, z, y, x] = [4, 3, 8, 32, 32],
 			// reversed into imglib2 F-order.
@@ -239,7 +239,7 @@ public interface PyramidBackendTestBase
 					new double[] { transform.get( 0, 0 ), transform.get( 1, 1 ), transform.get( 2, 2 ) },
 					"The transform is the one of the level that was read, not of level 0" );
 
-			assertFalse( contents.hasPlaceholderCalibration,
+			assertFalse( contents.hasPlaceholderCalibration(),
 					"The scale and unit come from the parent multiscales group, so they are real" );
 
 			Omero omero = contents.omero;
@@ -269,7 +269,7 @@ public interface PyramidBackendTestBase
 		try (Context context = new Context())
 		{
 			PyramidContents< ? > contents = this.read( resource, context );
-			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name() );
 			assertEquals( 2, contents.numResolutionLevels() );
 			assertEquals( 16, contents.asImg( 0 ).dimension( 0 ) );
 			assertEquals( 8, contents.asImg( 1 ).dimension( 0 ) );
@@ -426,7 +426,7 @@ public interface PyramidBackendTestBase
 		try (Context context = new Context())
 		{
 			PyramidContents< ? > contents = this.read( resource, context );
-			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name() );
 		}
 	}
 

@@ -64,7 +64,7 @@ class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		PyramidContents< ? > contents = ZarrJavaPyramidBackend.readPyramid( path.toUri() );
 		assertNotNull( contents );
-		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name() );
 		assertEquals( 5, contents.numDimensions() );
 		assertEquals( 2, contents.numResolutionLevels() );
 	}
@@ -75,7 +75,7 @@ class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
 		Path archive = ZarrTestUtils.zipDataset( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr", tempDir.resolve( "5d.ozx" ) );
 		PyramidContents< ? > contents = ZarrJavaPyramidBackend.readPyramid( archive.toUri() );
 		assertNotNull( contents );
-		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name() );
 		assertEquals( 5, contents.numDimensions() );
 		assertEquals( 2, contents.numResolutionLevels() );
 	}
@@ -91,7 +91,7 @@ class ZarrJavaPyramidBackendTest implements PyramidBackendTestBase
 			URI uri = URI.create( "http://localhost:" + server.getAddress().getPort() + "/5d.ozx" );
 			PyramidContents< ? > contents = ZarrJavaPyramidBackend.readPyramid( uri );
 			assertNotNull( contents );
-			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+			assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name() );
 			assertEquals( 5, contents.numDimensions() );
 			assertEquals( 2, contents.numResolutionLevels() );
 		}

@@ -223,7 +223,7 @@ class OmeZarrTest
 			assertEquals( 1, datasetService.getDatasets().size(), "Accepting must open the image" );
 			PyramidalDataset opened =
 					assertInstanceOf( PyramidalDataset.class, context.getService( PyramidalService.class ).getPyramidals().get( 0 ) );
-			assertTrue( opened.getPyramidContents().hasPlaceholderCalibration,
+			assertTrue( opened.getPyramidContents().hasPlaceholderCalibration(),
 					"The opened image still knows its calibration was made up" );
 
 			SwingUtilities.invokeAndWait( () -> {} ); // let Swing process the show
