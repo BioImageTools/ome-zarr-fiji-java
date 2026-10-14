@@ -62,7 +62,7 @@ class N5PyramidBackendTest implements PyramidBackendTestBase
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		PyramidContents< ? > contents = N5PyramidBackend.readPyramid( path.toUri() );
 		assertNotNull( contents );
-		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name );
+		assertEquals( ZarrTestUtils.IMAGE_NAME, contents.name() );
 		assertEquals( 5, contents.numDimensions() );
 		assertEquals( 2, contents.numResolutionLevels() );
 	}
