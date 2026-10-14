@@ -80,7 +80,7 @@ public class BdvUtils
 		BdvHandle bdvHandle = BdvFunctions.show( pyramidalBdv.asSources(), pyramidalBdv.getPyramidContents().numTimepoints(),
 				BdvOptions.options().frameTitle( pyramidalBdv.getName() ) ).getBdvHandle();
 
-		final Omero omero = pyramidalBdv.getPyramidContents().omero;
+		final Omero omero = pyramidalBdv.getPyramidContents().omero();
 		final List< Omero.Channel > omeroChannels = omeroChannels( omero, pyramidalBdv.asSources().size() );
 		setTimepoint( omero, bdvHandle.getViewerPanel().state() );
 		setChannelProperties( omeroChannels, pyramidalBdv.asSources(), bdvHandle.getConverterSetups(), bdvHandle.getViewerPanel().state() );
@@ -144,8 +144,8 @@ public class BdvUtils
 			final Omero.Channel omeroChannel = omeroChannels.get( channelNumber );
 			final ConverterSetup converterSetup = converterSetups.getConverterSetup( source );
 			converterSetup.setColor( channelColor( omeroChannel ) );
-			if ( omeroChannel != null && omeroChannel.window != null )
-				setDisplayRangeAndBounds( converterSetup, converterSetups.getBounds(), omeroChannel.window );
+			if ( omeroChannel != null && omeroChannel.window() != null )
+				setDisplayRangeAndBounds( converterSetup, converterSetups.getBounds(), omeroChannel.window() );
 			state.setSourceActive( source, isChannelActive( omeroChannel ) );
 		}
 	}
@@ -165,9 +165,9 @@ public class BdvUtils
 	private static void setDisplayRangeAndBounds( final ConverterSetup converterSetup,
 			final ConverterSetupBounds converterSetupBounds, final Omero.Channel.Window window )
 	{
-		converterSetup.setDisplayRange( window.start, window.end );
-		if ( window.max > window.min )
-			converterSetupBounds.setBounds( converterSetup, new Bounds( window.min, window.max ) );
+		converterSetup.setDisplayRange( window.start(), window.end() );
+		if ( window.max() > window.min() )
+			converterSetupBounds.setBounds( converterSetup, new Bounds( window.min(), window.max() ) );
 	}
 
 	/**
@@ -183,16 +183,16 @@ public class BdvUtils
 	 */
 	public static List< Omero.Channel > omeroChannels( final Omero omero, final int numChannels )
 	{
-		if ( omero == null || omero.channels == null || omero.channels.isEmpty() )
+		if ( omero == null || omero.channels() == null || omero.channels().isEmpty() )
 			return Collections.emptyList();
-		if ( omero.channels.size() != numChannels )
+		if ( omero.channels().size() != numChannels )
 		{
 			logger.warn(
 					"The number of channels in the Omero metadata ({}) does not match the number of sources in the dataset ({}). Channel properties will not be applied.",
-					omero.channels.size(), numChannels );
+					omero.channels().size(), numChannels );
 			return Collections.emptyList();
 		}
-		return omero.channels;
+		return omero.channels();
 	}
 
 	/**
@@ -205,9 +205,9 @@ public class BdvUtils
 	 */
 	private static ARGBType channelColor( final Omero.Channel omeroChannel )
 	{
-		final Color color = omeroChannel == null || omeroChannel.color == null
+		final Color color = omeroChannel == null || omeroChannel.color() == null
 				? Color.white
-				: Color.decode( "#" + omeroChannel.color );
+				: Color.decode( "#" + omeroChannel.color() );
 		final int opaque = 255;
 		return new ARGBType( ARGBType.rgba( color.getRed(), color.getGreen(), color.getBlue(), opaque ) );
 	}
@@ -222,7 +222,7 @@ public class BdvUtils
 	 */
 	private static boolean isChannelActive( final Omero.Channel omeroChannel )
 	{
-		return omeroChannel == null || omeroChannel.active;
+		return omeroChannel == null || omeroChannel.active();
 	}
 
 	/**
@@ -234,7 +234,7 @@ public class BdvUtils
 	 */
 	private static int defaultTimepoint( final Omero omero )
 	{
-		return omero == null || omero.rdefs == null ? 0 : omero.rdefs.defaultT;
+		return omero == null || omero.rdefs() == null ? 0 : omero.rdefs().defaultT();
 	}
 
 	/**
