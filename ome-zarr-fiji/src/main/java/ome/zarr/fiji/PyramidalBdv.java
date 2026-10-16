@@ -28,14 +28,21 @@
  */
 package ome.zarr.fiji;
 
+import bdv.img.cache.VolatileCachedCellImg;
+import bdv.util.volatiles.VolatileView;
+import bdv.viewer.Source;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
+import net.imglib2.cache.Invalidate;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.converter.Converter;
+import net.imglib2.img.WrappedImg;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.MixedTransformView;
 import net.imglib2.view.Views;
 
 import org.scijava.AbstractContextual;
@@ -284,5 +291,84 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	{
 		if ( objectService != null )
 			objectService.removeObject( this );
+	}
+
+	// ------------------ caches ------------------
+	/**
+	 * Invalidates all chunks from all pyramidal/resolution levels for the given timepoint
+	 * of this object's particular {@link Source}.
+	 */
+	public void invalidate( final int sourceIndex, final int timePoint )
+	{
+		if ( sourceIndex < 0 || sourceIndex >= sources.size() )
+			throw new IllegalArgumentException( "Invalid source index: " + sourceIndex );
+		invalidateCache( sources.get( sourceIndex ).asVolatile().getSpimSource(), timePoint );
+	}
+
+	/**
+	 * Invalidates all chunks from all pyramidal/resolution levels for the given timepoint
+	 * of this object's particular {@link Source}.
+	 */
+	public Invalidate< ? > getInvalidate( final int sourceIndex, final int timePoint, final int resolutionLevel )
+	{
+		if ( sourceIndex < 0 || sourceIndex >= sources.size() )
+			throw new IllegalArgumentException( "Invalid source index: " + sourceIndex );
+		return getCache( sources.get( sourceIndex ).asVolatile().getSpimSource(), timePoint, resolutionLevel );
+	}
+
+	/**
+	 * Invalidates all chunks from all pyramidal/resolution levels of the given {@link Source}
+	 * for the given timepoint.
+	 */
+	public static void invalidateCache( final Source< ? > src, final int timePoint )
+	{
+		for ( int l = 0; l < src.getNumMipmapLevels(); ++l )
+			invalidateCache( src, timePoint, l );
+	}
+
+	/**
+	 * Invalidates all chunks from a given pyramidal/resolution level of the given {@link Source}
+	 * for the given timepoint.
+	 */
+	public static void invalidateCache( final Source< ? > src, final int timePoint, final int resolutionLevel )
+	{
+		Invalidate< ? > c = getCache( src, timePoint, resolutionLevel );
+		if ( c != null )
+			c.invalidateAll();
+	}
+
+	/**
+	 * Returns {@link Invalidate<?>}, which is a collection of methods to invalidate caches, associated
+	 * with the backing cache from a given pyramidal/resolution level of the given {@link Source}
+	 * for the given timepoint.
+	 */
+	public static Invalidate< ? > getCache( final Source< ? > src, final int timePoint, final int resolutionLevel )
+	{
+		if ( !src.isPresent( timePoint ) )
+			throw new IllegalArgumentException(
+					"Timepoint " + timePoint + " is not available in this source." );
+		if ( resolutionLevel < 0 || resolutionLevel >= src.getNumMipmapLevels() )
+			throw new IllegalArgumentException(
+					"Resolution level " + resolutionLevel + " is not available in this source." );
+		return findCache( src.getSource( timePoint, resolutionLevel ) );
+	}
+
+	public static Invalidate< ? > findCache( final Object rai )
+	{
+		// Claude was creative here....
+		// TODO this gotta be made shorter exactly for the needs of PyramidalBdv
+		if ( rai instanceof VolatileCachedCellImg )
+			return ( ( VolatileCachedCellImg< ?, ? > ) rai ).getCache();
+		if ( rai instanceof CachedCellImg )
+			return ( ( CachedCellImg< ?, ? > ) rai ).getCache();
+		if ( rai instanceof VolatileView )
+			return findCache( ( ( VolatileView< ?, ? > ) rai ).getVolatileViewData().getImg() );
+		if ( rai instanceof IntervalView )
+			return findCache( ( ( IntervalView< ? > ) rai ).getSource() );
+		if ( rai instanceof MixedTransformView )
+			return findCache( ( ( MixedTransformView< ? > ) rai ).getSource() );
+		if ( rai instanceof WrappedImg )
+			return findCache( ( ( WrappedImg< ? > ) rai ).getImg() );
+		return null; // not cache-backed (e.g. ArrayImg): data is live, a repaint suffices
 	}
 }
