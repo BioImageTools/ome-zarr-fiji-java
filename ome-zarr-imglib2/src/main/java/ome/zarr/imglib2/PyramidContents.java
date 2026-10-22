@@ -66,7 +66,8 @@ import ome.zarr.imglib2.util.ImageSizes;
  * {@link #numChannels()}, {@link #numTimepoints()} and {@link #axisIndex} cannot
  * disagree with one another. The constructor enforces the one cross-axis
  * invariant they all rely on: the axis list and the image have the same number
- * of dimensions.
+ * of dimensions. It also checks that images, transforms and axis lists cover the
+ * same number of resolution levels.
  *
  * @param <T> pixel type
  */
@@ -107,6 +108,10 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 			axesPerLevel[ level ] = b.axesPerLevel[ level ].clone();
 		this.omero = b.omero;
 		this.hasPlaceholderCalibration = b.hasPlaceholderCalibration;
+
+		if ( transforms.length != cachedCellImgs.length || axesPerLevel.length != cachedCellImgs.length )
+			throw new IllegalArgumentException( "Level counts differ: " + cachedCellImgs.length + " images, "
+					+ transforms.length + " transforms, " + axesPerLevel.length + " axis lists." );
 
 		final int numDimensions = cachedCellImgs[ 0 ].numDimensions();
 		if ( axesPerLevel[ 0 ].length != numDimensions )
