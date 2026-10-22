@@ -50,6 +50,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
 
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.stream.Stream;
 
 import ome.zarr.ZarrTestUtils;
@@ -159,7 +160,7 @@ public interface PyramidBackendTestBase
 			// dimension_names are y, x; the imglib2 image is in F-order, so x comes first.
 			assertEquals( 0, contents.axisIndex( AxisCalibration.X ) );
 			assertEquals( 1, contents.axisIndex( AxisCalibration.Y ) );
-			for ( final AxisCalibration axis : contents.axesPerLevel[ 0 ] )
+			for ( final AxisCalibration axis : contents.axes( 0 ) )
 			{
 				assertEquals( 1.0, axis.scale, "An array without a parent multiscale reads uncalibrated" );
 				assertEquals( "", axis.unit );
@@ -255,7 +256,7 @@ public interface PyramidBackendTestBase
 	{
 		final int index = contents.axisIndex( axisName );
 		assertNotEquals( -1, index, "Axis " + axisName + " is missing" );
-		assertEquals( expectedScale, contents.axesPerLevel[ 0 ][ index ].scale, axisName + " scale" );
+		assertEquals( expectedScale, contents.axes( 0 ).get( index ).scale, axisName + " scale" );
 	}
 
 	/**
@@ -538,11 +539,11 @@ public interface PyramidBackendTestBase
 	 */
 	static double[] physicalExtents( final PyramidContents< ? > contents, final int level )
 	{
-		final AxisCalibration[] axes = contents.axesPerLevel[ level ];
+		final List< AxisCalibration > axes = contents.axes( level );
 		final Img< ? > img = contents.asImg( level );
-		final double[] extents = new double[ axes.length ];
-		for ( int d = 0; d < axes.length; d++ )
-			extents[ d ] = axes[ d ].scale * img.dimension( d );
+		final double[] extents = new double[ axes.size() ];
+		for ( int d = 0; d < axes.size(); d++ )
+			extents[ d ] = axes.get( d ).scale * img.dimension( d );
 		return extents;
 	}
 
@@ -560,7 +561,7 @@ public interface PyramidBackendTestBase
 				final int index = contents.axisIndex( axisName );
 				if ( index < 0 )
 					continue; // axis not present (e.g. no z)
-				final AxisCalibration axis = contents.axesPerLevel[ 0 ][ index ];
+				final AxisCalibration axis = contents.axes( 0 ).get( index );
 				assertEquals( 1.0, axis.scale );
 				assertEquals( "", axis.unit );
 			}
