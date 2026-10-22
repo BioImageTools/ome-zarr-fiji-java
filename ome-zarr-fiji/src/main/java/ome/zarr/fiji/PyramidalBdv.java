@@ -94,7 +94,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 
 	public String getName()
 	{
-		return contents.name;
+		return contents.name();
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -103,15 +103,16 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	{
 		final int nLevels = contents.numResolutionLevels();
 		final int numChannels = contents.numChannels();
-		final T type = contents.type;
-		final AffineTransform3D[] mipmapTransforms = contents.transforms;
+		final T type = contents.type();
+		final AffineTransform3D[] mipmapTransforms = new AffineTransform3D[ nLevels ];
+		Arrays.setAll( mipmapTransforms, contents::transform );
 		final VoxelDimensions voxelDimensions = voxelDimensions( contents );
 
 		final RandomAccessibleInterval< V >[] volatileImgs = createVolatileImgs( contents );
 		final V volatileType = volatileImgs[ 0 ].getType();
 
 		final RandomAccessibleInterval< T >[][] levelToChannels = new RandomAccessibleInterval[ nLevels ][];
-		Arrays.setAll( levelToChannels, level -> splitInputStackIntoSourceStacks( contents, contents.cachedCellImgs[ level ] ) );
+		Arrays.setAll( levelToChannels, level -> splitInputStackIntoSourceStacks( contents, contents.asImg( level ) ) );
 
 		final RandomAccessibleInterval< V >[][] levelToVolatileChannels = new RandomAccessibleInterval[ nLevels ][];
 		Arrays.setAll( levelToVolatileChannels, level -> splitInputStackIntoSourceStacks( contents, volatileImgs[ level ] ) );
@@ -149,7 +150,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		double yScale = 1.0;
 		double zScale = 1.0;
 		String unit = "";
-		for ( final AxisCalibration axis : contents.axesPerLevel[ 0 ] )
+		for ( final AxisCalibration axis : contents.axes( 0 ) )
 		{
 			switch ( axis.name )
 			{
@@ -180,7 +181,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final RandomAccessibleInterval< V >[] volatileImgs = new RandomAccessibleInterval[ contents.numResolutionLevels() ];
 		for ( int level = 0; level < contents.numResolutionLevels(); level++ )
-			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( contents.cachedCellImgs[ level ], sharedQueue );
+			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( contents.asImg( level ), sharedQueue );
 		return volatileImgs;
 	}
 

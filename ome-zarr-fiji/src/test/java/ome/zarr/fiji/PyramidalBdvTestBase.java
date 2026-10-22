@@ -45,6 +45,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.scijava.Context;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 import bdv.tools.brightness.ConverterSetup;
@@ -266,13 +267,17 @@ public interface PyramidalBdvTestBase
 		try (Context context = new Context())
 		{
 			PyramidContents< ? > contents = read( resource, context );
-			// NB: neither example turns a channel off, so switch one off to cover both answers.
-			contents.omero.channels.get( 1 ).active = false;
 			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
 			BdvHandle bdvHandle = BdvUtils.showBdvAndRegisterWindow( pyramidalBdv, null );
 			ViewerState state = bdvHandle.getViewerPanel().state();
 			assertEquals( 1, state.getCurrentTimepoint(), "the timepoint the rendering defaults name" );
 			List< ? extends SourceAndConverter< ? > > sources = pyramidalBdv.asSources();
+			// NB: neither example turns a channel off, so switch one off to cover both answers.
+			List< Omero.Channel > channels = new ArrayList<>( contents.omero().channels() );
+			Omero.Channel on = channels.get( 1 );
+			channels.set( 1, new Omero.Channel( false, on.coefficient(), on.color(), on.family(), on.inverted(),
+					on.label(), on.window() ) );
+			BdvUtils.setChannelProperties( channels, sources, bdvHandle.getConverterSetups(), state );
 			assertTrue( state.isSourceActive( sources.get( 0 ) ) );
 			assertFalse( state.isSourceActive( sources.get( 1 ) ) );
 			assertTrue( state.isSourceActive( sources.get( 2 ) ) );
@@ -287,8 +292,8 @@ public interface PyramidalBdvTestBase
 	{
 		try (Context context = new Context())
 		{
-			final Omero omero = read( resource, context ).omero;
-			final int numChannels = omero.channels.size();
+			final Omero omero = read( resource, context ).omero();
+			final int numChannels = omero.channels().size();
 			assertEquals( numChannels, BdvUtils.omeroChannels( omero, numChannels ).size(), "as many channels as sources" );
 			assertTrue( BdvUtils.omeroChannels( omero, numChannels + 1 ).isEmpty(), "fewer channels than sources" );
 			assertTrue( BdvUtils.omeroChannels( omero, numChannels - 1 ).isEmpty(), "more channels than sources" );
