@@ -54,10 +54,10 @@ import ome.zarr.imglib2.util.ZarrUtils;
  * run( "Open OME-Zarr as Dataset", "uri=/path/to/image.ome.zarr" );
  * </pre>
  *
- * SciJava's output post-processing shows the returned dataset as usual; a
- * script that captures the output decides for itself.
+ * The command does not display the dataset. A script that captures the output
+ * decides what to do with it.
  */
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open OME-Zarr as Dataset" )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open OME-Zarr as Dataset", description = "Open an OME-Zarr image as a Dataset output for macros and scripts, without displaying it" )
 public class OpenOmeZarrAsDatasetCommand extends ContextCommand
 {
 	@Parameter( label = "OME-Zarr URI or path", description = "Local path, file: or http(s): URI of the OME-Zarr dataset" )

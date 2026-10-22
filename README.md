@@ -90,7 +90,7 @@ run("Open OME-Zarr as Dataset", "uri=/path/to/image.ome.zarr");
 
 Unlike the `File -> Import` entry it accepts local paths, `file:` and `http(s):` URIs, and it always produces a
 `Dataset` instead of following the configured open behavior. The reader backend still comes from the
-settings. `s3://` is not supported here. The command opens no dialog of its own.
+settings. `s3://` is not supported here. The command opens no dialog and does not display the image.
 
 ### FIJI links (`fiji://`)
 
