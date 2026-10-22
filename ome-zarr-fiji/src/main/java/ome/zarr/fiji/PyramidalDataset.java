@@ -138,7 +138,7 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 		}
 
 		final List< AxisCalibration > selectedAxes = contents.axes( resolutionLevel );
-		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.cachedCellImgs[ resolutionLevel ], contents.name() );
+		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.asImg( resolutionLevel ), contents.name() );
 		for ( int i = 0; i < selectedAxes.size(); i++ )
 		{
 			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( selectedAxes.get( i ).name, Axes.unknown() );
