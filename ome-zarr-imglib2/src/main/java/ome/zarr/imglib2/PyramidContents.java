@@ -80,19 +80,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	private final T type;
 
-	/**
-	 * Per-resolution-level transform from that level's image coordinates to the
-	 * shared physical world coordinate system, in resolution-level order (index 0
-	 * is the highest resolution; aligned with {@link #cachedCellImgs}).
-	 * <p>
-	 * <b>Source</b> coordinates are the discrete pixel/voxel coordinates of
-	 * resolution level i, in imglib2 F-order (x, y, z). <b>Target</b> coordinates
-	 * are a single physical world space — in the spatial axes' unit (see
-	 * {@link #axes(int)}) — shared by all levels, so that every level overlays
-	 * correctly when displayed together. The transform combines the level's voxel
-	 * spacing (scale) with its origin offset (translation) in that world space.
-	 */
-	public final AffineTransform3D[] transforms;
+	private final AffineTransform3D[] transforms;
 
 	public final CachedCellImg< T, ? >[] cachedCellImgs;
 
@@ -106,7 +94,9 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	{
 		this.name = b.name;
 		this.type = b.type;
-		this.transforms = b.transforms;
+		this.transforms = new AffineTransform3D[ b.transforms.length ];
+		for ( int level = 0; level < transforms.length; level++ )
+			transforms[ level ] = b.transforms[ level ].copy();
 		this.cachedCellImgs = b.cachedCellImgs;
 		this.axesPerLevel = new AxisCalibration[ b.axesPerLevel.length ][];
 		for ( int level = 0; level < axesPerLevel.length; level++ )
@@ -145,6 +135,25 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	public boolean hasPlaceholderCalibration()
 	{
 		return hasPlaceholderCalibration;
+	}
+
+	/**
+	 * Transform from the image coordinates of the given resolution level to the
+	 * shared physical world coordinate system, as a new copy on every call.
+	 * <p>
+	 * <b>Source</b> coordinates are the discrete pixel/voxel coordinates of
+	 * the resolution level, in imglib2 F-order (x, y, z). <b>Target</b> coordinates
+	 * are a single physical world space — in the spatial axes' unit (see
+	 * {@link #axes(int)}) — shared by all levels, so that every level overlays
+	 * correctly when displayed together. The transform combines the level's voxel
+	 * spacing (scale) with its origin offset (translation) in that world space.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public AffineTransform3D transform( final int resolutionLevel )
+	{
+		return transforms[ resolutionLevel ].copy();
 	}
 
 	/**
