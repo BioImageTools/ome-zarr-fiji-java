@@ -30,6 +30,7 @@ package ome.zarr.fiji;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.scijava.Context;
@@ -136,12 +137,12 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 					" (numResolutionLevels = " + contents.numResolutionLevels() + ")" );
 		}
 
-		final AxisCalibration[] selectedAxes = contents.axesPerLevel[ resolutionLevel ];
+		final List< AxisCalibration > selectedAxes = contents.axes( resolutionLevel );
 		final ImgPlus< T > imgPlus = new ImgPlus<>( contents.cachedCellImgs[ resolutionLevel ], contents.name() );
-		for ( int i = 0; i < selectedAxes.length; i++ )
+		for ( int i = 0; i < selectedAxes.size(); i++ )
 		{
-			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( selectedAxes[ i ].name, Axes.unknown() );
-			imgPlus.setAxis( new DefaultLinearAxis( axisType, selectedAxes[ i ].unit, selectedAxes[ i ].scale ), i );
+			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( selectedAxes.get( i ).name, Axes.unknown() );
+			imgPlus.setAxis( new DefaultLinearAxis( axisType, selectedAxes.get( i ).unit, selectedAxes.get( i ).scale ), i );
 		}
 		return imgPlus;
 	}

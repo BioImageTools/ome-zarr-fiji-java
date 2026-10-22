@@ -149,7 +149,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		double yScale = 1.0;
 		double zScale = 1.0;
 		String unit = "";
-		for ( final AxisCalibration axis : contents.axesPerLevel[ 0 ] )
+		for ( final AxisCalibration axis : contents.axes( 0 ) )
 		{
 			switch ( axis.name )
 			{

@@ -29,6 +29,9 @@
 package ome.zarr.imglib2;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.img.Img;
@@ -55,7 +58,7 @@ import ome.zarr.imglib2.util.ImageSizes;
  * <p>
  * The resolution-level count and the per-axis sizes are derived on demand from
  * the full-resolution image and its axis list ({@code cachedCellImgs[ 0 ]} and
- * {@code axesPerLevel[ 0 ]}), rather than stored, so {@link #numDimensions()},
+ * {@code axes( 0 )}), rather than stored, so {@link #numDimensions()},
  * {@link #numChannels()}, {@link #numTimepoints()} and {@link #axisIndex} cannot
  * disagree with one another. The constructor enforces the one cross-axis
  * invariant they all rely on: the axis list and the image have the same number
@@ -85,7 +88,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * <b>Source</b> coordinates are the discrete pixel/voxel coordinates of
 	 * resolution level i, in imglib2 F-order (x, y, z). <b>Target</b> coordinates
 	 * are a single physical world space — in the spatial axes' unit (see
-	 * {@link #axesPerLevel}) — shared by all levels, so that every level overlays
+	 * {@link #axes(int)}) — shared by all levels, so that every level overlays
 	 * correctly when displayed together. The transform combines the level's voxel
 	 * spacing (scale) with its origin offset (translation) in that world space.
 	 */
@@ -93,10 +96,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	public final CachedCellImg< T, ? >[] cachedCellImgs;
 
-	/**
-	 * Axes per resolution level: {@code [resolutionLevel][axisIndex]}.
-	 */
-	public final AxisCalibration[][] axesPerLevel;
+	private final AxisCalibration[][] axesPerLevel;
 
 	private final Omero omero;
 
@@ -108,7 +108,9 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		this.type = b.type;
 		this.transforms = b.transforms;
 		this.cachedCellImgs = b.cachedCellImgs;
-		this.axesPerLevel = b.axesPerLevel;
+		this.axesPerLevel = new AxisCalibration[ b.axesPerLevel.length ][];
+		for ( int level = 0; level < axesPerLevel.length; level++ )
+			axesPerLevel[ level ] = b.axesPerLevel[ level ].clone();
 		this.omero = b.omero;
 		this.hasPlaceholderCalibration = b.hasPlaceholderCalibration;
 
@@ -133,7 +135,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
-	 * Whether the scale and unit in {@link #axesPerLevel} are placeholders that no
+	 * Whether the scale and unit in {@link #axes(int)} are placeholders that no
 	 * part of the dataset states, rather than real calibration (see
 	 * {@link AxisCalibration#createPlaceholderCalibration}).
 	 * <p>
@@ -143,6 +145,18 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	public boolean hasPlaceholderCalibration()
 	{
 		return hasPlaceholderCalibration;
+	}
+
+	/**
+	 * Axes of the image at the given resolution level, unmodifiable and indexed
+	 * like the image's dimensions (imglib2 F-order).
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public List< AxisCalibration > axes( final int resolutionLevel )
+	{
+		return Collections.unmodifiableList( Arrays.asList( axesPerLevel[ resolutionLevel ] ) );
 	}
 
 	/** OMERO rendering metadata, or {@code null} if unavailable. */
@@ -174,7 +188,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * {@link #asLargestImg()}.
 	 * <p>
 	 * The dimensions are in imglib2 F-order — a subset of (x, y, z, c, t) — so use
-	 * {@link #axisIndex} / {@link #hasAxis} together with {@link #axesPerLevel} to
+	 * {@link #axisIndex} / {@link #hasAxis} together with {@link #axes(int)} to
 	 * map dimension indices to logical axes.
 	 */
 	public Img< T > asImg()
@@ -280,7 +294,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * The axis is located <em>by name</em> rather than by a fixed position: axes
 	 * may be absent, so an axis' index shifts with the set of axes actually
 	 * present (in F-order, {@code c} is at index 2 in {@code xyct} but at index 3
-	 * in {@code xyzc}). The lookup goes through {@link #axesPerLevel}, which is
+	 * in {@code xyzc}). The lookup goes through {@link #axes(int)}, which is
 	 * aligned 1:1 with the dimensions of {@code cachedCellImgs[ 0 ]}.
 	 */
 	public int axisIndex( final String axisName )
