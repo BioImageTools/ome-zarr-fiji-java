@@ -389,7 +389,7 @@ public interface PyramidBackendTestBase
 		try (Context context = new Context())
 		{
 			PyramidContents< ? > contents = this.read( resource, context );
-			Object type = contents.type;
+			Object type = contents.type();
 			assertInstanceOf( UnsignedByteType.class, type );
 		}
 	}
