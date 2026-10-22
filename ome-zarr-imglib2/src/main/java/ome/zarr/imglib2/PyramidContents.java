@@ -75,7 +75,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	private final String name;
 
-	public final T type;
+	private final T type;
 
 	/**
 	 * Per-resolution-level transform from that level's image coordinates to the
@@ -122,6 +122,14 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	public String name()
 	{
 		return name;
+	}
+
+	/**
+	 * Pixel type, as a new instance on every call.
+	 */
+	public T type()
+	{
+		return type.createVariable();
 	}
 
 	/**

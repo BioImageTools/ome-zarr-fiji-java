@@ -158,7 +158,7 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 			sb.append( ", c=" ).append( contents.sizeAlongAxis( AxisCalibration.C, level ) );
 		if ( contents.hasAxis( AxisCalibration.T ) )
 			sb.append( ", t=" ).append( contents.sizeAlongAxis( AxisCalibration.T, level ) );
-		return sb.append( ", " ).append( dataTypeName( contents.type ) )
+		return sb.append( ", " ).append( dataTypeName( contents.type() ) )
 				.append( ", slice " ).append( ImageSizes.formatPixels( contents.numXYSlicePixels( level ) ) )
 				.append( " ~ " ).append( ImageSizes.formatBytes( contents.uncompressedXYSliceBytes( level ) ) )
 				.append( ", total " ).append( ImageSizes.formatBytes( contents.uncompressedBytes( level ) ) )
