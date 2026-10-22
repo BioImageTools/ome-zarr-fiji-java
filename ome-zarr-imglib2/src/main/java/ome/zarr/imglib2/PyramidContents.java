@@ -49,15 +49,19 @@ import ome.zarr.imglib2.util.ImageSizes;
 
 /**
  * Immutable snapshot of everything a {@link PyramidBackend} produces when
- * reading an OME-Zarr multi-resolution image.
+ * reading an OME-Zarr multi-resolution image, <b>except for pixel data</b>: the
+ * images are lazily loaded views of the store, so they are shared rather than
+ * copied, and every call of {@link #asImg(int)} returns the same instance.
+ * Pixel writes therefore show up for every user of these contents and live in
+ * memory only, so they may be lost when the cache frees memory.
  * <p>
- * Indices in {@code cachedCellImgs} and {@code transforms}
- * are in resolution-level order (index 0 is the highest resolution).
+ * Resolution levels are indexed from {@code 0} (the highest resolution) to
+ * {@link #smallestResolutionLevel()}.
  * The imglib2 axis indices follow F-order (x, y, z, c, t), the order produced
  * after the backend has reversed any zarr C-order shapes.
  * <p>
  * The resolution-level count and the per-axis sizes are derived on demand from
- * the full-resolution image and its axis list ({@code cachedCellImgs[ 0 ]} and
+ * the full-resolution image and its axis list ({@code asImg( 0 )} and
  * {@code axes( 0 )}), rather than stored, so {@link #numDimensions()},
  * {@link #numChannels()}, {@link #numTimepoints()} and {@link #axisIndex} cannot
  * disagree with one another. The constructor enforces the one cross-axis
@@ -82,7 +86,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	private final AffineTransform3D[] transforms;
 
-	public final CachedCellImg< T, ? >[] cachedCellImgs;
+	private final CachedCellImg< T, ? >[] cachedCellImgs;
 
 	private final AxisCalibration[][] axesPerLevel;
 
@@ -97,7 +101,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		this.transforms = new AffineTransform3D[ b.transforms.length ];
 		for ( int level = 0; level < transforms.length; level++ )
 			transforms[ level ] = b.transforms[ level ].copy();
-		this.cachedCellImgs = b.cachedCellImgs;
+		this.cachedCellImgs = b.cachedCellImgs.clone();
 		this.axesPerLevel = new AxisCalibration[ b.axesPerLevel.length ][];
 		for ( int level = 0; level < axesPerLevel.length; level++ )
 			axesPerLevel[ level ] = b.axesPerLevel[ level ].clone();
@@ -175,8 +179,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
-	 * Number of resolution levels in the pyramid, i.e. the length of
-	 * {@link #cachedCellImgs}.
+	 * Number of resolution levels in the pyramid.
 	 */
 	public int numResolutionLevels()
 	{
@@ -199,6 +202,10 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * The dimensions are in imglib2 F-order — a subset of (x, y, z, c, t) — so use
 	 * {@link #axisIndex} / {@link #hasAxis} together with {@link #axes(int)} to
 	 * map dimension indices to logical axes.
+	 * <p>
+	 * The image is shared, not copied: pixel writes show up for every user of
+	 * these contents and live in memory only, so they may be lost when the cache
+	 * frees memory.
 	 */
 	public Img< T > asImg()
 	{
@@ -208,6 +215,10 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	/**
 	 * Largest image of the pyramid, i.e., the full-resolution level {@code 0}. See
 	 * {@link #asImg()} for the axis ordering.
+	 * <p>
+	 * The image is shared, not copied: pixel writes show up for every user of
+	 * these contents and live in memory only, so they may be lost when the cache
+	 * frees memory.
 	 */
 	public Img< T > asLargestImg()
 	{
@@ -219,6 +230,10 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * {@link #smallestResolutionLevel()}. For a single-level pyramid this is the
 	 * same image as {@link #asLargestImg()}. See {@link #asImg()} for the axis
 	 * ordering.
+	 * <p>
+	 * The image is shared, not copied: pixel writes show up for every user of
+	 * these contents and live in memory only, so they may be lost when the cache
+	 * frees memory.
 	 */
 	public Img< T > asSmallestImg()
 	{
@@ -229,6 +244,10 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * Image at the given resolution level ({@code 0} = highest resolution). See
 	 * {@link #asImg()} for the axis ordering; {@link #suggestResolutionLevel} can
 	 * pick a level by preferred width.
+	 * <p>
+	 * The image is shared, not copied: pixel writes show up for every user of
+	 * these contents and live in memory only, so they may be lost when the cache
+	 * frees memory.
 	 *
 	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
 	 *   {@code [0, numResolutionLevels())}
@@ -304,7 +323,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * may be absent, so an axis' index shifts with the set of axes actually
 	 * present (in F-order, {@code c} is at index 2 in {@code xyct} but at index 3
 	 * in {@code xyzc}). The lookup goes through {@link #axes(int)}, which is
-	 * aligned 1:1 with the dimensions of {@code cachedCellImgs[ 0 ]}.
+	 * aligned 1:1 with the dimensions of {@code asImg( 0 )}.
 	 */
 	public int axisIndex( final String axisName )
 	{

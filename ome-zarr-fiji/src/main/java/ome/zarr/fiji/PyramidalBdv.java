@@ -112,7 +112,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final V volatileType = volatileImgs[ 0 ].getType();
 
 		final RandomAccessibleInterval< T >[][] levelToChannels = new RandomAccessibleInterval[ nLevels ][];
-		Arrays.setAll( levelToChannels, level -> splitInputStackIntoSourceStacks( contents, contents.cachedCellImgs[ level ] ) );
+		Arrays.setAll( levelToChannels, level -> splitInputStackIntoSourceStacks( contents, contents.asImg( level ) ) );
 
 		final RandomAccessibleInterval< V >[][] levelToVolatileChannels = new RandomAccessibleInterval[ nLevels ][];
 		Arrays.setAll( levelToVolatileChannels, level -> splitInputStackIntoSourceStacks( contents, volatileImgs[ level ] ) );
@@ -181,7 +181,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
 		final RandomAccessibleInterval< V >[] volatileImgs = new RandomAccessibleInterval[ contents.numResolutionLevels() ];
 		for ( int level = 0; level < contents.numResolutionLevels(); level++ )
-			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( contents.cachedCellImgs[ level ], sharedQueue );
+			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( contents.asImg( level ), sharedQueue );
 		return volatileImgs;
 	}
 
