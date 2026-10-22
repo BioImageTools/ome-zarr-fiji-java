@@ -104,7 +104,8 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final int nLevels = contents.numResolutionLevels();
 		final int numChannels = contents.numChannels();
 		final T type = contents.type();
-		final AffineTransform3D[] mipmapTransforms = contents.transforms;
+		final AffineTransform3D[] mipmapTransforms = new AffineTransform3D[ nLevels ];
+		Arrays.setAll( mipmapTransforms, contents::transform );
 		final VoxelDimensions voxelDimensions = voxelDimensions( contents );
 
 		final RandomAccessibleInterval< V >[] volatileImgs = createVolatileImgs( contents );

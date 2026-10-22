@@ -235,7 +235,7 @@ public interface PyramidBackendTestBase
 			assertScaleAtAxis( contents, AxisCalibration.C, 1.0 );
 			assertScaleAtAxis( contents, AxisCalibration.T, 1.0 );
 
-			AffineTransform3D transform = contents.transforms[ 0 ];
+			AffineTransform3D transform = contents.transform( 0 );
 			assertArrayEquals( new double[] { 2.0, 2.0, 2.0 },
 					new double[] { transform.get( 0, 0 ), transform.get( 1, 1 ), transform.get( 2, 2 ) },
 					"The transform is the one of the level that was read, not of level 0" );
