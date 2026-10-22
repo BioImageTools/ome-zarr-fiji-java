@@ -209,7 +209,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 */
 	public Img< T > asImg()
 	{
-		return asImg( 0 );
+		return asLargestImg();
 	}
 
 	/**
