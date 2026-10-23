@@ -53,6 +53,7 @@ import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
+import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.read.exceptions.NonExistingResolutionLevelException;
 import ome.zarr.fiji.util.BdvUtils;
@@ -386,6 +387,7 @@ public class OmeZarr
 	{
 		final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
 		context.getService( UIService.class ).show( dataset );
+		context.getService( ActiveViewerService.class ).setActiveViewer( null );
 		context.getService( PyramidalService.class ).setActivePyramidal( dataset );
 		logger.info( "Opened dataset at resolution level {} in ImageJ: {}", resolutionLevel, inputUri );
 		return dataset;
@@ -459,6 +461,7 @@ public class OmeZarr
 					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, readContents() );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 					final BdvHandle result = BdvUtils.show( pyramidal, bdvHandle, pyramidalService );
+					context.getService( ActiveViewerService.class ).setActiveViewer( result.getViewerPanel() );
 					logger.info( "{} pyramidal in BigDataViewer: {}", bdvHandle == null ? "Opened" : "Added", inputUri );
 					return result;
 				} );
