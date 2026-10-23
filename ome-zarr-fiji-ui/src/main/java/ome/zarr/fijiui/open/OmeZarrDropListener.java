@@ -111,10 +111,14 @@ public class OmeZarrDropListener extends DropTargetAdapter
 		final List< String > locations = droppedLocations( event.getTransferable() );
 		event.dropComplete( !locations.isEmpty() );
 		if ( !locations.isEmpty() )
-			new Thread( () -> locations.forEach( this::add ), "OME-Zarr drop onto BigDataViewer" ).start();
+			new Thread( () -> {
+				final OmeZarrOpeningSettings settings =
+						OmeZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
+				locations.forEach( location -> add( location, settings ) );
+			}, "OME-Zarr drop onto BigDataViewer" ).start();
 	}
 
-	private void add( final String location )
+	private void add( final String location, final OmeZarrOpeningSettings settings )
 	{
 		final URI uri = ClipboardUtils.stringToUri( location, IJ::error );
 		if ( uri == null )
@@ -124,8 +128,6 @@ public class OmeZarrDropListener extends DropTargetAdapter
 			IJ.error( "The dropped location does not appear to be an OME-Zarr dataset:\n" + uri + "." );
 			return;
 		}
-		final OmeZarrOpeningSettings settings =
-				OmeZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
 		OmeZarrOpenActions.withSettings( uri, context, settings, IJ::error ).showInBdv( bdvHandle );
 	}
 
