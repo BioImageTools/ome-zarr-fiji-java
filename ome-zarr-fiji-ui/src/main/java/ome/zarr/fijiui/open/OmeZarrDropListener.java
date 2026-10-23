@@ -109,8 +109,9 @@ public class OmeZarrDropListener extends DropTargetAdapter
 	{
 		event.acceptDrop( DnDConstants.ACTION_COPY );
 		final List< String > locations = droppedLocations( event.getTransferable() );
-		event.dropComplete( !locations.isEmpty() );
-		if ( !locations.isEmpty() )
+		final boolean transferSucceeded = !locations.isEmpty();
+		event.dropComplete( transferSucceeded );
+		if ( transferSucceeded )
 			new Thread( () -> {
 				final OmeZarrOpeningSettings settings =
 						OmeZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
