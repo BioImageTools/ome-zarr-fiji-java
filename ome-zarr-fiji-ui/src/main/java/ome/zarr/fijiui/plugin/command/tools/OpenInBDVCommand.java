@@ -29,6 +29,8 @@
 package ome.zarr.fijiui.plugin.command.tools;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collections;
+import java.util.List;
 
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
@@ -38,10 +40,13 @@ import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import bdv.util.BdvHandle;
 import ome.zarr.fiji.Pyramidal;
-import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.util.BdvUtils;
+import ome.zarr.fiji.util.OmeZarrImagesChooser;
+import ome.zarr.fijiui.open.OmeZarrBdvDropListener;
+import ome.zarr.imglib2.PyramidContents;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer" )
 public class OpenInBDVCommand implements Command
@@ -70,7 +75,23 @@ public class OpenInBDVCommand implements Command
 				logger.warn( message );
 			return;
 		}
-		final PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( this.pyramidal.getContext(), this.pyramidal.getPyramidContents() );
-		BdvUtils.showBdvAndRegisterWindow( pyramidalBdv, pyramidalService );
+		final BdvHandle bdvHandle = BdvUtils.showInOneWindow( selectContents(), this.pyramidal.getContext(), pyramidalService );
+		if ( bdvHandle != null )
+			OmeZarrBdvDropListener.install( bdvHandle, this.pyramidal.getContext() );
+	}
+
+	/**
+	 * The OME-Zarrs to show in one BDV window: just the active one, unless more than one
+	 * is open, in ImageJ or BigDataViewer. Each is listed once, however many windows show it.
+	 */
+	private List< PyramidContents< ? > > selectContents()
+	{
+		final List< PyramidContents< ? > > open = pyramidalService.getPyramidContents();
+		if ( open.isEmpty() )
+			return Collections.emptyList();
+		// for one OME-Zarr, this.pyramidal's contents should be the same as open.get( 0 ) and for headless mode, we don't want to show a chooser dialog, so just return the active one
+		if ( open.size() == 1 || uiService.isHeadless() )
+			return Collections.singletonList( this.pyramidal.getPyramidContents() );
+		return OmeZarrImagesChooser.choose( open, this.pyramidal.getPyramidContents() ); // NB: the active one is pre-selected
 	}
 }
