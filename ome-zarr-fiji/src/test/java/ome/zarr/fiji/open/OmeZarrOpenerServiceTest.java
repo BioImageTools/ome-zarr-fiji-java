@@ -94,7 +94,7 @@ class OmeZarrOpenerServiceTest
 		return info;
 	}
 
-	private static OmeZarr omeZarrFor( final Context context )
+	private static OmeZarr omeZarrWithoutBackend( final Context context )
 	{
 		return new OmeZarr( URI_UNDER_TEST, context, null, null, message -> {} );
 	}
@@ -165,10 +165,10 @@ class OmeZarrOpenerServiceTest
 			register( context, RecordingOpener.class, "recording", Priority.NORMAL );
 			RecordingOpener.opened = 0;
 
-			assertTrue( openerService.open( "recording", omeZarrFor( context ) ) );
+			assertTrue( openerService.open( "recording", omeZarrWithoutBackend( context ) ) );
 			assertEquals( 1, RecordingOpener.opened );
 
-			assertFalse( openerService.open( "uninstalled", omeZarrFor( context ) ),
+			assertFalse( openerService.open( "uninstalled", omeZarrWithoutBackend( context ) ),
 					"An unknown name opens nothing and says so" );
 			assertEquals( 1, RecordingOpener.opened );
 		}
@@ -182,7 +182,7 @@ class OmeZarrOpenerServiceTest
 			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 			register( context, FailingOpener.class, "failing", Priority.NORMAL );
 
-			assertDoesNotThrow( () -> openerService.open( "failing", omeZarrFor( context ) ) );
+			assertDoesNotThrow( () -> openerService.open( "failing", omeZarrWithoutBackend( context ) ) );
 		}
 	}
 
@@ -192,7 +192,7 @@ class OmeZarrOpenerServiceTest
 		try (Context context = new Context())
 		{
 			final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
-			final OmeZarr omeZarr = omeZarrFor( context );
+			final OmeZarr omeZarr = omeZarrWithoutBackend( context );
 
 			// Neither label nor description given, so both fall back to the name.
 			final PluginInfo< OmeZarrOpener > bare = register( context, RecordingOpener.class, "bare", Priority.NORMAL );
