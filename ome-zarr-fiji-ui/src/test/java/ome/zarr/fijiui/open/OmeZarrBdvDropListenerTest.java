@@ -65,7 +65,7 @@ import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.fijiui.open.openers.BdvAddToActiveOpener;
 
-class OmeZarrDropListenerTest
+class OmeZarrBdvDropListenerTest
 {
 	private static final String SPOTS = "ome/zarr/testdata/bdv_testing/logo_spots.ome.zarr";
 
@@ -110,7 +110,7 @@ class OmeZarrDropListenerTest
 	{
 		File a = new File( "/data/a.ome.zarr" ), b = new File( "/data/b.ome.zarr" );
 		assertEquals( Arrays.asList( a.toString(), b.toString() ),
-				OmeZarrDropListener.droppedLocations( fileList( Arrays.asList( a, b ) ) ) );
+				OmeZarrBdvDropListener.droppedLocations( fileList( Arrays.asList( a, b ) ) ) );
 	}
 
 	/** Browsers send URLs as text, one per line, as in {@code text/uri-list}, where '#' starts a comment. */
@@ -119,13 +119,13 @@ class OmeZarrDropListenerTest
 	{
 		String uriList = "# dragged from a browser\r\nhttps://example.com/a.ome.zarr\n\n  /data/b.ome.zarr  \n";
 		assertEquals( Arrays.asList( "https://example.com/a.ome.zarr", "/data/b.ome.zarr" ),
-				OmeZarrDropListener.droppedLocations( new StringSelection( uriList ) ) );
+				OmeZarrBdvDropListener.droppedLocations( new StringSelection( uriList ) ) );
 	}
 
 	@Test
 	void droppedLocationsIsEmptyForNeitherFilesNorText()
 	{
-		assertEquals( Collections.emptyList(), OmeZarrDropListener.droppedLocations( mock( Transferable.class ) ) );
+		assertEquals( Collections.emptyList(), OmeZarrBdvDropListener.droppedLocations( mock( Transferable.class ) ) );
 	}
 
 	@Test
@@ -134,7 +134,7 @@ class OmeZarrDropListenerTest
 		Transferable unreadable = mock( Transferable.class );
 		when( unreadable.isDataFlavorSupported( DataFlavor.stringFlavor ) ).thenReturn( true );
 		when( unreadable.getTransferData( DataFlavor.stringFlavor ) ).thenThrow( new IOException( "source app quit" ) );
-		assertEquals( Collections.emptyList(), OmeZarrDropListener.droppedLocations( unreadable ) );
+		assertEquals( Collections.emptyList(), OmeZarrBdvDropListener.droppedLocations( unreadable ) );
 	}
 
 	/** {@code files} as Finder or Explorer drag them. */
