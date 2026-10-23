@@ -65,7 +65,7 @@ import ome.zarr.imglib2.util.ZarrUtils;
  * with {@link ZarrUtils#isZarr(URI)}, like every other entry route. Parsing, check and reading run
  * on a background thread, since each may go over the network or show an error dialog.
  */
-public class OmeZarrDropListener extends DropTargetAdapter
+public class OmeZarrBdvDropListener extends DropTargetAdapter
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
@@ -73,7 +73,7 @@ public class OmeZarrDropListener extends DropTargetAdapter
 
 	private final Context context;
 
-	private OmeZarrDropListener( final BdvHandle bdvHandle, final Context context )
+	private OmeZarrBdvDropListener( final BdvHandle bdvHandle, final Context context )
 	{
 		this.bdvHandle = bdvHandle;
 		this.context = context;
@@ -91,7 +91,7 @@ public class OmeZarrDropListener extends DropTargetAdapter
 	public static void install( final BdvHandle bdvHandle, final Context context )
 	{
 		new DropTarget( bdvHandle.getViewerPanel().getDisplayComponent(), DnDConstants.ACTION_COPY,
-				new OmeZarrDropListener( bdvHandle, context ) );
+				new OmeZarrBdvDropListener( bdvHandle, context ) );
 	}
 
 	@Override

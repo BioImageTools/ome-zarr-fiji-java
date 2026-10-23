@@ -278,7 +278,7 @@ public class OmeZarrOpenActions
 	/**
 	 * Adds the dataset to the open BigDataViewer of {@code bdvHandle}, or opens it in a new one if
 	 * {@code null}. Delegates to {@link OmeZarr#showInBdv(BdvHandle)} and makes a new window
-	 * {@link OmeZarrDropListener#install accept dropped OME-Zarrs}.
+	 * {@link OmeZarrBdvDropListener#install accept dropped OME-Zarrs}.
 	 *
 	 * @param bdvHandle the BigDataViewer to add to, or {@code null} to open a new window
 	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
@@ -288,7 +288,7 @@ public class OmeZarrOpenActions
 	{
 		final BdvHandle result = omeZarr.showInBdv( bdvHandle );
 		if ( bdvHandle == null && result != null ) // NB: only install the drop target on a new window, not on an existing one
-			OmeZarrDropListener.install( result, omeZarr.context() );
+			OmeZarrBdvDropListener.install( result, omeZarr.context() );
 		return result;
 	}
 
