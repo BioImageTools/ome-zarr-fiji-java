@@ -126,7 +126,7 @@ public class OmeZarrDropListener extends DropTargetAdapter
 		}
 		final OmeZarrOpeningSettings settings =
 				OmeZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
-		OmeZarrOpenActions.omeZarrFor( uri, context, settings, IJ::error ).showInBdv( bdvHandle );
+		OmeZarrOpenActions.withSettings( uri, context, settings, IJ::error ).showInBdv( bdvHandle );
 	}
 
 	/**

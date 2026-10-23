@@ -90,7 +90,7 @@ public class OmeZarrOpenActions
 	{
 		final PrefService prefService = context.getService( PrefService.class );
 		final OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-		final OmeZarr omeZarr = omeZarrFor( inputUri, context, settings, IJ::error );
+		final OmeZarr omeZarr = withSettings( inputUri, context, settings, IJ::error );
 		final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 		if ( openerService == null )
 		{
@@ -172,7 +172,7 @@ public class OmeZarrOpenActions
 	OmeZarrOpenActions( final URI inputUri, final Context context, final OmeZarrOpeningSettings settings,
 			final Consumer< String > errorHandler )
 	{
-		this( omeZarrFor( inputUri, context, settings, errorHandler ) );
+		this( withSettings( inputUri, context, settings, errorHandler ) );
 	}
 
 	/**
@@ -189,10 +189,17 @@ public class OmeZarrOpenActions
 	}
 
 	/**
-	 * OmeZarr for {@code inputUri} using the backend, AWS profile and preferred
-	 * width from {@code settings}, or the defaults when no settings are given.
+	 * Factory for an {@link OmeZarr} that uses the backend, AWS profile and
+	 * preferred width from {@code settings}, or the defaults when no settings are
+	 * given, like {@link #withDefaultBackend}.
+	 *
+	 * @param inputUri the OME-Zarr location to read
+	 * @param context the SciJava context used for display and services
+	 * @param settings the opening settings, or {@code null} for the defaults
+	 * @param errorHandler receives a user-facing message when opening fails
+	 * @return an {@link OmeZarr} for {@code inputUri} using {@code settings}
 	 */
-	static OmeZarr omeZarrFor( final URI inputUri, final Context context,
+	public static OmeZarr withSettings( final URI inputUri, final Context context,
 			final OmeZarrOpeningSettings settings, final Consumer< String > errorHandler )
 	{
 		final OmeZarrBackend backend = settings == null ? OmeZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
