@@ -916,8 +916,8 @@ class OmeZarrOpenActionsTest
 				PyramidalDataset ifLevel1 = assertInstanceOf( PyramidalDataset.class, datasetService.getDatasets().get( 1 ) );
 
 				assertFalse( Util.imagesEqual( Cast.unchecked( ijLevel0.getImgPlus().getImg() ), ifLevel1.getImgPlus().getImg() ) );
-				long[] expectedDims0 = new long[] { 64, 64, 16, 3, 4 };
-				long[] expectedDims1 = new long[] { 32, 32, 8, 3, 4 };
+				long[] expectedDims0 = { 64, 64, 16, 3, 4 };
+				long[] expectedDims1 = { 32, 32, 8, 3, 4 };
 
 				assertArrayEquals( expectedDims0, ijLevel0.getImgPlus().dimensionsAsLongArray(),
 						"Dimensions of level 0 should be [x=64, y=64, z=16, c=3, t=4]" );
