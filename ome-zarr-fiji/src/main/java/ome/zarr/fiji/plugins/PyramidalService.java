@@ -31,15 +31,16 @@ package ome.zarr.fiji.plugins;
 import ij.ImageListener;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
-import java.awt.KeyboardFocusManager;
+import java.awt.Component;
 import java.awt.Window;
-import java.beans.PropertyChangeListener;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.swing.SwingUtilities;
 import net.imagej.Dataset;
 import net.imagej.patcher.LegacyInjector;
 import org.scijava.convert.ConvertService;
@@ -57,10 +58,11 @@ import ome.zarr.imglib2.PyramidContents;
  * Tracks which BDV or ImageJ window holding a {@link Pyramidal} was most recently focused.
  * <p>
  * BDV windows are not ImageJ2 displays, and IJ1 {@link ImageWindow} focus changes never reach
- * the SciJava {@code EventService}. This service therefore listens at the AWT level via a
- * {@code "activeWindow"} {@link PropertyChangeListener} on the {@link KeyboardFocusManager}:
- * BDV windows set the active pyramidal directly; ImageJ windows resolve it from the displayed
- * image; all other windows (toolbar, dialogs) are ignored so menu navigation doesn't clear state.
+ * the SciJava {@code EventService}. This service therefore follows the
+ * {@link ActiveViewerService}, which listens at the AWT level. A BDV window registered here gives
+ * its pyramidal. An ImageJ window resolves it from the displayed image. BDV windows opened by other
+ * tools are ignored, as are all non-viewer windows (toolbar, dialogs), so menu navigation doesn't
+ * clear state.
  */
 @Plugin( type = SciJavaService.class )
 public class PyramidalService extends AbstractService implements SciJavaService
@@ -82,6 +84,10 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	@Parameter
 	private ObjectService objectService;
 
+	@SuppressWarnings( "unused" )
+	@Parameter
+	private ActiveViewerService activeViewerService;
+
 	/** Registered BDV windows, each with the dataset owning its current source. */
 	private final Map< Window, Pyramidal > bdvWindows = new ConcurrentHashMap<>();
 
@@ -90,7 +96,7 @@ public class PyramidalService extends AbstractService implements SciJavaService
 
 	private final AtomicReference< Pyramidal > activePyramidal = new AtomicReference<>();
 
-	private PropertyChangeListener focusListener;
+	private Consumer< Component > activeViewerListener;
 
 	private ImageListener imageCloseListener;
 
@@ -98,8 +104,8 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	public void initialize()
 	{
 		activePyramidal.set( null );
-		focusListener = event -> onActiveWindowChanged( ( Window ) event.getNewValue() );
-		KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener( "activeWindow", focusListener );
+		activeViewerListener = this::onActiveViewerChanged;
+		activeViewerService.addListener( activeViewerListener );
 		imageCloseListener = new ImageListener()
 		{
 			@Override
@@ -122,10 +128,10 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	@Override
 	public void dispose()
 	{
-		if ( focusListener != null )
+		if ( activeViewerListener != null )
 		{
-			KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener( "activeWindow", focusListener );
-			focusListener = null;
+			activeViewerService.removeListener( activeViewerListener );
+			activeViewerListener = null;
 		}
 
 		if ( imageCloseListener != null )
@@ -138,19 +144,20 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	}
 
 	/**
-	 * Updates focus precedence when the active window changes. A registered BDV window gives
-	 * BDV precedence; an ImageJ {@link ImageWindow} returns precedence to the IJ dataset; any other
-	 * window (toolbar, dialogs) is ignored so the last image-window state persists.
+	 * Updates focus precedence when the active viewer changes. An ImageJ {@link ImageWindow} gives
+	 * precedence to the IJ dataset. A BDV viewer in a registered window gives BDV precedence. Any
+	 * other viewer is ignored so the last state persists.
 	 */
-	private void onActiveWindowChanged( final Window window )
+	private void onActiveViewerChanged( final Component viewer )
 	{
-		if ( window == null )
-			return;
-		final Pyramidal dataset = bdvWindows.get( window );
-		if ( dataset != null )
-			notifyBdvWindowFocused( dataset );
-		else if ( window instanceof ImageWindow )
-			notifyImageJWindowFocused( ( ImageWindow ) window );
+		if ( viewer instanceof ImageWindow )
+			notifyImageJWindowFocused( ( ImageWindow ) viewer );
+		else if ( viewer != null )
+		{
+			final Pyramidal dataset = bdvWindows.get( SwingUtilities.getWindowAncestor( viewer ) );
+			if ( dataset != null )
+				notifyBdvWindowFocused( dataset );
+		}
 	}
 
 	/**
