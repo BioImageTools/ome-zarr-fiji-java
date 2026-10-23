@@ -29,6 +29,7 @@
 package ome.zarr.fiji.util;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
@@ -51,9 +52,11 @@ import bdv.util.Bounds;
 import bdv.viewer.ConverterSetupBounds;
 import bdv.viewer.ConverterSetups;
 import bdv.viewer.SourceAndConverter;
+import bdv.viewer.ViewerPanel;
 import bdv.viewer.ViewerState;
 import bdv.viewer.ViewerStateChange;
 import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.Omero;
@@ -61,6 +64,9 @@ import ome.zarr.imglib2.metadata.Omero;
 public class BdvUtils
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	/** The client property of a {@link ViewerPanel} holding its {@link BdvHandle}, see {@link #bdvHandleOf}. */
+	private static final String BDV_HANDLE_KEY = BdvHandle.class.getName();
 
 	private BdvUtils()
 	{
@@ -101,7 +107,7 @@ public class BdvUtils
 	/**
 	 * Displays the given pyramidal in a new BigDataViewer (BDV) window, or adds it to the open one of
 	 * {@code bdvHandle}, applies its OMERO channel properties and registers it with
-	 * {@code pyramidalService} for focus tracking.<br>
+	 * {@code pyramidalService} for focus tracking. {@link #bdvHandleOf} finds its handle.<br>
 	 * Increments the pyramidal's reference count and decrements it when the window closes.
 	 * Only a new window is moved to the timepoint the OMERO metadata names. When adding, the
 	 * viewer's timepoint is left alone, so the images already shown do not jump.
@@ -119,6 +125,7 @@ public class BdvUtils
 				? BdvOptions.options().frameTitle( pyramidalBdv.getName() )
 				: BdvOptions.options().addTo( bdvHandle );
 		final BdvHandle shownIn = BdvFunctions.show( pyramidalBdv.asSources(), pyramidContents.numTimepoints(), options ).getBdvHandle();
+		shownIn.getViewerPanel().putClientProperty( BDV_HANDLE_KEY, shownIn );
 
 		if ( bdvHandle == null )
 			setTimepoint( pyramidContents.omero, shownIn.getViewerPanel().state() );
@@ -132,6 +139,24 @@ public class BdvUtils
 			registerWindow( pyramidalBdv, window, shownIn, pyramidalService );
 		}
 		return shownIn;
+	}
+
+	/**
+	 * The {@link BdvHandle} of {@code viewer} if it is the viewer of a BigDataViewer shown via
+	 * {@link #show(PyramidalBdv, BdvHandle, PyramidalService)}, else {@code null}, e.g., for an
+	 * ImageJ window or a BigDataViewer opened by another tool.
+	 * <p>
+	 * Mirrors the {@code BdvHandle.of( ViewerPanel )} proposed in
+	 * <a href="https://github.com/bigdataviewer/bigdataviewer-core/issues/227">bigdataviewer-core#227</a>,
+	 * including its client property key. Once that exists, this can delegate to it and reach every
+	 * BigDataViewer.
+	 *
+	 * @param viewer an image viewer as returned by {@link ActiveViewerService#getActiveViewer()}, may be {@code null}
+	 * @return the handle to add sources to {@code viewer} with, or {@code null}
+	 */
+	public static BdvHandle bdvHandleOf( final Component viewer )
+	{
+		return viewer instanceof ViewerPanel ? ( BdvHandle ) ( ( ViewerPanel ) viewer ).getClientProperty( BDV_HANDLE_KEY ) : null;
 	}
 
 	/**
@@ -156,14 +181,13 @@ public class BdvUtils
 	private static void registerWindow( final PyramidalBdv< ? > pyramidalBdv, final Window window,
 			final BdvHandle bdvHandle, final PyramidalService pyramidalService )
 	{
-		pyramidalBdv.setBdvHandle( bdvHandle );
 		pyramidalBdv.incrementReferences();
 		if ( pyramidalService != null )
 		{
-			if ( pyramidalBdv.isCurrentSource() )
+			if ( isCurrentSource( pyramidalBdv, bdvHandle ) )
 				pyramidalService.registerBdvWindow( window, pyramidalBdv );
 			bdvHandle.getViewerPanel().state().changeListeners().add( change -> {
-				if ( change == ViewerStateChange.CURRENT_SOURCE_CHANGED && pyramidalBdv.isCurrentSource() )
+				if ( change == ViewerStateChange.CURRENT_SOURCE_CHANGED && isCurrentSource( pyramidalBdv, bdvHandle ) )
 					pyramidalService.registerBdvWindow( window, pyramidalBdv );
 			} );
 		}
@@ -177,6 +201,15 @@ public class BdvUtils
 				pyramidalBdv.decrementReferences();
 			}
 		} );
+	}
+
+	/**
+	 * Whether the current source of {@code bdvHandle}'s viewer is one of {@code pyramidalBdv}'s
+	 * sources. Checked per viewer, since one pyramidal may be shown in several.
+	 */
+	private static boolean isCurrentSource( final PyramidalBdv< ? > pyramidalBdv, final BdvHandle bdvHandle )
+	{
+		return pyramidalBdv.asSources().contains( bdvHandle.getViewerPanel().state().getCurrentSource() );
 	}
 
 	/**

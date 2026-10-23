@@ -60,7 +60,9 @@ import bdv.util.BdvHandle;
 import bdv.viewer.ViewerStateChange;
 import ome.zarr.ZarrTestUtils;
 import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.fijiui.open.openers.BdvAddToActiveOpener;
 
 class OmeZarrDropListenerTest
@@ -80,9 +82,9 @@ class OmeZarrDropListenerTest
 		{
 			new BdvAddToActiveOpener()
 					.open( OmeZarrOpenActions.withDefaultBackend( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context ) );
-			PyramidalBdv< ? > spots =
-					assertInstanceOf( PyramidalBdv.class, context.getService( PyramidalService.class ).getActivePyramidal() );
-			BdvHandle bdvHandle = spots.getBdvHandle();
+			assertInstanceOf( PyramidalBdv.class, context.getService( PyramidalService.class ).getActivePyramidal() );
+			BdvHandle bdvHandle = BdvUtils.bdvHandleOf( context.getService( ActiveViewerService.class ).getActiveViewer() );
+			assertNotNull( bdvHandle );
 			assertEquals( 1, bdvHandle.getViewerPanel().state().getSources().size() );
 
 			DropTarget dropTarget = bdvHandle.getViewerPanel().getDisplayComponent().getDropTarget();
