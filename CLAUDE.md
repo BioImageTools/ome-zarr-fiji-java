@@ -273,9 +273,17 @@ it is not worth the code. A 0.7-and-earlier preference therefore reads as an unk
 `info` log, nothing thrown – and the next visit to `OpeningBehaviorSettings` overwrites it. `getOpenerName()` returns
 `null` for "never configured", which is what lets the priority rule above apply.
 
-**Active-window tracking:** `PyramidalService` (a SciJava service) tracks the most-recently-focused `Pyramidal` window
-(BDV or ImageJ) via AWT focus listening; `PyramidalPreprocessor` auto-fills any `Pyramidal`-typed command parameter
-with the currently active one.
+**Active-window tracking:** `ActiveViewerService` is the only AWT focus listener: it tracks the most recently focused
+image viewer, an ImageJ `ImageWindow` or a BDV `ViewerPanel`, whoever opened it. `PyramidalService` follows it to track
+the active `Pyramidal`, which `PyramidalPreprocessor` auto-fills into any `Pyramidal`-typed command parameter.
+"BigDataViewer (add to active window)" asks it for the active viewer and `BdvUtils.bdvHandleOf` for its handle. **Keep
+it one listener**: "an ImageJ window takes over, the toolbar and dialogs don't" is a precedence rule both consumers need,
+and two trackers drifting apart is what caused the "sticky BDV" bug (`ed658c70`). It listens to `"focusOwner"`, not
+`"activeWindow"`, so that two viewers in one window (BigWarp) stay apart. Focus in a BDV side panel lies outside the
+`ViewerPanel`, hence the "only viewer in the window" fallback. Focus events arrive after `show()` returns, so
+`OmeZarr.showInBdv` and `OmeZarr.showAsDataset` report the new viewer themselves. `bdvHandleOf` reads a client property
+`BdvUtils.show` puts on the panel, mirroring the `BdvHandle.of( ViewerPanel )` proposed upstream in
+bigdataviewer/bigdataviewer-core#227 — once that exists, delegate to it and BDVs opened by other tools work too.
 
 Note: `BdvHandleService` is test/example-only now (`ome-zarr-fiji-ui/src/test/java/ome/zarr/examples/demo/`), not part
 of the shipped plugin.
