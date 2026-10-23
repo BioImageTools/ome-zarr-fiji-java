@@ -32,8 +32,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
 
@@ -42,9 +43,10 @@ import org.scijava.Context;
 
 import bdv.util.BdvHandle;
 import ome.zarr.ZarrTestUtils;
-import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.fijiui.open.OmeZarrOpenActions;
 
 /**
@@ -87,12 +89,14 @@ class BdvOpenersTest
 	/** The BDV windows {@code opener} showed the spots and the labels in, one per image. */
 	private static List< BdvHandle > openSpotsThenLabels( final OmeZarrOpener opener, final Context context ) throws Exception
 	{
-		opener.open( OmeZarrOpenActions.withDefaultBackend( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context ) );
-		opener.open( OmeZarrOpenActions.withDefaultBackend( ZarrTestUtils.resourcePath( LABELS ).toUri(), context ) );
-		List< BdvHandle > windows = context.getService( PyramidalService.class ).getPyramidals().stream()
-				.map( pyramidal -> ( ( PyramidalBdv< ? > ) pyramidal ).getBdvHandle() )
-				.collect( Collectors.toList() );
-		assertEquals( 2, windows.size() );
+		ActiveViewerService activeViewerService = context.getService( ActiveViewerService.class );
+		List< BdvHandle > windows = new ArrayList<>();
+		for ( String image : Arrays.asList( SPOTS, LABELS ) )
+		{
+			opener.open( OmeZarrOpenActions.withDefaultBackend( ZarrTestUtils.resourcePath( image ).toUri(), context ) );
+			windows.add( BdvUtils.bdvHandleOf( activeViewerService.getActiveViewer() ) );
+		}
+		assertEquals( 2, context.getService( PyramidalService.class ).getPyramidals().size() );
 		return windows;
 	}
 

@@ -28,23 +28,22 @@
  */
 package ome.zarr.fijiui.open.openers;
 
-import ome.zarr.fiji.Pyramidal;
-import ome.zarr.fiji.PyramidalBdv;
-import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.open.OmeZarrOpener;
+import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.fijiui.open.OmeZarrOpenActions;
 
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
-import bdv.util.BdvHandle;
-
 /**
- * Adds the image to the BigDataViewer window holding the active pyramidal, e.g.
- * to overlay a segmentation on its raw data. Focusing Fiji's main window, toolbar
- * or a dialog keeps that window active; focusing an ImageJ image window does not,
- * and then, as when no such window is open, a new BigDataViewer window opens.
+ * Adds the image to the active BigDataViewer window, e.g. to overlay a
+ * segmentation on its raw data. A BigDataViewer window is active if it is the
+ * image window focused or opened most recently. Focusing Fiji's main window,
+ * toolbar or a dialog keeps it active. Focusing an ImageJ image window, or a
+ * BigDataViewer window another tool opened, does not, and then, as when no
+ * BigDataViewer window is open, a new one opens. See {@link BdvUtils#bdvHandleOf}.
  */
 @Plugin( type = OmeZarrOpener.class, name = BdvAddToActiveOpener.NAME,
 		label = "BigDataViewer (add to active window)",
@@ -58,8 +57,7 @@ public class BdvAddToActiveOpener implements OmeZarrOpener
 	@Override
 	public void open( final OmeZarr omeZarr )
 	{
-		final Pyramidal active = omeZarr.context().getService( PyramidalService.class ).getActivePyramidal();
-		final BdvHandle bdvHandle = active instanceof PyramidalBdv ? ( ( PyramidalBdv< ? > ) active ).getBdvHandle() : null;
-		new OmeZarrOpenActions( omeZarr ).showInBdv( bdvHandle );
+		final ActiveViewerService activeViewerService = omeZarr.context().getService( ActiveViewerService.class );
+		new OmeZarrOpenActions( omeZarr ).showInBdv( BdvUtils.bdvHandleOf( activeViewerService.getActiveViewer() ) );
 	}
 }
