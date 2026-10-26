@@ -20,7 +20,7 @@
     - [Opening Behavior Settings](#opening-behavior-settings)
         - [Default opening behavior](#default-opening-behavior)
             - [Selection dialog (Ask me every time)](#selection-dialog-ask-me-every-time)
-        - [Preferred width](#preferred-width)
+        - [Maximum width](#maximum-width)
         - [Reader backend](#reader-backend)
     - [Scriptlet support](#scriptlet-support)
     - [What is read and displayed](#what-is-read-and-displayed)
@@ -151,7 +151,7 @@ list to use its own `region`.
 ## Opening Behavior Settings
 
 `Plugins -> OME-Zarr -> Settings -> Opening Behavior Settings` sets three things, kept across Fiji sessions: the
-[default opening behavior](#default-opening-behavior), the [preferred width](#preferred-width) and the
+[default opening behavior](#default-opening-behavior), the [maximum width](#maximum-width) and the
 [reader backend](#reader-backend). They apply to drag & drop, copy & paste,
 `File -> Import -> OME-Zarr...` and `fiji://` links.
 
@@ -159,8 +159,8 @@ list to use its own `region`.
 
 What Fiji does with a dropped / pasted / linked OME-Zarr. The options shipped here are:
 
-* **ImageJ (preferred resolution)** (initial default): opens the highest single-resolution level that is not wider
-  than the [preferred width](#preferred-width). This avoids loading excessively large images.
+* **ImageJ (matching resolution)** (initial default): opens the highest single-resolution level that is not wider
+  than the [maximum width](#maximum-width). This avoids loading excessively large images.
 * **ImageJ (highest resolution)**: opens the highest-resolution level in ImageJ.
 * **BigDataViewer**: opens all resolution levels as a multi-resolution source. This is useful for large OME-Zarrs.
   Channel names, colors, contrast limits, and the time point are
@@ -182,10 +182,11 @@ and it then appears here and in the dialog next to the built-in ones.
 
 The dialog shows one icon button per registered opener, i.e., the options above, plus a help button.
 
-### Preferred width
+### Maximum width
 
-The maximum image width, in pixels, for **ImageJ (preferred resolution)** (default: 1000). Fiji picks the highest
-resolution level of the pyramid whose width is below this value.
+The maximum image width, in pixels, for **ImageJ (matching resolution)** (default: 1000). Fiji picks the highest
+resolution level of the pyramid whose width is at or below this value. If no level is narrow enough, Fiji asks whether
+to open the smallest one anyway.
 
 ### Reader backend
 

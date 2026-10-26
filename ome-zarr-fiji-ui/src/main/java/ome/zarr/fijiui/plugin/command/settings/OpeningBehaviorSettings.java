@@ -6,13 +6,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -80,8 +80,8 @@ public class OpeningBehaviorSettings extends DynamicCommand
 	@Parameter( visibility = ItemVisibility.MESSAGE, required = false, persist = false )
 	private String infoMessage = "<html>"
 			+ "<body width=" + WIDTH + "cm align=left>"
-			+ "Configure the behavior when OME-Zarr datasets are drag & dropped (local folders) or copy & pasted (local and remote paths) into Fiji.<br>"
-			+ "Choose a default behavior, optionally limit the preferred resolution and choose the reader backend libary."
+			+ "Configure the behavior when OME-Zarr datasets are drag & dropped or copy & pasted into Fiji.<br>"
+			+ "Choose a default opening behavior, optionally limit the matching resolution (ImageJ only) and choose the reader backend library."
 			+ "</body>"
 			+ "</html>";
 
@@ -90,16 +90,16 @@ public class OpeningBehaviorSettings extends DynamicCommand
 	private String defaultOpener;
 
 	@SuppressWarnings( "all" )
-	@Parameter( label = "Preferred width for 'matching resolution' choice" )
+	@Parameter( label = "Maximum width (pixels) for 'matching resolution'" )
 	private int preferredWidth;
 
 	@SuppressWarnings( "all" )
 	@Parameter( visibility = ItemVisibility.MESSAGE, required = false, persist = false )
 	private String preferredWidthInfo = "<html>"
 			+ "<body width=" + WIDTH + "cm align=left>"
-			+ "For the 'matching resolution' behavior, set a preferred maximum width.<br>"
-			+ "Fiji will open the highest available resolution whose width is below this value.<br>"
-			+ "If no such resolution exists, the image will not be opened."
+			+ "For the 'matching resolution' behavior, set a maximum width.<br>"
+			+ "Fiji will open the highest available resolution whose width is at or below this value.<br>"
+			+ "If no such resolution exists, Fiji asks whether to open the smallest one anyway."
 			+ "</body>"
 			+ "</html>";
 
