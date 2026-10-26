@@ -42,7 +42,7 @@ import org.scijava.plugin.Plugin;
  * who never configured a choice gets.
  */
 @Plugin( type = OmeZarrOpener.class, name = ImageJPreferredResolutionOpener.NAME,
-		label = "ImageJ (preferred resolution)",
+		label = "ImageJ (matching resolution)",
 		description = "Open a matching single-resolution image in ImageJ",
 		iconPath = "/ome/zarr/fijiui/dialog/ij_scaled_icon.png", priority = Priority.HIGH )
 public class ImageJPreferredResolutionOpener implements OmeZarrOpener
