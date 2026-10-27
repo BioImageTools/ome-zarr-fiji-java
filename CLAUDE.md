@@ -104,6 +104,14 @@ image: the
 `@Parameter( type = ItemIO.OUTPUT )` on the `dataset` field only hands it to the caller, and a script that captures it
 decides what to do with it. Being plain text rather than a chooser, it accepts `http(s):` too, but *not* `s3:`.
 
+A second one is dropping onto the image area of a BDV window this plugin opened: `OmeZarrBdvDropListener.install`
+(called by `OmeZarrOpenActions.showInBdv` for a new window, and by `OpenInBDVCommand`) puts an AWT `DropTarget` on the
+viewer's image area, whose `OmeZarrBdvDropListener` adds the dropped OME-Zarr to *that* window via
+`OmeZarr.showInBdv( BdvHandle )`, ignoring the configured opener — where it was dropped already says what the user wants. It validates with `isZarr` like every other route (so no `s3:`) and
+reads with the persisted backend and preferred width, loaded at drop time. It lives in `fiji-ui` because those settings
+do, so a script calling `OmeZarr.showInBdv()` directly gets a window without it. BDV windows opened by other tools get
+no drop target: see issue #127 and bigdataviewer/bigdataviewer-core#227.
+
 `OmeZarr.showInImageJ()`/`showInBdv()` return what they showed (`null` on failure or when the user
 declined) and `OmeZarrOpenActions` mirrors that; the plugin's own call sites want only the side effect, hence the
 `@SuppressWarnings( "UnusedReturnValue" )` — the values exist for API and script users.
@@ -240,8 +248,8 @@ i.e. a SciJava plugin anyway.
   what
   a persisted setting means (`effectiveOpenerName`).
 - Shipped openers – `imagej-preferred-resolution`, `imagej-highest-resolution`, `bdv-multi-resolution`,
-  `n5-importer-dialog`, `n5-viewer-dialog`, `script-editor` – are one class each, next to the `OmeZarrOpenActions` they
-  drive. Only the extension point itself sits in `ome-zarr-fiji`: that is the artifact a downstream opener compiles
+  `bdv-add-to-active`, `n5-importer-dialog`, `n5-viewer-dialog`, `script-editor` – are one class each, next to the
+  `OmeZarrOpenActions` they drive. Only the extension point itself sits in `ome-zarr-fiji`: that is the artifact a downstream opener compiles
   against, and it stays free of concrete openers. Help is a plain button, not an opener.
 
 The selection dialog (`OmeZarrOpenActionChooser`, one icon button per offered opener) is **not** an opener: it opens
@@ -265,9 +273,17 @@ it is not worth the code. A 0.7-and-earlier preference therefore reads as an unk
 `info` log, nothing thrown – and the next visit to `OpeningBehaviorSettings` overwrites it. `getOpenerName()` returns
 `null` for "never configured", which is what lets the priority rule above apply.
 
-**Active-window tracking:** `PyramidalService` (a SciJava service) tracks the most-recently-focused `Pyramidal` window
-(BDV or ImageJ) via AWT focus listening; `PyramidalPreprocessor` auto-fills any `Pyramidal`-typed command parameter
-with the currently active one.
+**Active-window tracking:** `ActiveViewerService` is the only AWT focus listener: it tracks the most recently focused
+image viewer, an ImageJ `ImageWindow` or a BDV `ViewerPanel`, whoever opened it. `PyramidalService` follows it to track
+the active `Pyramidal`, which `PyramidalPreprocessor` auto-fills into any `Pyramidal`-typed command parameter.
+"BigDataViewer (add to active window)" asks it for the active viewer and `BdvUtils.bdvHandleOf` for its handle. **Keep
+it one listener**: "an ImageJ window takes over, the toolbar and dialogs don't" is a precedence rule both consumers need,
+and two trackers drifting apart is what caused the "sticky BDV" bug (`ed658c70`). It listens to `"focusOwner"`, not
+`"activeWindow"`, so that two viewers in one window (BigWarp) stay apart. Focus in a BDV side panel lies outside the
+`ViewerPanel`, hence the "only viewer in the window" fallback. Focus events arrive after `show()` returns, so
+`OmeZarr.showInBdv` and `OmeZarr.showAsDataset` report the new viewer themselves. `bdvHandleOf` reads a client property
+`BdvUtils.show` puts on the panel, mirroring the `BdvHandle.of( ViewerPanel )` proposed upstream in
+bigdataviewer/bigdataviewer-core#227 — once that exists, delegate to it and BDVs opened by other tools work too.
 
 Note: `BdvHandleService` is test/example-only now (`ome-zarr-fiji-ui/src/test/java/ome/zarr/examples/demo/`), not part
 of the shipped plugin.
@@ -329,7 +345,7 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   pyramids).
 - **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.openers`, `.open.options`, `.plugin`,
   `.plugin.command.*`, `.dialog`, `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`,
-  Swing dialogs in `.dialog`, the six built-in `OmeZarrOpener`s in `.open.openers`. The SciJava commands sit in three
+  Swing dialogs in `.dialog`, the seven built-in `OmeZarrOpener`s in `.open.openers`. The SciJava commands sit in three
   sibling packages under `.plugin.command`, one per menu location: `.fileimport` for the two `File > Import` entries
   plus their shared `FileImportHelper` (package-private, so its tests live there too), `.tools` for the
   `Plugins > OME-Zarr` entries, and `.settings` for `OpeningBehaviorSettings`, `S3Settings` and `UserScriptSettings`.

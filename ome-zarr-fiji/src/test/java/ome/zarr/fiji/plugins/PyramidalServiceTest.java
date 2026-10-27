@@ -50,6 +50,7 @@ import javax.swing.SwingUtilities;
 
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.read.OmeZarr;
+import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.ZarrTestUtils;
 
@@ -170,6 +171,33 @@ class PyramidalServiceTest
 			}
 			assertNull( pyramidalService.getActivePyramidal() );
 			assertTrue( pyramidalService.getPyramidals().isEmpty() );
+		}
+	}
+
+	/**
+	 * An OME-Zarr shown twice, from one read, is listed only once in the pyramid contents.
+	 */
+	@Test
+	void getPyramidContents_listsEachReadOnce() throws URISyntaxException, InterruptedException, InvocationTargetException
+	{
+		try (Context context = new Context())
+		{
+			PyramidalService pyramidalService = context.getService( PyramidalService.class );
+			PyramidBackend pyramidBackend = new N5PyramidBackend();
+			OmeZarr omeZarr2d = new OmeZarr( ZarrTestUtils.resourcePath( ZARR_2D ).toUri(), context, pyramidBackend );
+			BdvHandle bdvHandle = omeZarr2d.showInBdv();
+			omeZarr2d.showInBdv( bdvHandle ); // the cached read, a second time - 2nd pyramidal (but same pyramid contents)
+			new OmeZarr( ZarrTestUtils.resourcePath( ZARR_3D ).toUri(), context, pyramidBackend ).showInBdv( bdvHandle ); // a second read, a third pyramidal, but only a second pyramid contents
+			try
+			{
+				assertEquals( 3, pyramidalService.getPyramidals().size() );
+				assertEquals( 2, pyramidalService.getPyramidContents().size() );
+			}
+			finally
+			{
+				bdvHandle.close();
+				SwingUtilities.invokeAndWait( () -> {} );
+			}
 		}
 	}
 }
