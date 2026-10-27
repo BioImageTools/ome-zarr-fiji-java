@@ -158,13 +158,14 @@ graph TD
     P --> PRE
 ```
 
-`OmeZarr` is the handle: a URI, a `Context`, a backend, and optionally a preferred maximum width and an error sink (pass
-a non-interactive one for headless use).
+`OmeZarr` is the handle: a URI, a `Context`, a backend, and optionally a preferred maximum width and an error sink, set
+with `withPreferredMaxWidth` and `withErrorHandler` (pass a non-interactive sink for headless use). Each returns a copy,
+so set them before reading: the copy does not share the original's cached contents.
 
 ```java
 Context context = new Context();   // in a plugin, get it injected instead
 URI uri = URI.create( "https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0033A/BR00109990_C2.zarr/0" );
-OmeZarr omeZarr = new OmeZarr( uri, context, new ZarrJavaPyramidBackend(), 1000 );
+OmeZarr omeZarr = new OmeZarr( uri, context, new ZarrJavaPyramidBackend() ).withPreferredMaxWidth( 1000 );
 
 // the direct ways — both return what they showed, or null if it failed / the user declined
 PyramidalDataset dataset = omeZarr.showInImageJ();

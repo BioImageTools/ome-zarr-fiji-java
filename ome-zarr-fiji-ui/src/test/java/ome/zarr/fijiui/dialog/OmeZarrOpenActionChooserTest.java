@@ -160,8 +160,8 @@ class OmeZarrOpenActionChooserTest
 
 	private static OmeZarr omeZarrIn( final Context context )
 	{
-		return new OmeZarr( URI.create( "file:/tmp/not-read-by-this-test.ome.zarr" ), context, null, null,
-				message -> {} );
+		return new OmeZarr( URI.create( "file:/tmp/not-read-by-this-test.ome.zarr" ), context, null )
+				.withErrorHandler( message -> {} );
 	}
 
 	/** The chooser's buttons, in the order they were added. */

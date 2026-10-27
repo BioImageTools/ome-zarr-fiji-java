@@ -104,6 +104,7 @@ public class OmeZarr
 	/**
 	 * The OME-Zarr at {@code inputUri} with an explicit backend.
 	 * Will select highest resolution level and report failures via {@code IJ::error}.
+	 * {@link #withPreferredMaxWidth} and {@link #withErrorHandler} change that.
 	 *
 	 * @param inputUri the location of the OME-Zarr dataset
 	 * @param context the SciJava context to get services from
@@ -111,45 +112,11 @@ public class OmeZarr
 	 */
 	public OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend )
 	{
-		this( inputUri, context, backend, null );
+		this( inputUri, context, backend, null, IJ::error, OmeZarr::confirmWithDialog );
 	}
 
 	/**
-	 * The OME-Zarr at {@code inputUri} with an explicit backend and preferred
-	 * resolution, reporting failures via {@code IJ::error}.
-	 *
-	 * @param inputUri the location of the OME-Zarr dataset
-	 * @param context the SciJava context to get services from
-	 * @param backend the backend used to read the dataset
-	 * @param preferredMaxWidth the highest-resolution level that is still no wider
-	 *   than this will be selected, or {@code null} for the highest resolution
-	 */
-	public OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend,
-			final Integer preferredMaxWidth )
-	{
-		this( inputUri, context, backend, preferredMaxWidth, IJ::error );
-	}
-
-	/**
-	 * The OME-Zarr at {@code inputUri} with an explicit backend, preferred
-	 * resolution, and error sink.
-	 *
-	 * @param inputUri the location of the OME-Zarr dataset
-	 * @param context the SciJava context to get services from
-	 * @param backend the backend used to read the dataset
-	 * @param preferredMaxWidth the highest-resolution level that is still no wider
-	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
-	 * @param errorHandler receives a user-facing message when opening fails
-	 */
-	public OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend,
-			final Integer preferredMaxWidth, final Consumer< String > errorHandler )
-	{
-		this( inputUri, context, backend, preferredMaxWidth, errorHandler, OmeZarr::confirmWithDialog );
-	}
-
-	/**
-	 * The OME-Zarr at {@code inputUri} with an explicit backend, preferred resolution,
-	 * error sink, and open-anyway confirmation.
+	 * The OME-Zarr at {@code inputUri} with every setting given explicitly.
 	 *
 	 * @param inputUri the location of the OME-Zarr dataset
 	 * @param context the SciJava context to get services from
@@ -158,11 +125,10 @@ public class OmeZarr
 	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
 	 * @param errorHandler receives a user-facing message when opening fails
 	 * @param openAnywayConfirmation asked whether to open an image that has something
-	 *   wrong with it after all.
-	 *   Pass a non-interactive implementation for headless use — the default shows a
-	 *   modal (modified) {@link YesNoCancelDialog}.
+	 *   wrong with it after all. The public constructor passes a modal (modified)
+	 *   {@link YesNoCancelDialog}, tests may pass a non-interactive one.
 	 */
-	public OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend,
+	OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend,
 			final Integer preferredMaxWidth, final Consumer< String > errorHandler,
 			final Predicate< String > openAnywayConfirmation )
 	{
@@ -172,6 +138,31 @@ public class OmeZarr
 		this.preferredMaxWidth = preferredMaxWidth;
 		this.errorHandler = errorHandler;
 		this.openAnywayConfirmation = openAnywayConfirmation;
+	}
+
+	/**
+	 * A copy of this that opens in ImageJ at the given preferred width. The copy
+	 * reads on its own, it does not share this one's cached {@link PyramidContents}.
+	 *
+	 * @param preferredMaxWidth the highest-resolution level that is still no wider
+	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
+	 * @return the copy
+	 */
+	public OmeZarr withPreferredMaxWidth( final Integer preferredMaxWidth )
+	{
+		return new OmeZarr( inputUri, context, backend, preferredMaxWidth, errorHandler, openAnywayConfirmation );
+	}
+
+	/**
+	 * A copy of this that reports failures to the given sink. The copy reads on
+	 * its own, it does not share this one's cached {@link PyramidContents}.
+	 *
+	 * @param errorHandler receives a user-facing message when opening fails
+	 * @return the copy
+	 */
+	public OmeZarr withErrorHandler( final Consumer< String > errorHandler )
+	{
+		return new OmeZarr( inputUri, context, backend, preferredMaxWidth, errorHandler, openAnywayConfirmation );
 	}
 
 	/**

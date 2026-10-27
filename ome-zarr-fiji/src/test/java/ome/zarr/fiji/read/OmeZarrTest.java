@@ -107,7 +107,7 @@ class OmeZarrTest
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend, null );
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend );
 			PyramidContents< ? > contents = omeZarr.readContents();
 			assertNotNull( contents );
 			assertEquals( 2, contents.numResolutionLevels() );
@@ -122,7 +122,7 @@ class OmeZarrTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			new OmeZarr( path.toUri(), context, new N5PyramidBackend(), null ).showInImageJ();
+			new OmeZarr( path.toUri(), context, new N5PyramidBackend() ).showInImageJ();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
 			assertEquals( 1, datasetService.getDatasets().size() );
@@ -140,7 +140,7 @@ class OmeZarrTest
 		Path path = ZarrTestUtils.resourcePath( DATASET );
 		try (Context context = new Context())
 		{
-			final OmeZarr omeZarr = new OmeZarr( path.toUri(), context, new N5PyramidBackend(), null );
+			final OmeZarr omeZarr = new OmeZarr( path.toUri(), context, new N5PyramidBackend() );
 			BdvHandle bdvHandle = omeZarr.showInBdv();
 			assertNotNull( bdvHandle, "BDV should have opened" );
 
@@ -169,7 +169,7 @@ class OmeZarrTest
 			{
 				Path path = ZarrTestUtils.resourcePath( levelPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				new OmeZarr( path.toUri(), context, backend, null, capturedError::set ).showInImageJ();
+				new OmeZarr( path.toUri(), context, backend ).withErrorHandler( capturedError::set ).showInImageJ();
 
 				assertEquals( 1, datasetService.getDatasets().size(),
 						"Single resolution level should open as a one-level dataset: " + levelPath );
@@ -248,7 +248,7 @@ class OmeZarrTest
 			{
 				Path path = ZarrTestUtils.resourcePath( invalidPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend, null, capturedError::set );
+				OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend ).withErrorHandler( capturedError::set );
 
 				assertDoesNotThrow( () -> omeZarr.showInImageJ(), "Opening " + invalidPath + " should not throw" );
 				assertNotNull( capturedError.get(), "Error handler should have been called for " + invalidPath );
@@ -267,7 +267,7 @@ class OmeZarrTest
 		try (Context context = new Context())
 		{
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend, null, capturedError::set );
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend ).withErrorHandler( capturedError::set );
 
 			assertDoesNotThrow( () -> omeZarr.showInImageJ() );
 			assertTrue( context.getService( DatasetService.class ).getDatasets().isEmpty(),
@@ -295,7 +295,7 @@ class OmeZarrTest
 			{
 				Path path = ZarrTestUtils.resourcePath( childPath );
 				AtomicReference< String > capturedError = new AtomicReference<>();
-				OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend, null, capturedError::set );
+				OmeZarr omeZarr = new OmeZarr( path.toUri(), context, backend ).withErrorHandler( capturedError::set );
 
 				assertDoesNotThrow( () -> omeZarr.showInImageJ(), "Opening child image " + childPath + " should not throw" );
 				assertEquals( 1, datasetService.getDatasets().size(),
@@ -446,8 +446,8 @@ class OmeZarrTest
 		try (Context context = new Context())
 		{
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			OmeZarr omeZarr = new OmeZarr( archive.toUri(), context, new N5PyramidBackend(), null,
-					capturedError::set );
+			OmeZarr omeZarr = new OmeZarr( archive.toUri(), context, new N5PyramidBackend() )
+					.withErrorHandler( capturedError::set );
 
 			assertNull( omeZarr.showInImageJ() );
 			assertTrue( context.getService( DatasetService.class ).getDatasets().isEmpty(),
@@ -466,8 +466,8 @@ class OmeZarrTest
 		try (Context context = new Context())
 		{
 			AtomicReference< String > capturedError = new AtomicReference<>();
-			PyramidalDataset dataset = new OmeZarr( archive.toUri(), context, new ZarrJavaPyramidBackend(), null,
-					capturedError::set ).showInImageJ();
+			PyramidalDataset dataset = new OmeZarr( archive.toUri(), context, new ZarrJavaPyramidBackend() )
+					.withErrorHandler( capturedError::set ).showInImageJ();
 
 			assertNull( capturedError.get() );
 			assertNotNull( dataset );

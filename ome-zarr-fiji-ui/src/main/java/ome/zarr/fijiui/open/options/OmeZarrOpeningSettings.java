@@ -208,7 +208,9 @@ public class OmeZarrOpeningSettings
 	 */
 	public OmeZarr createOmeZarr( final URI uri, final Context context, final Consumer< String > errorHandler )
 	{
-		return new OmeZarr( uri, context, backend.createBackend( awsProfile ), preferredMaxWidth, errorHandler );
+		return new OmeZarr( uri, context, backend.createBackend( awsProfile ) )
+				.withPreferredMaxWidth( preferredMaxWidth )
+				.withErrorHandler( errorHandler );
 	}
 
 	/**

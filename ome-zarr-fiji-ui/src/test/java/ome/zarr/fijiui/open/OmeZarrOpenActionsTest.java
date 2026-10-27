@@ -45,7 +45,9 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.withSettings;
+import static org.mockito.Answers.RETURNS_SELF;
 import static ome.zarr.ZarrTestUtils.IMAGE_NAME;
 
 import net.imagej.Dataset;
@@ -132,7 +134,7 @@ class OmeZarrOpenActionsTest
 			final OmeZarrBackend backend )
 	{
 		final PyramidBackend pyramidBackend = backend.createBackend();
-		final OmeZarr omeZarr = new OmeZarr( uri, context, pyramidBackend, null, error -> {} );
+		final OmeZarr omeZarr = new OmeZarr( uri, context, pyramidBackend ).withErrorHandler( error -> {} );
 		return omeZarr.readContents();
 	}
 
@@ -171,7 +173,8 @@ class OmeZarrOpenActionsTest
 			final PrefService prefService = context.getService( PrefService.class );
 			final Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr/" );
 
-			try (MockedConstruction< OmeZarr > readerConstruction = mockConstruction( OmeZarr.class );
+			try (MockedConstruction< OmeZarr > readerConstruction = mockConstruction( OmeZarr.class,
+					withSettings().defaultAnswer( RETURNS_SELF ) ); // the with... methods hand back the mock
 					MockedConstruction< OmeZarrOpenActionChooser > chooserConstruction =
 							mockConstruction( OmeZarrOpenActionChooser.class ))
 			{
@@ -187,7 +190,9 @@ class OmeZarrOpenActionsTest
 				verify( readers.get( 0 ), times( 1 ) ).showInBdv();
 				verify( readers.get( 1 ), times( 1 ) ).showInImageJ( 0 );
 				verify( readers.get( 2 ), times( 1 ) ).showInImageJ();
-				verifyNoInteractions( readers.get( 3 ) );
+				verify( readers.get( 3 ) ).withPreferredMaxWidth( any() );
+				verify( readers.get( 3 ) ).withErrorHandler( any() );
+				verifyNoMoreInteractions( readers.get( 3 ) );
 
 				final List< OmeZarrOpenActionChooser > chooserInstances = chooserConstruction.constructed();
 				assertEquals( 1, chooserInstances.size() );
@@ -298,7 +303,8 @@ class OmeZarrOpenActionsTest
 			actions.openViewerDialog();
 
 			verify( importers.constructed().get( 0 ) ).runWithDialog( argThat( OmeZarrOpenActionsTest::isParsableUri ), any( List.class ) );
-			verify( viewers.constructed().get( 0 ) ).runWithDialog( argThat( OmeZarrOpenActionsTest::isParsableUri ), any( Consumer.class ) );
+			verify( viewers.constructed().get( 0 ) ).runWithDialog( argThat( OmeZarrOpenActionsTest::isParsableUri ),
+					any( Consumer.class ) );
 		}
 	}
 
@@ -415,7 +421,8 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend(), null, System.out::println );
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() )
+					.withErrorHandler( System.out::println );
 			omeZarr.showInImageJ();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
@@ -515,7 +522,8 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend(), null, System.out::println );
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() )
+					.withErrorHandler( System.out::println );
 			BdvHandle bdvHandle = omeZarr.showInBdv();
 			assertNotNull( bdvHandle, "BDV should have opened" );
 
@@ -622,7 +630,8 @@ class OmeZarrOpenActionsTest
 					scriptFailed.set( true );
 					System.out.println( errorMessage );
 				};
-				OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend(), null, errorHandler ) );
+				OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() )
+						.withErrorHandler( errorHandler ) );
 				actions.runScript();
 
 				// wait until all Swing events are processed
@@ -870,7 +879,8 @@ class OmeZarrOpenActionsTest
 				scriptFailed.set( true );
 				System.out.println( errorMessage );
 			};
-			OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend(), null, errorHandler ) );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() )
+					.withErrorHandler( errorHandler ) );
 			actions.runScript();
 
 			boolean foundTextEditor = false;
