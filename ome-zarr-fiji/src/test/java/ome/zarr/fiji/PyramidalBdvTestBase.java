@@ -45,6 +45,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.scijava.Context;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 import bdv.tools.brightness.ConverterSetup;
@@ -56,6 +57,7 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import ome.zarr.ZarrTestUtils;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.metadata.Omero;
 
 /**
  * Shared parameterized tests for the BigDataViewer Fiji wrapper
@@ -265,13 +267,21 @@ public interface PyramidalBdvTestBase
 		try (Context context = new Context())
 		{
 			PyramidContents< ? > contents = read( resource, context );
-			// NB: neither example turns a channel off, so switch one off to cover both answers.
-			contents.omero.channels.get( 1 ).active = false;
 			PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context, contents );
 			BdvHandle bdvHandle = BdvUtils.show( pyramidalBdv, null );
 			ViewerState state = bdvHandle.getViewerPanel().state();
 			assertEquals( 1, state.getCurrentTimepoint(), "the timepoint the rendering defaults name" );
 			List< ? extends SourceAndConverter< ? > > sources = pyramidalBdv.asSources();
+			assertNotNull( contents );
+			Omero omero = contents.omero();
+			assertNotNull( omero );
+			assertNotNull( omero.channels() );
+			// NB: neither example turns a channel off, so switch one off to cover both answers.
+			List< Omero.Channel > channels = new ArrayList<>( omero.channels() );
+			Omero.Channel on = channels.get( 1 );
+			channels.set( 1, new Omero.Channel( false, on.coefficient(), on.color(), on.family(), on.inverted(),
+					on.label(), on.window() ) );
+			BdvUtils.setChannelProperties( channels, sources, bdvHandle.getConverterSetups(), state );
 			assertTrue( state.isSourceActive( sources.get( 0 ) ) );
 			assertFalse( state.isSourceActive( sources.get( 1 ) ) );
 			assertTrue( state.isSourceActive( sources.get( 2 ) ) );

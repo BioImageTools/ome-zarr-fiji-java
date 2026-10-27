@@ -95,12 +95,14 @@ public interface PyramidBackend
 }
 ```
 
-`PyramidContents<T>` is what you get back, and it is immutable — public final fields, no setters:
+`PyramidContents<T>` is what you get back, and it is immutable — accessors only, no setters. The one exception is
+pixel data: every `asImg(…)` call returns the same lazily loaded image, so pixel writes show up for every user and
+live in memory only — they may be lost when the cache frees memory.
 
 |                        |                                                                                                                                        |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| **Pixel data**         | `cachedCellImgs[]` (one per resolution level), `type`, `name`                                                                          |
-| **Visualisation data** | `transforms[]`, `axesPerLevel[][]`, `omero`, `hasPlaceholderCalibration`                                                               |
+| **Pixel data**         | `asImg(int)` (one per resolution level) · `type()` · `name()`                                                                          |
+| **Visualisation data** | `transform(int)` · `axes(int)` · `omero()` · `hasPlaceholderCalibration()`                                                             |
 | **Levels**             | `asImg()` (= level 0) · `asLargestImg()` · `asSmallestImg()` · `asImg(int)` · `numResolutionLevels()` · `smallestResolutionLevel()`    |
 | **Level selection**    | `suggestResolutionLevel(Integer preferredMaxWidth)`                                                                                    |
 | **Shape by axis name** | `hasAxis("z")` · `axisIndex("c")` · `sizeAlongAxis("t")` · `numDimensions()` · `numChannels()` · `numTimepoints()` · `channelLabels()` |

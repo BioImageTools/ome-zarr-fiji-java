@@ -29,6 +29,9 @@
 package ome.zarr.imglib2;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.img.Img;
@@ -46,20 +49,25 @@ import ome.zarr.imglib2.util.ImageSizes;
 
 /**
  * Immutable snapshot of everything a {@link PyramidBackend} produces when
- * reading an OME-Zarr multi-resolution image.
+ * reading an OME-Zarr multi-resolution image, <b>except for pixel data</b>: the
+ * images are lazily loaded views of the store, so they are shared rather than
+ * copied, and every call of {@link #asImg(int)} returns the same instance.
+ * Pixel writes therefore show up for every user of these contents and live in
+ * memory only, so they may be lost when the cache frees memory.
  * <p>
- * Indices in {@code cachedCellImgs} and {@code transforms}
- * are in resolution-level order (index 0 is the highest resolution).
+ * Resolution levels are indexed from {@code 0} (the highest resolution) to
+ * {@link #smallestResolutionLevel()}.
  * The imglib2 axis indices follow F-order (x, y, z, c, t), the order produced
  * after the backend has reversed any zarr C-order shapes.
  * <p>
  * The resolution-level count and the per-axis sizes are derived on demand from
- * the full-resolution image and its axis list ({@code cachedCellImgs[ 0 ]} and
- * {@code axesPerLevel[ 0 ]}), rather than stored, so {@link #numDimensions()},
+ * the full-resolution image and its axis list ({@code asImg( 0 )} and
+ * {@code axes( 0 )}), rather than stored, so {@link #numDimensions()},
  * {@link #numChannels()}, {@link #numTimepoints()} and {@link #axisIndex} cannot
  * disagree with one another. The constructor enforces the one cross-axis
  * invariant they all rely on: the axis list and the image have the same number
- * of dimensions.
+ * of dimensions. It also checks that images, transforms and axis lists cover the
+ * same number of resolution levels.
  *
  * @param <T> pixel type
  */
@@ -73,53 +81,37 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 */
 	public static final int NO_MATCHING_LEVEL = -1;
 
-	public final String name;
+	private final String name;
 
-	public final T type;
+	private final T type;
 
-	/**
-	 * Per-resolution-level transform from that level's image coordinates to the
-	 * shared physical world coordinate system, in resolution-level order (index 0
-	 * is the highest resolution; aligned with {@link #cachedCellImgs}).
-	 * <p>
-	 * <b>Source</b> coordinates are the discrete pixel/voxel coordinates of
-	 * resolution level i, in imglib2 F-order (x, y, z). <b>Target</b> coordinates
-	 * are a single physical world space — in the spatial axes' unit (see
-	 * {@link #axesPerLevel}) — shared by all levels, so that every level overlays
-	 * correctly when displayed together. The transform combines the level's voxel
-	 * spacing (scale) with its origin offset (translation) in that world space.
-	 */
-	public final AffineTransform3D[] transforms;
+	private final AffineTransform3D[] transforms;
 
-	public final CachedCellImg< T, ? >[] cachedCellImgs;
+	private final CachedCellImg< T, ? >[] cachedCellImgs;
 
-	/**
-	 * Axes per resolution level: {@code [resolutionLevel][axisIndex]}.
-	 */
-	public final AxisCalibration[][] axesPerLevel;
+	private final AxisCalibration[][] axesPerLevel;
 
-	/** OMERO rendering metadata, or {@code null} if unavailable. */
-	public final Omero omero;
+	private final Omero omero;
 
-	/**
-	 * Whether the scale and unit in {@link #axesPerLevel} are placeholders that no
-	 * part of the dataset states, rather than real calibration (see
-	 * {@link AxisCalibration#createPlaceholderCalibration}).
-	 * <p>
-	 * {@code true} only for a single array read from its own axis names alone,
-	 * with no parent multiscales group to supply a scale or unit.
-	 */
-	public final boolean hasPlaceholderCalibration;
+	private final boolean hasPlaceholderCalibration;
 
 	private PyramidContents( final Builder< T > b )
 	{
 		this.name = b.name;
 		this.type = b.type;
-		this.transforms = b.transforms;
-		this.cachedCellImgs = b.cachedCellImgs;
-		this.axesPerLevel = b.axesPerLevel;
+		this.transforms = new AffineTransform3D[ b.transforms.length ];
+		for ( int level = 0; level < transforms.length; level++ )
+			transforms[ level ] = b.transforms[ level ].copy();
+		this.cachedCellImgs = b.cachedCellImgs.clone();
+		this.axesPerLevel = new AxisCalibration[ b.axesPerLevel.length ][];
+		for ( int level = 0; level < axesPerLevel.length; level++ )
+			axesPerLevel[ level ] = b.axesPerLevel[ level ].clone();
 		this.omero = b.omero;
 		this.hasPlaceholderCalibration = b.hasPlaceholderCalibration;
+
+		if ( transforms.length != cachedCellImgs.length || axesPerLevel.length != cachedCellImgs.length )
+			throw new IllegalArgumentException( "Level counts differ: " + cachedCellImgs.length + " images, "
+					+ transforms.length + " transforms, " + axesPerLevel.length + " axis lists." );
 
 		final int numDimensions = cachedCellImgs[ 0 ].numDimensions();
 		if ( axesPerLevel[ 0 ].length != numDimensions )
@@ -127,9 +119,72 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 					+ ") does not match the number of image dimensions (" + numDimensions + ")." );
 	}
 
+	/** Dataset name. */
+	public String name()
+	{
+		return name;
+	}
+
 	/**
-	 * Number of resolution levels in the pyramid, i.e. the length of
-	 * {@link #cachedCellImgs}.
+	 * Pixel type, as a new instance on every call.
+	 */
+	public T type()
+	{
+		return type.createVariable();
+	}
+
+	/**
+	 * Whether the scale and unit in {@link #axes(int)} are placeholders that no
+	 * part of the dataset states, rather than real calibration (see
+	 * {@link AxisCalibration#createPlaceholderCalibration}).
+	 * <p>
+	 * {@code true} only for a single array read from its own axis names alone,
+	 * with no parent multiscales group to supply a scale or unit.
+	 */
+	public boolean hasPlaceholderCalibration()
+	{
+		return hasPlaceholderCalibration;
+	}
+
+	/**
+	 * Transform from the image coordinates of the given resolution level to the
+	 * shared physical world coordinate system, as a new copy on every call.
+	 * <p>
+	 * <b>Source</b> coordinates are the discrete pixel/voxel coordinates of
+	 * the resolution level, in imglib2 F-order (x, y, z). <b>Target</b> coordinates
+	 * are a single physical world space — in the spatial axes' unit (see
+	 * {@link #axes(int)}) — shared by all levels, so that every level overlays
+	 * correctly when displayed together. The transform combines the level's voxel
+	 * spacing (scale) with its origin offset (translation) in that world space.
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public AffineTransform3D transform( final int resolutionLevel )
+	{
+		return transforms[ resolutionLevel ].copy();
+	}
+
+	/**
+	 * Axes of the image at the given resolution level, unmodifiable and indexed
+	 * like the image's dimensions (imglib2 F-order).
+	 *
+	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
+	 *   {@code [0, numResolutionLevels())}
+	 */
+	public List< AxisCalibration > axes( final int resolutionLevel )
+	{
+		return Collections.unmodifiableList( Arrays.asList( axesPerLevel[ resolutionLevel ] ) );
+	}
+
+	/** OMERO rendering metadata, or {@code null} if unavailable. */
+	public Omero omero()
+	{
+		return omero;
+	}
+
+	/**
+	 * Number of resolution levels in the pyramid.
 	 */
 	public int numResolutionLevels()
 	{
@@ -150,17 +205,25 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * {@link #asLargestImg()}.
 	 * <p>
 	 * The dimensions are in imglib2 F-order — a subset of (x, y, z, c, t) — so use
-	 * {@link #axisIndex} / {@link #hasAxis} together with {@link #axesPerLevel} to
+	 * {@link #axisIndex} / {@link #hasAxis} together with {@link #axes(int)} to
 	 * map dimension indices to logical axes.
+	 * <p>
+	 * The image is shared, not copied: pixel writes show up for every user of
+	 * these contents and live in memory only, so they may be lost when the cache
+	 * frees memory.
 	 */
 	public Img< T > asImg()
 	{
-		return asImg( 0 );
+		return asLargestImg();
 	}
 
 	/**
 	 * Largest image of the pyramid, i.e., the full-resolution level {@code 0}. See
 	 * {@link #asImg()} for the axis ordering.
+	 * <p>
+	 * The image is shared, not copied: pixel writes show up for every user of
+	 * these contents and live in memory only, so they may be lost when the cache
+	 * frees memory.
 	 */
 	public Img< T > asLargestImg()
 	{
@@ -172,6 +235,10 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * {@link #smallestResolutionLevel()}. For a single-level pyramid this is the
 	 * same image as {@link #asLargestImg()}. See {@link #asImg()} for the axis
 	 * ordering.
+	 * <p>
+	 * The image is shared, not copied: pixel writes show up for every user of
+	 * these contents and live in memory only, so they may be lost when the cache
+	 * frees memory.
 	 */
 	public Img< T > asSmallestImg()
 	{
@@ -182,6 +249,10 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * Image at the given resolution level ({@code 0} = highest resolution). See
 	 * {@link #asImg()} for the axis ordering; {@link #suggestResolutionLevel} can
 	 * pick a level by preferred width.
+	 * <p>
+	 * The image is shared, not copied: pixel writes show up for every user of
+	 * these contents and live in memory only, so they may be lost when the cache
+	 * frees memory.
 	 *
 	 * @throws IndexOutOfBoundsException if {@code resolutionLevel} is not in
 	 *   {@code [0, numResolutionLevels())}
@@ -230,12 +301,12 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	/**
 	 * One label per channel.
 	 * Derived from the OMERO channel metadata when available and consistent with
-	 * {@link #numChannels()}, otherwise falling back to the dataset {@link #name}.
+	 * {@link #numChannels()}, otherwise falling back to the dataset {@link #name()}.
 	 */
 	public String[] channelLabels()
 	{
 		final int numChannels = numChannels();
-		final boolean omeroValid = omero != null && omero.channels != null && omero.channels.size() == numChannels;
+		final boolean omeroValid = omero != null && omero.channels() != null && omero.channels().size() == numChannels;
 		if ( omeroValid )
 			logger.trace( "Creating with OMERO metadata: {}", omero );
 		else
@@ -243,7 +314,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 		final String[] labels = new String[ numChannels ];
 		for ( int i = 0; i < numChannels; i++ )
-			labels[ i ] = omeroValid ? omero.channels.get( i ).label : name;
+			labels[ i ] = omeroValid ? omero.channels().get( i ).label() : name;
 		return labels;
 	}
 
@@ -256,8 +327,8 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * The axis is located <em>by name</em> rather than by a fixed position: axes
 	 * may be absent, so an axis' index shifts with the set of axes actually
 	 * present (in F-order, {@code c} is at index 2 in {@code xyct} but at index 3
-	 * in {@code xyzc}). The lookup goes through {@link #axesPerLevel}, which is
-	 * aligned 1:1 with the dimensions of {@code cachedCellImgs[ 0 ]}.
+	 * in {@code xyzc}). The lookup goes through {@link #axes(int)}, which is
+	 * aligned 1:1 with the dimensions of {@code asImg( 0 )}.
 	 */
 	public int axisIndex( final String axisName )
 	{
@@ -466,7 +537,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 * Factory for one case where a level's calibration has to be made up: a bare
 	 * array node read from its own axis names alone, with no parent multiscales
 	 * group to state a scale or unit. The result has
-	 * {@link #hasPlaceholderCalibration} set.
+	 * {@link #hasPlaceholderCalibration()} set.
 	 *
 	 * @param <T> pixel type
 	 * @param name dataset name
@@ -540,7 +611,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 			return this;
 		}
 
-		/** See {@link PyramidContents#hasPlaceholderCalibration}. Defaults to {@code false}. */
+		/** See {@link PyramidContents#hasPlaceholderCalibration()}. Defaults to {@code false}. */
 		public Builder< T > hasPlaceholderCalibration( final boolean h )
 		{
 			this.hasPlaceholderCalibration = h;

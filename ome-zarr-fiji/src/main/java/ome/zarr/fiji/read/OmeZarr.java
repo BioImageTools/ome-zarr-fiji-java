@@ -76,7 +76,7 @@ import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
  * BigDataViewer displays all levels and streams them lazily.
  * <p>
  * Independently of the width, every display path refuses to show an image whose
- * calibration is a placeholder ({@link PyramidContents#hasPlaceholderCalibration})
+ * calibration is a placeholder ({@link PyramidContents#hasPlaceholderCalibration()})
  * unless the user confirms.
  */
 public class OmeZarr
@@ -267,7 +267,7 @@ public class OmeZarr
 
 	/**
 	 * Whether the image must not be shown: {@code true} only when its calibration is
-	 * a placeholder (see {@link PyramidContents#hasPlaceholderCalibration}) and the
+	 * a placeholder (see {@link PyramidContents#hasPlaceholderCalibration()}) and the
 	 * user declined to open it anyway.
 	 * <p>
 	 * Every display path asks this, because the invented scale and unit belong to
@@ -276,7 +276,7 @@ public class OmeZarr
 	 */
 	private boolean uncalibratedAndDeclined( final PyramidContents< ? > contents )
 	{
-		if ( !contents.hasPlaceholderCalibration )
+		if ( !contents.hasPlaceholderCalibration() )
 			return false;
 		final boolean openAnyway = openAnywayConfirmation.test( uncalibratedMessage() );
 		logger.info( "{} has no scale or unit of its own. Opening it anyway: {}.", inputUri, openAnyway );

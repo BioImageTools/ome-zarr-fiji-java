@@ -61,7 +61,7 @@ public class OmeZarrImagesChooser
 	public static List< PyramidContents< ? > > choose( final List< PyramidContents< ? > > candidates, final PyramidContents< ? > preselected )
 	{
 		final List< JCheckBox > checkboxes = candidates.stream()
-				.map( contents -> new JCheckBox( contents.name, contents == preselected ) )
+				.map( contents -> new JCheckBox( contents.name(), contents == preselected ) )
 				.collect( Collectors.toList() );
 		final JOptionPane pane = new JOptionPane( checkboxes.toArray(), JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION );
 		final JDialog dialog = pane.createDialog( "OME-Zarr Images to open" );

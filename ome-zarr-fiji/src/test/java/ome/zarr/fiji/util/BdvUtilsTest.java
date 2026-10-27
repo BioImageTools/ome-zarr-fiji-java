@@ -90,9 +90,9 @@ class BdvUtilsTest
 	@Test
 	void testOmeroChannelCountMismatch()
 	{
-		final Omero omero = new Omero();
-		omero.channels = Arrays.asList( new Omero.Channel(), new Omero.Channel(), new Omero.Channel() );
-		final int numChannels = omero.channels.size();
+		final Omero.Channel channel = new Omero.Channel( true, 1, null, null, false, null, null );
+		final Omero omero = new Omero( 0, null, null, Arrays.asList( channel, channel, channel ) );
+		final int numChannels = omero.channels().size();
 		assertEquals( numChannels, BdvUtils.omeroChannels( omero, numChannels ).size(), "as many channels as sources" );
 		assertTrue( BdvUtils.omeroChannels( omero, numChannels + 1 ).isEmpty(), "fewer channels than sources" );
 		assertTrue( BdvUtils.omeroChannels( omero, numChannels - 1 ).isEmpty(), "more channels than sources" );
