@@ -30,7 +30,9 @@ package ome.zarr.fijiui.open.openers;
 
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.open.OmeZarrOpener;
-import ome.zarr.fijiui.open.OmeZarrOpenActions;
+import ome.zarr.fijiui.open.OmeZarrBdvDropListener;
+
+import bdv.util.BdvHandle;
 
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
@@ -51,6 +53,8 @@ public class BdvMultiResolutionOpener implements OmeZarrOpener
 	@Override
 	public void open( final OmeZarr omeZarr )
 	{
-		new OmeZarrOpenActions( omeZarr ).showInBdv();
+		final BdvHandle bdvHandle = omeZarr.showInBdv();
+		if ( bdvHandle != null )
+			OmeZarrBdvDropListener.install( bdvHandle, omeZarr.context() );
 	}
 }

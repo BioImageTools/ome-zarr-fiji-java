@@ -220,6 +220,9 @@ Reading the settings without opening anything:
 OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 PyramidBackend backend = settings.getBackend().createBackend();
 int preferredWidth = settings.getPreferredMaxWidth();
+
+// or all of it at once, as an OmeZarr
+OmeZarr omeZarr = settings.createOmeZarr( uri, context, IJ::error );
 ```
 
 # Registering your own opener

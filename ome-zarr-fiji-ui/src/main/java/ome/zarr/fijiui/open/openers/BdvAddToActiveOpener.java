@@ -32,7 +32,9 @@ import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fiji.util.BdvUtils;
-import ome.zarr.fijiui.open.OmeZarrOpenActions;
+import ome.zarr.fijiui.open.OmeZarrBdvDropListener;
+
+import bdv.util.BdvHandle;
 
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
@@ -58,6 +60,9 @@ public class BdvAddToActiveOpener implements OmeZarrOpener
 	public void open( final OmeZarr omeZarr )
 	{
 		final ActiveViewerService activeViewerService = omeZarr.context().getService( ActiveViewerService.class );
-		new OmeZarrOpenActions( omeZarr ).showInBdv( BdvUtils.bdvHandleOf( activeViewerService.getActiveViewer() ) );
+		final BdvHandle active = BdvUtils.bdvHandleOf( activeViewerService.getActiveViewer() );
+		final BdvHandle bdvHandle = omeZarr.showInBdv( active );
+		if ( active == null && bdvHandle != null ) // NB: only install the drop target on a new window, not on an existing one
+			OmeZarrBdvDropListener.install( bdvHandle, omeZarr.context() );
 	}
 }

@@ -103,7 +103,7 @@ public class OmeZarr
 
 	/**
 	 * The OME-Zarr at {@code inputUri} with an explicit backend.
-	 * Will select highest resolution level und report failures via {@code IJ::error}.
+	 * Will select highest resolution level and report failures via {@code IJ::error}.
 	 *
 	 * @param inputUri the location of the OME-Zarr dataset
 	 * @param context the SciJava context to get services from

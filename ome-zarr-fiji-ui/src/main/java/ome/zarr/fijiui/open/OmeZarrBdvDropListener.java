@@ -129,7 +129,7 @@ public class OmeZarrBdvDropListener extends DropTargetAdapter
 			IJ.error( "The dropped location does not appear to be an OME-Zarr dataset:\n" + uri + "." );
 			return;
 		}
-		OmeZarrOpenActions.withSettings( uri, context, settings, IJ::error ).showInBdv( bdvHandle );
+		settings.createOmeZarr( uri, context, IJ::error ).showInBdv( bdvHandle );
 	}
 
 	/**
