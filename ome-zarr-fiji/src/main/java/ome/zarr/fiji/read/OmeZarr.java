@@ -456,9 +456,10 @@ public class OmeZarr
 	{
 		return openPyramidImage(
 				() -> {
-					if ( uncalibratedAndDeclined( readContents() ) )
+					PyramidContents< ? > pyramidContents = readContents();
+					if ( uncalibratedAndDeclined( pyramidContents ) )
 						return null;
-					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, readContents() );
+					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, pyramidContents );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 					final BdvHandle result = BdvUtils.show( pyramidal, bdvHandle, pyramidalService );
 					context.getService( ActiveViewerService.class ).setActiveViewer( result.getViewerPanel() );
