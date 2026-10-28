@@ -30,10 +30,7 @@ package ome.zarr.fiji.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.awt.AWTEvent;
-import java.awt.Toolkit;
-import java.awt.event.AWTEventListener;
-import java.awt.event.WindowEvent;
+import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,7 +39,7 @@ import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 import org.junit.jupiter.api.Test;
 
@@ -67,18 +64,26 @@ class OmeZarrImagesChooserTest
 		PyramidContents< ? > labels = N5PyramidBackend.readPyramid( ZarrTestUtils.resourcePath( LABELS ).toUri() );
 
 		List< Boolean > ticksWhenShown = new ArrayList<>();
-		AWTEventListener user = event -> {
-			if ( event.getID() != WindowEvent.WINDOW_OPENED || !( event.getSource() instanceof JDialog ) )
+		boolean[] seen = { false };
+		Timer user = new Timer( 50, null );
+		user.addActionListener( e -> {
+			JOptionPane pane = shownChooserPane();
+			if ( pane == null )
 				return;
-			JOptionPane pane = ( JOptionPane ) ( ( JDialog ) event.getSource() ).getContentPane().getComponent( 0 );
+			if ( !seen[ 0 ] )
+			{
+				seen[ 0 ] = true;
+				return;
+			}
+			user.stop();
 			JCheckBox spotsBox = ( JCheckBox ) ( ( Object[] ) pane.getMessage() )[ 0 ];
 			JCheckBox labelsBox = ( JCheckBox ) ( ( Object[] ) pane.getMessage() )[ 1 ];
 			ticksWhenShown.addAll( Arrays.asList( spotsBox.isSelected(), labelsBox.isSelected() ) );
 			spotsBox.setSelected( false );
 			labelsBox.setSelected( true );
-			SwingUtilities.invokeLater( () -> pane.setValue( JOptionPane.OK_OPTION ) ); // press OK
-		};
-		Toolkit.getDefaultToolkit().addAWTEventListener( user, AWTEvent.WINDOW_EVENT_MASK );
+			pane.setValue( JOptionPane.OK_OPTION ); // press OK
+		} );
+		user.start();
 		try
 		{
 			List< PyramidContents< ? > > chosen = OmeZarrImagesChooser.choose( Arrays.asList( spots, labels ), spots );
@@ -87,7 +92,19 @@ class OmeZarrImagesChooserTest
 		}
 		finally
 		{
-			Toolkit.getDefaultToolkit().removeAWTEventListener( user );
+			user.stop();
 		}
+	}
+
+	/**
+	 * Returns the option pane of the chooser's dialog if it is on screen, otherwise {@code null}.
+	 */
+	private static JOptionPane shownChooserPane()
+	{
+		for ( Window window : Window.getWindows() )
+			if ( window instanceof JDialog && window.isShowing()
+					&& "OME-Zarr Images to open".equals( ( ( JDialog ) window ).getTitle() ) )
+				return ( JOptionPane ) ( ( JDialog ) window ).getContentPane().getComponent( 0 );
+		return null;
 	}
 }
