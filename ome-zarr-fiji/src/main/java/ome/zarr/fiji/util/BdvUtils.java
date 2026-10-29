@@ -30,13 +30,14 @@ package ome.zarr.fiji.util;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.List;
+
+import javax.swing.SwingUtilities;
 
 import net.imglib2.type.numeric.ARGBType;
 
@@ -49,6 +50,7 @@ import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
 import bdv.util.Bounds;
+import bdv.viewer.AbstractViewerPanel;
 import bdv.viewer.ConverterSetupBounds;
 import bdv.viewer.ConverterSetups;
 import bdv.viewer.SourceAndConverter;
@@ -132,12 +134,7 @@ public class BdvUtils
 		final List< Omero.Channel > omeroChannels = omeroChannels( pyramidContents.omero(), pyramidalBdv.asSources().size() );
 		setChannelProperties( omeroChannels, pyramidalBdv.asSources(), shownIn.getConverterSetups(), shownIn.getViewerPanel().state() );
 
-		Container topLevelContainer = shownIn.getViewerPanel().getRootPane().getParent();
-		if ( topLevelContainer instanceof Window )
-		{
-			final Window window = ( Window ) topLevelContainer;
-			registerWindow( pyramidalBdv, window, shownIn, pyramidalService );
-		}
+		registerViewer( pyramidalBdv, shownIn.getViewerPanel(), pyramidalService );
 		return shownIn;
 	}
 
@@ -160,34 +157,36 @@ public class BdvUtils
 	}
 
 	/**
-	 * Increments the reference count for the given {@code pyramidal} and, if {@code pyramidalService} is non-null,
-	 * registers the BDV window with it for focus tracking. Also installs a listener to decrement the
-	 * reference count (and unregister the window) when the BDV window closes.
+	 * Increments the reference count of {@code pyramidalBdv} and, if {@code pyramidalService} is non-null,
+	 * registers the window of {@code viewer} with it for focus tracking. Also installs a listener to decrement the
+	 * reference count (and unregister the window) when the window closes. Does nothing if {@code viewer}
+	 * is not in a window.
 	 * <p>
-	 * A BDV window can show several pyramidals.
-	 * The {@code pyramidalService} maps the BDV Window to the {@code pyramidal} owning BDV's current
+	 * A viewer window can show several pyramidals.
+	 * The {@code pyramidalService} maps the window to the pyramidal owning the viewer's current
 	 * source.
-	 * So {@code pyramidal} is registered now only if its source is current (BDV makes the
-	 * first source added to an empty viewer current). The {@code pyramidal} is updated whenever the user makes one of its
-	 * sources current.
+	 * So {@code pyramidalBdv} is registered now only if one of its sources is current (BDV makes the
+	 * first source added to an empty viewer current), and again whenever one of its sources becomes current.
 	 * <p>
 	 * Focus switches themselves are observed centrally by {@link PyramidalService} via the AWT
 	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
 	 * @param pyramidalBdv the {@link PyramidalBdv} the window displays
-	 * @param window the top-level window to track
-	 * @param bdvHandle the handle of the BDV in {@code window}
+	 * @param viewer the viewer showing {@code pyramidalBdv}, whose top-level window is tracked.
 	 * @param pyramidalService the service to register with, or {@code null} to only reference-count
 	 */
-	private static void registerWindow( final PyramidalBdv< ? > pyramidalBdv, final Window window,
-			final BdvHandle bdvHandle, final PyramidalService pyramidalService )
+	public static void registerViewer( final PyramidalBdv< ? > pyramidalBdv, final AbstractViewerPanel viewer,
+			final PyramidalService pyramidalService )
 	{
+		final Window window = SwingUtilities.getWindowAncestor( viewer );
+		if ( window == null )
+			return;
 		pyramidalBdv.incrementReferences();
 		if ( pyramidalService != null )
 		{
-			if ( isCurrentSource( pyramidalBdv, bdvHandle ) )
+			if ( isCurrentSource( pyramidalBdv, viewer ) )
 				pyramidalService.registerBdvWindow( window, pyramidalBdv );
-			bdvHandle.getViewerPanel().state().changeListeners().add( change -> {
-				if ( change == ViewerStateChange.CURRENT_SOURCE_CHANGED && isCurrentSource( pyramidalBdv, bdvHandle ) )
+			viewer.state().changeListeners().add( change -> {
+				if ( change == ViewerStateChange.CURRENT_SOURCE_CHANGED && isCurrentSource( pyramidalBdv, viewer ) )
 					pyramidalService.registerBdvWindow( window, pyramidalBdv );
 			} );
 		}
@@ -204,12 +203,19 @@ public class BdvUtils
 	}
 
 	/**
-	 * Whether the current source of {@code bdvHandle}'s viewer is one of {@code pyramidalBdv}'s
-	 * sources. Checked per viewer, since one pyramidal may be shown in several.
+	 * Whether the current source of {@code viewer} shows {@code pyramidalBdv}'s image data, i.e., wraps
+	 * one of its spim sources. A viewer may pair them with converters of its own.
+	 * Checked per viewer, since one pyramidal may be shown in several.
 	 */
-	private static boolean isCurrentSource( final PyramidalBdv< ? > pyramidalBdv, final BdvHandle bdvHandle )
+	private static boolean isCurrentSource( final PyramidalBdv< ? > pyramidalBdv, final AbstractViewerPanel viewer )
 	{
-		return pyramidalBdv.asSources().contains( bdvHandle.getViewerPanel().state().getCurrentSource() );
+		final SourceAndConverter< ? > current = viewer.state().getCurrentSource();
+		if ( current == null )
+			return false;
+		for ( final SourceAndConverter< ? > source : pyramidalBdv.asSources() )
+			if ( source.getSpimSource() == current.getSpimSource() )
+				return true;
+		return false;
 	}
 
 	/**
