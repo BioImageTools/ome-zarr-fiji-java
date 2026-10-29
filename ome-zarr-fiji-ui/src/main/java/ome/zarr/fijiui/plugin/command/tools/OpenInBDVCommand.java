@@ -56,7 +56,7 @@ public class OpenInBDVCommand implements Command
 	@Parameter
 	private UIService uiService;
 
-	@Parameter( required = false )
+	@Parameter
 	private PyramidalService pyramidalService;
 
 	@Parameter( required = false )
