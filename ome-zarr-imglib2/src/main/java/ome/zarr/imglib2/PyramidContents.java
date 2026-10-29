@@ -91,7 +91,13 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	private final AxisCalibration[][] axesPerLevel;
 
-	private final Omero omero;
+	/**
+	 * OMERO rendering metadata, or {@code null} if unavailable.
+	 *
+	 * @deprecated Will be private with the 0.11 release. Use {@link #omero()}.
+	 */
+	@Deprecated
+	public final Omero omero;
 
 	private final boolean hasPlaceholderCalibration;
 

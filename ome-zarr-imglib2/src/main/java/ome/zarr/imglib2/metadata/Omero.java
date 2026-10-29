@@ -122,7 +122,9 @@ public final class Omero
 
 		private final String label;
 
-		private final Window window;
+		/** @deprecated Will be private with the 0.11 release. Use {@link #window()}. */
+		@Deprecated
+		public final Window window;
 
 		public Channel( final boolean active, final double coefficient, final String color, final String family,
 				final boolean inverted, final String label, final Window window )
@@ -173,13 +175,21 @@ public final class Omero
 
 		public static final class Window
 		{
-			private final double start;
+			/** @deprecated Will be private with the 0.11 release. Use {@link #start()}. */
+			@Deprecated
+			public final double start;
 
-			private final double end;
+			/** @deprecated Will be private with the 0.11 release. Use {@link #end()}. */
+			@Deprecated
+			public final double end;
 
-			private final double min;
+			/** @deprecated Will be private with the 0.11 release. Use {@link #min()}. */
+			@Deprecated
+			public final double min;
 
-			private final double max;
+			/** @deprecated Will be private with the 0.11 release. Use {@link #max()}. */
+			@Deprecated
+			public final double max;
 
 			public Window( final double start, final double end, final double min, final double max )
 			{
