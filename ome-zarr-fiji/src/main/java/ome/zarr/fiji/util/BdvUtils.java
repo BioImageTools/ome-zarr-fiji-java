@@ -271,7 +271,7 @@ public class BdvUtils
 	 * @param numChannels the number of display sources to be configured
 	 * @return the channels to apply, empty if they cannot be applied
 	 */
-	static List< Omero.Channel > omeroChannels( final Omero omero, final int numChannels )
+	public static List< Omero.Channel > omeroChannels( final Omero omero, final int numChannels )
 	{
 		if ( omero == null || omero.channels() == null || omero.channels().isEmpty() )
 			return Collections.emptyList();
