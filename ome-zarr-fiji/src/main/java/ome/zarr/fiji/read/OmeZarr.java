@@ -116,6 +116,25 @@ public class OmeZarr
 	}
 
 	/**
+	 * The OME-Zarr at {@code inputUri} with an explicit backend and preferred
+	 * resolution, reporting failures via {@code IJ::error}.
+	 *
+	 * @param inputUri the location of the OME-Zarr dataset
+	 * @param context the SciJava context to get services from
+	 * @param backend the backend used to read the dataset
+	 * @param preferredMaxWidth the highest-resolution level that is still no wider
+	 *   than this is opened in ImageJ, or {@code null} for the highest resolution
+	 * @deprecated Will be removed with the 0.11 release. Use
+	 *   {@code new OmeZarr( inputUri, context, backend ).withPreferredMaxWidth( preferredMaxWidth )}.
+	 */
+	@Deprecated
+	public OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend,
+			final Integer preferredMaxWidth )
+	{
+		this( inputUri, context, backend, preferredMaxWidth, IJ::error, OmeZarr::confirmWithDialog );
+	}
+
+	/**
 	 * The OME-Zarr at {@code inputUri} with every setting given explicitly.
 	 *
 	 * @param inputUri the location of the OME-Zarr dataset
