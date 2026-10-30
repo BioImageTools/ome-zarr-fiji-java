@@ -567,7 +567,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	private static AffineTransform3D[] createTransforms( final MultiscalesEntry entry,
 			final int numResolutionLevels, final double[] level0Scales )
 	{
-		final int[] spatialZarrIdx = new int[] {
+		final int[] spatialZarrIdx = {
 				zarrAxisIndex( entry.axes, AxisCalibration.X ),
 				zarrAxisIndex( entry.axes, AxisCalibration.Y ),
 				zarrAxisIndex( entry.axes, AxisCalibration.Z )
