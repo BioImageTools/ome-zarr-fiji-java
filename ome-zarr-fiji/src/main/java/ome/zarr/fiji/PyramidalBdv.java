@@ -31,6 +31,8 @@ package ome.zarr.fiji;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
 import net.imglib2.cache.img.CachedCellImg;
+import net.imglib2.cache.volatiles.CacheHints;
+import net.imglib2.cache.volatiles.LoadingStrategy;
 import net.imglib2.converter.Converter;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -51,6 +53,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import bdv.BigDataViewer;
+import bdv.cache.CacheControl;
 import bdv.cache.SharedQueue;
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.util.volatiles.VolatileViews;
@@ -67,13 +70,66 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 
 	private final PyramidContents< T > contents;
 
+	private final SharedQueue sharedQueue;
+
+	private final boolean ownsSharedQueue;
+
 	private final List< SourceAndConverter< T > > sources;
 
+	/**
+	 * Loads through a queue of its own, see {@link #PyramidalBdv(Context, PyramidContents, SharedQueue)}.
+	 *
+	 * @param context the SciJava context
+	 * @param contents the image to show
+	 */
 	public PyramidalBdv( final Context context, final PyramidContents< T > contents )
 	{
+		this( context, contents, null );
+	}
+
+	/**
+	 * Loads through {@code sharedQueue}, e.g., to share fetcher threads and priorities with other
+	 * images. The caller keeps ownership: this never shuts it down.
+	 * <p>
+	 * Without one, this loads through a queue of its own, like BigDataViewer's own
+	 * {@code N5ImageLoader} does per dataset, shut down once no BigDataViewer window shows this
+	 * anymore, see {@link #decrementReferences()}. It has one fetcher thread per two available
+	 * processors, half of {@code N5ImageLoader}'s default, since an application opening many
+	 * datasets gets that many threads per dataset. A queue
+	 * per dataset rather than per window keeps a local image from waiting behind the network
+	 * requests of a remote one in the same window.
+	 *
+	 * @param context the SciJava context
+	 * @param contents the image to show
+	 * @param sharedQueue the queue that loads the chunks for BigDataViewer, or {@code null} for one
+	 *   of its own
+	 */
+	public PyramidalBdv( final Context context, final PyramidContents< T > contents, final SharedQueue sharedQueue )
+	{
 		this.contents = contents;
-		sources = initSourceAndConverters( contents );
+		if ( sharedQueue == null )
+		{
+			final int defaultNumThreads = Runtime.getRuntime().availableProcessors() / 2;
+			final int numFetcherThreads = Math.max( 1, defaultNumThreads );
+			this.sharedQueue = new SharedQueue( numFetcherThreads );
+			this.ownsSharedQueue = true;
+		}
+		else
+		{
+			this.sharedQueue = sharedQueue;
+			this.ownsSharedQueue = false;
+		}
+		sources = initSourceAndConverters( contents, this.sharedQueue );
 		setContext( context );
+	}
+
+	/**
+	 * @return the cache control of the queue that loads the chunks of {@link #asSources()}. A
+	 *   BigDataViewer showing them should register it, so that panning drops stale requests.
+	 */
+	public CacheControl getCacheControl()
+	{
+		return sharedQueue;
 	}
 
 	@Override
@@ -99,7 +155,8 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 
 	@SuppressWarnings( "unchecked" )
 	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
-			List< SourceAndConverter< T > > initSourceAndConverters( final PyramidContents< T > contents )
+			List< SourceAndConverter< T > > initSourceAndConverters( final PyramidContents< T > contents,
+					final SharedQueue sharedQueue )
 	{
 		final int nLevels = contents.numResolutionLevels();
 		final int numChannels = contents.numChannels();
@@ -108,7 +165,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		Arrays.setAll( mipmapTransforms, contents::transform );
 		final VoxelDimensions voxelDimensions = voxelDimensions( contents );
 
-		final RandomAccessibleInterval< V >[] volatileImgs = createVolatileImgs( contents );
+		final RandomAccessibleInterval< V >[] volatileImgs = createVolatileImgs( contents, sharedQueue );
 		final V volatileType = volatileImgs[ 0 ].getType();
 
 		final RandomAccessibleInterval< T >[][] levelToChannels = new RandomAccessibleInterval[ nLevels ][];
@@ -172,16 +229,22 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	}
 
 	/**
-	 * Wraps each resolution level's {@link CachedCellImg} as a volatile view.
+	 * Wraps each resolution level's {@link CachedCellImg} as a volatile view, prioritized like
+	 * BigDataViewer's own {@code N5ImageLoader} does it: the coarsest level loads first (priority 0),
+	 * and {@code BUDGETED} loads synchronously within the renderer's per-frame I/O budget.
 	 */
 	@SuppressWarnings( "unchecked" )
 	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
-			RandomAccessibleInterval< V >[] createVolatileImgs( final PyramidContents< T > contents )
+			RandomAccessibleInterval< V >[] createVolatileImgs( final PyramidContents< T > contents, final SharedQueue sharedQueue )
 	{
-		final SharedQueue sharedQueue = new SharedQueue( Math.max( 1, Runtime.getRuntime().availableProcessors() / 2 ) );
-		final RandomAccessibleInterval< V >[] volatileImgs = new RandomAccessibleInterval[ contents.numResolutionLevels() ];
-		for ( int level = 0; level < contents.numResolutionLevels(); level++ )
-			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( contents.asImg( level ), sharedQueue );
+		final int nLevels = contents.numResolutionLevels();
+		sharedQueue.ensureNumPriorities( nLevels );
+		final RandomAccessibleInterval< V >[] volatileImgs = new RandomAccessibleInterval[ nLevels ];
+		for ( int level = 0; level < nLevels; level++ )
+		{
+			final CacheHints hints = new CacheHints( LoadingStrategy.BUDGETED, nLevels - 1 - level, false ); // priority 0, i.e., loaded first, is the coarsest level
+			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( contents.asImg( level ), sharedQueue, hints );
+		}
 		return volatileImgs;
 	}
 
@@ -279,11 +342,14 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	}
 
 	/**
-	 * Called when the reference count is decremented to zero.
+	 * Called when the reference count is decremented to zero. Also shuts down the queue this
+	 * created itself, so a closed window leaves no fetcher threads behind.
 	 */
 	private void unregister()
 	{
 		if ( objectService != null )
 			objectService.removeObject( this );
+		if ( ownsSharedQueue )
+			sharedQueue.shutdown();
 	}
 }
