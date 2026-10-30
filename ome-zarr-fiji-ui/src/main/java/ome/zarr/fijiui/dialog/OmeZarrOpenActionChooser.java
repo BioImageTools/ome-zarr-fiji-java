@@ -280,7 +280,7 @@ public class OmeZarrOpenActionChooser
 
 	private void startFadeOut( final JDialog dialog )
 	{
-		final float[] opacity = new float[] { 1.0f };
+		final float[] opacity = { 1.0f };
 		final int steps = 10;
 		final int duration = 300;
 		final int interval = duration / steps;
