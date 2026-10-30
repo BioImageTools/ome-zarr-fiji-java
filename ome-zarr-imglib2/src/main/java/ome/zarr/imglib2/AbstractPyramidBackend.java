@@ -69,6 +69,9 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
+	/** Message of the {@link IllegalArgumentException} thrown for a {@code null} URI. */
+	protected static final String NO_LOCATION_MESSAGE = "No OME-Zarr location given";
+
 	private final String awsProfile;
 
 	/** A backend that reads {@code s3:} URIs with the AWS SDK default profile. */
@@ -176,6 +179,8 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	 */
 	protected final < T extends NativeType< T > & RealType< T > > PyramidContents< T > readSingleArray( final URI arrayUri )
 	{
+		if ( arrayUri == null )
+			throw new IllegalArgumentException( NO_LOCATION_MESSAGE );
 		final URI parentUri = ZarrUtils.parentUri( arrayUri );
 		if ( parentUri != null )
 		{

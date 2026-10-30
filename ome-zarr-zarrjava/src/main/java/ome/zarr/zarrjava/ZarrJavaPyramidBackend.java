@@ -100,8 +100,6 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
-	private static final String NO_LOCATION_MESSAGE = "No OME-Zarr location given";
-
 	public ZarrJavaPyramidBackend()
 	{
 		super();
