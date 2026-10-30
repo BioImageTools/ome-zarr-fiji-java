@@ -203,6 +203,36 @@ public class BdvUtils
 	}
 
 	/**
+	 * Increments the reference count for the given {@code pyramidal} and, if {@code pyramidalService} is non-null,
+	 * registers {@code window} with it for focus tracking, unconditionally. Undoes both when the window closes.
+	 *
+	 * @param pyramidalBdv the {@link PyramidalBdv} the window displays
+	 * @param window the top-level window to track
+	 * @param pyramidalService the service to register with, or {@code null} to only reference-count
+	 * @deprecated Will be removed with the 0.11 release. Use
+	 *   {@link #registerViewer(PyramidalBdv, AbstractViewerPanel, PyramidalService)}, which also
+	 *   follows the viewer's current source.
+	 */
+	@Deprecated
+	public static void registerBdvWindow( final PyramidalBdv< ? > pyramidalBdv, final Window window,
+			final PyramidalService pyramidalService )
+	{
+		pyramidalBdv.incrementReferences();
+		if ( pyramidalService != null )
+			pyramidalService.registerBdvWindow( window, pyramidalBdv );
+		window.addWindowListener( new WindowAdapter()
+		{
+			@Override
+			public void windowClosed( final WindowEvent e )
+			{
+				if ( pyramidalService != null )
+					pyramidalService.unregisterBdvWindow( window );
+				pyramidalBdv.decrementReferences();
+			}
+		} );
+	}
+
+	/**
 	 * Whether the current source of {@code viewer} shows {@code pyramidalBdv}'s image data, i.e., wraps
 	 * one of its spim sources. A viewer may pair them with converters of its own.
 	 * Checked per viewer, since one pyramidal may be shown in several.
