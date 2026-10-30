@@ -57,6 +57,11 @@ Drop a local OME-Zarr folder, an `.ozx` archive or an OME-Zarr URI onto Fiji. Wh
 Dropping onto the image area of a BigDataViewer window opened by this plugin instead adds the OME-Zarr to that
 window, e.g., to overlay a segmentation on the raw data. This does not depend on the opening behavior settings.
 
+Below, `logo_spots.ome.zarr` is dropped onto Fiji and opens in BigDataViewer. `logo_labels.ome.zarr` is then dropped
+onto that window and shows up there as a second source, overlaid on the spots:
+
+<img src="doc/readme/dnd_bdv.gif" width="640" alt="Dragging an OME-Zarr onto an open BigDataViewer window adds it to that window">
+
 ### Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)
 
 * Supports local paths, http(s) URLs, and `s3://` URIs
