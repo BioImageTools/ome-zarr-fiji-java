@@ -48,16 +48,16 @@ import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
 import org.scijava.service.SciJavaService;
 
-import bdv.viewer.ViewerPanel;
+import bdv.viewer.AbstractViewerPanel;
 import ij.gui.ImageWindow;
 
 /**
- * Tracks the most recently focused image viewer: an ImageJ {@link ImageWindow} or a BigDataViewer
- * {@link ViewerPanel}, no matter which tool opened it.
+ * Tracks the most recently focused image viewer: an ImageJ {@link ImageWindow} or the
+ * {@link AbstractViewerPanel} of a BigDataViewer or a BigVolumeViewer, no matter which tool opened it.
  * <p>
  * Listens to the {@code "focusOwner"} property of the {@link KeyboardFocusManager} rather than to
  * {@code "activeWindow"}, so that the viewers of a window holding two of them (e.g. BigWarp) can be
- * told apart. Focus in a BDV window's side panel lies outside its {@link ViewerPanel}, so a window
+ * told apart. Focus in a BDV window's side panel lies outside its {@link AbstractViewerPanel}, so a window
  * holding exactly one viewer counts as that viewer wherever its focus is. All other windows (Fiji's
  * main window, dialogs) are ignored, so the last viewer stays active while the user navigates menus.
  * <p>
@@ -106,7 +106,7 @@ public class ActiveViewerService extends AbstractService implements SciJavaServi
 
 	/**
 	 * @return the most recently focused or reported image viewer, an {@link ImageWindow} or a
-	 *   {@link ViewerPanel}, or {@code null} if there is none or it has been closed since
+	 *   {@link AbstractViewerPanel}, or {@code null} if there is none or it has been closed since
 	 */
 	public Component getActiveViewer()
 	{
@@ -118,7 +118,7 @@ public class ActiveViewerService extends AbstractService implements SciJavaServi
 	 * Makes {@code viewer} the active one, without waiting for its focus event, and tells the
 	 * listeners.
 	 *
-	 * @param viewer an {@link ImageWindow} or a {@link ViewerPanel}, or {@code null} if the viewer
+	 * @param viewer an {@link ImageWindow} or an {@link AbstractViewerPanel}, or {@code null} if the viewer
 	 *   about to become active is not known yet
 	 */
 	public void setActiveViewer( final Component viewer )
@@ -140,7 +140,7 @@ public class ActiveViewerService extends AbstractService implements SciJavaServi
 
 	/**
 	 * The image viewer {@code focusOwner} belongs to: its {@link ImageWindow}, the
-	 * {@link ViewerPanel} containing it, or else the only one in its window. {@code null} for
+	 * {@link AbstractViewerPanel} containing it, or else the only one in its window. {@code null} for
 	 * anything else.
 	 */
 	static Component viewerOf( final Component focusOwner )
@@ -150,22 +150,22 @@ public class ActiveViewerService extends AbstractService implements SciJavaServi
 		final Window window = focusOwner instanceof Window ? ( Window ) focusOwner : SwingUtilities.getWindowAncestor( focusOwner );
 		if ( window instanceof ImageWindow )
 			return window;
-		final Component viewerPanel = SwingUtilities.getAncestorOfClass( ViewerPanel.class, focusOwner );
+		final Component viewerPanel = SwingUtilities.getAncestorOfClass( AbstractViewerPanel.class, focusOwner );
 		if ( viewerPanel != null )
 			return viewerPanel;
 		if ( window == null )
 			return null;
-		final List< ViewerPanel > viewerPanels = new ArrayList<>();
+		final List< AbstractViewerPanel > viewerPanels = new ArrayList<>();
 		collectViewerPanels( window, viewerPanels );
 		return viewerPanels.size() == 1 ? viewerPanels.get( 0 ) : null;
 	}
 
-	private static void collectViewerPanels( final Container container, final List< ViewerPanel > viewerPanels )
+	private static void collectViewerPanels( final Container container, final List< AbstractViewerPanel > viewerPanels )
 	{
 		for ( final Component child : container.getComponents() )
 		{
-			if ( child instanceof ViewerPanel )
-				viewerPanels.add( ( ViewerPanel ) child );
+			if ( child instanceof AbstractViewerPanel )
+				viewerPanels.add( ( AbstractViewerPanel ) child );
 			else if ( child instanceof Container )
 				collectViewerPanels( ( Container ) child, viewerPanels );
 		}
