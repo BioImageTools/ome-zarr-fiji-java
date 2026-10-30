@@ -270,8 +270,10 @@ Images may be 2D (xy), 3D (xyc, xyt, xyz), 4D (xyct, xyzc, xyzt) or 5D (xyzct).
   using all resolution pyramids (via `Plugins > OME-Zarr > Open Current OME-Zarr Image in BigDataViewer`).
 * Or the opposite, even if the dropped / pasted OME-Zarr has right away landed in BigDataViewer, it is possible to
   display a particular resolution of it as Dataset in ImageJ (via `Plugins > OME-Zarr > Open Current OME-Zarr Image in ImageJ...`).
-  Images which support swithing resolutions are displayed carry `(R=l/n)` in their name to indicate this property, `l`
+  Images that support switching resolutions carry `(R=l/n)` in their name to indicate this property, `l`
   being the shown resolution level (1 = highest resolution) and `n` the number of resolution levels.
+  The dialog lists every resolution level with its size:<br>
+  <img src="doc/readme/open_resolution_level.png" width="621" alt="The Open Current OME-Zarr Image in ImageJ dialog listing three resolution levels with their extents and sizes">
 * Both views share the same pixel data, so an edit in ImageJ (e.g. *Edit > Fill*) also shows up in BigDataViewer —
   once you move to another channel, slice or time point in ImageJ and BigDataViewer redraws (e.g. after panning).
   Only the edited resolution level changes, and edits live in memory only: they are not saved to the OME-Zarr and
