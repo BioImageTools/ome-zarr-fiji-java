@@ -15,7 +15,7 @@
         - [Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)](#copy--paste-of-ome-zarr-uris-local-folder-http-https-s3)
         - [Open via menu (local folders)](#open-via-menu-local-folders)
         - [Open as `Dataset` (scripting)](#open-as-dataset-scripting)
-        - [FIJI links (`fiji://`)](#fiji-links-fiji)
+        - [Fiji links (`fiji://`)](#fiji-links-fiji)
         - [AWS profiles (private buckets, non-AWS S3 endpoints)](#aws-profiles-private-buckets-non-aws-s3-endpoints)
     - [Opening Behavior Settings](#opening-behavior-settings)
         - [Default opening behavior](#default-opening-behavior)
@@ -95,7 +95,7 @@ Unlike the `File -> Import` entry it accepts local paths, `file:` and `http(s):`
 `Dataset` instead of following the configured open behavior. The reader backend still comes from the
 settings. `s3://` is not supported here. The command opens no dialog and does not display the image.
 
-### FIJI links (`fiji://`)
+### Fiji links (`fiji://`)
 
 A `fiji://` link on a web page opens an OME-Zarr in Fiji, honoring the same
 [default opening behavior](#default-opening-behavior) as drag & drop and paste. It needs Fiji-Latest with the [OME-Zarr update site](#fiji-update-site). A link such as
@@ -126,6 +126,16 @@ work, check the *Enable web links* setting in `Edit -> Options -> Desktop...`:
 See [doc/fiji-links-demo.html](https://htmlpreview.github.io/?https://raw.githubusercontent.com/BioImageTools/ome-zarr-fiji-java/main/doc/fiji-links-demo.html)
 for a page with clickable examples of each form.
 
+Fiji links in action:
+
+* [OME-NGFF samples](https://idr.github.io/ome-ngff-samples/): the Fiji icon next to each dataset opens it in Fiji.
+
+  <img src="doc/readme/fiji_link_ngff_samples.png" width="469" alt="A dataset row on the OME-NGFF samples page with its viewer icons, the Fiji icon last">
+* [OME-NGFF Validator](https://ome.github.io/ome-ngff-validator/?source=https://livingobjects.ebi.ac.uk/idr/zarr/v0.5/idr0062A/6001240_labels.zarr):
+  the Fiji icon under *Open with* opens the validated dataset in Fiji.
+
+  <img src="doc/readme/fiji_link_ngff_validator.png" width="517" alt="The OME-NGFF Validator page with the Fiji icon under Open with">
+
 ### AWS profiles (private buckets, non-AWS S3 endpoints)
 
 Credentials are expected to live in the standard AWS files. Define a profile like this:
@@ -150,6 +160,8 @@ A profile without keys falls back to anonymous access.
 *No profile* uses the profile named by the `AWS_PROFILE` environment variable at Fiji start (e.g.
 `AWS_PROFILE=my_profile ./fiji`), else the `default` profile, always with region `us-east-1`. Choose `default` in the
 list to use its own `region`.
+
+<img src="doc/readme/s3_settings.png" width="640" alt="The S3 Settings dialog with the AWS profile choice">
 
 ## Opening Behavior Settings
 
