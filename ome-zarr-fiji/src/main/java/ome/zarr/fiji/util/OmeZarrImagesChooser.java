@@ -1,6 +1,6 @@
 /*-
  * #%L
- * OME-Zarr integration into FIJI
+ * OME-Zarr extras for Fiji
  * %%
  * Copyright (C) 2022 - 2026 SciJava developers
  * %%
