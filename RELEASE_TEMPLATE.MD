@@ -1,6 +1,12 @@
 # Release
 
 * [ ] Merge Open Pull Requests
+* [ ] Check compatibility with the update sites that build on ours
+    * [MoBIE-latest](https://sites.imagej.net/MoBIE-latest/jars/): `mobie-io`, `mobie-viewer-fiji`
+    * [BigVolumeBrowser](https://sites.imagej.net/BigVolumeBrowser/jars/): `bigvolumebrowser`
+    * [ ] Every `ome.zarr` class and member their jars reference still exists on main
+    * [ ] Shared dependency jars (e.g. `n5-zarr`, `zarr-java`) do not conflict with theirs
+    * [ ] Fiji with all three update sites enabled starts, and MoBIE and BigVolumeBrowser open an OME-Zarr
 * [ ] Documentation
     * [ ] Update Documentation in the repo
     * [ ] Screenshots with demo data (Optional)
