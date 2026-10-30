@@ -185,7 +185,7 @@ and it then appears here and in the dialog next to the built-in ones.
 
 #### Selection dialog (Ask me every time)
 
-<img src="doc/readme/dialog.png" width="120" alt="The opening-selection dialog with six openers and the help button">
+<img src="doc/readme/dialog.png" width="154" alt="The opening-selection dialog with seven openers and the help button">
 
 The dialog shows one icon button per registered opener, i.e., the options above, plus a help button.
 
