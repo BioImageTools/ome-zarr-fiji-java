@@ -110,8 +110,10 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	@Override
 	public final < T extends NativeType< T > & RealType< T > > PyramidContents< T > read( final URI inputUri )
 	{
+		if ( inputUri == null )
+			throw new IllegalArgumentException( NO_LOCATION_MESSAGE );
 		// Checked here so that it does not need to be repeated for all backends.
-		if ( awsProfile != null && inputUri != null && "s3".equalsIgnoreCase( inputUri.getScheme() )
+		if ( awsProfile != null && "s3".equalsIgnoreCase( inputUri.getScheme() )
 				&& !AwsProfiles.names().contains( awsProfile ) )
 			throw new AwsProfileNotFoundException( inputUri.toString(), awsProfile );
 		try
