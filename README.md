@@ -11,9 +11,9 @@
 - [About](#about)
 - [Features](#features)
     - [How to open an OME-Zarr](#how-to-open-an-ome-zarr)
-        - [Drag & Drop of local OME-Zarr folders and URIs](#drag--drop-of-local-ome-zarr-folders-and-uris)
+        - [Drag & Drop of local OME-Zarr folders, `.ozx` archives and URIs](#drag--drop-of-local-ome-zarr-folders-ozx-archives-and-uris)
         - [Copy & Paste of OME-Zarr URIs (local folder, http, https, s3)](#copy--paste-of-ome-zarr-uris-local-folder-http-https-s3)
-        - [Open via menu (local folders)](#open-via-menu-local-folders)
+        - [Open via menu (local folders and `.ozx` archives)](#open-via-menu-local-folders-and-ozx-archives)
         - [Open as `Dataset` (scripting)](#open-as-dataset-scripting)
         - [Fiji links (`fiji://`)](#fiji-links-fiji)
         - [AWS profiles (private buckets, non-AWS S3 endpoints)](#aws-profiles-private-buckets-non-aws-s3-endpoints)
@@ -40,7 +40,8 @@
 # About
 
 A convenience layer for using **OME-Zarr** in Fiji/ImageJ. Open a dataset the way you would open any image: drag it
-in, paste a URI, use the menu, or call it from a script. Support local and remote (https/s3) stores.
+in, paste a URI, use the menu, or call it from a script. Support local and remote (https/s3) stores, as well as zipped
+OME-Zarr archives (`.ozx`, read by the default zarr-java [reader backend](#reader-backend)).
 
 If the dropped / pasted / linked target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing.
 
@@ -48,9 +49,9 @@ If the dropped / pasted / linked target is not recognized as a **OME-Zarr v0.3 -
 
 ## How to open an OME-Zarr
 
-### Drag & Drop of local OME-Zarr folders and URIs
+### Drag & Drop of local OME-Zarr folders, `.ozx` archives and URIs
 
-Drop a local OME-Zarr folder or an OME-Zarr URI onto Fiji. What happens next is set in the
+Drop a local OME-Zarr folder, an `.ozx` archive or an OME-Zarr URI onto Fiji. What happens next is set in the
 [Opening Behavior Settings](#opening-behavior-settings).
 
 Dropping onto the image area of a BigDataViewer window opened by this plugin instead adds the OME-Zarr to that
@@ -70,7 +71,7 @@ window, e.g., to overlay a segmentation on the raw data. This does not depend on
     * Paste via menu: Plugins -> OME-Zarr -> Paste OME-Zarr URI
     * Paste via button in FIJI: ![fiji_paste_button.png](doc/readme/fiji_paste_button.png)
 
-### Open via menu (local folders)
+### Open via menu (local folders and `.ozx` archives)
 
 `File -> Import -> OME-Zarr...` opens a folder chooser. The selected folder is checked for Zarr metadata and then opened
 with the same opening behavior, resolution and reader backend as drag & drop and paste. Being a single-parameter SciJava
@@ -80,7 +81,17 @@ command, it is macro-recordable:
 run("OME-Zarr...", "directory=/path/to/image.ome.zarr");
 ```
 
-Only local folders can be chosen here; for http(s) and `s3://` locations use copy & paste.
+`File -> Import -> OME-Zarr Archive (.ozx)...` does the same for a zipped OME-Zarr archive, with a file chooser:
+
+```
+run("OME-Zarr Archive (.ozx)...", "archive=/path/to/image.ozx");
+```
+
+The two are separate entries because a file chooser picks either folders or files, never both. Archives are read by
+the zarr-java [reader backend](#reader-backend), the default. With N5 selected, opening an archive shows a message
+telling you to switch.
+
+Only local folders and files can be chosen here; for http(s) and `s3://` locations use copy & paste.
 
 ### Open as `Dataset` (scripting)
 
