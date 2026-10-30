@@ -45,7 +45,6 @@ import org.scijava.event.EventHandler;
 import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
 import org.scijava.service.SciJavaService;
-import org.scijava.service.Service;
 import org.scijava.ui.event.UIShownEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
