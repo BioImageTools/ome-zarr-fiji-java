@@ -465,6 +465,8 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	@Override
 	protected < T extends NativeType< T > & RealType< T > > PyramidContents< T > tryReadArrayNodeOnly( final URI arrayUri )
 	{
+		if ( arrayUri == null )
+			throw new IllegalArgumentException( NO_LOCATION_MESSAGE );
 		final Array arr;
 		try
 		{
