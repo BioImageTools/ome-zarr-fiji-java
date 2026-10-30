@@ -28,6 +28,7 @@
  */
 package ome.zarr.fijiui.plugin.command.tools;
 
+import static ome.zarr.fijiui.open.options.OmeZarrOpeningSettings.DEFAULT_BACKEND;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -56,7 +57,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingUtilities;
 
-import ome.zarr.fijiui.open.OmeZarrOpenActions;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
@@ -91,7 +92,7 @@ class OpenResolutionLevelCommandTest
 		{
 			final OpenResolutionLevelCommand cmd = createCommand( context );
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarrOpenActions( path.toUri(), context ).showInBdv();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() ).showInBdv();
 			cmd.initialize();
 			assertFalse( cmd.isCanceled() );
 			final MutableModuleItem< ? > item = assertInstanceOf( MutableModuleItem.class, cmd.getInfo().getInput( "resolutionLevel" ) );
@@ -111,7 +112,7 @@ class OpenResolutionLevelCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarrOpenActions( path.toUri(), context ).showInBdv();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() ).showInBdv();
 
 			final Map< String, Object > inputs = new HashMap<>();
 			inputs.put( "resolutionLevel", level1Choice( context ) );
@@ -132,7 +133,7 @@ class OpenResolutionLevelCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarrOpenActions( path.toUri(), context ).showInImageJ();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() ).showInImageJ();
 
 			final Map< String, Object > inputs = new HashMap<>();
 			inputs.put( "resolutionLevel", level1Choice( context ) );
@@ -155,7 +156,7 @@ class OpenResolutionLevelCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarrOpenActions( path.toUri(), context ).showInBdv();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() ).showInBdv();
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			final Pyramidal bdvPyramidal = pyramidalService.getPyramidals().get( 0 );
 
@@ -181,7 +182,7 @@ class OpenResolutionLevelCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarrOpenActions( path.toUri(), context ).showInImageJ();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() ).showInImageJ();
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
@@ -212,8 +213,8 @@ class OpenResolutionLevelCommandTest
 		final Path path2d = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr" );
 		try (Context context = new Context())
 		{
-			new OmeZarrOpenActions( path5d.toUri(), context ).showInImageJ();
-			new OmeZarrOpenActions( path2d.toUri(), context ).showInBdv();
+			new OmeZarr( path5d.toUri(), context, DEFAULT_BACKEND.createBackend() ).showInImageJ();
+			new OmeZarr( path2d.toUri(), context, DEFAULT_BACKEND.createBackend() ).showInBdv();
 
 			final Map< String, Object > inputs = new HashMap<>();
 			inputs.put( "resolutionLevel", level1Choice( context ) );

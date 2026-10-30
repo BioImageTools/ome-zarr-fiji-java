@@ -28,6 +28,7 @@
  */
 package ome.zarr.fijiui.plugin.command.tools;
 
+import static ome.zarr.fijiui.open.options.OmeZarrOpeningSettings.DEFAULT_BACKEND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -52,7 +53,7 @@ import org.scijava.Context;
 import org.scijava.command.CommandService;
 import org.scijava.ui.UIService;
 
-import ome.zarr.fijiui.open.OmeZarrOpenActions;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
@@ -96,7 +97,7 @@ class OpenInBDVCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarrOpenActions( path.toUri(), context ).showInImageJ();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() ).showInImageJ();
 
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			final DatasetService datasetService = context.getService( DatasetService.class );
@@ -134,7 +135,7 @@ class OpenInBDVCommandTest
 		{
 			// Simulate the first BDV open.
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarrOpenActions( path.toUri(), context ).showInBdv();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend() ).showInBdv();
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
@@ -162,8 +163,8 @@ class OpenInBDVCommandTest
 	{
 		try (Context context = new Context())
 		{
-			new OmeZarrOpenActions( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context ).showInImageJ();
-			new OmeZarrOpenActions( ZarrTestUtils.resourcePath( LABELS ).toUri(), context ).showInImageJ();
+			new OmeZarr( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context, DEFAULT_BACKEND.createBackend() ).showInImageJ();
+			new OmeZarr( ZarrTestUtils.resourcePath( LABELS ).toUri(), context, DEFAULT_BACKEND.createBackend() ).showInImageJ();
 			flushEventQueue();
 			Pyramidal active = context.getService( PyramidalService.class ).getActivePyramidal();
 			context.getService( UIService.class ).setHeadless( true );

@@ -105,7 +105,7 @@ image: the
 decides what to do with it. Being plain text rather than a chooser, it accepts `http(s):` too, but *not* `s3:`.
 
 A second one is dropping onto the image area of a BDV window this plugin opened: `OmeZarrBdvDropListener.install`
-(called by `OmeZarrOpenActions.showInBdv` for a new window, and by `OpenInBDVCommand`) puts an AWT `DropTarget` on the
+(called for a new window by the two BDV openers and by `OpenInBDVCommand`) puts an AWT `DropTarget` on the
 viewer's image area, whose `OmeZarrBdvDropListener` adds the dropped OME-Zarr to *that* window via
 `OmeZarr.showInBdv( BdvHandle )`, ignoring the configured opener — where it was dropped already says what the user wants. It validates with `isZarr` like every other route (so no `s3:`) and
 reads with the persisted backend and preferred width, loaded at drop time. It lives in `fiji-ui` because those settings
@@ -242,8 +242,11 @@ i.e. a SciJava plugin anyway.
 - **The type is `OmeZarr`, not `OmeZarrReader` (0.9).** `opener.open( omeZarr )` reads as prose where
   `open( reader )` put a tool-noun in the object slot, but the deciding reason was a collision: once `OmeZarrOpener`
   existed, ten locals of the reader type were named `opener`, and `OmeZarrOpenActions.defaultOpener()` returned a
-  *reader* while `OpeningBehaviorSettings.defaultOpener` held the actual default opener **name**. That factory is now
-  `withDefaultBackend()`. The class stays in `ome.zarr.fiji.read`: it does read, and moving it would leave that package
+  *reader* while `OpeningBehaviorSettings.defaultOpener` held the actual default opener **name**. Since issue #162 the
+  only factory is `OmeZarrOpeningSettings.createOmeZarr`, and `OmeZarrOpenActions` has no `showInImageJ`/`showInBdv`
+  delegates and no URI constructors: a `withX` factory there returning an `OmeZarr`, next to `openWithSettings`, read
+  as a builder of the actions class, and a delegate that silently differed from `OmeZarr.showInBdv` (it installed the
+  drop target) hid that difference. Callers use `OmeZarr` directly. The class stays in `ome.zarr.fiji.read`: it does read, and moving it would leave that package
   holding nothing but `exceptions`.
 - `OmeZarrOpenerService` – `AbstractPTService<OmeZarrOpener>`: lists openers by priority, runs one by name, and resolves
   what

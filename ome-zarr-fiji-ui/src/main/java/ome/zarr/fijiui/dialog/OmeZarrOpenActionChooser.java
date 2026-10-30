@@ -182,7 +182,7 @@ public class OmeZarrOpenActionChooser
 	{
 		final JButton button = new JButton( CreateIcon.getAndResizeIcon( "help_icon.png" ) );
 		button.setToolTipText( "Help about OME-Zarr actions" );
-		button.addActionListener( e -> disposeAndRun( dialog, new OmeZarrOpenActions( omeZarr )::showHelp ) );
+		button.addActionListener( e -> disposeAndRun( dialog, OmeZarrOpenActions::showHelp ) );
 		return button;
 	}
 

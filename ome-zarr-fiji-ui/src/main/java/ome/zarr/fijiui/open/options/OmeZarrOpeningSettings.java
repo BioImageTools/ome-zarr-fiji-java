@@ -29,8 +29,11 @@
 package ome.zarr.fijiui.open.options;
 
 import java.lang.invoke.MethodHandles;
+import java.net.URI;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 
+import org.scijava.Context;
 import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fiji.open.OmeZarrOpenerService;
+import ome.zarr.fiji.read.OmeZarr;
 
 /**
  * The user's OME-Zarr opening preferences: which {@link OmeZarrOpener} to use, up
@@ -187,6 +191,26 @@ public class OmeZarrOpeningSettings
 	public void setAwsProfile( final String awsProfile )
 	{
 		this.awsProfile = awsProfile == null || awsProfile.trim().isEmpty() ? null : awsProfile.trim();
+	}
+
+	/**
+	 * Creates and returns an {@link OmeZarr} for {@code uri}, configured by these settings:
+	 * <ul>
+	 *     <li>it reads with {@link #getBackend()}, using {@link #getAwsProfile()} for {@code s3:} URIs</li>
+	 *     <li>{@link OmeZarr#showInImageJ()} opens the largest level no wider than {@link #getPreferredMaxWidth()}</li>
+	 * </ul>
+	 * {@link #getOpenerName()} is not used. Which opener gets the {@link OmeZarr} is up to the caller.
+	 *
+	 * @param uri the OME-Zarr location to read
+	 * @param context the SciJava context used for display and services
+	 * @param errorHandler receives a user-facing message when opening fails
+	 * @return an {@link OmeZarr} for {@code uri} using these settings
+	 */
+	public OmeZarr createOmeZarr( final URI uri, final Context context, final Consumer< String > errorHandler )
+	{
+		return new OmeZarr( uri, context, backend.createBackend( awsProfile ) )
+				.withPreferredMaxWidth( preferredMaxWidth )
+				.withErrorHandler( errorHandler );
 	}
 
 	/**

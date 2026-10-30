@@ -40,20 +40,15 @@ import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.function.Consumer;
 
-import bdv.util.BdvHandle;
 import ij.IJ;
-import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fiji.open.OmeZarrOpenerService;
 import ome.zarr.fijiui.open.openers.ImageJPreferredResolutionOpener;
 import ome.zarr.fijiui.dialog.OmeZarrOpenActionChooser;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
-import ome.zarr.fijiui.open.options.OmeZarrBackend;
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fijiui.util.ScriptUtils;
-import ome.zarr.imglib2.PyramidBackend;
 
 /**
  * Fiji-ui orchestration of the OME-Zarr opening pipeline: it reads the user's
@@ -90,7 +85,7 @@ public class OmeZarrOpenActions
 	{
 		final PrefService prefService = context.getService( PrefService.class );
 		final OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-		final OmeZarr omeZarr = withSettings( inputUri, context, settings, IJ::error );
+		final OmeZarr omeZarr = settings.createOmeZarr( inputUri, context, IJ::error );
 		final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 		if ( openerService == null )
 		{
@@ -118,64 +113,6 @@ public class OmeZarrOpenActions
 	}
 
 	/**
-	 * Convenience factory for a backend-agnostic {@link OmeZarr} that uses the
-	 * default backend ({@link OmeZarrOpeningSettings#DEFAULT_BACKEND})
-	 * at the highest resolution, reporting failures via {@code IJ::error}.
-	 * <p>
-	 * This lives in the fiji-ui layer because picking a concrete backend is a
-	 * fiji-ui concern: {@link OmeZarr} itself only knows {@link PyramidBackend}
-	 * and the fiji layer therefore depends on no concrete backend. It restores the
-	 * one-liner ergonomics of the former no-backend {@code OmeZarr}
-	 * constructor.
-	 *
-	 * @param inputUri the OME-Zarr location to read
-	 * @param context the SciJava context used for display and services
-	 * @return an {@link OmeZarr} for {@code inputUri} using the default backend
-	 */
-	public static OmeZarr withDefaultBackend( final URI inputUri, final Context context )
-	{
-		return new OmeZarr( inputUri, context, OmeZarrOpeningSettings.DEFAULT_BACKEND.createBackend(), null );
-	}
-
-	/**
-	 * Actions for {@code inputUri} with default opening settings, reporting
-	 * failures via {@code IJ::error}.
-	 *
-	 * @param inputUri the OME-Zarr location the actions operate on
-	 * @param context the SciJava context used for display and services
-	 */
-	public OmeZarrOpenActions( final URI inputUri, final Context context )
-	{
-		this( inputUri, context, null, IJ::error );
-	}
-
-	/**
-	 * Actions for {@code inputUri} using the given opening {@code settings}
-	 * (reader backend and preferred resolution), reporting failures via
-	 * {@code IJ::error}. Pass {@code null} settings to use the defaults.
-	 *
-	 * @param inputUri the OME-Zarr location the actions operate on
-	 * @param context the SciJava context used for display and services
-	 * @param settings the opening settings, or {@code null} for the defaults
-	 */
-	public OmeZarrOpenActions( final URI inputUri, final Context context, final OmeZarrOpeningSettings settings )
-	{
-		this( inputUri, context, settings, IJ::error );
-	}
-
-	/**
-	 * Actions for {@code inputUri} using the given opening {@code settings} and an
-	 * explicit error sink. Pass {@code null} settings to use the defaults.
-	 *
-	 * @param errorHandler receives a user-facing message when opening fails
-	 */
-	OmeZarrOpenActions( final URI inputUri, final Context context, final OmeZarrOpeningSettings settings,
-			final Consumer< String > errorHandler )
-	{
-		this( withSettings( inputUri, context, settings, errorHandler ) );
-	}
-
-	/**
 	 * Actions sharing an existing {@link OmeZarr} — the constructor a
 	 * {@link OmeZarrOpener} in this package uses, so the actions read through the
 	 * same {@link OmeZarr} the opener was handed and reuse its cached
@@ -186,26 +123,6 @@ public class OmeZarrOpenActions
 	public OmeZarrOpenActions( final OmeZarr omeZarr )
 	{
 		this.omeZarr = omeZarr;
-	}
-
-	/**
-	 * Factory for an {@link OmeZarr} that uses the backend, AWS profile and
-	 * preferred width from {@code settings}, or the defaults when no settings are
-	 * given, like {@link #withDefaultBackend}.
-	 *
-	 * @param inputUri the OME-Zarr location to read
-	 * @param context the SciJava context used for display and services
-	 * @param settings the opening settings, or {@code null} for the defaults
-	 * @param errorHandler receives a user-facing message when opening fails
-	 * @return an {@link OmeZarr} for {@code inputUri} using {@code settings}
-	 */
-	public static OmeZarr withSettings( final URI inputUri, final Context context,
-			final OmeZarrOpeningSettings settings, final Consumer< String > errorHandler )
-	{
-		final OmeZarrBackend backend = settings == null ? OmeZarrOpeningSettings.DEFAULT_BACKEND : settings.getBackend();
-		final String awsProfile = settings == null ? null : settings.getAwsProfile();
-		final Integer preferredMaxWidth = settings == null ? null : settings.getPreferredMaxWidth();
-		return new OmeZarr( inputUri, context, backend.createBackend( awsProfile ), preferredMaxWidth, errorHandler );
 	}
 
 	private String uriFormattedForN5Dialog( final URI uri )
@@ -237,62 +154,6 @@ public class OmeZarrOpenActions
 	}
 
 	/**
-	 * Opens the dataset in ImageJ at the resolution level selected by the settings.
-	 * Delegates to {@link OmeZarr#showInImageJ()}.
-	 *
-	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
-	 */
-	// UnusedReturnValue: the dataset is returned for API and script users
-	@SuppressWarnings( "UnusedReturnValue" )
-	public PyramidalDataset showInImageJ()
-	{
-		return omeZarr.showInImageJ();
-	}
-
-	/**
-	 * Opens the given resolution level of the dataset in ImageJ (0 = highest
-	 * resolution). Delegates to {@link OmeZarr#showInImageJ(int)}.
-	 *
-	 * @param resolutionLevel 0-based index into the resolution pyramid
-	 * @return the opened {@link PyramidalDataset}, or {@code null} if opening failed
-	 */
-	// UnusedReturnValue: the dataset is returned for API and script users
-	@SuppressWarnings( "UnusedReturnValue" )
-	public PyramidalDataset showInImageJ( final int resolutionLevel )
-	{
-		return omeZarr.showInImageJ( resolutionLevel );
-	}
-
-	/**
-	 * Opens the dataset in BigDataViewer. Delegates to
-	 * {@link OmeZarr#showInBdv()}.
-	 *
-	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
-	 */
-	@SuppressWarnings( "UnusedReturnValue" )
-	public BdvHandle showInBdv()
-	{
-		return showInBdv( null );
-	}
-
-	/**
-	 * Adds the dataset to the open BigDataViewer of {@code bdvHandle}, or opens it in a new one if
-	 * {@code null}. Delegates to {@link OmeZarr#showInBdv(BdvHandle)} and makes a new window
-	 * {@link OmeZarrBdvDropListener#install accept dropped OME-Zarrs}.
-	 *
-	 * @param bdvHandle the BigDataViewer to add to, or {@code null} to open a new window
-	 * @return the resulting {@link BdvHandle}, or {@code null} if opening failed
-	 */
-	@SuppressWarnings( "UnusedReturnValue" )
-	public BdvHandle showInBdv( final BdvHandle bdvHandle )
-	{
-		final BdvHandle result = omeZarr.showInBdv( bdvHandle );
-		if ( bdvHandle == null && result != null ) // NB: only install the drop target on a new window, not on an existing one
-			OmeZarrBdvDropListener.install( result, omeZarr.context() );
-		return result;
-	}
-
-	/**
 	 * Opens the Fiji script editor pre-filled with a scriptlet that opens the
 	 * dataset, so the user can adapt it for macros/scripts.
 	 */
@@ -305,7 +166,7 @@ public class OmeZarrOpenActions
 	/**
 	 * Opens the project's help page in the system web browser.
 	 */
-	public void showHelp()
+	public static void showHelp()
 	{
 		try
 		{

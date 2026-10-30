@@ -28,6 +28,7 @@
  */
 package ome.zarr.fijiui.open;
 
+import static ome.zarr.fijiui.open.options.OmeZarrOpeningSettings.DEFAULT_BACKEND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -58,6 +59,7 @@ import org.scijava.Context;
 
 import bdv.util.BdvHandle;
 import bdv.viewer.ViewerStateChange;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.ZarrTestUtils;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.plugins.ActiveViewerService;
@@ -81,7 +83,7 @@ class OmeZarrBdvDropListenerTest
 		try (Context context = new Context())
 		{
 			new BdvAddToActiveOpener()
-					.open( OmeZarrOpenActions.withDefaultBackend( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context ) );
+					.open( new OmeZarr( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context, DEFAULT_BACKEND.createBackend() ) );
 			assertInstanceOf( PyramidalBdv.class, context.getService( PyramidalService.class ).getActivePyramidal() );
 			BdvHandle bdvHandle = BdvUtils.bdvHandleOf( context.getService( ActiveViewerService.class ).getActiveViewer() );
 			assertNotNull( bdvHandle );

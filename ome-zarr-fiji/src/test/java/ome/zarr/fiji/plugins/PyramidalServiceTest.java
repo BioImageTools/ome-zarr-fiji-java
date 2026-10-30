@@ -71,7 +71,7 @@ class PyramidalServiceTest
 		try (Context context = new Context())
 		{
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
-			BdvHandle bdvHandle = new OmeZarr( path.toUri(), context, new N5PyramidBackend(), null ).showInBdv();
+			BdvHandle bdvHandle = new OmeZarr( path.toUri(), context, new N5PyramidBackend() ).showInBdv();
 			try
 			{
 				assertNotNull( pyramidalService.getActivePyramidal() );
@@ -99,7 +99,7 @@ class PyramidalServiceTest
 		try (Context context = new Context())
 		{
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
-			BdvHandle bdvHandle = new OmeZarr( path.toUri(), context, new N5PyramidBackend(), null ).showInBdv();
+			BdvHandle bdvHandle = new OmeZarr( path.toUri(), context, new N5PyramidBackend() ).showInBdv();
 			ImagePlus nonOmeZarrImagePlus = null;
 			try
 			{
@@ -144,8 +144,8 @@ class PyramidalServiceTest
 		try (Context context = new Context())
 		{
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
-			BdvHandle bdvHandle1 = new OmeZarr( path1.toUri(), context, new N5PyramidBackend(), null ).showInBdv();
-			BdvHandle bdvHandle2 = new OmeZarr( path2.toUri(), context, new N5PyramidBackend(), null ).showInBdv();
+			BdvHandle bdvHandle1 = new OmeZarr( path1.toUri(), context, new N5PyramidBackend() ).showInBdv();
+			BdvHandle bdvHandle2 = new OmeZarr( path2.toUri(), context, new N5PyramidBackend() ).showInBdv();
 			try
 			{
 				assertEquals( 2, pyramidalService.getPyramidals().size() );

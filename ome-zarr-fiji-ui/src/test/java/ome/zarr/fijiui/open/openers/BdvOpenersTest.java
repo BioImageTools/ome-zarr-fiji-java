@@ -28,6 +28,7 @@
  */
 package ome.zarr.fijiui.open.openers;
 
+import static ome.zarr.fijiui.open.options.OmeZarrOpeningSettings.DEFAULT_BACKEND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -42,12 +43,12 @@ import org.junit.jupiter.api.Test;
 import org.scijava.Context;
 
 import bdv.util.BdvHandle;
+import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.ZarrTestUtils;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.util.BdvUtils;
-import ome.zarr.fijiui.open.OmeZarrOpenActions;
 
 /**
  * "BigDataViewer (add to active window)" against "BigDataViewer (new window)", each opening the
@@ -93,7 +94,7 @@ class BdvOpenersTest
 		List< BdvHandle > windows = new ArrayList<>();
 		for ( String image : Arrays.asList( SPOTS, LABELS ) )
 		{
-			opener.open( OmeZarrOpenActions.withDefaultBackend( ZarrTestUtils.resourcePath( image ).toUri(), context ) );
+			opener.open( new OmeZarr( ZarrTestUtils.resourcePath( image ).toUri(), context, DEFAULT_BACKEND.createBackend() ) );
 			windows.add( BdvUtils.bdvHandleOf( activeViewerService.getActiveViewer() ) );
 		}
 		assertEquals( 2, context.getService( PyramidalService.class ).getPyramidals().size() );

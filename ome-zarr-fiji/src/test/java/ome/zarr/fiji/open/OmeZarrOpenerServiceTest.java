@@ -96,7 +96,7 @@ class OmeZarrOpenerServiceTest
 
 	private static OmeZarr omeZarrWithoutBackend( final Context context )
 	{
-		return new OmeZarr( URI_UNDER_TEST, context, null, null, message -> {} );
+		return new OmeZarr( URI_UNDER_TEST, context, null ).withErrorHandler( message -> {} );
 	}
 
 	@Test
