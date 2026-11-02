@@ -28,21 +28,30 @@
  */
 package ome.zarr.imglib2.util;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -56,6 +65,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.sun.net.httpserver.HttpServer;
 
 import ome.zarr.ZarrTestUtils;
+import ome.zarr.imglib2.exceptions.NotZarrException;
+import ome.zarr.imglib2.exceptions.ZarrAccessException;
 
 class ZarrUtilsTest
 {
@@ -188,6 +199,8 @@ class ZarrUtilsTest
 
 	private final Set< String > htmlPaths = Collections.synchronizedSet( new HashSet<>() );
 
+	private final Map< String, Integer > statusByPath = new ConcurrentHashMap<>();
+
 	static Stream< String > omeZarrPaths()
 	{
 		return Stream.of(
@@ -203,10 +216,11 @@ class ZarrUtilsTest
 	{
 		existingPaths.clear();
 		htmlPaths.clear();
+		statusByPath.clear();
 		server = HttpServer.create( new InetSocketAddress( "127.0.0.1", 0 ), 0 );
 		server.createContext( "/", exchange -> {
 			final String path = exchange.getRequestURI().getPath();
-			final int code = existingPaths.contains( path ) ? 200 : 404;
+			final int code = statusByPath.getOrDefault( path, existingPaths.contains( path ) ? 200 : 404 );
 			if ( htmlPaths.contains( path ) )
 				exchange.getResponseHeaders().set( "Content-Type", "text/html; charset=utf-8" );
 			exchange.sendResponseHeaders( code, -1 );
@@ -270,6 +284,134 @@ class ZarrUtilsTest
 		exists( "/dataset/zarr.json" );
 		final URI withSlash = URI.create( base() + "/" );
 		assertTrue( ZarrUtils.isZarr( withSlash ) );
+	}
+
+	@ParameterizedTest
+	@CsvSource( { "401", "403", "500" } )
+	void refusedHttpAccessIsAnAccessProblem( final int status )
+	{
+		statusByPath.put( "/dataset/zarr.json", status );
+		final URI uri = base();
+		final ZarrAccessException e = assertThrows( ZarrAccessException.class, () -> ZarrUtils.checkZarr( uri ) );
+		assertEquals( status, e.getStatusCode() );
+		assertEquals( uri, e.getUri() );
+		assertTrue( e.getMessage().contains( "HTTP " + status ), e.getMessage() );
+		// names the dataset URL, not the probed metadata file
+		assertTrue( e.getMessage().contains( uri + ":" ), e.getMessage() );
+		assertFalse( e.getMessage().contains( "zarr.json" ), e.getMessage() );
+		assertFalse( ZarrUtils.isZarr( uri ) );
+	}
+
+	/** S3-style stores refuse a missing zarr.json, which must not hide a Zarr v2 dataset. */
+	@Test
+	void refusedZarrJsonDoesNotHideZarrV2Metadata()
+	{
+		statusByPath.put( "/dataset/zarr.json", 403 );
+		exists( "/dataset/.zgroup" );
+		assertDoesNotThrow( () -> ZarrUtils.checkZarr( base() ) );
+	}
+
+	@Test
+	void missingHttpLocationIsNotZarr()
+	{
+		final URI uri = base();
+		final NotZarrException e = assertThrows( NotZarrException.class, () -> ZarrUtils.checkZarr( uri ) );
+		assertEquals( uri, e.getUri() );
+	}
+
+	@Test
+	void unreachableServerIsAnAccessProblem() throws IOException
+	{
+		final int closedPort;
+		try (ServerSocket socket = new ServerSocket( 0 ))
+		{
+			closedPort = socket.getLocalPort();
+		}
+		final URI uri = URI.create( "http://127.0.0.1:" + closedPort + "/dataset" );
+		final ZarrAccessException e = assertThrows( ZarrAccessException.class, () -> ZarrUtils.checkZarr( uri ) );
+		assertEquals( -1, e.getStatusCode() );
+		assertTrue( e.getMessage().contains( "could not be reached" ), e.getMessage() );
+	}
+
+	@Test
+	void unreadableLocalFolderIsAnAccessProblem( @TempDir final Path tempDir ) throws IOException
+	{
+		final Path folder = Files.createDirectory( tempDir.resolve( "img.ome.zarr" ) );
+		Files.createFile( folder.resolve( "zarr.json" ) );
+		assertDoesNotThrow( () -> ZarrUtils.checkZarr( folder.toUri() ) );
+		withPermissions( folder, "---------", () -> {
+			final URI uri = folder.toUri();
+			final ZarrAccessException e = assertThrows( ZarrAccessException.class, () -> ZarrUtils.checkZarr( uri ) );
+			assertTrue( e.getMessage().contains( "permission denied" ), e.getMessage() );
+		} );
+	}
+
+	@Test
+	void unreadableLocalOzxArchiveIsAnAccessProblem( @TempDir final Path tempDir ) throws IOException
+	{
+		final Path archive = Files.createFile( tempDir.resolve( "img.ozx" ) );
+		assertDoesNotThrow( () -> ZarrUtils.checkZarr( archive.toUri() ) );
+		withPermissions( archive, "---------", () -> {
+			final URI uri = archive.toUri();
+			final ZarrAccessException e = assertThrows( ZarrAccessException.class, () -> ZarrUtils.checkZarr( uri ) );
+			assertTrue( e.getMessage().contains( "permission denied" ), e.getMessage() );
+		} );
+	}
+
+	/** Looking up known file names needs search (execute) permission only, not listing (read). */
+	@Test
+	void searchableButUnlistableLocalFolderIsZarr( @TempDir final Path tempDir ) throws IOException
+	{
+		final Path folder = Files.createDirectory( tempDir.resolve( "img.ome.zarr" ) );
+		Files.createFile( folder.resolve( "zarr.json" ) );
+		withPermissions( folder, "--x------", () -> assertDoesNotThrow( () -> ZarrUtils.checkZarr( folder.toUri() ) ) );
+	}
+
+	@Test
+	void missingLocalOzxArchiveIsShownAsPath( @TempDir final Path tempDir )
+	{
+		final Path archive = tempDir.resolve( "img.ozx" );
+		final URI uri = archive.toUri();
+		final NotZarrException e = assertThrows( NotZarrException.class, () -> ZarrUtils.checkZarr( uri ) );
+		assertTrue( e.getMessage().endsWith( archive.toString() ), e.getMessage() );
+		assertFalse( e.getMessage().contains( "file:" ), e.getMessage() );
+	}
+
+	@Test
+	void missingLocalFolderIsNotZarr( @TempDir final Path tempDir )
+	{
+		final URI uri = tempDir.resolve( "missing.ome.zarr" ).toUri();
+		assertThrows( NotZarrException.class, () -> ZarrUtils.checkZarr( uri ) );
+	}
+
+	@Test
+	void unprobedSchemeIsAnAccessProblem()
+	{
+		final URI uri = URI.create( "s3://bucket/img.ome.zarr" );
+		final ZarrAccessException e = assertThrows( ZarrAccessException.class, () -> ZarrUtils.checkZarr( uri ) );
+		assertTrue( e.getMessage().contains( "'s3'" ), e.getMessage() );
+	}
+
+	/**
+	 * Runs {@code check} with the POSIX {@code permissions} (e.g. {@code "--x------"})
+	 * on {@code path}, restoring the original ones afterwards so that
+	 * {@code @TempDir} can clean up. Skipped where permissions cannot take effect:
+	 * on a non-POSIX file system, or when running as root, who may read anything.
+	 */
+	private static void withPermissions( final Path path, final String permissions, final Runnable check ) throws IOException
+	{
+		assumeTrue( path.getFileSystem().supportedFileAttributeViews().contains( "posix" ) );
+		final Set< PosixFilePermission > original = Files.getPosixFilePermissions( path );
+		Files.setPosixFilePermissions( path, PosixFilePermissions.fromString( permissions ) );
+		try
+		{
+			assumeFalse( Files.isReadable( path ), "permissions are not enforced, e.g. running as root" );
+			check.run();
+		}
+		finally
+		{
+			Files.setPosixFilePermissions( path, original );
+		}
 	}
 
 	@ParameterizedTest
