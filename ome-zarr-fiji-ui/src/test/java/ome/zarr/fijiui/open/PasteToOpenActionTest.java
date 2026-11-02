@@ -62,7 +62,7 @@ class PasteToOpenActionTest
 			boolean result = PasteToOpenAction.pasteFromClipboard( context, errorHandler );
 			assertFalse( result );
 			assertEquals( 1, errors.size() );
-			assertTrue( errors.get( 0 ).contains( "OME-Zarr" ) );
+			assertTrue( errors.get( 0 ).contains( "No Zarr metadata" ) );
 		}
 	}
 }

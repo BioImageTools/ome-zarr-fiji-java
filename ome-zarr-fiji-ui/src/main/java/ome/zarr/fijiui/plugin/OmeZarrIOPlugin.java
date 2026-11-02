@@ -31,7 +31,9 @@ package ome.zarr.fijiui.plugin;
 import org.scijava.io.AbstractIOPlugin;
 import org.scijava.io.IOPlugin;
 import org.scijava.io.location.Location;
+import org.scijava.log.LogService;
 import org.scijava.plugin.Attr;
+import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,8 @@ import java.net.URI;
 import java.util.ArrayList;
 
 import ome.zarr.fijiui.open.OmeZarrOpenActions;
+import ome.zarr.imglib2.exceptions.NotZarrException;
+import ome.zarr.imglib2.exceptions.ZarrAccessException;
 import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
@@ -63,7 +67,11 @@ import ome.zarr.imglib2.util.ZarrUtils;
  * otherwise (e.g., an in-memory {@code BytesLocation}), which we decline.</p>
  * <p>
  * NB: for remote locations {@link #supportsOpen} costs a few HTTP HEAD requests, see
- * {@link ZarrUtils#isZarr(URI)}.
+ * {@link ZarrUtils#checkZarr(URI)}.
+ * </p>
+ * <p>
+ * A location that could not be looked into gets a {@link LogService} warning, so
+ * the user learns why.
  * </p>
  * <p>
  * {@code s3:} URIs are out of reach here: {@code fiji-links} cannot resolve an
@@ -80,12 +88,30 @@ public class OmeZarrIOPlugin extends AbstractIOPlugin< Object >
 	// the "innocent" product of a (hypothetical) file reading, which Fiji will not display
 	private static final Object FAKE_INPUT = new ArrayList<>( 0 );
 
+	@Parameter
+	private LogService log;
+
 	@Override
 	public boolean supportsOpen( final Location source )
 	{
 		final URI uri = source.getURI();
 		logger.debug( "OME-Zarr IO plugin: supportsOpen check, location type={}, uri={}", source.getClass().getSimpleName(), uri );
-		return ZarrUtils.isZarr( uri );
+		if ( uri == null )
+			return false;
+		try
+		{
+			ZarrUtils.checkZarr( uri );
+			return true;
+		}
+		catch ( NotZarrException ignored )
+		{
+			// Not an OME-Zarr, so we don't claim it. No log message, because other IOPlugins may claim it.
+		}
+		catch ( ZarrAccessException e )
+		{
+			log.warn( e.getMessage() );
+		}
+		return false;
 	}
 
 	@Override

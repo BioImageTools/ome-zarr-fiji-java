@@ -34,6 +34,8 @@ import java.util.function.Consumer;
 import org.scijava.Context;
 
 import ome.zarr.fijiui.util.ClipboardUtils;
+import ome.zarr.imglib2.exceptions.NotZarrException;
+import ome.zarr.imglib2.exceptions.ZarrAccessException;
 import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
@@ -74,11 +76,18 @@ public class PasteToOpenAction
 		// for detection.
 		// It is skipped because the actual open method creates the client it needs anyway
 		// and reports and error if the location turns out not to be OME-Zarr.
-		if ( !"s3".equalsIgnoreCase( uri.getScheme() ) && !ZarrUtils.isZarr( uri ) )
+		if ( !"s3".equalsIgnoreCase( uri.getScheme() ) )
 		{
-			if ( errorHandler != null )
-				errorHandler.accept( "The pasted location does not appear to be an OME-Zarr dataset:\n" + uri + "." );
-			return false;
+			try
+			{
+				ZarrUtils.checkZarr( uri );
+			}
+			catch ( ZarrAccessException | NotZarrException e )
+			{
+				if ( errorHandler != null )
+					errorHandler.accept( e.getMessage() );
+				return false;
+			}
 		}
 		OmeZarrOpenActions.openWithSettings( uri, context );
 		return true;

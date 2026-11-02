@@ -44,6 +44,9 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ome.zarr.imglib2.exceptions.NotZarrException;
+import ome.zarr.imglib2.exceptions.ZarrAccessException;
+
 /**
  * Utility methods for Zarr datasets.
  */
@@ -64,6 +67,9 @@ public class ZarrUtils
 
 	/** Extension of a zipped OME-Zarr archive: one ZIP file holding the whole dataset. */
 	public static final String OZX_EXTENSION = ".ozx";
+
+	private static final String NO_METADATA_FOUND_AT =
+			"No Zarr metadata (zarr.json, .zgroup, .zarray or .zattrs) found at: ";
 
 	/**
 	 * Prevents instantiation. {@code protected} only so that the deprecated
@@ -89,9 +95,12 @@ public class ZarrUtils
 	 * @param folder the path to the directory to check
 	 * @return {@code true} if the folder contains Zarr metadata files indicating
 	 *         a Zarr v2 or v3 dataset, {@code false} otherwise
+	 * @throws ZarrAccessException if the folder may not be searched
 	 */
 	private static boolean isZarrFolder( final Path folder )
 	{
+		if ( Files.isDirectory( folder ) && !Files.isExecutable( folder ) )
+			throw new ZarrAccessException( folder.toUri(), -1, "Could not access " + folder + ": permission denied.", null );
 		for ( final String name : METADATA_FILES )
 			if ( Files.exists( folder.resolve( name ) ) )
 				return true;
@@ -99,7 +108,27 @@ public class ZarrUtils
 	}
 
 	/**
-	 * Determines whether the URI points at the root of a Zarr dataset.
+	 * Determines whether the URI points at the root of a Zarr dataset, i.e.,
+	 * whether {@link #checkZarr(URI)} succeeds. Use that to learn why not.
+	 *
+	 * @param uri location to probe; may be {@code null}
+	 * @return {@code true} if the URI points at the root of a Zarr dataset
+	 */
+	public static boolean isZarr( final URI uri )
+	{
+		try
+		{
+			checkZarr( uri );
+			return true;
+		}
+		catch ( ZarrAccessException | NotZarrException e )
+		{
+			return false;
+		}
+	}
+
+	/**
+	 * Checks that the URI points at the root of a Zarr dataset.
 	 * <p>
 	 * Supported schemes:
 	 * <ul>
@@ -111,7 +140,7 @@ public class ZarrUtils
 	 * A zipped archive ({@link #OZX_EXTENSION}) is judged by the archive file
 	 * alone – present as a regular file, or reachable over HTTP – since looking
 	 * inside it would mean reading the whole ZIP index.
-	 * Other schemes (e.g. {@code s3:}) always return {@code false}.<br>
+	 * Other schemes (e.g. {@code s3:}) always throw {@link ZarrAccessException}.<br>
 	 * They are not probed because doing so cheaply is not possible: it would require
 	 * creating an (authenticated), scheme-specific client (such as an S3 client)
 	 * purely to look for metadata files, only to discard it and
@@ -119,44 +148,96 @@ public class ZarrUtils
 	 * Callers that accept such schemes should therefore bypass this method and
 	 * attempt to read the dataset directly, letting the backend
 	 * report a clear error if the location turns out not to be OME-Zarr.
+	 * Both exceptions carry a user-facing message that names the location.
 	 *
 	 * @param uri location to probe; may be {@code null}
-	 * @return {@code true} if the URI points at the root of a Zarr dataset;
-	 *         {@code false} for an unsupported scheme, a {@code null} URI, or any
-	 *         error during probing
+	 * @throws NotZarrException if the location could be looked into, but holds no
+	 *         Zarr metadata
+	 * @throws ZarrAccessException if the location could not be looked into, so
+	 *         whether it is Zarr is unknown
 	 */
-	public static boolean isZarr( final URI uri )
+	public static void checkZarr( final URI uri )
 	{
 		if ( uri == null )
-			return false;
+			throw new NotZarrException( null, "No location given." );
 		if ( isOzxArchive( uri ) )
-			return isOzxArchiveAccessible( uri );
+		{
+			if ( !isOzxArchiveAccessible( uri ) )
+				throw new NotZarrException( uri, "No archive file found at: " + displayLocation( uri ) );
+			return;
+		}
 		final String scheme = uri.getScheme();
 		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
 		{
+			final Path folder;
 			try
 			{
-				return isZarrFolder( Paths.get( uri ) );
+				folder = Paths.get( uri );
 			}
 			catch ( RuntimeException e )
 			{
-				return false;
+				throw new ZarrAccessException( uri, -1, "Could not access " + uri + ": not a valid local path.", e );
 			}
+			if ( !isZarrFolder( folder ) )
+				throw new NotZarrException( uri, NO_METADATA_FOUND_AT + folder );
+			return;
 		}
 		if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
-			return isZarrUrl( uri );
-		return false;
+		{
+			if ( !isZarrUrl( uri ) )
+				throw new NotZarrException( uri, NO_METADATA_FOUND_AT + uri );
+			return;
+		}
+		throw new ZarrAccessException( uri, -1,
+				"Could not access " + uri + ": '" + scheme + "' locations cannot be checked for Zarr metadata.", null );
 	}
 
+	/**
+	 * Tries the metadata files in turn and returns {@code true} as soon as one is
+	 * found. A refused file (e.g. HTTP 403) does not stop the search, because
+	 * S3-style stores answer 403 instead of 404 for a missing key: a Zarr v2
+	 * dataset there refuses {@code zarr.json}, but serves {@code .zgroup}.
+	 * <p>
+	 * If no file is found and at least one was refused, the refusal is thrown
+	 * instead of returning {@code false}: whether the location is Zarr is then
+	 * unknown.
+	 */
 	private static boolean isZarrUrl( final URI baseUri )
 	{
 		final URI base = ensureTrailingSlash( baseUri );
+		ZarrAccessException refusal = null;
 		for ( final String name : METADATA_FILES )
 		{
-			if ( isHttpAccessible( base.resolve( name ) ) )
-				return true;
+			try
+			{
+				if ( isHttpAccessible( base.resolve( name ), baseUri ) )
+					return true;
+			}
+			catch ( ZarrAccessException e )
+			{
+				refusal = e;
+			}
 		}
+		if ( refusal != null )
+			throw refusal;
 		return false;
+	}
+
+	/** {@code uri} as shown to the user: a local path for {@code file:}, else the URI. */
+	private static String displayLocation( final URI uri )
+	{
+		if ( "file".equalsIgnoreCase( uri.getScheme() ) )
+		{
+			try
+			{
+				return Paths.get( uri ).toString();
+			}
+			catch ( RuntimeException e )
+			{
+				// not a valid local path: show the URI as it is
+			}
+		}
+		return uri.toString();
 	}
 
 	private static boolean isOzxArchiveAccessible( final URI archiveUri )
@@ -164,17 +245,21 @@ public class ZarrUtils
 		final String scheme = archiveUri.getScheme();
 		if ( scheme == null || "file".equalsIgnoreCase( scheme ) )
 		{
+			final Path archive;
 			try
 			{
-				return Files.isRegularFile( Paths.get( archiveUri ) );
+				archive = Paths.get( archiveUri );
 			}
 			catch ( RuntimeException e )
 			{
 				return false;
 			}
+			if ( Files.isRegularFile( archive ) && !Files.isReadable( archive ) )
+				throw new ZarrAccessException( archiveUri, -1, "Could not access " + archive + ": permission denied.", null );
+			return Files.isRegularFile( archive );
 		}
 		if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
-			return isHttpAccessible( archiveUri );
+			return isHttpAccessible( archiveUri, archiveUri );
 		return false;
 	}
 
@@ -413,7 +498,7 @@ public class ZarrUtils
 				.collect( Collectors.toList() );
 	}
 
-	private static boolean isHttpAccessible( final URI uri )
+	private static boolean isHttpAccessible( final URI uri, final URI location )
 	{
 		HttpURLConnection conn = null;
 		try
@@ -424,20 +509,33 @@ public class ZarrUtils
 			conn.setReadTimeout( READ_TIMEOUT_MILLIS );
 			conn.setInstanceFollowRedirects( true );
 			final int code = conn.getResponseCode();
-			if ( code < 200 || code >= 300 )
+			if ( code == HttpURLConnection.HTTP_NOT_FOUND )
 				return false;
+			if ( code < 200 || code >= 300 )
+				throw new ZarrAccessException( location, code,
+						"Could not access " + location + ": " + httpRefusal( code, conn.getResponseMessage() ), null );
 			final String contentType = conn.getHeaderField( "Content-Type" );
 			return contentType == null || !contentType.toLowerCase().startsWith( "text/html" );
 		}
 		catch ( IOException e )
 		{
 			logger.debug( "HEAD request failed for {}: {}", uri, e.getMessage() );
-			return false;
+			throw new ZarrAccessException( location, -1,
+					"Could not access " + location + ": the server could not be reached (" + e + ").", e );
 		}
 		finally
 		{
 			if ( conn != null )
 				conn.disconnect();
 		}
+	}
+
+	private static String httpRefusal( final int code, final String responseMessage )
+	{
+		if ( code == HttpURLConnection.HTTP_UNAUTHORIZED )
+			return "the server requires authentication (HTTP 401).";
+		if ( code == HttpURLConnection.HTTP_FORBIDDEN )
+			return "the server denied access (HTTP 403 Forbidden).";
+		return "the server answered HTTP " + code + ( responseMessage == null ? "" : " " + responseMessage ) + ".";
 	}
 }

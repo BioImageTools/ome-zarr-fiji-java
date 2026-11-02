@@ -111,7 +111,7 @@ class OpenOmeZarrArchiveCommandTest
 		final File folder = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing" ).toFile();
 		assertFalse( OpenOmeZarrArchiveCommand.open( folder, null, errorHandler ) );
 		assertEquals( 1, errors.size() );
-		assertTrue( errors.get( 0 ).contains( "archive" ), errors.get( 0 ) );
+		assertTrue( errors.get( 0 ).contains( folder.toString() ), errors.get( 0 ) );
 	}
 
 	/** A missing error handler must not turn a rejection into an exception. */
