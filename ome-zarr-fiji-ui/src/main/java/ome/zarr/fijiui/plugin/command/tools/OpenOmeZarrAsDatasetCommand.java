@@ -43,6 +43,8 @@ import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.util.ClipboardUtils;
+import ome.zarr.imglib2.exceptions.NotZarrException;
+import ome.zarr.imglib2.exceptions.ZarrAccessException;
 import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
@@ -94,9 +96,13 @@ public class OpenOmeZarrAsDatasetCommand extends ContextCommand
 		final URI uri = ClipboardUtils.stringToUri( location, errorHandler );
 		if ( uri == null )
 			return null;
-		if ( !ZarrUtils.isZarr( uri ) )
+		try
 		{
-			errorHandler.accept( "The given location does not appear to be an OME-Zarr dataset:\n" + uri + "." );
+			ZarrUtils.checkZarr( uri );
+		}
+		catch ( ZarrAccessException | NotZarrException e )
+		{
+			errorHandler.accept( e.getMessage() );
 			return null;
 		}
 		final OmeZarrOpeningSettings settings =

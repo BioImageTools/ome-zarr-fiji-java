@@ -34,6 +34,8 @@ import java.util.function.Consumer;
 import org.scijava.Context;
 
 import ome.zarr.fijiui.open.OmeZarrOpenActions;
+import ome.zarr.imglib2.exceptions.NotZarrException;
+import ome.zarr.imglib2.exceptions.ZarrAccessException;
 import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
@@ -91,8 +93,14 @@ final class FileImportHelper
 	{
 		if ( location == null )
 			return "No " + noun + " selected.";
-		if ( !ZarrUtils.isZarr( location.toURI() ) )
-			return "The selected " + noun + " does not appear to be an OME-Zarr dataset:\n" + location + ".";
-		return null;
+		try
+		{
+			ZarrUtils.checkZarr( location.toURI() );
+			return null;
+		}
+		catch ( ZarrAccessException | NotZarrException e )
+		{
+			return e.getMessage();
+		}
 	}
 }

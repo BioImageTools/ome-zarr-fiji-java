@@ -53,6 +53,8 @@ import ij.IJ;
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.util.ClipboardUtils;
+import ome.zarr.imglib2.exceptions.NotZarrException;
+import ome.zarr.imglib2.exceptions.ZarrAccessException;
 import ome.zarr.imglib2.util.ZarrUtils;
 
 /**
@@ -124,9 +126,13 @@ public class OmeZarrBdvDropListener extends DropTargetAdapter
 		final URI uri = ClipboardUtils.stringToUri( location, IJ::error );
 		if ( uri == null )
 			return;
-		if ( !ZarrUtils.isZarr( uri ) )
+		try
 		{
-			IJ.error( "The dropped location does not appear to be an OME-Zarr dataset:\n" + uri + "." );
+			ZarrUtils.checkZarr( uri );
+		}
+		catch ( ZarrAccessException | NotZarrException e )
+		{
+			IJ.error( e.getMessage() );
 			return;
 		}
 		settings.createOmeZarr( uri, context, IJ::error ).showInBdv( bdvHandle );

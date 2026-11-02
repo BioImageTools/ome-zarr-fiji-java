@@ -91,7 +91,7 @@ class OpenOmeZarrCommandTest
 		final File folder = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing" ).toFile();
 		final String error = OpenOmeZarrCommand.validate( folder );
 		assertNotNull( error );
-		assertTrue( error.contains( "OME-Zarr" ), error );
+		assertTrue( error.contains( "No Zarr metadata" ), error );
 		assertTrue( error.contains( folder.toString() ), error );
 	}
 
@@ -117,7 +117,7 @@ class OpenOmeZarrCommandTest
 		final File folder = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing" ).toFile();
 		assertFalse( OpenOmeZarrCommand.open( folder, null, errorHandler ) );
 		assertEquals( 1, errors.size() );
-		assertTrue( errors.get( 0 ).contains( "OME-Zarr" ) );
+		assertTrue( errors.get( 0 ).contains( "No Zarr metadata" ) );
 	}
 
 	/** A missing error handler must not turn a rejection into an exception. */
