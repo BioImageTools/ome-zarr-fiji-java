@@ -35,7 +35,7 @@ public class PyramidalUtils
 	{
 		// NB: asImg() checks validity of the requested resolutionLevel
 		final ImgPlus< T > imgPlus = ImgPlus.wrap( pyramidContents.asImg( resolutionLevel ) );
-		imgPlus.setName( pyramidContents.name + " (R=" + resolutionLevel + ")" );
+		imgPlus.setName( pyramidContents.name() + " (R=" + resolutionLevel + ")" );
 		//TODO set axes...
 		return imgPlus;
 	}
@@ -59,18 +59,18 @@ public class PyramidalUtils
 		final ImgPlus< T > imgPlus =
 				ImgPlus.wrapRAI( PyramidContentsUtils.xyzReducedView( pyramidContents, resolutionLevel, channel, timePoint ) );
 
-		final AxisCalibration X = pyramidContents.axesPerLevel[ 0 ][ pyramidContents.axisIndex( AxisCalibration.X ) ];
-		final AxisCalibration Y = pyramidContents.axesPerLevel[ 0 ][ pyramidContents.axisIndex( AxisCalibration.Y ) ];
-		final AxisCalibration Z =
-				imgPlus.numDimensions() == 3 ? pyramidContents.axesPerLevel[ 0 ][ pyramidContents.axisIndex( AxisCalibration.Z ) ] : null;
+		final AxisCalibration axisCalibrationX = pyramidContents.axes( 0 ).get( pyramidContents.axisIndex( AxisCalibration.X ) );
+		final AxisCalibration axisCalibrationY = pyramidContents.axes( 0 ).get( pyramidContents.axisIndex( AxisCalibration.Y ) );
+		final AxisCalibration axisCalibrationZ =
+				imgPlus.numDimensions() == 3 ? pyramidContents.axes( 0 ).get( pyramidContents.axisIndex( AxisCalibration.Z ) ) : null;
 		final CalibratedAxis[] axes = new CalibratedAxis[ imgPlus.numDimensions() ];
-		axes[ 0 ] = new DefaultLinearAxis( Axes.X, X.unit, X.scale );
-		axes[ 1 ] = new DefaultLinearAxis( Axes.Y, Y.unit, Y.scale );
-		if ( Z != null ) //iff imgPlus.numDimensions() == 3
-			axes[ 2 ] = new DefaultLinearAxis( Axes.Z, Z.unit, Z.scale );
+		axes[ 0 ] = new DefaultLinearAxis( Axes.X, axisCalibrationX.unit, axisCalibrationX.scale );
+		axes[ 1 ] = new DefaultLinearAxis( Axes.Y, axisCalibrationY.unit, axisCalibrationY.scale );
+		if ( axisCalibrationZ != null ) //iff imgPlus.numDimensions() == 3
+			axes[ 2 ] = new DefaultLinearAxis( Axes.Z, axisCalibrationZ.unit, axisCalibrationZ.scale );
 
 		imgPlus.axes( axes );
-		imgPlus.setName( pyramidContents.name + " (R=" + resolutionLevel + ",C=" + channel + ",T=" + timePoint + ")" );
+		imgPlus.setName( pyramidContents.name() + " (R=" + resolutionLevel + ",C=" + channel + ",T=" + timePoint + ")" );
 		return imgPlus;
 	}
 
