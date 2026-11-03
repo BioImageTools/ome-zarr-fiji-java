@@ -365,6 +365,15 @@ Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`i
 are selected at runtime (`OmeZarrBackend`), so `fiji` needs at least one backend on the classpath at runtime even
 though it doesn't depend on one.
 
+**The two Fiji-only modules declare every artifact Fiji ships as `provided`** (BigDataViewer, ImageJ, SciJava, N5
+viewer, script editor, slf4j, …), so the poms say what Fiji supplies. Our own `ome-zarr-*` modules stay `compile`, since
+Fiji does not ship them, and so does every dependency of the three library modules, which also run outside Fiji.
+Compiling MoBIE (`mobie-io`, `mobie-viewer-fiji`) and BigVolumeBrowser against the change showed that none of them
+relied on getting these transitively from us. One side effect: `udunits` used to resolve to Fiji's 4.3.18 via
+`ome-zarr-fiji → imagej-common`. With that path `provided`, builds that also have `ome-zarr-zarrjava` resolve 5.9.1 via
+`zarr-java → cdm-core`, our `fiji-ui` tests included. In Fiji, its own 4.3.18 runs either way. Pinning 4.3.18 in the root
+pom was rejected, because it would also change what `ome-zarr-zarrjava`, a library used outside Fiji, is tested with.
+
 A sixth, non-published module **`ome-zarr-coverage-report`** only runs `jacoco:report-aggregate` to produce a
 cross-module coverage report for SonarCloud; it joins the reactor solely under the `coverage` profile.
 
