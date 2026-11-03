@@ -297,7 +297,7 @@ class ZarrUtilsTest
 		assertEquals( uri, e.getUri() );
 		assertTrue( e.getMessage().contains( "HTTP " + status ), e.getMessage() );
 		// names the dataset URL, not the probed metadata file
-		assertTrue( e.getMessage().contains( uri + ":" ), e.getMessage() );
+		assertTrue( e.getMessage().startsWith( "Could not access " + uri + ":\n" ), e.getMessage() );
 		assertFalse( e.getMessage().contains( "zarr.json" ), e.getMessage() );
 		assertFalse( ZarrUtils.isZarr( uri ) );
 	}
@@ -342,7 +342,7 @@ class ZarrUtilsTest
 		withPermissions( folder, "---------", () -> {
 			final URI uri = folder.toUri();
 			final ZarrAccessException e = assertThrows( ZarrAccessException.class, () -> ZarrUtils.checkZarr( uri ) );
-			assertTrue( e.getMessage().contains( "permission denied" ), e.getMessage() );
+			assertTrue( e.getMessage().contains( "Permission denied" ), e.getMessage() );
 		} );
 	}
 
@@ -354,7 +354,7 @@ class ZarrUtilsTest
 		withPermissions( archive, "---------", () -> {
 			final URI uri = archive.toUri();
 			final ZarrAccessException e = assertThrows( ZarrAccessException.class, () -> ZarrUtils.checkZarr( uri ) );
-			assertTrue( e.getMessage().contains( "permission denied" ), e.getMessage() );
+			assertTrue( e.getMessage().contains( "Permission denied" ), e.getMessage() );
 		} );
 	}
 

@@ -100,7 +100,7 @@ public class ZarrUtils
 	private static boolean isZarrFolder( final Path folder )
 	{
 		if ( Files.isDirectory( folder ) && !Files.isExecutable( folder ) )
-			throw new ZarrAccessException( folder.toUri(), -1, "Could not access " + folder + ": permission denied.", null );
+			throw new ZarrAccessException( folder.toUri(), -1, couldNotAccess( folder, "Permission denied." ), null );
 		for ( final String name : METADATA_FILES )
 			if ( Files.exists( folder.resolve( name ) ) )
 				return true;
@@ -176,7 +176,7 @@ public class ZarrUtils
 			}
 			catch ( RuntimeException e )
 			{
-				throw new ZarrAccessException( uri, -1, "Could not access " + uri + ": not a valid local path.", e );
+				throw new ZarrAccessException( uri, -1, couldNotAccess( uri, "Not a valid local path." ), e );
 			}
 			if ( !isZarrFolder( folder ) )
 				throw new NotZarrException( uri, NO_METADATA_FOUND_AT + folder );
@@ -189,7 +189,7 @@ public class ZarrUtils
 			return;
 		}
 		throw new ZarrAccessException( uri, -1,
-				"Could not access " + uri + ": '" + scheme + "' locations cannot be checked for Zarr metadata.", null );
+				couldNotAccess( uri, "'" + scheme + "' locations cannot be checked for Zarr metadata." ), null );
 	}
 
 	/**
@@ -255,7 +255,7 @@ public class ZarrUtils
 				return false;
 			}
 			if ( Files.isRegularFile( archive ) && !Files.isReadable( archive ) )
-				throw new ZarrAccessException( archiveUri, -1, "Could not access " + archive + ": permission denied.", null );
+				throw new ZarrAccessException( archiveUri, -1, couldNotAccess( archive, "Permission denied." ), null );
 			return Files.isRegularFile( archive );
 		}
 		if ( "http".equalsIgnoreCase( scheme ) || "https".equalsIgnoreCase( scheme ) )
@@ -513,7 +513,7 @@ public class ZarrUtils
 				return false;
 			if ( code < 200 || code >= 300 )
 				throw new ZarrAccessException( location, code,
-						"Could not access " + location + ": " + httpRefusal( code, conn.getResponseMessage() ), null );
+						couldNotAccess( location, httpRefusal( code, conn.getResponseMessage() ) ), null );
 			final String contentType = conn.getHeaderField( "Content-Type" );
 			return contentType == null || !contentType.toLowerCase().startsWith( "text/html" );
 		}
@@ -521,7 +521,7 @@ public class ZarrUtils
 		{
 			logger.debug( "HEAD request failed for {}: {}", uri, e.getMessage() );
 			throw new ZarrAccessException( location, -1,
-					"Could not access " + location + ": the server could not be reached (" + e + ").", e );
+					couldNotAccess( location, "The server could not be reached (" + e + ")." ), e );
 		}
 		finally
 		{
@@ -530,12 +530,17 @@ public class ZarrUtils
 		}
 	}
 
+	private static String couldNotAccess( final Object location, final String reason )
+	{
+		return "Could not access " + location + ":\n\r\n" + reason;
+	}
+
 	private static String httpRefusal( final int code, final String responseMessage )
 	{
 		if ( code == HttpURLConnection.HTTP_UNAUTHORIZED )
-			return "the server requires authentication (HTTP 401).";
+			return "The server requires authentication (HTTP 401).";
 		if ( code == HttpURLConnection.HTTP_FORBIDDEN )
-			return "the server denied access (HTTP 403 Forbidden).";
-		return "the server answered HTTP " + code + ( responseMessage == null ? "" : " " + responseMessage ) + ".";
+			return "The server denied access (HTTP 403 Forbidden).";
+		return "The server answered HTTP " + code + ( responseMessage == null ? "" : " " + responseMessage ) + ".";
 	}
 }
