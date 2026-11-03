@@ -61,6 +61,7 @@ import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fijiui.util.PyramidTexts;
 import ome.zarr.ZarrTestUtils;
 
 class OpenResolutionLevelCommandTest
@@ -247,7 +248,7 @@ class OpenResolutionLevelCommandTest
 	/** The dialog choice for level 1 of the pyramid the command acts on, i.e. the active one. */
 	private static String level1Choice( final Context context )
 	{
-		return OpenResolutionLevelCommand.describeLevel(
+		return PyramidTexts.describeLevel(
 				context.getService( PyramidalService.class ).getActivePyramidal().getPyramidContents(), 1 );
 	}
 
