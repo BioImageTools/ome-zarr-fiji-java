@@ -37,6 +37,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.DiskCachedCellImg;
 import net.imglib2.cache.img.DiskCachedCellImgFactory;
 import net.imglib2.cache.img.DiskCachedCellImgOptions;
+import net.imglib2.cache.img.optional.CacheOptions;
 import net.imglib2.loops.LoopBuilder;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
@@ -93,9 +94,14 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	 */
 	private PyramidContents< T > data;
 
+	/** Chunks kept in memory per resolution level by {@link #InMemoryPyramidSaver(String)}. */
+	public static final int DEFAULT_MAX_CACHED_CHUNKS = 100;
+
 	public InMemoryPyramidSaver( final String name )
 	{
-		this( name, DiskCachedCellImgOptions.options() );
+		this( name, DiskCachedCellImgOptions.options()
+				.cacheType( CacheOptions.CacheType.BOUNDED )
+				.maxCacheSize( DEFAULT_MAX_CACHED_CHUNKS ) );
 	}
 
 	public InMemoryPyramidSaver( final String name, final DiskCachedCellImgOptions diskOpts )
