@@ -28,6 +28,11 @@
  */
 package ome.zarr.fijiui.util;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.List;
+import java.util.function.UnaryOperator;
+
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -58,10 +63,7 @@ public final class PyramidTexts
 			final int level )
 	{
 		final StringBuilder sb = new StringBuilder( "<html><b>" ).append( level + 1 ).append( "</b>&nbsp; (" )
-				.append( contents.sizeAlongAxis( AxisCalibration.X, level ) )
-				.append( "×" ).append( contents.sizeAlongAxis( AxisCalibration.Y, level ) );
-		if ( contents.hasAxis( AxisCalibration.Z ) )
-			sb.append( "×" ).append( contents.sizeAlongAxis( AxisCalibration.Z, level ) );
+				.append( spatialAxes( contents, axis -> String.valueOf( contents.sizeAlongAxis( axis, level ) ) ) );
 		if ( contents.hasAxis( AxisCalibration.C ) )
 			sb.append( ", c=" ).append( contents.sizeAlongAxis( AxisCalibration.C, level ) );
 		if ( contents.hasAxis( AxisCalibration.T ) )
@@ -89,6 +91,57 @@ public final class PyramidTexts
 		if ( contents.hasAxis( AxisCalibration.T ) )
 			sb.append( ", t = time points" );
 		return sb.append( "; slice = one xy-plane" ).toString();
+	}
+
+	/**
+	 * A resolution level description for choosing the level to segment, e.g.
+	 * {@code <b>1</b> (1024×1024×35, pixel 0.52×0.52×2 micrometer)} for
+	 * {@code level} 0. Unlike {@link #describeLevel}, it leaves out everything that
+	 * is the same on every level, which {@link #describeImage} names once.
+	 */
+	public static String describeSegmentationLevel( final PyramidContents< ? > contents, final int level )
+	{
+		final List< AxisCalibration > axes = contents.axes( level );
+		final String unit = axes.get( contents.axisIndex( AxisCalibration.X ) ).unit;
+		return "<html><b>" + ( level + 1 ) + "</b>&nbsp; ("
+				+ spatialAxes( contents, axis -> String.valueOf( contents.sizeAlongAxis( axis, level ) ) )
+				+ ", pixel " + spatialAxes( contents, axis -> formatScale( axes.get( contents.axisIndex( axis ) ).scale ) )
+				+ ( unit.isEmpty() ? "" : " " + unit ) + ")</html>";
+	}
+
+	/**
+	 * What all resolution levels share, e.g. {@code 4 channels, 18 time points,
+	 * uint16}, followed on a second line by the axis order of the
+	 * {@link #describeSegmentationLevel} choices. Absent c and t axes are left out.
+	 */
+	public static < T extends NativeType< T > & RealType< T > > String describeImage( final PyramidContents< T > contents )
+	{
+		final StringBuilder sb = new StringBuilder( "<html>" );
+		if ( contents.hasAxis( AxisCalibration.C ) )
+			sb.append( count( contents.sizeAlongAxis( AxisCalibration.C ), "channel" ) ).append( ", " );
+		if ( contents.hasAxis( AxisCalibration.T ) )
+			sb.append( count( contents.sizeAlongAxis( AxisCalibration.T ), "time point" ) ).append( ", " );
+		return sb.append( dataTypeName( contents.type() ) )
+				.append( "<br>Extent and pixel size in " )
+				.append( spatialAxes( contents, axis -> axis ) ).append( " order</html>" ).toString();
+	}
+
+	/** {@code format} applied to x, y and, if present, z, joined by "×". */
+	private static String spatialAxes( final PyramidContents< ? > contents, final UnaryOperator< String > format )
+	{
+		final String xy = format.apply( AxisCalibration.X ) + "×" + format.apply( AxisCalibration.Y );
+		return contents.hasAxis( AxisCalibration.Z ) ? xy + "×" + format.apply( AxisCalibration.Z ) : xy;
+	}
+
+	/** Three significant digits without trailing zeros, e.g. {@code "0.52"} or {@code "2"}. */
+	private static String formatScale( final double scale )
+	{
+		return BigDecimal.valueOf( scale ).round( new MathContext( 3 ) ).stripTrailingZeros().toPlainString();
+	}
+
+	private static String count( final long n, final String noun )
+	{
+		return n + " " + noun + ( n == 1 ? "" : "s" );
 	}
 
 	/** Zarr-style name such as {@code "uint16"}. */

@@ -60,6 +60,28 @@ class PyramidTextsTest
 				PyramidTexts.describeLevel( contents, 0 ) );
 	}
 
+	@Test
+	void describesSegmentationLevelsByExtentAndPixelSize() throws URISyntaxException
+	{
+		final PyramidContents< UnsignedByteType > contents = read( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr" );
+		assertEquals( "<html>3 channels, 4 time points, uint8<br>Extent and pixel size in x×y×z order</html>",
+				PyramidTexts.describeImage( contents ) );
+		assertEquals( "<html><b>1</b>&nbsp; (64×64×16, pixel 1×1×1)</html>",
+				PyramidTexts.describeSegmentationLevel( contents, 0 ) );
+		assertEquals( "<html><b>2</b>&nbsp; (32×32×8, pixel 2×2×2)</html>",
+				PyramidTexts.describeSegmentationLevel( contents, 1 ) );
+	}
+
+	@Test
+	void leavesOutAbsentAxesForSegmentation() throws URISyntaxException
+	{
+		final PyramidContents< UnsignedByteType > contents = read( "ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr" );
+		assertEquals( "<html>uint8<br>Extent and pixel size in x×y order</html>",
+				PyramidTexts.describeImage( contents ) );
+		assertEquals( "<html><b>2</b>&nbsp; (32×32, pixel 2×2)</html>",
+				PyramidTexts.describeSegmentationLevel( contents, 1 ) );
+	}
+
 	private static PyramidContents< UnsignedByteType > read( final String resource ) throws URISyntaxException
 	{
 		return new ZarrJavaPyramidBackend().read( ZarrTestUtils.resourcePath( resource ).toUri() );

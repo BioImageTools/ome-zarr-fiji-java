@@ -252,9 +252,12 @@ i.e. a SciJava plugin anyway.
   what
   a persisted setting means (`effectiveOpenerName`).
 - Shipped openers – `imagej-preferred-resolution`, `imagej-highest-resolution`, `bdv-multi-resolution`,
-  `bdv-add-to-active`, `n5-importer-dialog`, `n5-viewer-dialog`, `script-editor` – are one class each, next to the
+  `bdv-add-to-active`, `labkit`, `n5-importer-dialog`, `n5-viewer-dialog`, `script-editor` – are one class each, next to the
   `OmeZarrOpenActions` they drive. Only the extension point itself sits in `ome-zarr-fiji`: that is the artifact a downstream opener compiles
   against, and it stays free of concrete openers. Help is a plain button, not an opener.
+- `LabkitOpener` (issue #172) lives here, with `labkit-ui` `provided` since Fiji ships it. Putting it into Labkit was
+  tried and dropped: every Fiji without our update site would then log a plugin-discovery exception for its
+  unloadable `@Plugin` type.
 
 The selection dialog (`OmeZarrOpenActionChooser`, one icon button per offered opener) is **not** an opener: it opens
 nothing, it *picks* one. The persisted setting is therefore a `String` that is either an opener `name` or the sentinel
@@ -349,7 +352,7 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   pyramids).
 - **`ome-zarr-fiji-ui`** – `ome.zarr.fijiui` (+`.open`, `.open.openers`, `.open.options`, `.plugin`,
   `.plugin.command.*`, `.dialog`, `.util`); the OME-Zarr `IOPlugin` (drag-and-drop and `fiji://` links) in `.plugin`,
-  Swing dialogs in `.dialog`, the seven built-in `OmeZarrOpener`s in `.open.openers`. The SciJava commands sit in three
+  Swing dialogs in `.dialog`, the eight built-in `OmeZarrOpener`s in `.open.openers`. The SciJava commands sit in three
   sibling packages under `.plugin.command`, one per menu location: `.fileimport` for the two `File > Import` entries
   plus their shared `FileImportHelper` (package-private, so its tests live there too), `.tools` for the
   `Plugins > OME-Zarr` entries, and `.settings` for `OpeningBehaviorSettings`, `S3Settings` and `UserScriptSettings`.
