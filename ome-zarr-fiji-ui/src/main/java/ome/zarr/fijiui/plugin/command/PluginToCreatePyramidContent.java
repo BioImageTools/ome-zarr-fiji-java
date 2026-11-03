@@ -8,7 +8,10 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import ome.zarr.fiji.Pyramidal;
-import ome.zarr.fiji.PyramidalDatasetInMemory;
+import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.plugins.ActiveViewerService;
+import ome.zarr.fiji.plugins.PyramidalService;
+import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.write.InMemoryPyramidSaver;
@@ -19,6 +22,8 @@ import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+
+import bdv.util.BdvHandle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,6 +95,12 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 	@Parameter
 	String tUnit = "second";
 
+	@Parameter
+	PyramidalService pyramidalService;
+
+	@Parameter
+	ActiveViewerService activeViewerService;
+
 	@Parameter( type = ItemIO.OUTPUT )
 	Pyramidal pyramidal;
 
@@ -97,7 +108,12 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 	public void run()
 	{
 		InMemoryPyramidSaver< ? > saver = create();
-		pyramidal = new PyramidalDatasetInMemory( context(), saver, 0 );
+		final PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context(), saver.getPyramidContents() );
+		final BdvHandle bdvHandle = BdvUtils.show( pyramidalBdv, pyramidalService );
+		activeViewerService.setActiveViewer( bdvHandle.getViewerPanel() );
+		pyramidal = pyramidalBdv;
+		// already shown in BDV, keep the DisplayPostprocessor from also opening it
+		resolveOutput( "pyramidal" );
 
 		//REMOVE LATER TODO
 		//System.out.println( saver.getPyramidContents() );
