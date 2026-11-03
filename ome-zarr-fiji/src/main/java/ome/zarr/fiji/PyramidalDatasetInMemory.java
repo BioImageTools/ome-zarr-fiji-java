@@ -5,7 +5,7 @@ import net.imglib2.type.numeric.RealType;
 import ome.zarr.imglib2.write.InMemoryPyramidSaver;
 import org.scijava.Context;
 
-public class PyramidalDatasetInMemory extends PyramidalDataset implements Pyramidal
+public class PyramidalDatasetInMemory extends PyramidalDataset
 {
 	public < T extends NativeType< T > & RealType< T > > PyramidalDatasetInMemory( Context context, InMemoryPyramidSaver< T > saver,
 			int resolutionLevel )
