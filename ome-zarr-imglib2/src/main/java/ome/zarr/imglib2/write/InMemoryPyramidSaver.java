@@ -31,12 +31,14 @@ package ome.zarr.imglib2.write;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
+import java.util.List;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.DiskCachedCellImg;
 import net.imglib2.cache.img.DiskCachedCellImgFactory;
 import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.loops.LoopBuilder;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Cast;
@@ -119,8 +121,9 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	 * sizes from {@code opts}. The {@code pyramidContents.asImg(level)} must return valid
 	 * objects for each resolution level. From these "image objects", the image shape/geometry
 	 * is taken but their pixel arrays are not touched/read, so the "image objects" need not
-	 * have their pixel arrays available and populated (consider using {@link PyramidContentsUtils#create()}
-	 * methods).
+	 * have their pixel arrays available and populated (consider using, e.g.,
+	 * {@link PyramidContentsUtils#create(String, NativeType, long[], long, long, AxisCalibration[], double[][])}
+	 * or its sibbling methods).
 	 * <p>
 	 * On return from this method, the underlying *new* {@link PyramidContents} is immediately
 	 * accessible via {@link #getPyramidContents()}. Indeed, this method isn't keeping the
@@ -159,17 +162,28 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 					? diskOpts.cellDimensions( chunkShapes[ level ] )
 					: diskOpts;
 
-			imgs[ level ] = new DiskCachedCellImgFactory<>( pyramidContents.type, levelOpts )
+			imgs[ level ] = new DiskCachedCellImgFactory<>( pyramidContents.type(), levelOpts )
 					.create( pyramidContents.asImg( level ).dimensionsAsLongArray() );
 		}
 
+		AffineTransform3D[] transforms = new AffineTransform3D[ pyramidContents.numResolutionLevels() ];
+		for ( int level = 0; level < transforms.length; level++ )
+			transforms[ level ] = pyramidContents.transform( level );
+		AxisCalibration[][] axisCalibrations = new AxisCalibration[ pyramidContents.numResolutionLevels() ][];
+		for ( int level = 0; level < transforms.length; level++ )
+		{
+			final List< AxisCalibration > axes = pyramidContents.axes( level );
+			axisCalibrations[ level ] = new AxisCalibration[ axes.size() ];
+			for ( int axisIdx = 0; axisIdx < axes.size(); axisIdx++ )
+				axisCalibrations[ level ][ axisIdx ] = axes.get( axisIdx );
+		}
 		data = PyramidContents.< T >builder()
 				.name( this.name )
-				.type( pyramidContents.type )
-				.transforms( pyramidContents.transforms )
+				.type( pyramidContents.type() )
+				.transforms( transforms )
 				.cachedCellImgs( Cast.unchecked( imgs ) )
-				.axesPerLevel( pyramidContents.axesPerLevel )
-				.omero( pyramidContents.omero )
+				.axesPerLevel( axisCalibrations )
+				.omero( pyramidContents.omero() )
 				.build();
 	}
 
