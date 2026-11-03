@@ -9,7 +9,7 @@ import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Macros > Extract Dataset" )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Extract > Channel and Timepoint as Dataset..." )
 public class PluginToCreateDataset implements Command
 {
 	@Parameter

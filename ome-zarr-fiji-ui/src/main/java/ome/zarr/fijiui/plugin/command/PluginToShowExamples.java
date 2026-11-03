@@ -5,7 +5,7 @@ import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Macros > Examples" )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Scripting Examples" )
 public class PluginToShowExamples implements Command
 {
 	@Parameter( type = ItemIO.OUTPUT )

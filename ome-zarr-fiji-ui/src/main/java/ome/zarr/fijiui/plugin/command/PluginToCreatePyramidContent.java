@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Macros > Create New Pyramidal Image" )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Write > Create New Pyramidal Image (In Memory)" )
 public class PluginToCreatePyramidContent extends DynamicCommand
 {
 	static final List< String > spatialUnits = Arrays.asList(
