@@ -1,7 +1,10 @@
 package ome.zarr.imglib2.write;
 
+import java.util.List;
+
 import net.imglib2.img.Img;
 import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.metadata.AxisCalibration;
 
 /**
  * Writing-time parameters for OME-Zarr output, to work with {@link PyramidSaver}s.
@@ -84,7 +87,7 @@ public class OmeZarrWritingOptions
 	/**
 	 * Creates options with defaults derived from the given {@link PyramidContents}.
 	 * Chunk shapes are auto-computed from the dimensions at each resolution level
-	 * (capped at 64 per axis).
+	 * (capped at 64 per spatial axis, 1 along channel and time).
 	 */
 	public static OmeZarrWritingOptions defaultOptionsFor( final PyramidContents< ? > pc )
 	{
@@ -308,10 +311,15 @@ public class OmeZarrWritingOptions
 		for ( int level = 0; level < nLevels; level++ )
 		{
 			final Img< ? > img = pc.asImg( level );
+			final List< AxisCalibration > axes = pc.axes( level );
 			final int n = img.numDimensions();
 			final int[] chunk = new int[ n ];
 			for ( int d = 0; d < n; d++ )
-				chunk[ d ] = ( int ) Math.min( img.dimension( d ), 64 );
+			{
+				final String axis = axes.get( d ).name;
+				final boolean cOrT = AxisCalibration.C.equals( axis ) || AxisCalibration.T.equals( axis );
+				chunk[ d ] = cOrT ? 1 : ( int ) Math.min( img.dimension( d ), 64 );
+			}
 			shapes[ level ] = chunk;
 		}
 		return shapes;
