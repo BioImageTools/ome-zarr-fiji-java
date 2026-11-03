@@ -9,7 +9,7 @@ import org.scijava.convert.ConvertService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Macros > Extract ImagePlus" )
+@Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Extract > Channel and Timepoint as ImagePlus..." )
 public class PluginToCreateImagePlus implements Command
 {
 	@Parameter
