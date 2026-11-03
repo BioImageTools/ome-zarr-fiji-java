@@ -123,6 +123,15 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 
 	/**
 	 * Convenience method to convert this {@code PyramidalDataset} to an IJ1
+	 * {@link ij.ImagePlus} via SciJava's {@link org.scijava.convert.ConvertService}
+	 */
+	public ImagePlus asImagePlus()
+	{
+		return getContext().service( ConvertService.class ).convert( this, ImagePlus.class );
+	}
+
+	/**
+	 * Convenience method to convert this {@code PyramidalDataset} to an IJ1
 	 * {@link ij.ImagePlus} via SciJava's {@link org.scijava.convert.ConvertService}.
 	 *
 	 * The convenience lies especially in fixing a particular channel and timepoint,
