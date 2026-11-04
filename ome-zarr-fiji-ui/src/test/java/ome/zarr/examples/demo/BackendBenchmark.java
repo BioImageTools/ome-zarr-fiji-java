@@ -33,7 +33,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Array;
-import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;
+import dev.zarr.conventions.ome.MultiscaleImage;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.StoreHandle;
 import net.imglib2.Cursor;
