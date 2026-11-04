@@ -29,11 +29,11 @@
 package ome.zarr.zarrjava;
 
 import dev.zarr.zarrjava.ZarrException;
-import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;
-import dev.zarr.zarrjava.experimental.ome.metadata.OmeroChannel;
-import dev.zarr.zarrjava.experimental.ome.metadata.OmeroMetadata;
-import dev.zarr.zarrjava.experimental.ome.metadata.OmeroRdefs;
-import dev.zarr.zarrjava.experimental.ome.metadata.OmeroWindow;
+import dev.zarr.conventions.ome.MultiscaleImage;
+import dev.zarr.conventions.ome.metadata.OmeroChannel;
+import dev.zarr.conventions.ome.metadata.OmeroMetadata;
+import dev.zarr.conventions.ome.metadata.OmeroRdefs;
+import dev.zarr.conventions.ome.metadata.OmeroWindow;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.StoreHandle;
 import org.junit.jupiter.params.ParameterizedTest;

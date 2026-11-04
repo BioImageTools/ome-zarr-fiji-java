@@ -41,17 +41,17 @@ import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Array;
 import dev.zarr.zarrjava.core.Attributes;
 import dev.zarr.zarrjava.core.Group;
-import dev.zarr.zarrjava.experimental.ome.MultiscaleImage;
-import dev.zarr.zarrjava.experimental.ome.metadata.Axis;
-import dev.zarr.zarrjava.experimental.ome.metadata.Dataset;
-import dev.zarr.zarrjava.experimental.ome.metadata.MultiscalesEntry;
-import dev.zarr.zarrjava.experimental.ome.metadata.OmeroChannel;
-import dev.zarr.zarrjava.experimental.ome.metadata.OmeroMetadata;
-import dev.zarr.zarrjava.experimental.ome.metadata.OmeroRdefs;
-import dev.zarr.zarrjava.experimental.ome.metadata.OmeroWindow;
-import dev.zarr.zarrjava.experimental.ome.metadata.transform.CoordinateTransformation;
-import dev.zarr.zarrjava.experimental.ome.metadata.transform.ScaleCoordinateTransformation;
-import dev.zarr.zarrjava.experimental.ome.metadata.transform.TranslationCoordinateTransformation;
+import dev.zarr.conventions.ome.MultiscaleImage;
+import dev.zarr.conventions.ome.metadata.Axis;
+import dev.zarr.conventions.ome.metadata.Dataset;
+import dev.zarr.conventions.ome.metadata.MultiscalesEntry;
+import dev.zarr.conventions.ome.metadata.OmeroChannel;
+import dev.zarr.conventions.ome.metadata.OmeroMetadata;
+import dev.zarr.conventions.ome.metadata.OmeroRdefs;
+import dev.zarr.conventions.ome.metadata.OmeroWindow;
+import dev.zarr.conventions.ome.metadata.transform.CoordinateTransformation;
+import dev.zarr.conventions.ome.metadata.transform.ScaleCoordinateTransformation;
+import dev.zarr.conventions.ome.metadata.transform.TranslationCoordinateTransformation;
 import dev.zarr.zarrjava.store.FilesystemStore;
 import dev.zarr.zarrjava.store.HttpStore;
 import dev.zarr.zarrjava.store.ReadOnlyZipStore;
@@ -646,7 +646,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	{
 		if ( entry.datasets == null || entry.datasets.size() <= level )
 			return null;
-		final dev.zarr.zarrjava.experimental.ome.metadata.Dataset ds = entry.datasets.get( level );
+		final dev.zarr.conventions.ome.metadata.Dataset ds = entry.datasets.get( level );
 		if ( ds.coordinateTransformations == null )
 			return null;
 		for ( final CoordinateTransformation ct : ds.coordinateTransformations )
@@ -674,7 +674,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	{
 		if ( entry.datasets == null || entry.datasets.size() <= level )
 			return null;
-		final dev.zarr.zarrjava.experimental.ome.metadata.Dataset ds = entry.datasets.get( level );
+		final dev.zarr.conventions.ome.metadata.Dataset ds = entry.datasets.get( level );
 		if ( ds.coordinateTransformations == null )
 			return null;
 		for ( final CoordinateTransformation ct : ds.coordinateTransformations )
