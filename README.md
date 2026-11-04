@@ -200,6 +200,9 @@ What Fiji does with a dropped / pasted / linked OME-Zarr. The options shipped he
 * **BigDataViewer (add to active window)**: adds the image as a multi-resolution source to the BigDataViewer
   window that had focus most recently, e.g., to overlay a segmentation on the raw data. Opens a new BigDataViewer
   window if none is open, or if an ImageJ image window had focus after it.
+* **Labkit**: opens the image in [Labkit](https://imagej.net/plugins/labkit/) for pixel classification. It asks which
+  resolution level to segment, preselecting the one the [maximum width](#maximum-width) selects, but displays the full
+  multi-resolution image within its BigDataViewer.
 * **N5 importer dialog**: opens the N5 import dialog at the dropped OME-Zarr. It lists the resolution levels, lets you
   choose one, possibly crop it, and opens it in ImageJ.
 * **N5 viewer dialog**: opens the N5 viewer dialog at the dropped OME-Zarr. It lists the resolution levels, lets you
@@ -213,7 +216,7 @@ and it then appears here and in the dialog next to the built-in ones.
 
 #### Selection dialog (Ask me every time)
 
-<img src="doc/readme/dialog.png" width="154" alt="The opening-selection dialog with seven openers and the help button">
+<img src="doc/readme/dialog.png" width="136" alt="The opening-selection dialog with eight openers and the help button">
 
 The dialog shows one icon button per registered opener, i.e., the options above, plus a help button.
 
