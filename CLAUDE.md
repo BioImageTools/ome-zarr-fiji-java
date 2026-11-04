@@ -365,6 +365,10 @@ Dependency graph: `n5`, `zarrjava`, `fiji` each → `imglib2`; `fiji-ui` → {`i
 are selected at runtime (`OmeZarrBackend`), so `fiji` needs at least one backend on the classpath at runtime even
 though it doesn't depend on one.
 
+**`fiji` and `fiji-ui` declare every artifact Fiji ships as `provided`** (PR #177). Our `ome-zarr-*` modules and all
+dependencies of the library modules stay `compile`. As a result, `fiji-ui` tests get `udunits` 5.9.1 (via `zarr-java`)
+instead of Fiji's 4.3.18. Do not pin it in the root pom: that would also change what `ome-zarr-zarrjava` is tested with.
+
 A sixth, non-published module **`ome-zarr-coverage-report`** only runs `jacoco:report-aggregate` to produce a
 cross-module coverage report for SonarCloud; it joins the reactor solely under the `coverage` profile.
 
