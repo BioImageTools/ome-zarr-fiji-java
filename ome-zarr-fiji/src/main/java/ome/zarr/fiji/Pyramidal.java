@@ -43,4 +43,18 @@ public interface Pyramidal extends Contextual
 	// PyramidalDataset to carry a type parameter it has no value for.
 	@SuppressWarnings( "java:S1452" )
 	PyramidContents< ? > getPyramidContents();
+
+	/**
+	 * Drops every chunk loaded for this {@link Pyramidal},
+	 * so the next read goes back to storage and sees chunks added, changed or removed since.
+	 * Repainting the windows showing it is up to the caller.
+	 * <p>
+	 * By default, this calls {@link PyramidContents#invalidateCachedPixels()} on the underlying
+	 * {@link #getPyramidContents()}. An implementation with a cache of its own on
+	 * top of them must invalidate that too.
+	 */
+	default void invalidateCachedPixels()
+	{
+		getPyramidContents().invalidateCachedPixels();
+	}
 }

@@ -272,6 +272,17 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
+	 * Drops every loaded chunk of every resolution level, so the next access reads
+	 * the storage again and sees chunks that were added, changed or removed since.
+	 * Pixel which had been modified are discarded with them.
+	 */
+	public void invalidateCachedPixels()
+	{
+		for ( final CachedCellImg< T, ? > img : cachedCellImgs )
+			img.getCache().invalidateAll();
+	}
+
+	/**
 	 * Number of imglib2 dimensions of the full-resolution image. This is the
 	 * count of axes that are actually present (a subset of x, y, z, c, t), and
 	 * therefore the upper bound on every axis index reported by this class.

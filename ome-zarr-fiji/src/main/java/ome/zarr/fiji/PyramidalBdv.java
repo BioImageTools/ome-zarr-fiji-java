@@ -30,12 +30,14 @@ package ome.zarr.fiji;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
+import net.imglib2.cache.Invalidate;
 import net.imglib2.cache.img.CachedCellImg;
 import net.imglib2.converter.Converter;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Cast;
 import net.imglib2.view.Views;
 
 import org.scijava.AbstractContextual;
@@ -52,7 +54,9 @@ import java.util.List;
 
 import bdv.BigDataViewer;
 import bdv.cache.SharedQueue;
+import bdv.img.cache.VolatileCachedCellImg;
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
+import bdv.util.volatiles.VolatileView;
 import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.SourceAndConverter;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
@@ -69,10 +73,13 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 
 	private final List< SourceAndConverter< T > > sources;
 
+	private final RandomAccessibleInterval< ? >[] volatileImgs;
+
 	public PyramidalBdv( final Context context, final PyramidContents< T > contents )
 	{
 		this.contents = contents;
-		sources = initSourceAndConverters( contents );
+		volatileImgs = createVolatileImgs( contents );
+		sources = initSourceAndConverters( contents, Cast.unchecked( volatileImgs ) );
 		setContext( context );
 	}
 
@@ -97,9 +104,33 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		return contents.name();
 	}
 
+	/**
+	 * Drops every chunk loaded for these sources, volatile and not, so a viewer
+	 * reads the storage again on its next repaint.
+	 * <p>
+	 * The non-volatile images are those of {@link #getPyramidContents()},
+	 * so this also drops what e.g. an ImageJ window on these contents have loaded.
+	 */
+	@Override
+	public void invalidateCachedPixels()
+	{
+		boolean unreachable = false;
+		for ( final RandomAccessibleInterval< ? > volatileImg : volatileImgs )
+		{
+			final Invalidate< ? > cache = volatileCacheOf( volatileImg );
+			if ( cache != null )
+				cache.invalidateAll();
+			else
+				unreachable = true;
+		}
+		if ( unreachable )
+			logger.info( "Cannot reach the BigDataViewer cache of {}, so a reload may not show in BigDataViewer.", getName() );
+	}
+
 	@SuppressWarnings( "unchecked" )
 	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
-			List< SourceAndConverter< T > > initSourceAndConverters( final PyramidContents< T > contents )
+			List< SourceAndConverter< T > > initSourceAndConverters( final PyramidContents< T > contents,
+					final RandomAccessibleInterval< V >[] volatileImgs )
 	{
 		final int nLevels = contents.numResolutionLevels();
 		final int numChannels = contents.numChannels();
@@ -108,7 +139,6 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		Arrays.setAll( mipmapTransforms, contents::transform );
 		final VoxelDimensions voxelDimensions = voxelDimensions( contents );
 
-		final RandomAccessibleInterval< V >[] volatileImgs = createVolatileImgs( contents );
 		final V volatileType = volatileImgs[ 0 ].getType();
 
 		final RandomAccessibleInterval< T >[][] levelToChannels = new RandomAccessibleInterval[ nLevels ][];
@@ -183,6 +213,23 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		for ( int level = 0; level < contents.numResolutionLevels(); level++ )
 			volatileImgs[ level ] = VolatileViews.wrapAsVolatile( contents.asImg( level ), sharedQueue );
 		return volatileImgs;
+	}
+
+	/**
+	 * The cache behind a volatile view that {@link VolatileViews#wrapAsVolatile}
+	 * made of a {@link CachedCellImg}.
+	 *
+	 * @return the cache, or {@code null}, if the volatile image does not wrap a {@link VolatileCachedCellImg}
+	 */
+	private static Invalidate< ? > volatileCacheOf( final RandomAccessibleInterval< ? > volatileImg )
+	{
+		if ( volatileImg instanceof VolatileView )
+		{
+			final Object img = ( ( VolatileView< ?, ? > ) volatileImg ).getVolatileViewData().getImg();
+			if ( img instanceof VolatileCachedCellImg )
+				return ( ( VolatileCachedCellImg< ?, ? > ) img ).getCache();
+		}
+		return null;
 	}
 
 	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
