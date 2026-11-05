@@ -29,6 +29,10 @@
 package ome.zarr.fijiui;
 
 import net.imagej.ImageJ;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import ome.zarr.n5.N5PyramidSaver;
 
 public class StartUI
 {
@@ -38,9 +42,17 @@ public class StartUI
 		net.imagej.patcher.LegacyInjector.preinit();
 	}
 
-	public static void main( String[] args )
+	public static void mainOrig( String[] args )
 	{
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
+	}
+
+	public static void main( String[] args )
+	{
+		Img< UnsignedShortType > i = ArrayImgs.unsignedShorts( 300, 305, 205 );
+		i.forEach( p -> p.setInteger( 10 ) );
+
+		N5PyramidSaver.writeFullImmediately( i, "/temp/FIJIZARRWRITE.zarr", "dgrp" );
 	}
 }
