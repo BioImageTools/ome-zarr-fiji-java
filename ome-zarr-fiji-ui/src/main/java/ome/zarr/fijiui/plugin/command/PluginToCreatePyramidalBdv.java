@@ -7,16 +7,14 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
-import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
-import ome.zarr.imglib2.write.InMemoryPyramidSaver;
-import ome.zarr.imglib2.write.OmeZarrWritingOptions;
 import ome.zarr.imglib2.write.PyramidContentsUtils;
+import org.jspecify.annotations.NonNull;
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
@@ -25,12 +23,11 @@ import org.scijava.plugin.Plugin;
 
 import bdv.util.BdvHandle;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Write > Create New Pyramidal Image (In Memory)" )
-public class PluginToCreatePyramidContent extends DynamicCommand
+public class PluginToCreatePyramidalBdv extends DynamicCommand
 {
 	static final List< String > spatialUnits = Arrays.asList(
 			"angstrom", "attometer", "centimeter", "decimeter", "exameter", "femtometer", "foot",
@@ -102,40 +99,33 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 	ActiveViewerService activeViewerService;
 
 	@Parameter( type = ItemIO.OUTPUT )
-	Pyramidal pyramidal;
+	PyramidalBdv pyramidalBdv;
 
 	@Override
 	public void run()
 	{
-		InMemoryPyramidSaver< ? > saver = create();
-		final PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context(), saver.getPyramidContents() );
+		final PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context(), ( PyramidContents ) createPyramidContents() );
+/*
 		final BdvHandle bdvHandle = BdvUtils.show( pyramidalBdv, pyramidalService );
 		activeViewerService.setActiveViewer( bdvHandle.getViewerPanel() );
-		pyramidal = pyramidalBdv;
+		this.pyramidalBdv = pyramidalBdv;
+*/
 		// already shown in BDV, keep the DisplayPostprocessor from also opening it
 		resolveOutput( "pyramidal" );
-
-		//REMOVE LATER TODO
-		//System.out.println( saver.getPyramidContents() );
-		//System.out.println( pyramidal );
-		//
-		//saver.getPyramidContents().asImg( 0 ).forEach( px -> px.setReal( 100 ) );
-		//saver.getPyramidContents().asImg( 1 ).forEach( px -> px.set( 150 ) );
-		//saver.getPyramidContents().asImg( 2 ).forEach( px -> px.set( 200 ) );
 	}
 
-	private < T extends NativeType< T > & RealType< T > > InMemoryPyramidSaver< T > create()
+	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > createPyramidContents()
 	{
-		List< AxisCalibration > laxes = new ArrayList<>( 5 );
-		laxes.add( new AxisCalibration( AxisCalibration.X, xyzUnit, xScale ) );
-		laxes.add( new AxisCalibration( AxisCalibration.Y, xyzUnit, yScale ) );
+		final PyramidContentsUtils.AxisCalibrationsBuilder axesBuilder = new PyramidContentsUtils.AxisCalibrationsBuilder()
+				.setAxisXCalibration( xScale, xyzUnit )
+				.setAxisYCalibration( yScale, xyzUnit );
 		if ( zSize > 0 )
-			laxes.add( new AxisCalibration( AxisCalibration.Z, xyzUnit, zScale ) );
+			axesBuilder.setAxisZCalibration( zScale, xyzUnit );
 		if ( numChannels > 0 )
-			laxes.add( new AxisCalibration( AxisCalibration.C, cUnit, cScale ) );
+			axesBuilder.setAxisCCalibration( cScale, cUnit );
 		if ( numTimepoints > 0 )
-			laxes.add( new AxisCalibration( AxisCalibration.T, tUnit, tScale ) );
-		AxisCalibration[] axes = laxes.toArray( new AxisCalibration[ 0 ] );
+			axesBuilder.setAxisTCalibration( tScale, tUnit );
+		final AxisCalibration[] axes = axesBuilder.build();
 
 		long[] dims = zSize > 0 ? new long[] { xSize, ySize, zSize } : new long[] { xSize, ySize };
 
@@ -166,14 +156,7 @@ public class PluginToCreatePyramidContent extends DynamicCommand
 				axes,
 				xyzIsoDownScales
 		);
-		//System.out.println( p );
-
-		InMemoryPyramidSaver< T > saver = new InMemoryPyramidSaver<>( name );
-		assert saver.getPyramidContents() == null: "Found data in not-yet-initialized InMemorySaver.";
-		//saver.initEmptyContainer();
-		saver.initEmptyMultiscales( null, p, OmeZarrWritingOptions.defaultOptionsFor( p ) );
-
-		return saver;
+		return p;
 	}
 
 	private < T extends RealType< T > & NativeType< T > > T getType( String type )
