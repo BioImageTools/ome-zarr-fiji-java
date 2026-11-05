@@ -154,7 +154,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	/**
 	 * Transform from the image coordinates of the given resolution level to the
-	 * shared physical world coordinate system, as a new copy on every call.
+	 * shared physical world coordinate system. Returns a new copy on every call.
 	 * <p>
 	 * <b>Source</b> coordinates are the discrete pixel/voxel coordinates of
 	 * the resolution level, in imglib2 F-order (x, y, z). <b>Target</b> coordinates
