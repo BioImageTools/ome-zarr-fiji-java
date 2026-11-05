@@ -13,7 +13,10 @@ import net.imglib2.view.Views;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
+
 import java.util.Arrays;
+import java.util.Objects;
+
 import static java.lang.Math.round;
 
 public class PyramidContentsUtils
@@ -23,6 +26,84 @@ public class PyramidContentsUtils
 		return ( axis.name.equals( AxisCalibration.X ) )
 				|| ( axis.name.equals( AxisCalibration.Y ) )
 				|| ( axis.name.equals( AxisCalibration.Z ) );
+	}
+
+	/**
+	 * Collects the calibration of one resolution level axis by axis and returns it
+	 * as the {@code AxisCalibration[]} the {@code create(...)} methods take, e.g.
+	 * <pre>
+	 * AxisCalibration[] axes = new PyramidContentsUtils.AxisCalibrationsBuilder()
+	 *         .setAxisXCalibration( 0.5, "micrometer" )
+	 *         .setAxisYCalibration( 0.5, "micrometer" )
+	 *         .setAxisTCalibration( 2.0, "second" )
+	 *         .build();
+	 * </pre>
+	 * An axis is present exactly when its setter was called; x and y are mandatory.
+	 * {@link #build()} always orders the axes x, y, z, c, t regardless of the order
+	 * of the setter calls, so the order of the created image's dimensions is fixed too.
+	 * A {@code null} unit is stored as {@code ""}, the {@link AxisCalibration}
+	 * convention for "no unit".
+	 */
+	public static class AxisCalibrationsBuilder
+	{
+		/** The axes in the order {@link #build()} returns them; the ordinal is the index into {@link #axes}. */
+		private enum Order
+		{
+			X( AxisCalibration.X ), Y( AxisCalibration.Y ), Z( AxisCalibration.Z ),
+			C( AxisCalibration.C ), T( AxisCalibration.T );
+
+			final String axisName;
+
+			Order( final String axisName )
+			{
+				this.axisName = axisName;
+			}
+		}
+
+		/** Indexed by {@link Order#ordinal()}; {@code null} for an axis not set. */
+		private final AxisCalibration[] axes = new AxisCalibration[ Order.values().length ];
+
+		public AxisCalibrationsBuilder setAxisXCalibration( final double scale, final String unit )
+		{
+			return set( Order.X, scale, unit );
+		}
+
+		public AxisCalibrationsBuilder setAxisYCalibration( final double scale, final String unit )
+		{
+			return set( Order.Y, scale, unit );
+		}
+
+		public AxisCalibrationsBuilder setAxisZCalibration( final double scale, final String unit )
+		{
+			return set( Order.Z, scale, unit );
+		}
+
+		public AxisCalibrationsBuilder setAxisCCalibration( final double scale, final String unit )
+		{
+			return set( Order.C, scale, unit );
+		}
+
+		public AxisCalibrationsBuilder setAxisTCalibration( final double scale, final String unit )
+		{
+			return set( Order.T, scale, unit );
+		}
+
+		public AxisCalibrationsBuilder set( final Order axis, final double scale, final String unit )
+		{
+			axes[ axis.ordinal() ] = new AxisCalibration( axis.axisName, unit == null ? "" : unit, scale );
+			return this;
+		}
+
+		/**
+		 * @return the set axes in x, y, z, c, t order
+		 * @throws IllegalStateException if the x or the y axis has not been set
+		 */
+		public AxisCalibration[] build()
+		{
+			if ( axes[ Order.X.ordinal() ] == null || axes[ Order.Y.ordinal() ] == null )
+				throw new IllegalStateException( "Both the x and the y axis must be set." );
+			return Arrays.stream( axes ).filter( Objects::nonNull ).toArray( AxisCalibration[]::new );
+		}
 	}
 
 	/**
