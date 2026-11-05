@@ -34,8 +34,7 @@ public class PyramidSaverTest
 
 		InMemoryPyramidSaver< UnsignedShortType > saver = new InMemoryPyramidSaver<>( "fully in-mem PyramidalContents" );
 		assert saver.getPyramidContents() == null: "Found data in not-yet-initialized InMemorySaver.";
-		saver.initEmptyContainer();
-		saver.initEmptyMultiscales( null, p, OmeZarrWritingOptions.defaultOptionsFor( p ) );
+		saver.createMultiscales( null, p, OmeZarrWritingOptions.defaultOptionsFor( p ) );
 
 		saver.getPyramidContents().asImg( 0 ).forEach( px -> px.set( 100 ) );
 		saver.getPyramidContents().asImg( 1 ).forEach( px -> px.set( 150 ) );
