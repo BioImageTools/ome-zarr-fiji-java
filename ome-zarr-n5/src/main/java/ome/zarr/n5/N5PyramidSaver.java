@@ -13,10 +13,12 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Intervals;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.exceptions.AlreadyOccupiedException;
+import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.write.OmeZarrWritingOptions;
 import ome.zarr.imglib2.write.PyramidSaver;
+import org.janelia.saalfeldlab.n5.DataType;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5Exception;
 import org.janelia.saalfeldlab.n5.N5Writer;
@@ -28,6 +30,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.axes.Axis;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadataParser;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
 /**
@@ -38,7 +41,8 @@ import com.google.gson.JsonElement;
  * <p>
  * One instance targets one multiscales group at a time: {@link #writeRegion} has no
  * group parameter, so it writes into the group of the most recent
- * {@link #initEmptyMultiscales} call.
+ * {@link #createMultiscales} or {@link #openMultiscales} call. That's the idea put
+ * forward in the implemented {@code PyramidSaver} interface.
  */
 public class N5PyramidSaver< T extends RealType< T > & NativeType< T > > implements PyramidSaver< T >
 {
@@ -49,10 +53,10 @@ public class N5PyramidSaver< T extends RealType< T > & NativeType< T > > impleme
 
 	private final URI uri;
 
-	/** Opened by {@link #initEmptyContainer()}, so that nothing touches the store before. */
+	/** Opened by the first {@link #createMultiscales} or {@link #openMultiscales}, so that nothing touches the store before. */
 	private N5Writer n5w;
 
-	/** Per-level dataset paths and attributes of the current multiscales group; set by {@link #initEmptyMultiscales}. */
+	/** Per-level dataset paths and attributes of the bound multiscales group; set by {@link #createMultiscales} or {@link #openMultiscales}. */
 	private String[] levelPaths;
 
 	private DatasetAttributes[] levelAttributes;
@@ -63,46 +67,82 @@ public class N5PyramidSaver< T extends RealType< T > & NativeType< T > > impleme
 	}
 
 	/**
-	 * Opens (creating if needed) the Zarr v3 store at the construction-time URI.
-	 *
-	 * @throws AlreadyOccupiedException if the store root already holds OME metadata or any child node
-	 * @throws StoreAccessException if the store cannot be opened or created
+	 * Reads the level paths from the group's OME-Zarr v0.5 {@code ome/multiscales}
+	 * metadata (the first multiscale, as the readers do) and the chunk layout from each
+	 * level's array. Only Zarr v3 / OME-Zarr v0.5 groups are understood, i.e. what
+	 * {@link #createMultiscales} writes.
+	 * <p>
+	 * Opening the writer creates an empty store root if there is none at the URI yet;
+	 * the call then fails with {@link NotAMultiscaleImageException} anyway.
 	 */
 	@Override
-	public void initEmptyContainer()
+	public void openMultiscales( final String groupPath, final T type )
 	{
+		final String group = normalizeGroupPath( groupPath );
+		writer();
+		final String[] paths;
+		final DatasetAttributes[] attributes;
 		try
 		{
-			n5w = new N5Factory().openWriter( StorageFormat.ZARR3, uri );
+			final JsonArray multiscales = n5w.exists( group )
+					? n5w.getAttribute( group, "ome/multiscales", JsonArray.class )
+					: null;
+			if ( multiscales == null || multiscales.size() == 0 )
+				throw new NotAMultiscaleImageException( uri + "/" + group );
+			final JsonArray datasets = multiscales.get( 0 ).getAsJsonObject().getAsJsonArray( "datasets" );
+			if ( datasets == null || datasets.size() == 0 )
+				throw new NotAMultiscaleImageException( uri + "/" + group );
+
+			paths = new String[ datasets.size() ];
+			attributes = new DatasetAttributes[ datasets.size() ];
+			for ( int level = 0; level < paths.length; level++ )
+			{
+				final String scalePath = datasets.get( level ).getAsJsonObject().get( "path" ).getAsString();
+				paths[ level ] = group.isEmpty() ? scalePath : group + "/" + scalePath;
+				attributes[ level ] = n5w.getDatasetAttributes( paths[ level ] );
+				if ( attributes[ level ] == null )
+					throw new NotAMultiscaleImageException( uri + "/" + paths[ level ] );
+			}
 		}
 		catch ( final N5Exception e )
 		{
-			throw new StoreAccessException( uri.toString(), e );
+			throw new StoreAccessException( uri + "/" + group, e );
 		}
-		if ( isOccupied( "" ) )
-			throw new AlreadyOccupiedException( uri.toString() );
+		catch ( final IllegalStateException | ClassCastException | NullPointerException e )
+		{
+			// malformed multiscales JSON: not an object, or a dataset without "path"
+			throw new NotAMultiscaleImageException( uri + "/" + group, e );
+		}
+
+		final DataType requested = N5Utils.dataType( type );
+		for ( int level = 0; level < paths.length; level++ )
+			if ( attributes[ level ].getDataType() != requested )
+				throw new IllegalArgumentException( "Level " + level + " of " + uri + "/" + group + " stores "
+						+ attributes[ level ].getDataType() + ", not the requested " + requested + "." );
+
+		levelPaths = paths;
+		levelAttributes = attributes;
 	}
 
 	/**
 	 * Creates the group {@code groupPath} with one array per resolution level, named
 	 * {@code 0}, {@code 1}, … as OME-Zarr expects, and writes the OME-Zarr v0.5
 	 * {@code multiscales} metadata (axes, per-level scales and translations) onto the group.
- * A level's translation is written only when it is non-zero.
+	 * A level's translation is written only when it is non-zero.
 	 * Chunk shapes come from {@code opts}, falling back to
 	 * {@link OmeZarrWritingOptions#defaultOptionsFor(PyramidContents)} for levels it
-	 * leaves unset.
+	 * leaves unset. The store is created if it does not exist yet; other groups
+	 * already in it are left alone.
 	 *
-	 * @throws IllegalStateException if {@link #initEmptyContainer()} has not been called
+	 * @throws AlreadyOccupiedException if {@code groupPath} already holds OME metadata or any child node
 	 */
 	@Override
-	public void initEmptyMultiscales( final String groupPath,
+	public void createMultiscales( final String groupPath,
 			final PyramidContents< T > pc,
 			final OmeZarrWritingOptions opts )
 	{
-		if ( n5w == null )
-			throw new IllegalStateException( "initEmptyContainer() must be called before initEmptyMultiscales()." );
-
 		final String group = normalizeGroupPath( groupPath );
+		writer();
 		if ( isOccupied( group ) )
 			throw new AlreadyOccupiedException( groupPath );
 
@@ -156,7 +196,7 @@ public class N5PyramidSaver< T extends RealType< T > & NativeType< T > > impleme
 	 * Writes {@code region} at its own coordinates into level {@code level}; chunks
 	 * only partially covered by it are merged with what is already stored.
 	 *
-	 * @throws IllegalStateException if {@link #initEmptyMultiscales} has not been called
+	 * @throws IllegalStateException if neither {@link #createMultiscales} nor {@link #openMultiscales} has been called
 	 * @throws IllegalArgumentException if {@code level} does not exist or {@code region}
 	 *         reaches outside that level's array (N5 would silently grow the array)
 	 */
@@ -165,7 +205,7 @@ public class N5PyramidSaver< T extends RealType< T > & NativeType< T > > impleme
 			final int level )
 	{
 		if ( levelPaths == null )
-			throw new IllegalStateException( "initEmptyMultiscales() must be called before writeRegion()." );
+			throw new IllegalStateException( "createMultiscales() or openMultiscales() must be called before writeRegion()." );
 		if ( level < 0 || level >= levelPaths.length )
 			throw new IllegalArgumentException( "No resolution level " + level + ", there are " + levelPaths.length + "." );
 		final Interval levelInterval = new FinalInterval( levelAttributes[ level ].getDimensions() );
@@ -203,6 +243,27 @@ public class N5PyramidSaver< T extends RealType< T > & NativeType< T > > impleme
 			nonZero |= translation[ d ] != 0;
 		}
 		return nonZero ? translation : null;
+	}
+
+	/**
+	 * Opens (creating if needed) the Zarr v3 store at the construction-time URI, once.
+	 *
+	 * @throws StoreAccessException if the store cannot be opened or created
+	 */
+	private N5Writer writer()
+	{
+		if ( n5w == null )
+		{
+			try
+			{
+				n5w = new N5Factory().openWriter( StorageFormat.ZARR3, uri );
+			}
+			catch ( final N5Exception e )
+			{
+				throw new StoreAccessException( uri.toString(), e );
+			}
+		}
+		return n5w;
 	}
 
 	/** A node is occupied when it carries OME metadata or has any children. */
