@@ -35,8 +35,6 @@ import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.exceptions.AlreadyOccupiedException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 
-import java.io.IOException;
-
 /**
  * Progressive-writing API for OME-Zarr multiscales data.
  * <p>
@@ -92,39 +90,39 @@ public interface PyramidSaver< T extends NativeType< T > & RealType< T > >
 	 * is not supported; the following interface methods are therefore commented out.
 	 *
 	 * void initFromExistingContainer( URI );
-	 * void initFromExistingMultiscales( String path );
+	 * void initFromExistingMultiscales( String groupPath );
 	 */
 
 	/**
-	 * Writes a skeleton OME-Zarr {@code multiscales} group at {@code path}: all
+	 * Writes a skeleton OME-Zarr {@code multiscales} group at {@code groupPath}: all
 	 * metadata (axes, coordinate transforms, chunk layout, compression) but no pixel
 	 * data. {@link #writeRegion} requires this to have been called for the same
-	 * {@code path} first; calling {@link #writeRegion} without it will fail.
+	 * {@code groupPath} first; calling {@link #writeRegion} without it will fail.
 	 * <p>
 	 * Shape, pyramid layout, and writing options are fixed after this call —
 	 * it is not possible for some chunks to be written with compression A and
 	 * others with B.
 	 *
-	 * @param path relative path within the container, e.g. {@code "/"} for a
+	 * @param groupPath relative path within the container, e.g. {@code "/"} for a
 	 *             single-image store or an HCS well path such as {@code "A/1/0"}
 	 * @param pc   defines the shape and calibration of the pyramid; pixel arrays
 	 *             need not be populated
 	 * @param opts chunk layout, compression, sharding, and optional annotations;
 	 *             use {@link OmeZarrWritingOptions#defaultOptionsFor(PyramidContents)}
 	 *             for auto-computed defaults
-	 * @throws AlreadyOccupiedException if {@code path} already exists in the container
+	 * @throws AlreadyOccupiedException if {@code groupPath} already exists in the container
 	 * @throws StoreAccessException if the accessing or writing to the store experienced any issue
 	 */
-	void initEmptyMultiscales( String path, PyramidContents< T > pc, OmeZarrWritingOptions opts );
+	void initEmptyMultiscales( final String groupPath, final PyramidContents< T > pc, final OmeZarrWritingOptions opts );
 
 	/**
 	 * Convenience overload using {@link OmeZarrWritingOptions#defaultOptionsFor(PyramidContents)}.
 	 *
 	 * @see #initEmptyMultiscales(String, PyramidContents, OmeZarrWritingOptions)
 	 */
-	default void initEmptyMultiscales( final String path, final PyramidContents< T > pc )
+	default void initEmptyMultiscales( final String groupPath, final PyramidContents< T > pc )
 	{
-		initEmptyMultiscales( path, pc, OmeZarrWritingOptions.defaultOptionsFor( pc ) );
+		initEmptyMultiscales( groupPath, pc, OmeZarrWritingOptions.defaultOptionsFor( pc ) );
 	}
 
 	/**
@@ -134,7 +132,7 @@ public interface PyramidSaver< T extends NativeType< T > & RealType< T > >
 	 * (min&nbsp;==&nbsp;0 in every dimension) is valid only for a single write that
 	 * covers the entire array at that level.
 	 * <p>
-	 * {@link #initEmptyMultiscales} must have been called for the target path before
+	 * {@link #initEmptyMultiscales} must have been called for the target groupPath before
 	 * any {@code writeRegion} call.
 	 *
 	 * @param region pixel data to write, with correct min/max coordinates;
@@ -143,5 +141,5 @@ public interface PyramidSaver< T extends NativeType< T > & RealType< T > >
 	 * @throws IllegalStateException if {@link #initEmptyMultiscales} has not been called already
 	 * @throws StoreAccessException if the accessing or writing to the store experienced any issue
 	 */
-	void writeRegion( RandomAccessibleInterval< T > region, int level );
+	void writeRegion( final RandomAccessibleInterval< T > region, final int level );
 }
