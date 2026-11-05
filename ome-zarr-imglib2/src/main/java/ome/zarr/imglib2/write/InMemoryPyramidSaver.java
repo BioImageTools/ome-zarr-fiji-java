@@ -28,8 +28,6 @@
  */
 package ome.zarr.imglib2.write;
 
-import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.List;
 
@@ -46,8 +44,6 @@ import net.imglib2.util.Cast;
 import net.imglib2.view.Views;
 
 import ome.zarr.imglib2.metadata.AxisCalibration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
@@ -55,24 +51,28 @@ import ome.zarr.imglib2.exceptions.AlreadyOccupiedException;
 
 /**
  * In-memory implementation of {@link PyramidSaver} that collects pixel data into an
- * own {@link PyramidContents}. The {@link PyramidContents} is exposed with public API
- * so that it can be either written directly, or (and especially) read and displayed
- * as if it was coming from {@link PyramidBackend#read(URI)}.
+ * own {@link PyramidContents}, which is backed by RAM (and not by any persistent store).
+ * The {@link PyramidContents} is exposed with public API so that it can be either written
+ * directly, or (and especially) read and displayed as if it was coming from
+ * {@link PyramidBackend#read(URI)}. It, thus, fulfills requirements of {@code Pyramidal}
+ * that, however, is defined in an upstream artifact {@code ome.zarr.fiji}, which is
+ * not accessible from here. Nevertheless, {@link #getPyramidContents()} was made available.
  * <p>
  * Being a {@link PyramidSaver}, it can be used interchangeably with a caller's write
  * pipeline. The exactly same pipeline can thus write to either persistent storage or
- * RAM. Caller "only" needs to be very careful in the later case. As a consequence,
- * for example, the {@link #initEmptyContainer()} is a no-op as there is no real
- * container to initialize. Indeed, this class is not producing any real OME-Zarr.
+ * RAM. Caller "only" needs to be very careful in the later case. Of course, the
+ * {@link #openMultiscales} is unsupported as there is no real store to open. Indeed,
+ * this class is not producing any real OME-Zarr.
  * <p>
- * {@link #initEmptyMultiscales} allocates one {@link net.imglib2.cache.img.DiskCachedCellImg}
+ * {@link #createMultiscales} allocates one {@link net.imglib2.cache.img.DiskCachedCellImg}
  * per resolution level. This implementation provides that evicted chunks are swapped
- * to a temp directory and restored on re-access, so written data is never lost — correct
+ * to a temp directory and restored on re-access, so written data is never lost -- correct
  * behavior for a write target. This is a difference compared to {@link PyramidContents}
  * that come from {@link PyramidBackend#read(URI)}, which looses any changes made to evicted
- * chunks. Here, the underlying disk-caching machinery can be configured by passing a custom
- * {@link DiskCachedCellImgOptions} at construction, includes also the configuration of the
- * temporary files used for chunks mem-disk swapping.
+ * chunks (because it can reload them anytime again). Here, the underlying disk-caching
+ * machinery can be configured by passing a custom {@link DiskCachedCellImgOptions} at
+ * construction, includes also the configuration of the temporary files used for chunks
+ * mem-disk swapping.
  * <p>
  * Note again, the returned {@link PyramidContents} can be wrapped into a
  * {@code PyramidalDataset} or {@code PyramidalBdv} for display in ImageJ or BDV.
@@ -82,14 +82,13 @@ import ome.zarr.imglib2.exceptions.AlreadyOccupiedException;
  */
 public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > implements PyramidSaver< T >
 {
-	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
 
 	private final String name;
 
 	private final DiskCachedCellImgOptions diskOpts;
 
 	/*
-	 * Populated by initEmptyMultiscales(); null before that call.
+	 * Populated by createMultiscales(); null before that call.
 	 * writeRegion() requires it to be non-null.
 	 */
 	private PyramidContents< T > data;
@@ -108,17 +107,6 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	{
 		this.name = name;
 		this.diskOpts = diskOpts;
-	}
-
-	/**
-	 * No-op: there is no container concept for an in-memory store, it is not
-	 * building any real OME-Zarr anywhere. The method only logs an informational
-	 * message.
-	 */
-	@Override
-	public void initEmptyContainer()
-	{
-		logger.info( "InMemoryPyramidSaver.initEmptyContainer() is a no-op for in-memory storage." );
 	}
 
 	/**
@@ -148,7 +136,7 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	 * in one OME-Zarr, which is because it is not building any OME-Zarr explicitly
 	 */
 	@Override
-	public void initEmptyMultiscales(
+	public void createMultiscales(
 			final String path,
 			final PyramidContents< T > pyramidContents,
 			final OmeZarrWritingOptions opts )
@@ -194,18 +182,30 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	}
 
 	/**
+	 * Unsupported: there is no store holding an earlier multiscales group, only
+	 * {@link #createMultiscales} builds the in-memory one.
+	 *
+	 * @throws UnsupportedOperationException always
+	 */
+	@Override
+	public void openMultiscales( final String groupPath, final T type )
+	{
+		throw new UnsupportedOperationException( "InMemoryPyramidSaver has no store to open a multiscales group from." );
+	}
+
+	/**
 	 * Copies pixels from {@code region} into the backing store at the given
 	 * resolution level, using the region's own min/max coordinates to locate the
 	 * destination inside the level array.
 	 *
-	 * @throws IllegalStateException if {@link #initEmptyMultiscales} has not been called
+	 * @throws IllegalStateException if {@link #createMultiscales} has not been called
 	 * @throws IllegalArgumentException when level is not within the range
 	 */
 	@Override
 	public void writeRegion( final RandomAccessibleInterval< T > region, final int level )
 	{
 		if ( data == null )
-			throw new IllegalStateException( "initEmptyMultiscales() must be called before writeRegion()." );
+			throw new IllegalStateException( "createMultiscales() must be called before writeRegion()." );
 
 		final RandomAccessibleInterval< T > dest = Views.interval( data.asImg( level ), region );
 		LoopBuilder.setImages( region, dest ).forEachPixel( ( src, tgt ) -> tgt.set( src ) );
@@ -216,14 +216,14 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	 * resolution level, channel and timePoint. The {@code Interval} placement
 	 * of the {@code region} (its min/max coordinates) is ignored.
 	 *
-	 * @throws IllegalStateException if {@link #initEmptyMultiscales} has not been called
+	 * @throws IllegalStateException if {@link #createMultiscales} has not been called
 	 * @throws IllegalArgumentException when any of level, channel and/or timePoint is not within the respective range
 	 */
 	public < R extends RealType< R > > void writeRegionToResLevelAt( final RandomAccessibleInterval< R > region, final int level,
 			final int channel, final int timePoint )
 	{
 		if ( data == null )
-			throw new IllegalStateException( "initEmptyMultiscales() must be called before writeRegion()." );
+			throw new IllegalStateException( "createMultiscales() must be called before writeRegion()." );
 
 		final RandomAccessibleInterval< T > view = PyramidContentsUtils.xyzReducedView( data, level, channel, timePoint );
 		LoopBuilder.setImages( region, view ).forEachPixel( ( src, tgt ) -> tgt.setReal( src.getRealDouble() ) );
@@ -232,7 +232,7 @@ public class InMemoryPyramidSaver< T extends NativeType< T > & RealType< T > > i
 	/**
 	 * Returns the {@link PyramidContents} backed by the in-memory
 	 * {@link net.imglib2.cache.img.DiskCachedCellImg}s, or {@code null} if
-	 * {@link #initEmptyMultiscales} has not been called yet.
+	 * {@link #createMultiscales} has not been called yet.
 	 */
 	public PyramidContents< T > getPyramidContents()
 	{
