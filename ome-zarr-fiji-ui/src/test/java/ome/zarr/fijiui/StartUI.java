@@ -32,7 +32,13 @@ import net.imagej.ImageJ;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import ome.zarr.fijiui.plugin.command.PluginToCreatePyramidalBdv;
+import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.write.PyramidContentsUtils;
 import ome.zarr.n5.N5PyramidSaver;
+
+import java.net.URI;
 
 public class StartUI
 {
@@ -53,6 +59,23 @@ public class StartUI
 		Img< UnsignedShortType > i = ArrayImgs.unsignedShorts( 300, 305, 205 );
 		i.forEach( p -> p.setInteger( 10 ) );
 
-		N5PyramidSaver.writeFullImmediately( i, "/temp/FIJIZARRWRITE.zarr", "dgrp" );
+		//N5PyramidSaver.writeFullImmediately( i, , "dgrp" );
+		PyramidContents< UnsignedShortType > pc = PyramidContentsUtils.create(
+				"image1",
+				i.firstElement(),
+				i.dimensionsAsLongArray(),
+				0, 0,
+				new PyramidContentsUtils.AxisCalibrationsBuilder()
+						.setAxisXCalibration( 1, "microns" )
+						.setAxisYCalibration( 1, "microns" )
+						.setAxisZCalibration( 1, "microns" )
+						.build(),
+				new double[] { 3.0, 2.0 } );
+		System.out.println( pc );
+
+		N5PyramidSaver< ? > saver = new N5PyramidSaver<>( URI.create( "/temp/FIJIZARRWRITE2.zarr" ) );
+		saver.initEmptyContainer();
+		saver.initEmptyMultiscales( "image1", ( PyramidContents ) pc );
+		saver.writeRegion( ( Img ) i, 0 );
 	}
 }
