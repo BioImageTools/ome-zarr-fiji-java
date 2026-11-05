@@ -29,7 +29,7 @@
 package ome.zarr.imglib2.exceptions;
 
 /**
- * Thrown when {@code initEmptyContainer()} or {@code initEmptyMultiscales()}
+ * Thrown when {@code PyramidSaver.createMultiscales()}
  * finds the target location already occupied by existing OME-Zarr content.
  * Writers refuse to overwrite existing data rather than silently corrupting it.
  */
