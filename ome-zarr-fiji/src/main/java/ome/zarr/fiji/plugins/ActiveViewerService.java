@@ -155,19 +155,29 @@ public class ActiveViewerService extends AbstractService implements SciJavaServi
 			return viewerPanel;
 		if ( window == null )
 			return null;
-		final List< AbstractViewerPanel > viewerPanels = new ArrayList<>();
-		collectViewerPanels( window, viewerPanels );
-		return viewerPanels.size() == 1 ? viewerPanels.get( 0 ) : null;
+		final List< AbstractViewerPanel > found = viewerPanels( window );
+		return found.size() == 1 ? found.get( 0 ) : null;
 	}
 
-	private static void collectViewerPanels( final Container container, final List< AbstractViewerPanel > viewerPanels )
+	/**
+	 * Finds the image viewers of BigDataViewer, BigVolumeViewer and other tools
+	 * built on BDV {@link AbstractViewerPanel} inside the given {@code container},
+	 * however deeply nested. The search does not descend into a viewer it found.
+	 *
+	 * @param container the component to search in, typically a {@link Window}
+	 * @return the viewers in component order, in a new modifiable list that is
+	 *   empty if there are none
+	 */
+	public static List< AbstractViewerPanel > viewerPanels( final Container container )
 	{
+		final List< AbstractViewerPanel > found = new ArrayList<>();
 		for ( final Component child : container.getComponents() )
 		{
 			if ( child instanceof AbstractViewerPanel )
-				viewerPanels.add( ( AbstractViewerPanel ) child );
+				found.add( ( AbstractViewerPanel ) child );
 			else if ( child instanceof Container )
-				collectViewerPanels( ( Container ) child, viewerPanels );
+				found.addAll( viewerPanels( ( Container ) child ) );
 		}
+		return found;
 	}
 }
