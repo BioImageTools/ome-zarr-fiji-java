@@ -34,23 +34,50 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
+import org.scijava.Context;
+import org.scijava.log.LogService;
+import org.scijava.object.ObjectService;
 import org.scijava.plugin.Plugin;
 
 import bdv.util.BdvHandle;
+import bdv.viewer.SourceAndConverter;
+import net.imglib2.Interval;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.util.Intervals;
+import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.imglib2.PyramidContents;
+import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.write.PyramidContentsUtils;
+import ome.zarr.n5.N5PyramidSaver;
 import sc.fiji.labkit.ui.Extensible;
 import sc.fiji.labkit.ui.LabkitExtension;
 import sc.fiji.labkit.ui.models.ImageLabelingModel;
 import sc.fiji.labkit.ui.models.SegmentationItem;
+import sc.fiji.labkit.ui.models.SegmentationResultsModel;
 
 /**
  * Adds "Save as OME-Zarr" to Labkit: an entry in the Segmentation menu, next to
- * "Save Segmentation Result as TIF / HDF5", and a toolbar button. Saving is not
- * implemented yet, so both only say so.
+ * "Save Segmentation Result as TIF / HDF5", and a toolbar button.
+ * <p>
+ * Only an image opened from OME-Zarr into Labkit can be saved: dimensions, axes and
+ * transform come from the {@link PyramidContents} shown in Labkit's viewer, at the
+ * resolution level that was segmented, without the channel axis. The result is a
+ * single-level OME-Zarr in a folder the user picks.
+ * <p>
+ * The toolbar button still only says it is not implemented: it gets no
+ * {@link SegmentationItem}, and {@link LabkitExtension} offers no way to the selected one.
  */
 @Plugin( type = LabkitExtension.class )
 public class SaveAsOmeZarrLabkitExtension implements LabkitExtension
@@ -75,8 +102,113 @@ public class SaveAsOmeZarrLabkitExtension implements LabkitExtension
 		final Runnable notImplemented = () -> JOptionPane.showMessageDialog( extensible.dialogParent(),
 				"Saving the segmentation result as OME-Zarr is not implemented yet.", TITLE, JOptionPane.INFORMATION_MESSAGE );
 		extensible.addMenuItem( SegmentationItem.SEGMENTER_MENU, TITLE + " ...", MENU_PRIORITY,
-				ignore -> notImplemented.run(), null, "" );
+				item -> save( extensible, model, bdvHandle, item ), null, "" );
 		extensible.addToolBarButton( TITLE, labkitToOmeZarrIcon(), notImplemented );
+	}
+
+	private static void save( final Extensible extensible, final ImageLabelingModel model, final BdvHandle bdvHandle,
+			final SegmentationItem item )
+	{
+		final SegmentationResultsModel results = item.results( model );
+		if ( !results.hasResults() )
+		{
+			message( extensible, "Train the classifier first.", JOptionPane.INFORMATION_MESSAGE );
+			return;
+		}
+		final PyramidContents< ? > source = pyramidContentsShownIn( extensible.context(), bdvHandle );
+		final int level = source == null ? -1 : segmentedLevel( source, model.imageForSegmentation().get() );
+		if ( level < 0 )
+		{
+			message( extensible, "Only an image opened from OME-Zarr into Labkit can be saved as OME-Zarr.",
+					JOptionPane.INFORMATION_MESSAGE );
+			return;
+		}
+
+		final JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle( TITLE );
+		chooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+		chooser.setSelectedFile( new File( ( source.name() == null ? "" : source.name() ) + "_segmentation.ome.zarr" ) );
+		if ( chooser.showSaveDialog( extensible.dialogParent() ) != JFileChooser.APPROVE_OPTION )
+			return;
+		final File folder = chooser.getSelectedFile();
+
+		final RandomAccessibleInterval< UnsignedByteType > segmentation = results.segmentation();
+		// ponytail: single-threaded, no progress bar. Labkit's HDF5 export shows a SwingProgressWriter if users need one.
+		new Thread( () -> {
+			try
+			{
+				final N5PyramidSaver< UnsignedByteType > saver = new N5PyramidSaver<>( folder.toURI() );
+				saver.initEmptyContainer();
+				saver.initEmptyMultiscales( "", segmentationContents( source, level ) );
+				saver.writeRegion( segmentation, 0 );
+				message( extensible, "Saved the segmentation to\n" + folder, JOptionPane.INFORMATION_MESSAGE );
+			}
+			catch ( final RuntimeException e )
+			{
+				extensible.context().service( LogService.class ).error( "Saving the segmentation to " + folder + " failed", e );
+				message( extensible, "Saving the segmentation failed:\n" + e.getMessage(), JOptionPane.ERROR_MESSAGE );
+			}
+		}, TITLE ).start();
+	}
+
+	/**
+	 * The contents of the {@link PyramidalBdv} whose sources {@code bdvHandle} shows,
+	 * i.e. the one {@code LabkitOpener} handed to Labkit, or {@code null} if Labkit
+	 * was opened some other way.
+	 */
+	private static PyramidContents< ? > pyramidContentsShownIn( final Context context, final BdvHandle bdvHandle )
+	{
+		final List< SourceAndConverter< ? > > shown = bdvHandle.getViewerPanel().state().getSources();
+		for ( final PyramidalBdv< ? > pyramidal : context.service( ObjectService.class ).getObjects( PyramidalBdv.class ) )
+			for ( final SourceAndConverter< ? > source : pyramidal.asSources() )
+				for ( final SourceAndConverter< ? > s : shown )
+					if ( s.getSpimSource() == source.getSpimSource() )
+						return pyramidal.getPyramidContents();
+		return null;
+	}
+
+	/** The level Labkit segments, i.e. the one whose size {@code image} has, or -1. */
+	private static int segmentedLevel( final PyramidContents< ? > contents, final Interval image )
+	{
+		for ( int level = 0; level < contents.numResolutionLevels(); level++ )
+			if ( Intervals.equalDimensions( contents.asImg( level ), image ) )
+				return level;
+		return -1;
+	}
+
+	/**
+	 * Level {@code level} of {@code source} as a single-level pyramid without the
+	 * channel axis, in the axis order of Labkit's segmentation.
+	 */
+	private static PyramidContents< UnsignedByteType > segmentationContents( final PyramidContents< ? > source,
+			final int level )
+	{
+		final List< AxisCalibration > sourceAxes = source.axes( level );
+		final long[] sourceDims = source.asImg( level ).dimensionsAsLongArray();
+		final List< AxisCalibration > axes = sourceAxes.stream()
+				.filter( a -> !a.name.equals( AxisCalibration.C ) )
+				.collect( Collectors.toList() );
+		final long[] xyz = Stream.of( AxisCalibration.X, AxisCalibration.Y, AxisCalibration.Z )
+				.mapToInt( name -> indexOf( sourceAxes, name ) )
+				.filter( i -> i >= 0 )
+				.mapToLong( i -> sourceDims[ i ] )
+				.toArray();
+		final int t = indexOf( sourceAxes, AxisCalibration.T );
+		return PyramidContentsUtils.create( source.name(), new UnsignedByteType(), xyz, 0, t < 0 ? 0 : sourceDims[ t ],
+				new AxisCalibration[][] { axes.toArray( new AxisCalibration[ 0 ] ) }, new double[ 0 ][], source.transform( level ), null );
+	}
+
+	private static int indexOf( final List< AxisCalibration > axes, final String name )
+	{
+		for ( int i = 0; i < axes.size(); i++ )
+			if ( axes.get( i ).name.equals( name ) )
+				return i;
+		return -1;
+	}
+
+	private static void message( final Extensible extensible, final String text, final int type )
+	{
+		SwingUtilities.invokeLater( () -> JOptionPane.showMessageDialog( extensible.dialogParent(), text, TITLE, type ) );
 	}
 
 	/**
