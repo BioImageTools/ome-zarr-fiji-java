@@ -32,9 +32,7 @@ import net.imagej.ImageJ;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import ome.zarr.fijiui.plugin.command.PluginToCreatePyramidalBdv;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.write.PyramidContentsUtils;
 import ome.zarr.n5.N5PyramidSaver;
 
@@ -48,14 +46,11 @@ public class StartUI
 		net.imagej.patcher.LegacyInjector.preinit();
 	}
 
-	public static void mainOrig( String[] args )
+	public static void main( String[] args )
 	{
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-	}
 
-	public static void main( String[] args )
-	{
 		Img< UnsignedShortType > i = ArrayImgs.unsignedShorts( 300, 305, 205 );
 		i.forEach( p -> p.setInteger( 10 ) );
 
@@ -66,11 +61,11 @@ public class StartUI
 				i.dimensionsAsLongArray(),
 				0, 0,
 				new PyramidContentsUtils.AxisCalibrationsBuilder()
-						.setAxisXCalibration( 1, "microns" )
-						.setAxisYCalibration( 1, "microns" )
-						.setAxisZCalibration( 1, "microns" )
+						.setAxisXCalibration( 1, "micrometer" )
+						.setAxisYCalibration( 1, "micrometer" )
+						.setAxisZCalibration( 1, "micrometer" )
 						.build(),
-				new double[] { 3.0, 2.0 } );
+				new double[] { 3.0, 6.0 } );
 		System.out.println( pc );
 
 		N5PyramidSaver< ? > saver = new N5PyramidSaver<>( URI.create( "/temp/FIJIZARRWRITE2.zarr" ) );
