@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -95,12 +96,21 @@
 		<license.projectName>OME-Zarr integration into FIJI</license.projectName>
 		<license.organizationName>SciJava</license.organizationName>
 		<license.copyrightOwners>SciJava developers</license.copyrightOwners>
+		<awaitility.version>4.3.0</awaitility.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>ome.zarr</groupId>
 			<artifactId>ome-zarr-n5</artifactId>
+			<exclusions>
+				<!-- jblosc leaks JUnit 4 and its hamcrest-core 1.3 into test scope, which duplicates the
+				hamcrest 2 classes Awaitility needs. -->
+				<exclusion>
+					<groupId>org.hamcrest</groupId>
+					<artifactId>hamcrest-core</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>ome.zarr</groupId>
@@ -175,6 +185,12 @@
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.awaitility</groupId>
+			<artifactId>awaitility</artifactId>
+			<version>${awaitility.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
