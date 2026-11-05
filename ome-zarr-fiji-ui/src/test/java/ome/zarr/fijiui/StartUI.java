@@ -29,9 +29,11 @@
 package ome.zarr.fijiui;
 
 import net.imagej.ImageJ;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.view.Views;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.write.PyramidContentsUtils;
 import ome.zarr.n5.N5PyramidSaver;
@@ -52,7 +54,6 @@ public class StartUI
 		ij.ui().showUI();
 
 		Img< UnsignedShortType > i = ArrayImgs.unsignedShorts( 300, 305, 205 );
-		i.forEach( p -> p.setInteger( 10 ) );
 
 		//N5PyramidSaver.writeFullImmediately( i, , "dgrp" );
 		PyramidContents< UnsignedShortType > pc = PyramidContentsUtils.create(
@@ -68,9 +69,18 @@ public class StartUI
 				new double[] { 3.0, 6.0 } );
 		System.out.println( pc );
 
-		N5PyramidSaver< ? > saver = new N5PyramidSaver<>( URI.create( "/temp/FIJIZARRWRITE2.zarr" ) );
-		saver.initEmptyContainer();
-		saver.initEmptyMultiscales( "image1", ( PyramidContents ) pc );
-		saver.writeRegion( ( Img ) i, 0 );
+		i.forEach( p -> p.setInteger( 10 ) );
+		//
+		N5PyramidSaver< UnsignedShortType > saverA = new N5PyramidSaver<>( URI.create( "/temp/FIJIZARRWRITE2.zarr" ) );
+		saverA.createMultiscales( "image1", ( PyramidContents ) pc );
+		saverA.writeRegion( Views.interval( i, new long[] { 0, 0, 0 }, new long[] { 299, 304, 63 } ), 0 );
+		System.out.println( "1/3 written" );
+
+		i.forEach( p -> p.setInteger( 20 ) );
+		//
+		N5PyramidSaver< UnsignedShortType > saverB = new N5PyramidSaver<>( URI.create( "/temp/FIJIZARRWRITE2.zarr" ) );
+		saverB.openMultiscales( "image1", i.getType() );
+		saverB.writeRegion( Views.interval( i, new long[] { 0, 0, 64 }, new long[] { 299, 304, 204 } ), 0 );
+		System.out.println( "3/3 written" );
 	}
 }
