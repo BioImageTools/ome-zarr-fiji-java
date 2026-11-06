@@ -53,6 +53,11 @@ public class StartUI
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
+		//demoWriting();
+	}
+
+	public static void demoWriting()
+	{
 		Img< UnsignedShortType > i = ArrayImgs.unsignedShorts( 300, 305, 205 );
 
 		//N5PyramidSaver.writeFullImmediately( i, , "dgrp" );
