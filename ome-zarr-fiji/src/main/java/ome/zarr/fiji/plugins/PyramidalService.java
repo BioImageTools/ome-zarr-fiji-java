@@ -261,4 +261,14 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	{
 		return getPyramidals().stream().map( Pyramidal::getPyramidContents ).distinct().collect( Collectors.toList() );
 	}
+
+	public void registerPyramidal( final Pyramidal p )
+	{
+		objectService.addObject( p, p.getPyramidContents().name() );
+	}
+
+	public void unregisterPyramidal( final Pyramidal p )
+	{
+		objectService.removeObject( p );
+	}
 }
