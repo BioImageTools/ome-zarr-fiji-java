@@ -7,27 +7,24 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
-import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.write.PyramidContentsUtils;
-import org.jspecify.annotations.NonNull;
+import org.scijava.Context;
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import bdv.util.BdvHandle;
-
 import java.util.Arrays;
 import java.util.List;
 
 @Plugin( type = Command.class, menuPath = "Plugins > OME-Zarr > Write > Create New Pyramidal Image (In Memory)" )
-public class PluginToCreatePyramidalBdv extends DynamicCommand
+public class PluginToCreatePyramidal extends DynamicCommand
 {
 	static final List< String > spatialUnits = Arrays.asList(
 			"angstrom", "attometer", "centimeter", "decimeter", "exameter", "femtometer", "foot",
@@ -99,19 +96,41 @@ public class PluginToCreatePyramidalBdv extends DynamicCommand
 	ActiveViewerService activeViewerService;
 
 	@Parameter( type = ItemIO.OUTPUT )
-	PyramidalBdv pyramidalBdv;
+	Pyramidal pyramidal;
 
 	@Override
 	public void run()
 	{
-		final PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context(), ( PyramidContents ) createPyramidContents() );
+		pyramidal = new Pyramidal()
+		{
+			@Override
+			public PyramidContents< ? > getPyramidContents()
+			{
+				return createPyramidContents();
+			}
+
+			@Override
+			public Context context()
+			{
+				return context();
+			}
+
+			@Override
+			public Context getContext()
+			{
+				return context();
+			}
+		};
 /*
+		final PyramidalBdv< ? > pyramidalBdv = new PyramidalBdv<>( context(), ( PyramidContents ) createPyramidContents() );
 		final BdvHandle bdvHandle = BdvUtils.show( pyramidalBdv, pyramidalService );
 		activeViewerService.setActiveViewer( bdvHandle.getViewerPanel() );
 		this.pyramidalBdv = pyramidalBdv;
 */
 		// already shown in BDV, keep the DisplayPostprocessor from also opening it
 		resolveOutput( "pyramidal" );
+		pyramidalService.registerPyramidal( this.pyramidal );
+		pyramidalService.setActivePyramidal( this.pyramidal );
 	}
 
 	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > createPyramidContents()
