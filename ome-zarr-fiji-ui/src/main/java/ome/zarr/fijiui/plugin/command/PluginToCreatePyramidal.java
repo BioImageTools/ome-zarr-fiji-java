@@ -101,24 +101,27 @@ public class PluginToCreatePyramidal extends DynamicCommand
 	@Override
 	public void run()
 	{
+		final Context ctx = context();
+		final PyramidContents< ? > pyramidContents = createPyramidContents();
+
 		pyramidal = new Pyramidal()
 		{
 			@Override
 			public PyramidContents< ? > getPyramidContents()
 			{
-				return createPyramidContents();
+				return pyramidContents;
 			}
 
 			@Override
 			public Context context()
 			{
-				return context();
+				return ctx;
 			}
 
 			@Override
 			public Context getContext()
 			{
-				return context();
+				return ctx;
 			}
 		};
 /*
