@@ -138,8 +138,7 @@ public class SaveAsOmeZarrLabkitExtension implements LabkitExtension
 			try
 			{
 				final N5PyramidSaver< UnsignedByteType > saver = new N5PyramidSaver<>( folder.toURI() );
-				saver.initEmptyContainer();
-				saver.initEmptyMultiscales( "", segmentationContents( source, level ) );
+				saver.createMultiscales( "", segmentationContents( source, level ) );
 				saver.writeRegion( segmentation, 0 );
 				message( extensible, "Saved the segmentation to\n" + folder, JOptionPane.INFORMATION_MESSAGE );
 			}
