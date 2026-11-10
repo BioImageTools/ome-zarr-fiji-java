@@ -41,6 +41,7 @@ import java.util.function.Supplier;
 
 import com.google.gson.JsonSyntaxException;
 
+import bdv.cache.SharedQueue;
 import bdv.util.BdvHandle;
 import ij.IJ;
 import ij.gui.YesNoCancelDialog;
@@ -99,6 +100,8 @@ public class OmeZarr
 
 	private final Predicate< String > openAnywayConfirmation;
 
+	private final SharedQueue sharedQueue;
+
 	private PyramidContents< ? > cachedContents;
 
 	/**
@@ -151,12 +154,20 @@ public class OmeZarr
 			final Integer preferredMaxWidth, final Consumer< String > errorHandler,
 			final Predicate< String > openAnywayConfirmation )
 	{
+		this( inputUri, context, backend, preferredMaxWidth, errorHandler, openAnywayConfirmation, null );
+	}
+
+	private OmeZarr( final URI inputUri, final Context context, final PyramidBackend backend,
+			final Integer preferredMaxWidth, final Consumer< String > errorHandler,
+			final Predicate< String > openAnywayConfirmation, final SharedQueue sharedQueue )
+	{
 		this.inputUri = inputUri;
 		this.context = context;
 		this.backend = backend;
 		this.preferredMaxWidth = preferredMaxWidth;
 		this.errorHandler = errorHandler;
 		this.openAnywayConfirmation = openAnywayConfirmation;
+		this.sharedQueue = sharedQueue;
 	}
 
 	/**
@@ -169,7 +180,7 @@ public class OmeZarr
 	 */
 	public OmeZarr withPreferredMaxWidth( final Integer preferredMaxWidth )
 	{
-		return new OmeZarr( inputUri, context, backend, preferredMaxWidth, errorHandler, openAnywayConfirmation );
+		return new OmeZarr( inputUri, context, backend, preferredMaxWidth, errorHandler, openAnywayConfirmation, sharedQueue );
 	}
 
 	/**
@@ -181,7 +192,22 @@ public class OmeZarr
 	 */
 	public OmeZarr withErrorHandler( final Consumer< String > errorHandler )
 	{
-		return new OmeZarr( inputUri, context, backend, preferredMaxWidth, errorHandler, openAnywayConfirmation );
+		return new OmeZarr( inputUri, context, backend, preferredMaxWidth, errorHandler, openAnywayConfirmation, sharedQueue );
+	}
+
+	/**
+	 * A copy of this whose {@link #showInBdv()} loads through {@code sharedQueue}, e.g. to share
+	 * fetcher threads and priorities with other images, see
+	 * {@link PyramidalBdv#PyramidalBdv(Context, PyramidContents, SharedQueue)}. The copy reads on
+	 * its own, it does not share this one's cached {@link PyramidContents}.
+	 *
+	 * @param sharedQueue the queue that loads the chunks for BigDataViewer, which the caller keeps
+	 *   ownership of, or {@code null} for a queue of the image's own
+	 * @return the copy
+	 */
+	public OmeZarr withSharedQueue( final SharedQueue sharedQueue )
+	{
+		return new OmeZarr( inputUri, context, backend, preferredMaxWidth, errorHandler, openAnywayConfirmation, sharedQueue );
 	}
 
 	/**
@@ -469,7 +495,7 @@ public class OmeZarr
 					PyramidContents< ? > pyramidContents = readContents();
 					if ( uncalibratedAndDeclined( pyramidContents ) )
 						return null;
-					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, pyramidContents );
+					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, pyramidContents, sharedQueue );
 					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 					final BdvHandle result = BdvUtils.show( pyramidal, bdvHandle, pyramidalService );
 					context.getService( ActiveViewerService.class ).setActiveViewer( result.getViewerPanel() );
