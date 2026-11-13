@@ -64,7 +64,7 @@ class BdvUtilsTest
 		try (Context context = new Context())
 		{
 			PyramidalService pyramidalService = context.getService( PyramidalService.class );
-			BdvHandle bdvHandle = BdvUtils.showInOneWindow( Arrays.asList( spots, labels ), context, pyramidalService );
+			BdvHandle bdvHandle = BdvUtils.showInOneWindow( Arrays.asList( spots, labels ), context );
 			try
 			{
 				assertEquals( 2, bdvHandle.getViewerPanel().state().getSources().size() );
@@ -83,7 +83,7 @@ class BdvUtilsTest
 	@Test
 	void showInOneWindowOpensNoWindowForNothing()
 	{
-		assertNull( BdvUtils.showInOneWindow( Collections.emptyList(), null, null ) );
+		assertNull( BdvUtils.showInOneWindow( Collections.emptyList(), null ) );
 	}
 
 	/** Omero channels are applied only when there are as many of them as there are sources. */

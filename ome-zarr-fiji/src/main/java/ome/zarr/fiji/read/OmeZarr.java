@@ -470,8 +470,7 @@ public class OmeZarr
 					if ( uncalibratedAndDeclined( pyramidContents ) )
 						return null;
 					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, pyramidContents );
-					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
-					final BdvHandle result = BdvUtils.show( pyramidal, bdvHandle, pyramidalService );
+					final BdvHandle result = BdvUtils.show( pyramidal, bdvHandle );
 					context.getService( ActiveViewerService.class ).setActiveViewer( result.getViewerPanel() );
 					logger.info( "{} pyramidal in BigDataViewer: {}", bdvHandle == null ? "Opened" : "Added", inputUri );
 					return result;

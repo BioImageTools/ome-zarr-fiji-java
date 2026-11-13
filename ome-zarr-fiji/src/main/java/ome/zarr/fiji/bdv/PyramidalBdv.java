@@ -47,10 +47,15 @@ import org.scijava.plugin.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.Window;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.swing.SwingUtilities;
 
 import bdv.BigDataViewer;
 import bdv.cache.SharedQueue;
@@ -58,10 +63,13 @@ import bdv.img.cache.VolatileCachedCellImg;
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.util.volatiles.VolatileView;
 import bdv.util.volatiles.VolatileViews;
+import bdv.viewer.AbstractViewerPanel;
 import bdv.viewer.SourceAndConverter;
+import bdv.viewer.ViewerStateChange;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import ome.zarr.fiji.Pyramidal;
+import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 
@@ -306,6 +314,67 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		refs--;
 		if ( refs == 0 )
 			unregister();
+	}
+
+	/**
+	 * Registers the window of {@code viewer} as showing this pyramidal, so commands acting on the
+	 * active OME-Zarr image find it. Increments the reference count and installs a listener that
+	 * decrements it (and unregisters the window) when the window closes. Does nothing if
+	 * {@code viewer} is not in a window.
+	 * <p>
+	 * A viewer window can show several pyramidals. The {@link PyramidalService} of this pyramidal's
+	 * context maps the window to the pyramidal owning the viewer's current source. So this pyramidal
+	 * is registered now only if one of its sources is current (BDV makes the first source added to
+	 * an empty viewer current), and again whenever one of its sources becomes current. Without a
+	 * {@link PyramidalService} in the context, this only counts references.
+	 * <p>
+	 * Focus switches themselves are observed centrally by {@link PyramidalService} via the AWT
+	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
+	 *
+	 * @param viewer the viewer showing this pyramidal's sources, whose top-level window is tracked
+	 */
+	public void registerViewer( final AbstractViewerPanel viewer )
+	{
+		final Window window = SwingUtilities.getWindowAncestor( viewer );
+		if ( window == null )
+			return;
+		incrementReferences();
+		final PyramidalService pyramidalService = getContext().getService( PyramidalService.class );
+		if ( pyramidalService != null )
+		{
+			if ( isCurrentSource( viewer ) )
+				pyramidalService.registerBdvWindow( window, this );
+			viewer.state().changeListeners().add( change -> {
+				if ( change == ViewerStateChange.CURRENT_SOURCE_CHANGED && isCurrentSource( viewer ) )
+					pyramidalService.registerBdvWindow( window, this );
+			} );
+		}
+		window.addWindowListener( new WindowAdapter()
+		{
+			@Override
+			public void windowClosed( final WindowEvent e )
+			{
+				if ( pyramidalService != null )
+					pyramidalService.unregisterBdvWindow( window );
+				decrementReferences();
+			}
+		} );
+	}
+
+	/**
+	 * Whether the current source of {@code viewer} shows this pyramidal's image data, i.e., wraps
+	 * one of its spim sources. A viewer may pair them with converters of its own.
+	 * Checked per viewer, since one pyramidal may be shown in several.
+	 */
+	private boolean isCurrentSource( final AbstractViewerPanel viewer )
+	{
+		final SourceAndConverter< ? > current = viewer.state().getCurrentSource();
+		if ( current == null )
+			return false;
+		for ( final SourceAndConverter< ? > source : sources )
+			if ( source.getSpimSource() == current.getSpimSource() )
+				return true;
+		return false;
 	}
 
 	/**
