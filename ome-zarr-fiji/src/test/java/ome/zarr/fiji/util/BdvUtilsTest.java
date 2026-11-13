@@ -42,6 +42,7 @@ import org.scijava.Context;
 
 import bdv.util.BdvHandle;
 import ome.zarr.ZarrTestUtils;
+import ome.zarr.fiji.bdv.OmeroDisplay;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
@@ -93,10 +94,10 @@ class BdvUtilsTest
 		final Omero.Channel channel = new Omero.Channel( true, 1, null, null, false, null, null );
 		final Omero omero = new Omero( 0, null, null, Arrays.asList( channel, channel, channel ) );
 		final int numChannels = omero.channels().size();
-		assertEquals( numChannels, BdvUtils.omeroChannels( omero, numChannels ).size(), "as many channels as sources" );
-		assertTrue( BdvUtils.omeroChannels( omero, numChannels + 1 ).isEmpty(), "fewer channels than sources" );
-		assertTrue( BdvUtils.omeroChannels( omero, numChannels - 1 ).isEmpty(), "more channels than sources" );
+		assertEquals( numChannels, OmeroDisplay.channels( omero, numChannels ).size(), "as many channels as sources" );
+		assertTrue( OmeroDisplay.channels( omero, numChannels + 1 ).isEmpty(), "fewer channels than sources" );
+		assertTrue( OmeroDisplay.channels( omero, numChannels - 1 ).isEmpty(), "more channels than sources" );
 		// empty, never null, so callers test isEmpty() and never dereference null
-		assertTrue( BdvUtils.omeroChannels( null, numChannels ).isEmpty(), "no omero metadata at all" );
+		assertTrue( OmeroDisplay.channels( null, numChannels ).isEmpty(), "no omero metadata at all" );
 	}
 }

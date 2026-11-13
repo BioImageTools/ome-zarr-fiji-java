@@ -281,7 +281,7 @@ public interface PyramidalBdvTestBase
 			Omero.Channel on = channels.get( 1 );
 			channels.set( 1, new Omero.Channel( false, on.coefficient(), on.color(), on.family(), on.inverted(),
 					on.label(), on.window() ) );
-			BdvUtils.setChannelProperties( channels, sources, bdvHandle.getConverterSetups(), state );
+			OmeroDisplay.apply( channels, sources, bdvHandle.getConverterSetups(), state );
 			assertTrue( state.isSourceActive( sources.get( 0 ) ) );
 			assertFalse( state.isSourceActive( sources.get( 1 ) ) );
 			assertTrue( state.isSourceActive( sources.get( 2 ) ) );
