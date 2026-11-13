@@ -67,8 +67,8 @@ import ome.zarr.imglib2.util.ImageSizes;
  * <p>
  * This base is deliberately free of any Fiji/BDV dependency: it exercises only
  * the {@code ome.zarr.imglib2} core API. Tests for the Fiji wrappers
- * ({@code PyramidalDataset}, {@code PyramidalBdv}) live in the {@code ome.zarr.fiji}
- * test package instead, so that the core and backend packages stay independent
+ * ({@code PyramidalDataset}, {@code PyramidalBdv}) live in the {@code ome.zarr.fiji} and {@code ome.zarr.fiji.bdv}
+ * test packages instead, so that the core and backend packages stay independent
  * of the Fiji integration layer.
  */
 public interface PyramidBackendTestBase

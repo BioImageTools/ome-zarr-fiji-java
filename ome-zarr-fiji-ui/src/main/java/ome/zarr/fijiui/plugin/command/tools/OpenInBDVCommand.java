@@ -75,7 +75,7 @@ public class OpenInBDVCommand implements Command
 				logger.warn( message );
 			return;
 		}
-		final BdvHandle bdvHandle = BdvUtils.showInOneWindow( selectContents(), this.pyramidal.getContext(), pyramidalService );
+		final BdvHandle bdvHandle = BdvUtils.showInOneWindow( selectContents(), this.pyramidal.getContext() );
 		if ( bdvHandle != null )
 			OmeZarrBdvDropListener.install( bdvHandle, this.pyramidal.getContext() );
 	}

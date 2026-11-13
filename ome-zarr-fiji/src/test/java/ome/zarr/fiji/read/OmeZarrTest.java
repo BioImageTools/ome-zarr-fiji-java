@@ -72,7 +72,7 @@ import net.imglib2.type.numeric.ARGBType;
 import javax.swing.SwingUtilities;
 
 import ome.zarr.ZarrTestUtils;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidBackend;

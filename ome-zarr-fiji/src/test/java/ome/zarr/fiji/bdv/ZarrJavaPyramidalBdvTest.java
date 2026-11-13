@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ome.zarr.fiji;
+package ome.zarr.fiji.bdv;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -35,19 +35,19 @@ import org.scijava.Context;
 
 import ome.zarr.ZarrTestUtils;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.n5.N5PyramidBackend;
+import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 
 /**
  * Runs the {@link PyramidalBdvTestBase} BigDataViewer-wrapper tests against
- * {@link PyramidContents} produced by the {@link N5PyramidBackend}.
+ * {@link PyramidContents} produced by the {@link ZarrJavaPyramidBackend}.
  */
-class N5PyramidalBdvTest implements PyramidalBdvTestBase
+class ZarrJavaPyramidalBdvTest implements PyramidalBdvTestBase
 {
 	@Override
 	public PyramidContents< ? > read( final String resource, final Context context )
 			throws URISyntaxException
 	{
 		Path path = ZarrTestUtils.resourcePath( resource );
-		return new N5PyramidBackend().read( path.toUri() );
+		return new ZarrJavaPyramidBackend().read( path.toUri() );
 	}
 }

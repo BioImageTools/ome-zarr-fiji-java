@@ -55,7 +55,7 @@ import org.scijava.ui.UIService;
 
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.Pyramidal;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.ZarrTestUtils;
 
