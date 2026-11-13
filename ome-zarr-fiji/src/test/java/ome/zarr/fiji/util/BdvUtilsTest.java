@@ -43,7 +43,7 @@ import org.scijava.Context;
 import bdv.util.BdvHandle;
 import ome.zarr.ZarrTestUtils;
 import ome.zarr.fiji.Pyramidal;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.Omero;
