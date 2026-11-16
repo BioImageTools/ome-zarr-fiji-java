@@ -289,7 +289,8 @@ dialog, once per session, from `openWithSettings` and not from `createOmeZarr`: 
 `OpenOmeZarrAsDatasetCommand`, which must stay dialog-free so that unattended macros do not hang. The probe sits in a holder class so it runs and logs once,
 on first use. `OmeZarrBackend` still imports `ZarrJavaPyramidBackend` directly: verified to load without it, since the
 `new` is only resolved when that branch runs. `ome-zarr-zarrjava` stays a `compile` dependency of `fiji-ui`, since Fiji
-installs jars from update sites, not through Maven scopes.
+installs jars from update sites, not through Maven scopes. `ZarrJavaMissingTest` runs in a surefire execution of its
+own that drops the `zarr-java` jar from the test classpath, and the default execution skips it.
 
 **Active-window tracking:** `ActiveViewerService` is the only AWT focus listener: it tracks the most recently focused
 image viewer, an ImageJ `ImageWindow` or a BDV `ViewerPanel`, whoever opened it. `PyramidalService` follows it to track
