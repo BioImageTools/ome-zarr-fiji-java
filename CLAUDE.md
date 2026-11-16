@@ -35,7 +35,7 @@ runnable check behind" reflex; the existing suites are where tests go when asked
 ## What this project is
 
 A Fiji/ImageJ plugin that provides drag-and-drop support for opening OME-Zarr (Open Microscopy Environment – Zarr) image
-datasets. It supports OME-Zarr v0.4 (Zarr v2) and v0.5 (Zarr v3) and integrates with both ImageJ and BigDataViewer for
+datasets. It supports OME-Zarr v0.4 (Zarr v2), v0.5 and v0.6 (Zarr v3) and integrates with both ImageJ and BigDataViewer for
 multi-resolution visualization.
 
 ## Build and test commands
@@ -328,6 +328,12 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   `GET /img.ozx/` is a 404. `ZarrUtils.isZarr` judges an archive by the file alone, since looking inside means reading
   the whole ZIP index. Other backends refuse archives up front: `N5PyramidBackend.openReader` throws
   `ZipArchiveUnsupportedException`, which `OmeZarr` turns into "switch the reader backend to zarr-java".
+
+  OME-Zarr v0.6 also moves rotations/affines into the multiscales-level `coordinateTransformations` (intrinsic →
+  e.g. "world"), which zarr-java's version-independent `getMultiscaleNode` leaves out. `MultiscaleTransformV06` reads
+  them from the typed v0.6 entry and `ZarrJavaPyramidBackend` pre-concatenates them onto every level transform. Only
+  linear types with inline parameters map onto an `AffineTransform3D`; displacements, coordinates, `mapAxis` etc. are
+  skipped with a warning so the image still opens in its intrinsic space. v0.6 scenes are not read yet.
 
   Every AWS SDK reference lives in the package-private `S3StoreFactory` (the AWS SDK arrives transitively via
   zarr-java), so the SDK is loaded only when an `s3:` URI is actually opened; `file:`/`http(s):` datasets never touch
