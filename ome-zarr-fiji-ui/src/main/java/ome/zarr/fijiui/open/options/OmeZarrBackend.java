@@ -105,17 +105,6 @@ public enum OmeZarrBackend
 
 	/**
 	 * Creates a fresh backend for the backend library this constant represents,
-	 * reading {@code s3:} URIs with the AWS SDK default profile.
-	 *
-	 * @return a new backend instance, never {@code null}
-	 */
-	public PyramidBackend createBackend()
-	{
-		return createBackend( null );
-	}
-
-	/**
-	 * Creates a fresh backend for the backend library this constant represents,
 	 * or for {@link #N5} if that library is not installed.
 	 *
 	 * @param awsProfile the AWS profile for {@code s3:} URIs, or {@code null} for

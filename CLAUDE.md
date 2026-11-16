@@ -99,7 +99,7 @@ One entry point deliberately does **not** end in `openWithSettings()`: `OpenOmeZ
 (`Plugins > OME-Zarr > Open OME-Zarr as Dataset`, issue #40) takes the location as a single `String` input and declares
 a `PyramidalDataset` output, so scripts can capture the image. It cannot honor the chosen `OmeZarrOpener` — BDV and the
 selection dialog produce no `Dataset` — so it always reads one, via `OmeZarr.readPyramidalDataset()` with the
-persisted backend, at full resolution (it passes no preferred width). Neither that method nor the command displays the
+persisted backend, at full resolution (it resets the preferred width that `createOmeZarr` sets). Neither that method nor the command displays the
 image: the
 `@Parameter( type = ItemIO.OUTPUT )` on the `dataset` field only hands it to the caller, and a script that captures it
 decides what to do with it. Being plain text rather than a chooser, it accepts `http(s):` too, but *not* `s3:`.

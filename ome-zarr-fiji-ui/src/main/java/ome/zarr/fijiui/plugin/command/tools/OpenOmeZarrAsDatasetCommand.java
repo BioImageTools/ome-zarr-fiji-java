@@ -40,7 +40,6 @@ import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
 import ome.zarr.fiji.PyramidalDataset;
-import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fijiui.util.ClipboardUtils;
 import ome.zarr.imglib2.exceptions.NotZarrException;
@@ -107,8 +106,8 @@ public class OpenOmeZarrAsDatasetCommand extends ContextCommand
 		}
 		final OmeZarrOpeningSettings settings =
 				OmeZarrOpeningSettings.loadSettingsFromPreferences( context.getService( PrefService.class ) );
-		final OmeZarr omeZarr = new OmeZarr( uri, context, settings.getBackend().createBackend() )
-				.withErrorHandler( errorHandler );
-		return omeZarr.readPyramidalDataset();
+		return settings.createOmeZarr( uri, context, errorHandler )
+				.withPreferredMaxWidth( null ) // scripts get the full resolution, not the ImageJ preview width
+				.readPyramidalDataset();
 	}
 }

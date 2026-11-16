@@ -94,7 +94,7 @@ class BdvOpenersTest
 		List< BdvHandle > windows = new ArrayList<>();
 		for ( String image : Arrays.asList( SPOTS, LABELS ) )
 		{
-			opener.open( new OmeZarr( ZarrTestUtils.resourcePath( image ).toUri(), context, DEFAULT_BACKEND.createBackend() ) );
+			opener.open( new OmeZarr( ZarrTestUtils.resourcePath( image ).toUri(), context, DEFAULT_BACKEND.createBackend( null ) ) );
 			windows.add( BdvUtils.bdvHandleOf( activeViewerService.getActiveViewer() ) );
 		}
 		assertEquals( 2, context.getService( PyramidalService.class ).getPyramidals().size() );
