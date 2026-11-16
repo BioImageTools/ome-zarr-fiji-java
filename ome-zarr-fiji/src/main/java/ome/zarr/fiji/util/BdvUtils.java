@@ -34,6 +34,7 @@ import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 
@@ -113,6 +114,11 @@ public class BdvUtils
 	 * Increments the pyramidal's reference count and decrements it when the window closes.
 	 * Only a new window is moved to the timepoint the OMERO metadata names. When adding, the
 	 * viewer's timepoint is left alone, so the images already shown do not jump.
+	 * <p>
+	 * Runs on the EDT, waiting for it when called from another thread: a new BDV window builds
+	 * an HTML help dialog, and Swing's HTML style sheets are shared and not thread-safe, so
+	 * building it off the EDT while the EDT renders HTML elsewhere fails with a
+	 * {@code NullPointerException} in {@code StyleSheet.getRule}.
 	 *
 	 * @param pyramidalBdv the input {@link PyramidalBdv} to be displayed in BDV
 	 * @param bdvHandle the BDV to add it to, or {@code null} to open a new window
@@ -120,6 +126,33 @@ public class BdvUtils
 	 * @return the {@code BdvHandle} of the window showing the pyramidal
 	 */
 	public static BdvHandle show( final PyramidalBdv< ? > pyramidalBdv, final BdvHandle bdvHandle,
+			final PyramidalService pyramidalService )
+	{
+		if ( SwingUtilities.isEventDispatchThread() )
+			return showOnEdt( pyramidalBdv, bdvHandle, pyramidalService );
+		final BdvHandle[] shownIn = new BdvHandle[ 1 ];
+		try
+		{
+			SwingUtilities.invokeAndWait( () -> shownIn[ 0 ] = showOnEdt( pyramidalBdv, bdvHandle, pyramidalService ) );
+		}
+		catch ( InterruptedException e )
+		{
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException( "Interrupted while opening BigDataViewer", e );
+		}
+		catch ( InvocationTargetException e )
+		{
+			final Throwable cause = e.getCause();
+			if ( cause instanceof RuntimeException )
+				throw ( RuntimeException ) cause;
+			if ( cause instanceof Error )
+				throw ( Error ) cause;
+			throw new IllegalStateException( cause );
+		}
+		return shownIn[ 0 ];
+	}
+
+	private static BdvHandle showOnEdt( final PyramidalBdv< ? > pyramidalBdv, final BdvHandle bdvHandle,
 			final PyramidalService pyramidalService )
 	{
 		final PyramidContents< ? > pyramidContents = pyramidalBdv.getPyramidContents();
