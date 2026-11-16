@@ -35,6 +35,10 @@ permissions:
 
 jobs:
   Sonar-Analysis-and-Report:
+    # GitHub withholds SONAR_TOKEN from pull requests opened from forks, so the scan can only fail there.
+    # Skip it instead; a maintainer can run this workflow by hand on a copy of the branch in this repository.
+    # Not pull_request_target: that would run the fork's code (its pom and tests) with the secret.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
 
     steps:
