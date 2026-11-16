@@ -133,7 +133,7 @@ class OmeZarrOpenActionsTest
 	private static PyramidContents< ? > readMultiscaleHeadless( final URI uri, final Context context,
 			final OmeZarrBackend backend )
 	{
-		final PyramidBackend pyramidBackend = backend.createBackend( null );
+		final PyramidBackend pyramidBackend = backend.create();
 		final OmeZarr omeZarr = new OmeZarr( uri, context, pyramidBackend ).withErrorHandler( error -> {} );
 		return omeZarr.readContents();
 	}
@@ -272,7 +272,7 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v4.ome.zarr" );
 		try (Context context = new Context(); MockedConstruction< N5Importer > ignored = mockConstruction( N5Importer.class ))
 		{
-			OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ) );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() ) );
 			assertDoesNotThrow( actions::openImporterDialog );
 		}
 	}
@@ -284,7 +284,7 @@ class OmeZarrOpenActionsTest
 		try (Context context = new Context();
 				MockedConstruction< N5ViewerCreator > ignored = mockConstruction( N5ViewerCreator.class ))
 		{
-			OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ) );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() ) );
 			assertDoesNotThrow( actions::openViewerDialog );
 		}
 	}
@@ -298,7 +298,7 @@ class OmeZarrOpenActionsTest
 				MockedConstruction< N5Importer > importers = mockConstruction( N5Importer.class );
 				MockedConstruction< N5ViewerCreator > viewers = mockConstruction( N5ViewerCreator.class ))
 		{
-			OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( uri, context, DEFAULT_BACKEND.createBackend( null ) ) );
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( uri, context, DEFAULT_BACKEND.create() ) );
 			actions.openImporterDialog();
 			actions.openViewerDialog();
 
@@ -353,7 +353,7 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ); // no preferred width means that the highest resolution is opened
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() ); // no preferred width means that the highest resolution is opened
 			omeZarr.showInImageJ();
 
 			DatasetService datasetService = context.getService( DatasetService.class );
@@ -421,7 +421,7 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) )
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() )
 					.withErrorHandler( System.out::println );
 			omeZarr.showInImageJ();
 
@@ -494,7 +494,7 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) );
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() );
 			BdvHandle bdvHandle = omeZarr.showInBdv();
 			assertNotNull( bdvHandle, "BDV should have opened" );
 
@@ -522,7 +522,7 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( resource );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) )
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() )
 					.withErrorHandler( System.out::println );
 			BdvHandle bdvHandle = omeZarr.showInBdv();
 			assertNotNull( bdvHandle, "BDV should have opened" );
@@ -630,7 +630,7 @@ class OmeZarrOpenActionsTest
 					scriptFailed.set( true );
 					System.out.println( errorMessage );
 				};
-				OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) )
+				OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() )
 						.withErrorHandler( errorHandler ) );
 				actions.runScript();
 
@@ -674,7 +674,7 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) );
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() );
 
 			// Open both resolution levels in ImageJ – each produces a separate dataset window,
 			// all backed by the same PyramidContents (shared cachedCellImgs / volatileImgs)
@@ -762,7 +762,7 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) );
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() );
 			BdvHandle bdvHandle = null;
 			try
 			{
@@ -820,7 +820,7 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr" );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) );
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() );
 			BdvHandle bdvHandle = null;
 			try
 			{
@@ -879,7 +879,7 @@ class OmeZarrOpenActionsTest
 				scriptFailed.set( true );
 				System.out.println( errorMessage );
 			};
-			OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) )
+			OmeZarrOpenActions actions = new OmeZarrOpenActions( new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() )
 					.withErrorHandler( errorHandler ) );
 			actions.runScript();
 
@@ -916,7 +916,7 @@ class OmeZarrOpenActionsTest
 		Path path = ZarrTestUtils.resourcePath( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr" );
 		try (Context context = new Context())
 		{
-			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) );
+			OmeZarr omeZarr = new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() );
 			try
 			{
 				omeZarr.showInImageJ( 0 );

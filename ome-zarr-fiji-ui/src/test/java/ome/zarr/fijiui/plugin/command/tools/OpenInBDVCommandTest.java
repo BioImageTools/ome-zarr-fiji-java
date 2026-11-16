@@ -97,7 +97,7 @@ class OpenInBDVCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInImageJ();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() ).showInImageJ();
 
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			final DatasetService datasetService = context.getService( DatasetService.class );
@@ -135,7 +135,7 @@ class OpenInBDVCommandTest
 		{
 			// Simulate the first BDV open.
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInBdv();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() ).showInBdv();
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
@@ -163,8 +163,8 @@ class OpenInBDVCommandTest
 	{
 		try (Context context = new Context())
 		{
-			new OmeZarr( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInImageJ();
-			new OmeZarr( ZarrTestUtils.resourcePath( LABELS ).toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInImageJ();
+			new OmeZarr( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context, DEFAULT_BACKEND.create() ).showInImageJ();
+			new OmeZarr( ZarrTestUtils.resourcePath( LABELS ).toUri(), context, DEFAULT_BACKEND.create() ).showInImageJ();
 			flushEventQueue();
 			Pyramidal active = context.getService( PyramidalService.class ).getActivePyramidal();
 			context.getService( UIService.class ).setHeadless( true );

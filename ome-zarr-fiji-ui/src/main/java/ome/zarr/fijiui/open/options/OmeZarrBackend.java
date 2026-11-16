@@ -86,7 +86,7 @@ public enum OmeZarrBackend
 	 * ships it. zarr-java needs both {@code ome-zarr-zarrjava} and {@code zarr-java},
 	 * which come with the OME-Zarr update site and may be missing elsewhere.
 	 *
-	 * @return {@code true} if {@link #createBackend(String)} can construct this backend
+	 * @return {@code true} if {@link #create(String)} can construct this backend
 	 */
 	public boolean isAvailable()
 	{
@@ -96,11 +96,23 @@ public enum OmeZarrBackend
 	/**
 	 * This backend if it {@link #isAvailable() is available}, otherwise {@link #N5}.
 	 *
-	 * @return the backend that {@link #createBackend(String)} actually constructs
+	 * @return the backend that {@link #create(String)} actually constructs
 	 */
 	OmeZarrBackend effective()
 	{
 		return isAvailable() ? this : N5;
+	}
+
+	/**
+	 * Creates a fresh backend for the backend library this constant represents,
+	 * reading {@code s3:} URIs with the AWS SDK default profile.
+	 *
+	 * @return a new backend instance, never {@code null}
+	 * @see #create(String)
+	 */
+	public PyramidBackend create()
+	{
+		return create( null );
 	}
 
 	/**
@@ -111,7 +123,7 @@ public enum OmeZarrBackend
 	 *   the AWS SDK default
 	 * @return a new backend instance, never {@code null}
 	 */
-	public PyramidBackend createBackend( final String awsProfile )
+	public PyramidBackend create( final String awsProfile )
 	{
 		switch ( effective() )
 		{

@@ -93,7 +93,7 @@ class OpenResolutionLevelCommandTest
 		{
 			final OpenResolutionLevelCommand cmd = createCommand( context );
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInBdv();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() ).showInBdv();
 			cmd.initialize();
 			assertFalse( cmd.isCanceled() );
 			final MutableModuleItem< ? > item = assertInstanceOf( MutableModuleItem.class, cmd.getInfo().getInput( "resolutionLevel" ) );
@@ -113,7 +113,7 @@ class OpenResolutionLevelCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInBdv();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() ).showInBdv();
 
 			final Map< String, Object > inputs = new HashMap<>();
 			inputs.put( "resolutionLevel", level1Choice( context ) );
@@ -134,7 +134,7 @@ class OpenResolutionLevelCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInImageJ();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() ).showInImageJ();
 
 			final Map< String, Object > inputs = new HashMap<>();
 			inputs.put( "resolutionLevel", level1Choice( context ) );
@@ -157,7 +157,7 @@ class OpenResolutionLevelCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInBdv();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() ).showInBdv();
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 			final Pyramidal bdvPyramidal = pyramidalService.getPyramidals().get( 0 );
 
@@ -183,7 +183,7 @@ class OpenResolutionLevelCommandTest
 		try (Context context = new Context())
 		{
 			final Path path = ZarrTestUtils.resourcePath( PYRAMID_RESOURCE );
-			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInImageJ();
+			new OmeZarr( path.toUri(), context, DEFAULT_BACKEND.create() ).showInImageJ();
 
 			final DatasetService datasetService = context.getService( DatasetService.class );
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
@@ -214,8 +214,8 @@ class OpenResolutionLevelCommandTest
 		final Path path2d = ZarrTestUtils.resourcePath( "ome/zarr/testdata/2d_testing/2d_dataset_v5.ome.zarr" );
 		try (Context context = new Context())
 		{
-			new OmeZarr( path5d.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInImageJ();
-			new OmeZarr( path2d.toUri(), context, DEFAULT_BACKEND.createBackend( null ) ).showInBdv();
+			new OmeZarr( path5d.toUri(), context, DEFAULT_BACKEND.create() ).showInImageJ();
+			new OmeZarr( path2d.toUri(), context, DEFAULT_BACKEND.create() ).showInBdv();
 
 			final Map< String, Object > inputs = new HashMap<>();
 			inputs.put( "resolutionLevel", level1Choice( context ) );

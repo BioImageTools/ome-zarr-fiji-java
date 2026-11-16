@@ -147,7 +147,7 @@ for free, with no change here.
 `~/.aws/*` (no key fields in any dialog, nothing secret in `PrefService`), and the user only picks a profile *name* in
 `S3Settings` — a dialog of its own, since most users never need it and it means nothing on Fiji-Stable, but stored in
 `OmeZarrOpeningSettings` next to the backend, so each open reads one settings object. The name travels as a
-constructor argument of the backend (`OmeZarrBackend.createBackend( awsProfile )`), so callers only need
+constructor argument of the backend (`OmeZarrBackend.create( awsProfile )`), so callers only need
 `PyramidBackend`. A setter on `AbstractPyramidBackend` forced callers onto the abstract class, and a setter on the
 interface would have to throw for every backend that cannot read `s3:` (PR #139 review). Both backends build a fresh
 `S3Client` per open, so a changed profile applies to the next open without a restart.
@@ -284,7 +284,7 @@ it is not worth the code. A 0.7-and-earlier preference therefore reads as an unk
 may lack `ome-zarr-zarrjava` or `zarr-java`. `OmeZarrOpeningSettings.getBackend()` already returns N5 then, so no
 caller has to remember a separate "effective backend" call (a public `effective()` existed during review and was
 dropped for that reason). Saving still writes the configured `ZARR_JAVA`, so enabling the update site restores it.
-`OmeZarrBackend.createBackend` falls back as well, for callers that use the enum directly. The user is told by a modal
+`OmeZarrBackend.create` falls back as well, for callers that use the enum directly. The user is told by a modal
 dialog, once per session, from `openWithSettings` and not from `createOmeZarr`: that factory also serves
 `OpenOmeZarrAsDatasetCommand`, which must stay dialog-free so that unattended macros do not hang. The probe sits in a holder class so it runs and logs once,
 on first use. `OmeZarrBackend` still imports `ZarrJavaPyramidBackend` directly: verified to load without it, since the

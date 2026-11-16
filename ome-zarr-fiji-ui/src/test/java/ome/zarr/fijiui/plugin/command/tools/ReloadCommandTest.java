@@ -144,7 +144,7 @@ class ReloadCommandTest
 		final Path dataset = testCase.copyTo( tempDir.resolve( "image.ome.zarr" ) );
 		context = new Context();
 		context.service( UIService.class ).showUI();
-		final OmeZarr omeZarr = new OmeZarr( dataset.toUri(), context, backend.createBackend( null ) );
+		final OmeZarr omeZarr = new OmeZarr( dataset.toUri(), context, backend.create() );
 		omeZarr.showInBdv();
 		imagePlus = imagePlusOf( omeZarr.showInImageJ( 0 ) );
 		testCase.moveTo( imagePlus );

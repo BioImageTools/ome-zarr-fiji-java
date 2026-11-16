@@ -66,7 +66,7 @@ class LabkitOpenerTest
 		try (Context context = new Context())
 		{
 			final OmeZarr omeZarr = new OmeZarr( ZarrTestUtils.resourcePath( SINGLE_LEVEL ).toUri(), context,
-					DEFAULT_BACKEND.createBackend( null ) );
+					DEFAULT_BACKEND.create() );
 			final PyramidalService pyramidalService = context.getService( PyramidalService.class );
 
 			new LabkitOpener().open( omeZarr );

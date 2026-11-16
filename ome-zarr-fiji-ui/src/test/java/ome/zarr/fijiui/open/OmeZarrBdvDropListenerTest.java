@@ -83,7 +83,7 @@ class OmeZarrBdvDropListenerTest
 		try (Context context = new Context())
 		{
 			new BdvAddToActiveOpener()
-					.open( new OmeZarr( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context, DEFAULT_BACKEND.createBackend( null ) ) );
+					.open( new OmeZarr( ZarrTestUtils.resourcePath( SPOTS ).toUri(), context, DEFAULT_BACKEND.create() ) );
 			assertInstanceOf( PyramidalBdv.class, context.getService( PyramidalService.class ).getActivePyramidal() );
 			BdvHandle bdvHandle = BdvUtils.bdvHandleOf( context.getService( ActiveViewerService.class ).getActiveViewer() );
 			assertNotNull( bdvHandle );
