@@ -28,11 +28,11 @@
  */
 package ome.zarr.fijiui.open.openers;
 
-import ome.zarr.fiji.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
+import ome.zarr.fiji.bdv.OmeroDisplay;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fiji.plugins.ActiveViewerService;
-import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.fijiui.util.PyramidTexts;
@@ -158,7 +158,7 @@ public class LabkitOpener implements OmeZarrOpener
 			final List< SourceAndConverter< T > > sources = pyramidal.asSources();
 			final BdvStackSource< T > stackSource = BdvFunctions.show( sources, pyramidal.getPyramidContents().numTimepoints(), options );
 			handle = stackSource.getBdvHandle();
-			BdvUtils.setChannelProperties( BdvUtils.omeroChannels( pyramidal.getPyramidContents().omero(), sources.size() ), sources,
+			OmeroDisplay.apply( OmeroDisplay.channels( pyramidal.getPyramidContents().omero(), sources.size() ), sources,
 					handle.getConverterSetups(), handle.getViewerPanel().state() );
 			return stackSource;
 		}
@@ -171,7 +171,7 @@ public class LabkitOpener implements OmeZarrOpener
 		void registerViewer( final Context context )
 		{
 			final ViewerPanel viewer = handle.getViewerPanel();
-			BdvUtils.registerViewer( pyramidal, viewer, context.getService( PyramidalService.class ) );
+			pyramidal.registerViewer( viewer );
 			context.getService( ActiveViewerService.class ).setActiveViewer( viewer );
 		}
 	}

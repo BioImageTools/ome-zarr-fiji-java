@@ -178,6 +178,10 @@ PyramidContents< ? > contents = omeZarr.readContents();   // read once, then cac
 // or build the BDV sources yourself
 PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, omeZarr.readContents() );
 List< ? extends SourceAndConverter< ? > > sources = pyramidal.asSources();
+// in a viewer of your own: track its window as the active OME-Zarr, and apply the OMERO display settings
+pyramidal.registerViewer( viewerPanel );
+OmeroDisplay.apply( OmeroDisplay.channels( pyramidal.getPyramidContents().omero(), sources.size() ), sources,
+		converterSetups, viewerPanel.state() );
 ```
 
 Because `omeZarr.readContents()` caches, sharing one `OmeZarr` instance means the pyramid is read once no matter how

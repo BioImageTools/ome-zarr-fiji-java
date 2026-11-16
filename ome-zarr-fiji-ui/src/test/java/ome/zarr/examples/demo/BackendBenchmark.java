@@ -53,7 +53,7 @@ import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
 import org.janelia.saalfeldlab.n5.universe.metadata.ome.ngff.OmeNgffMetadata;
 
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.n5.N5PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.ZarrTestUtils;

@@ -47,7 +47,7 @@ import bdv.viewer.SourceAndConverter;
 import bdv.viewer.ViewerPanel;
 
 import ome.zarr.ZarrTestUtils;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.read.OmeZarr;
