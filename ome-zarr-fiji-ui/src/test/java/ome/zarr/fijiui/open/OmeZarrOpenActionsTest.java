@@ -103,7 +103,7 @@ import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.fiji.read.OmeZarr;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fijiui.open.options.OmeZarrOpeningSettings;
 import ome.zarr.fiji.open.OmeZarrOpenerService;

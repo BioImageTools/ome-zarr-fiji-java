@@ -28,36 +28,24 @@
  */
 package ome.zarr.fiji.util;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.lang.invoke.MethodHandles;
-import java.util.Collections;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-
-import net.imglib2.type.numeric.ARGBType;
-
 import org.scijava.Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import bdv.tools.brightness.ConverterSetup;
 import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
-import bdv.util.Bounds;
 import bdv.viewer.AbstractViewerPanel;
-import bdv.viewer.ConverterSetupBounds;
 import bdv.viewer.ConverterSetups;
 import bdv.viewer.SourceAndConverter;
 import bdv.viewer.ViewerPanel;
 import bdv.viewer.ViewerState;
-import bdv.viewer.ViewerStateChange;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.bdv.OmeroDisplay;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidContents;
@@ -65,8 +53,6 @@ import ome.zarr.imglib2.metadata.Omero;
 
 public class BdvUtils
 {
-	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
-
 	/** The client property of a {@link ViewerPanel} holding its {@link BdvHandle}, see {@link #bdvHandleOf}. */
 	private static final String BDV_HANDLE_KEY = BdvHandle.class.getName();
 
@@ -76,51 +62,33 @@ public class BdvUtils
 	}
 
 	/**
-	 * Displays the given pyramidal in a new BigDataViewer (BDV) window, see
-	 * {@link #show(PyramidalBdv, BdvHandle, PyramidalService)}.
-	 *
-	 * @param pyramidalBdv the input {@link PyramidalBdv} to be displayed in BDV
-	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking
-	 * @return the {@code BdvHandle} of the new window
-	 */
-	public static BdvHandle show( final PyramidalBdv< ? > pyramidalBdv, final PyramidalService pyramidalService )
-	{
-		return show( pyramidalBdv, null, pyramidalService );
-	}
-
-	/**
 	 * Displays each of {@code contents} as a new {@link PyramidalBdv}, all in one new BigDataViewer
-	 * (BDV) window, see {@link #show(PyramidalBdv, BdvHandle, PyramidalService)}.
+	 * (BDV) window, see {@link #show(PyramidalBdv, BdvHandle)}.
 	 *
 	 * @param contents the OME-Zarrs to display, in the order their sources are added
 	 * @param context the SciJava context of the new pyramidals
-	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking
 	 * @return the {@code BdvHandle} of the new window, or {@code null} if {@code contents} is empty
 	 */
-	public static BdvHandle showInOneWindow( final List< PyramidContents< ? > > contents, final Context context,
-			final PyramidalService pyramidalService )
+	public static BdvHandle showInOneWindow( final List< PyramidContents< ? > > contents, final Context context )
 	{
 		BdvHandle bdvHandle = null;
 		for ( final PyramidContents< ? > pyramidContents : contents )
-			bdvHandle = show( new PyramidalBdv<>( context, pyramidContents ), bdvHandle, pyramidalService );
+			bdvHandle = show( new PyramidalBdv<>( context, pyramidContents ), bdvHandle );
 		return bdvHandle;
 	}
 
 	/**
 	 * Displays the given pyramidal in a new BigDataViewer (BDV) window, or adds it to the open one of
-	 * {@code bdvHandle}, applies its OMERO channel properties and registers it with
-	 * {@code pyramidalService} for focus tracking. {@link #bdvHandleOf} finds its handle.<br>
-	 * Increments the pyramidal's reference count and decrements it when the window closes.
+	 * {@code bdvHandle}, applies its OMERO channel properties and registers the viewer via
+	 * {@link PyramidalBdv#registerViewer}. {@link #bdvHandleOf} finds its handle.<br>
 	 * Only a new window is moved to the timepoint the OMERO metadata names. When adding, the
 	 * viewer's timepoint is left alone, so the images already shown do not jump.
 	 *
 	 * @param pyramidalBdv the input {@link PyramidalBdv} to be displayed in BDV
 	 * @param bdvHandle the BDV to add it to, or {@code null} to open a new window
-	 * @param pyramidalService the service to notify of focus changes, or {@code null} to skip tracking
 	 * @return the {@code BdvHandle} of the window showing the pyramidal
 	 */
-	public static BdvHandle show( final PyramidalBdv< ? > pyramidalBdv, final BdvHandle bdvHandle,
-			final PyramidalService pyramidalService )
+	public static BdvHandle show( final PyramidalBdv< ? > pyramidalBdv, final BdvHandle bdvHandle )
 	{
 		final PyramidContents< ? > pyramidContents = pyramidalBdv.getPyramidContents();
 		final BdvOptions options = bdvHandle == null
@@ -130,17 +98,17 @@ public class BdvUtils
 		shownIn.getViewerPanel().putClientProperty( BDV_HANDLE_KEY, shownIn );
 
 		if ( bdvHandle == null )
-			setTimepoint( pyramidContents.omero(), shownIn.getViewerPanel().state() );
-		final List< Omero.Channel > omeroChannels = omeroChannels( pyramidContents.omero(), pyramidalBdv.asSources().size() );
-		setChannelProperties( omeroChannels, pyramidalBdv.asSources(), shownIn.getConverterSetups(), shownIn.getViewerPanel().state() );
+			OmeroDisplay.setTimepoint( pyramidContents.omero(), shownIn.getViewerPanel().state() );
+		final List< Omero.Channel > omeroChannels = OmeroDisplay.channels( pyramidContents.omero(), pyramidalBdv.asSources().size() );
+		OmeroDisplay.apply( omeroChannels, pyramidalBdv.asSources(), shownIn.getConverterSetups(), shownIn.getViewerPanel().state() );
 
-		registerViewer( pyramidalBdv, shownIn.getViewerPanel(), pyramidalService );
+		pyramidalBdv.registerViewer( shownIn.getViewerPanel() );
 		return shownIn;
 	}
 
 	/**
 	 * The {@link BdvHandle} of {@code viewer} if it is the viewer of a BigDataViewer shown via
-	 * {@link #show(PyramidalBdv, BdvHandle, PyramidalService)}, else {@code null}, e.g., for an
+	 * {@link #show(PyramidalBdv, BdvHandle)}, else {@code null}, e.g., for an
 	 * ImageJ window or a BigDataViewer opened by another tool.
 	 * <p>
 	 * Mirrors the {@code BdvHandle.of( ViewerPanel )} proposed in
@@ -157,49 +125,17 @@ public class BdvUtils
 	}
 
 	/**
-	 * Increments the reference count of {@code pyramidalBdv} and, if {@code pyramidalService} is non-null,
-	 * registers the window of {@code viewer} with it for focus tracking. Also installs a listener to decrement the
-	 * reference count (and unregister the window) when the window closes. Does nothing if {@code viewer}
-	 * is not in a window.
-	 * <p>
-	 * A viewer window can show several pyramidals.
-	 * The {@code pyramidalService} maps the window to the pyramidal owning the viewer's current
-	 * source.
-	 * So {@code pyramidalBdv} is registered now only if one of its sources is current (BDV makes the
-	 * first source added to an empty viewer current), and again whenever one of its sources becomes current.
-	 * <p>
-	 * Focus switches themselves are observed centrally by {@link PyramidalService} via the AWT
-	 * {@link java.awt.KeyboardFocusManager}, so no per-window focus listener is needed here.
 	 * @param pyramidalBdv the {@link PyramidalBdv} the window displays
 	 * @param viewer the viewer showing {@code pyramidalBdv}, whose top-level window is tracked.
-	 * @param pyramidalService the service to register with, or {@code null} to only reference-count
+	 * @param pyramidalService ignored, {@link PyramidalBdv#registerViewer} looks the service up in
+	 *   the pyramidal's context
+	 * @deprecated Will be removed with the 0.11 release. Use {@link PyramidalBdv#registerViewer}.
 	 */
+	@Deprecated
 	public static void registerViewer( final PyramidalBdv< ? > pyramidalBdv, final AbstractViewerPanel viewer,
 			final PyramidalService pyramidalService )
 	{
-		final Window window = SwingUtilities.getWindowAncestor( viewer );
-		if ( window == null )
-			return;
-		pyramidalBdv.incrementReferences();
-		if ( pyramidalService != null )
-		{
-			if ( isCurrentSource( pyramidalBdv, viewer ) )
-				pyramidalService.registerBdvWindow( window, pyramidalBdv );
-			viewer.state().changeListeners().add( change -> {
-				if ( change == ViewerStateChange.CURRENT_SOURCE_CHANGED && isCurrentSource( pyramidalBdv, viewer ) )
-					pyramidalService.registerBdvWindow( window, pyramidalBdv );
-			} );
-		}
-		window.addWindowListener( new WindowAdapter()
-		{
-			@Override
-			public void windowClosed( final WindowEvent e )
-			{
-				if ( pyramidalService != null )
-					pyramidalService.unregisterBdvWindow( window );
-				pyramidalBdv.decrementReferences();
-			}
-		} );
+		pyramidalBdv.registerViewer( viewer );
 	}
 
 	/**
@@ -209,9 +145,8 @@ public class BdvUtils
 	 * @param pyramidalBdv the {@link PyramidalBdv} the window displays
 	 * @param window the top-level window to track
 	 * @param pyramidalService the service to register with, or {@code null} to only reference-count
-	 * @deprecated Will be removed with the 0.11 release. Use
-	 *   {@link #registerViewer(PyramidalBdv, AbstractViewerPanel, PyramidalService)}, which also
-	 *   follows the viewer's current source.
+	 * @deprecated Will be removed with the 0.11 release. Use {@link PyramidalBdv#registerViewer}, which
+	 *   also follows the viewer's current source.
 	 */
 	@Deprecated
 	public static void registerBdvWindow( final PyramidalBdv< ? > pyramidalBdv, final Window window,
@@ -233,145 +168,40 @@ public class BdvUtils
 	}
 
 	/**
-	 * Whether the current source of {@code viewer} shows {@code pyramidalBdv}'s image data, i.e., wraps
-	 * one of its spim sources. A viewer may pair them with converters of its own.
-	 * Checked per viewer, since one pyramidal may be shown in several.
-	 */
-	private static boolean isCurrentSource( final PyramidalBdv< ? > pyramidalBdv, final AbstractViewerPanel viewer )
-	{
-		final SourceAndConverter< ? > current = viewer.state().getCurrentSource();
-		if ( current == null )
-			return false;
-		for ( final SourceAndConverter< ? > source : pyramidalBdv.asSources() )
-			if ( source.getSpimSource() == current.getSpimSource() )
-				return true;
-		return false;
-	}
-
-	/**
-	 * Colors each of {@code sources} the way encoded in the OMERO channel metadata.
-	 * Sets each source's display range and bounds to what the metadata asks for.
-	 * Shows or hides each source according to the metadata.
-	 * <p>
 	 * @param omeroChannels the list of OMERO channels to apply, one per source and in source order
 	 * @param sources the viewer's sources, one per channel and in channel order
 	 * @param converterSetups the viewer's converter setups to look {@code sources} up in
 	 * @param state the viewer state that decides which sources are visible
+	 * @deprecated Will be removed with the 0.11 release. Use {@link OmeroDisplay#apply}.
 	 */
+	@Deprecated
 	public static void setChannelProperties( final List< Omero.Channel > omeroChannels,
 			final List< ? extends SourceAndConverter< ? > > sources,
 			final ConverterSetups converterSetups, final ViewerState state )
 	{
-		if ( omeroChannels.isEmpty() )
-			return;
-		for ( int channelNumber = 0; channelNumber < sources.size(); channelNumber++ )
-		{
-			final SourceAndConverter< ? > source = sources.get( channelNumber );
-			final Omero.Channel omeroChannel = omeroChannels.get( channelNumber );
-			final ConverterSetup converterSetup = converterSetups.getConverterSetup( source );
-			converterSetup.setColor( channelColor( omeroChannel ) );
-			if ( omeroChannel != null && omeroChannel.window() != null )
-				setDisplayRangeAndBounds( converterSetup, converterSetups.getBounds(), omeroChannel.window() );
-			state.setSourceActive( source, isChannelActive( omeroChannel ) );
-		}
+		OmeroDisplay.apply( omeroChannels, sources, converterSetups, state );
 	}
 
 	/**
-	 * Gives {@code converterSetup} the display range an OMERO channel window asks
-	 * for — {@code start}/{@code end}, where the brightness slider sits — and
-	 * {@code min}/{@code max} as the bounds, how far it may travel.
-	 * <p>
-	 * The bounds are only taken when the metadata really carries them: Gson leaves
-	 * an absent {@code min}/{@code max} at 0/0, which would leave the slider no
-	 * room at all. They need no widening to contain {@code start}/{@code end},
-	 * which some datasets place outside them, because
-	 * {@link ConverterSetupBounds#getBounds} joins the stored bounds with the
-	 * current display range on the way out.
-	 */
-	private static void setDisplayRangeAndBounds( final ConverterSetup converterSetup,
-			final ConverterSetupBounds converterSetupBounds, final Omero.Channel.Window window )
-	{
-		converterSetup.setDisplayRange( window.start(), window.end() );
-		if ( window.max() > window.min() )
-			converterSetupBounds.setBounds( converterSetup, new Bounds( window.min(), window.max() ) );
-	}
-
-	/**
-	 * The OMERO channel metadata to apply to display sources. One entry per source and in source order.
-	 * <p>
-	 * Returns an empty list when there is nothing to apply, i.e., no OMERO metadata at
-	 * all, or a channel count that disagrees with the number of sources. Callers must therefore test
-	 * {@link List#isEmpty()}, not for {@code null}.
-	 *
 	 * @param omero the dataset's OMERO metadata, may be {@code null}
 	 * @param numChannels the number of display sources to be configured
 	 * @return the channels to apply, empty if they cannot be applied
+	 * @deprecated Will be removed with the 0.11 release. Use {@link OmeroDisplay#channels}.
 	 */
+	@Deprecated
 	public static List< Omero.Channel > omeroChannels( final Omero omero, final int numChannels )
 	{
-		if ( omero == null || omero.channels() == null || omero.channels().isEmpty() )
-			return Collections.emptyList();
-		if ( omero.channels().size() != numChannels )
-		{
-			logger.warn(
-					"The number of channels in the Omero metadata ({}) does not match the number of sources in the dataset ({}). Channel properties will not be applied.",
-					omero.channels().size(), numChannels );
-			return Collections.emptyList();
-		}
-		return omero.channels();
+		return OmeroDisplay.channels( omero, numChannels );
 	}
 
 	/**
-	 * The display color of an OMERO channel: its {@code color}, an {@code RRGGBB}
-	 * hex string, made fully opaque. A channel without a color — or no channel at
-	 * all — is white.
-	 *
-	 * @param omeroChannel the channel, may be {@code null}
-	 * @return the color to give the channel's display source
-	 */
-	private static ARGBType channelColor( final Omero.Channel omeroChannel )
-	{
-		final Color color = omeroChannel == null || omeroChannel.color() == null
-				? Color.white
-				: Color.decode( "#" + omeroChannel.color() );
-		final int opaque = 255;
-		return new ARGBType( ARGBType.rgba( color.getRed(), color.getGreen(), color.getBlue(), opaque ) );
-	}
-
-	/**
-	 * Whether a channel should start out visible. A channel the metadata says
-	 * nothing about is shown, so a dataset without OMERO metadata does not open
-	 * blank.
-	 *
-	 * @param omeroChannel the channel, may be {@code null}
-	 * @return {@code true} if the channel's display source should be active
-	 */
-	private static boolean isChannelActive( final Omero.Channel omeroChannel )
-	{
-		return omeroChannel == null || omeroChannel.active();
-	}
-
-	/**
-	 * The timepoint a dataset should open at, from its OMERO rendering defaults,
-	 * or {@code 0} when it names none.
-	 *
-	 * @param omero the dataset's OMERO metadata, may be {@code null}
-	 * @return the timepoint index to show first
-	 */
-	private static int defaultTimepoint( final Omero omero )
-	{
-		return omero == null || omero.rdefs() == null ? 0 : omero.rdefs().defaultT();
-	}
-
-	/**
-	 * Moves {@code state} to the timepoint the dataset's OMERO rendering defaults
-	 * name, or to 0.
-	 *
 	 * @param omero the dataset's OMERO metadata, may be {@code null}
 	 * @param state the viewer state to move
+	 * @deprecated Will be removed with the 0.11 release. Use {@link OmeroDisplay#setTimepoint}.
 	 */
+	@Deprecated
 	public static void setTimepoint( final Omero omero, final ViewerState state )
 	{
-		state.setCurrentTimepoint( defaultTimepoint( omero ) );
+		OmeroDisplay.setTimepoint( omero, state );
 	}
 }

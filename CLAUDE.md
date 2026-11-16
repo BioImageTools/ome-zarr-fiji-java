@@ -341,7 +341,7 @@ registered) would be the alternative. Java package names stay `ome.zarr.*` throu
   `OmeZarr` turns into a "get Fiji-Latest" message plus a one-line warning instead of a linkage stack trace. That
   exception must be re-thrown ahead of the `catch ( RuntimeException e )` above, or its `isSdkException` call would fail
   to link too — on exactly the installation the message is about.
-- **`ome-zarr-fiji`** (+`.read`, `.read.exceptions`, `.open`, `.plugins`, `.util`) – ImageJ/BDV integration and, in
+- **`ome-zarr-fiji`** (+`.bdv`, `.read`, `.read.exceptions`, `.open`, `.plugins`, `.util`) – ImageJ/BDV integration and, in
   `.open`, the `OmeZarrOpener` extension point alone – a downstream opener depends on this module, not on `-ui`. It
   ships
   no opener of its own, so `OmeZarrOpenerService` names no default opener either: with an empty registry

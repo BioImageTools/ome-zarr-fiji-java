@@ -61,7 +61,7 @@ import bdv.util.BdvHandle;
 import bdv.viewer.ViewerStateChange;
 import ome.zarr.fiji.read.OmeZarr;
 import ome.zarr.ZarrTestUtils;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.util.BdvUtils;

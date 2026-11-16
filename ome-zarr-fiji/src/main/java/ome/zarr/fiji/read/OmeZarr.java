@@ -51,7 +51,7 @@ import ome.zarr.imglib2.s3.exceptions.AwsProfileNotFoundException;
 import ome.zarr.imglib2.exceptions.MultiImageDatasetException;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.fiji.plugins.PyramidalService;
@@ -470,8 +470,7 @@ public class OmeZarr
 					if ( uncalibratedAndDeclined( pyramidContents ) )
 						return null;
 					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, pyramidContents );
-					final PyramidalService pyramidalService = context.getService( PyramidalService.class );
-					final BdvHandle result = BdvUtils.show( pyramidal, bdvHandle, pyramidalService );
+					final BdvHandle result = BdvUtils.show( pyramidal, bdvHandle );
 					context.getService( ActiveViewerService.class ).setActiveViewer( result.getViewerPanel() );
 					logger.info( "{} pyramidal in BigDataViewer: {}", bdvHandle == null ? "Opened" : "Added", inputUri );
 					return result;

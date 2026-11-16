@@ -73,7 +73,7 @@ import ij.WindowManager;
 import ij.process.ImageProcessor;
 import ome.zarr.ZarrTestUtils;
 import ome.zarr.fiji.Pyramidal;
-import ome.zarr.fiji.PyramidalBdv;
+import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.PyramidalDataset;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.read.OmeZarr;
