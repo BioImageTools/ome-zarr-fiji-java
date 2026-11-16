@@ -154,12 +154,16 @@ public class OmeZarrOpeningSettings
 
 	/**
 	 * Gets the Zarr backend used to decode (encode) datasets.
+	 * <p>
+	 * This is the configured backend, or {@link OmeZarrBackend#N5} when the configured one is not
+	 * {@link OmeZarrBackend#isAvailable() installed}. The configured one is still what gets saved, so it applies
+	 * again once it is installed.
 	 *
-	 * @return the configured backend
+	 * @return the backend datasets are read with
 	 */
 	public OmeZarrBackend getBackend()
 	{
-		return backend;
+		return backend.effective();
 	}
 
 	/**
@@ -200,6 +204,9 @@ public class OmeZarrOpeningSettings
 	 *     <li>{@link OmeZarr#showInImageJ()} opens the largest level no wider than {@link #getPreferredMaxWidth()}</li>
 	 * </ul>
 	 * {@link #getOpenerName()} is not used. Which opener gets the {@link OmeZarr} is up to the caller.
+	 * <p>
+	 * Shows no dialog, so scripts can use it. Interactive callers tell the user about a missing backend, see
+	 * {@link #isConfiguredBackendAvailable()}.
 	 *
 	 * @param uri the OME-Zarr location to read
 	 * @param context the SciJava context used for display and services
@@ -211,6 +218,16 @@ public class OmeZarrOpeningSettings
 		return new OmeZarr( uri, context, backend.createBackend( awsProfile ) )
 				.withPreferredMaxWidth( preferredMaxWidth )
 				.withErrorHandler( errorHandler );
+	}
+
+	/**
+	 * Whether the configured backend is installed. If not, {@link #getBackend()} returns the fallback.
+	 *
+	 * @return {@code false} if datasets are read with a fallback instead of the configured backend
+	 */
+	public boolean isConfiguredBackendAvailable()
+	{
+		return backend.isAvailable();
 	}
 
 	/**
@@ -257,11 +274,11 @@ public class OmeZarrOpeningSettings
 		if ( openerName != null )
 			prefs.put( OmeZarrOpeningSettings.class, ZARR_OPEN_BEHAVIOR_SETTING_NAME, openerName );
 		prefs.put( OmeZarrOpeningSettings.class, ZARR_PREFERRED_WIDTH_SETTING_NAME, getPreferredMaxWidth() );
-		prefs.put( OmeZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, getBackend().name() );
+		prefs.put( OmeZarrOpeningSettings.class, ZARR_BACKEND_SETTING_NAME, backend.name() );
 		prefs.put( OmeZarrOpeningSettings.class, AWS_PROFILE_SETTING_NAME, awsProfile == null ? "" : awsProfile );
 		logger.debug( "Saved OME-Zarr opener to preferences: {}", openerName );
 		logger.debug( "Saved OME-Zarr preferred width to preferences: {}", getPreferredMaxWidth() );
-		logger.debug( "Saved OME-Zarr backend to preferences: {}", getBackend() );
+		logger.debug( "Saved OME-Zarr backend to preferences: {}", backend );
 		logger.debug( "Saved OME-Zarr AWS profile to preferences: {}", awsProfile );
 	}
 

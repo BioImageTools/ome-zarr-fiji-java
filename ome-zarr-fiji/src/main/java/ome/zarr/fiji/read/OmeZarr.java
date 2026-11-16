@@ -580,7 +580,9 @@ public class OmeZarr
 				+ e.getMissingClass() + "\n\r\n"
 				+ "Please try one of these:\n"
 				+ "- Switch the reader backend to zarr-java under "
-				+ "Plugins > OME-Zarr > Settings > Opening Behavior Settings.\n"
+				+ "Plugins > OME-Zarr > Settings > Opening Behavior Settings. "
+				+ "If zarr-java is not offered there, enable the OME-Zarr update site under "
+				+ "Help > Update... > Manage Update Sites.\n"
 				+ "- Use Fiji-latest instead. Download at https://fiji.sc" );
 		logger.warn( "Cannot open {} with the {} backend: reader library class missing ({})",
 				inputUri, backend.getName(), e.getMissingClass() );
@@ -592,7 +594,9 @@ public class OmeZarr
 				+ "This is a zipped OME-Zarr archive (.ozx), which the " + e.getBackendName()
 				+ " reader backend cannot read.\n\r\n"
 				+ "Please switch the reader backend to zarr-java under "
-				+ "Plugins > OME-Zarr > Settings > Opening Behavior Settings." );
+				+ "Plugins > OME-Zarr > Settings > Opening Behavior Settings.\n\r\n"
+				+ "If zarr-java is not offered there, enable the OME-Zarr update site under "
+				+ "Help > Update... > Manage Update Sites." );
 		logger.info( "Cannot open {} with the {} backend: zipped archives are unsupported", inputUri, e.getBackendName() );
 	}
 

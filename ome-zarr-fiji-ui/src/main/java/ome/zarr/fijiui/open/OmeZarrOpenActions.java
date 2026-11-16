@@ -32,6 +32,8 @@ import org.janelia.saalfeldlab.n5.bdv.N5ViewerCreator;
 import org.janelia.saalfeldlab.n5.ij.N5Importer;
 import org.scijava.Context;
 import org.scijava.prefs.PrefService;
+import org.scijava.ui.DialogPrompt;
+import org.scijava.ui.UIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +42,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import ij.IJ;
 import ome.zarr.fiji.open.OmeZarrOpener;
@@ -66,6 +69,9 @@ public class OmeZarrOpenActions
 
 	private static final String HELP_URL = "https://github.com/BioImageTools/ome-zarr-fiji-java/";
 
+	/** Whether the user was already told this session that the configured backend is missing. */
+	private static final AtomicBoolean fallbackNoticeShown = new AtomicBoolean();
+
 	private final OmeZarr omeZarr;
 
 	/**
@@ -85,6 +91,8 @@ public class OmeZarrOpenActions
 	{
 		final PrefService prefService = context.getService( PrefService.class );
 		final OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
+		if ( !settings.isConfiguredBackendAvailable() )
+			showBackendFallbackNoticeOnce( context, settings.getBackend().getDescription() );
 		final OmeZarr omeZarr = settings.createOmeZarr( inputUri, context, IJ::error );
 		final OmeZarrOpenerService openerService = context.getService( OmeZarrOpenerService.class );
 		if ( openerService == null )
@@ -110,6 +118,22 @@ public class OmeZarrOpenActions
 			if ( !openerService.open( fallback, omeZarr ) )
 				new ImageJPreferredResolutionOpener().open( omeZarr );
 		}
+	}
+
+	/**
+	 * Tells the user, once per session, that the configured backend is not installed. The dialog is modal, so it
+	 * belongs to this interactive route and not to {@link OmeZarrOpeningSettings#createOmeZarr}, which scripts use.
+	 */
+	private static void showBackendFallbackNoticeOnce( final Context context, final String fallback )
+	{
+		if ( !fallbackNoticeShown.compareAndSet( false, true ) )
+			return;
+		final UIService ui = context.getService( UIService.class );
+		if ( ui != null )
+			ui.showDialog( "The configured reader backend is not installed, so OME-Zarr images are read with "
+					+ fallback + " instead.\n\n"
+					+ "To use it, enable the OME-Zarr update site under Help > Update... > Manage Update Sites.",
+					"OME-Zarr reader backend", DialogPrompt.MessageType.INFORMATION_MESSAGE );
 	}
 
 	/**

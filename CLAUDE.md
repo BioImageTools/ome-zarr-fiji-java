@@ -280,6 +280,17 @@ it is not worth the code. A 0.7-and-earlier preference therefore reads as an unk
 `info` log, nothing thrown – and the next visit to `OpeningBehaviorSettings` overwrites it. `getOpenerName()` returns
 `null` for "never configured", which is what lets the priority rule above apply.
 
+**zarr-java is the default backend but optional at runtime** (issue #187): a Fiji without the OME-Zarr update site
+may lack `ome-zarr-zarrjava` or `zarr-java`. `OmeZarrOpeningSettings.getBackend()` already returns N5 then, so no
+caller has to remember a separate "effective backend" call (a public `effective()` existed during review and was
+dropped for that reason). Saving still writes the configured `ZARR_JAVA`, so enabling the update site restores it.
+`OmeZarrBackend.createBackend` falls back as well, for callers that use the enum directly. The user is told by a modal
+dialog, once per session, from `openWithSettings` and not from `createOmeZarr`: that factory also serves
+`OpenOmeZarrAsDatasetCommand`, which must stay dialog-free so that unattended macros do not hang. The probe sits in a holder class so it runs and logs once,
+on first use. `OmeZarrBackend` still imports `ZarrJavaPyramidBackend` directly: verified to load without it, since the
+`new` is only resolved when that branch runs. `ome-zarr-zarrjava` stays a `compile` dependency of `fiji-ui`, since Fiji
+installs jars from update sites, not through Maven scopes.
+
 **Active-window tracking:** `ActiveViewerService` is the only AWT focus listener: it tracks the most recently focused
 image viewer, an ImageJ `ImageWindow` or a BDV `ViewerPanel`, whoever opened it. `PyramidalService` follows it to track
 the active `Pyramidal`, which `PyramidalPreprocessor` auto-fills into any `Pyramidal`-typed command parameter.
