@@ -223,7 +223,7 @@ Reading the settings without opening anything:
 
 ```java
 OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
-PyramidBackend backend = settings.getBackend().createBackend();
+PyramidBackend backend = settings.getBackend().create( settings.getAwsProfile() );
 int preferredWidth = settings.getPreferredMaxWidth();
 
 // or all of it at once, as an OmeZarr

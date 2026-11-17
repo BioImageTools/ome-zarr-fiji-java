@@ -99,7 +99,7 @@ One entry point deliberately does **not** end in `openWithSettings()`: `OpenOmeZ
 (`Plugins > OME-Zarr > Open OME-Zarr as Dataset`, issue #40) takes the location as a single `String` input and declares
 a `PyramidalDataset` output, so scripts can capture the image. It cannot honor the chosen `OmeZarrOpener` — BDV and the
 selection dialog produce no `Dataset` — so it always reads one, via `OmeZarr.readPyramidalDataset()` with the
-persisted backend, at full resolution (it passes no preferred width). Neither that method nor the command displays the
+persisted backend, at full resolution (it resets the preferred width that `createOmeZarr` sets). Neither that method nor the command displays the
 image: the
 `@Parameter( type = ItemIO.OUTPUT )` on the `dataset` field only hands it to the caller, and a script that captures it
 decides what to do with it. Being plain text rather than a chooser, it accepts `http(s):` too, but *not* `s3:`.
@@ -147,7 +147,7 @@ for free, with no change here.
 `~/.aws/*` (no key fields in any dialog, nothing secret in `PrefService`), and the user only picks a profile *name* in
 `S3Settings` — a dialog of its own, since most users never need it and it means nothing on Fiji-Stable, but stored in
 `OmeZarrOpeningSettings` next to the backend, so each open reads one settings object. The name travels as a
-constructor argument of the backend (`OmeZarrBackend.createBackend( awsProfile )`), so callers only need
+constructor argument of the backend (`OmeZarrBackend.create( awsProfile )`), so callers only need
 `PyramidBackend`. A setter on `AbstractPyramidBackend` forced callers onto the abstract class, and a setter on the
 interface would have to throw for every backend that cannot read `s3:` (PR #139 review). Both backends build a fresh
 `S3Client` per open, so a changed profile applies to the next open without a restart.
@@ -279,6 +279,18 @@ it is not worth the code. A 0.7-and-earlier preference therefore reads as an unk
 "configured opener is not installed" fallback in `OmeZarrOpenActions.openWithSettings` – highest-priority opener, one
 `info` log, nothing thrown – and the next visit to `OpeningBehaviorSettings` overwrites it. `getOpenerName()` returns
 `null` for "never configured", which is what lets the priority rule above apply.
+
+**zarr-java is the default backend but optional at runtime** (issue #187): a Fiji without the OME-Zarr update site
+may lack `ome-zarr-zarrjava` or `zarr-java`. `OmeZarrOpeningSettings.getBackend()` already returns N5 then, so no
+caller has to remember a separate "effective backend" call (a public `effective()` existed during review and was
+dropped for that reason). Saving still writes the configured `ZARR_JAVA`, so enabling the update site restores it.
+`OmeZarrBackend.create` falls back as well, for callers that use the enum directly. The user is told by a modal
+dialog, once per session, from `openWithSettings` and not from `createOmeZarr`: that factory also serves
+`OpenOmeZarrAsDatasetCommand`, which must stay dialog-free so that unattended macros do not hang. The probe sits in a holder class so it runs and logs once,
+on first use. `OmeZarrBackend` still imports `ZarrJavaPyramidBackend` directly: verified to load without it, since the
+`new` is only resolved when that branch runs. `ome-zarr-zarrjava` stays a `compile` dependency of `fiji-ui`, since Fiji
+installs jars from update sites, not through Maven scopes. `ZarrJavaMissingTest` runs in a surefire execution of its
+own that drops the `zarr-java` jar from the test classpath, and the default execution skips it.
 
 **Active-window tracking:** `ActiveViewerService` is the only AWT focus listener: it tracks the most recently focused
 image viewer, an ImageJ `ImageWindow` or a BDV `ViewerPanel`, whoever opened it. `PyramidalService` follows it to track

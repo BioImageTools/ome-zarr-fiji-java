@@ -113,6 +113,9 @@ public class OpeningBehaviorSettings extends DynamicCommand
 			+ "<body width=" + WIDTH + "cm align=left>"
 			+ "N5 supports OME-Zarr v0.3 (Zarr v2) - v0.5 (Zarr v3). <i>Fiji latest only</i><br>"
 			+ "zarr-java supports OME-Zarr v0.4 (Zarr v2) - v0.5 (Zarr v3)."
+			+ ( OmeZarrBackend.ZARR_JAVA.isAvailable() ? ""
+					: "<br><b>zarr-java is not installed.</b> To use it, enable the OME-Zarr update site under "
+							+ "Help &gt; Update... &gt; Manage Update Sites." )
 			+ "</body>"
 			+ "</html>";
 
@@ -155,7 +158,8 @@ public class OpeningBehaviorSettings extends DynamicCommand
 	private void initOmeZarrBackends()
 	{
 		getInfo().getMutableInput( "readerBackend", String.class )
-				.setChoices( backendDescriptions( OmeZarrBackend.values() ) );
+				.setChoices( backendDescriptions( Arrays.stream( OmeZarrBackend.values() )
+						.filter( OmeZarrBackend::isAvailable ).toArray( OmeZarrBackend[]::new ) ) );
 	}
 
 	/**

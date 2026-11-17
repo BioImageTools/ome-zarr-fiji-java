@@ -28,7 +28,11 @@
  */
 package ome.zarr.fijiui.open.options;
 
+import java.lang.invoke.MethodHandles;
 import java.util.NoSuchElementException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.n5.N5PyramidBackend;
@@ -78,32 +82,84 @@ public enum OmeZarrBackend
 	}
 
 	/**
+	 * Whether this backend's reader library is installed. N5 always is, as Fiji
+	 * ships it. zarr-java needs both {@code ome-zarr-zarrjava} and {@code zarr-java},
+	 * which come with the OME-Zarr update site and may be missing elsewhere.
+	 *
+	 * @return {@code true} if {@link #create(String)} can construct this backend
+	 */
+	public boolean isAvailable()
+	{
+		return this != ZARR_JAVA || ZarrJavaProbe.AVAILABLE;
+	}
+
+	/**
+	 * This backend if it {@link #isAvailable() is available}, otherwise {@link #N5}.
+	 *
+	 * @return the backend that {@link #create(String)} actually constructs
+	 */
+	OmeZarrBackend effective()
+	{
+		return isAvailable() ? this : N5;
+	}
+
+	/**
 	 * Creates a fresh backend for the backend library this constant represents,
 	 * reading {@code s3:} URIs with the AWS SDK default profile.
 	 *
 	 * @return a new backend instance, never {@code null}
+	 * @see #create(String)
 	 */
-	public PyramidBackend createBackend()
+	public PyramidBackend create()
 	{
-		return createBackend( null );
+		return create( null );
 	}
 
 	/**
-	 * Creates a fresh backend for the backend library this constant represents.
+	 * Creates a fresh backend for the backend library this constant represents,
+	 * or for {@link #N5} if that library is not installed.
 	 *
 	 * @param awsProfile the AWS profile for {@code s3:} URIs, or {@code null} for
 	 *   the AWS SDK default
 	 * @return a new backend instance, never {@code null}
 	 */
-	public PyramidBackend createBackend( final String awsProfile )
+	public PyramidBackend create( final String awsProfile )
 	{
-		switch ( this )
+		switch ( effective() )
 		{
 		case ZARR_JAVA:
 			return new ZarrJavaPyramidBackend( awsProfile );
 		case N5:
 		default:
 			return new N5PyramidBackend( awsProfile );
+		}
+	}
+
+	/**
+	 * Probes once, on first use, whether zarr-java can be loaded. A holder class
+	 * rather than a field of the enum, so the probe runs (and logs) only when asked.
+	 */
+	private static final class ZarrJavaProbe
+	{
+		private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+		static final boolean AVAILABLE = probe();
+
+		private static boolean probe()
+		{
+			try
+			{
+				final ClassLoader loader = OmeZarrBackend.class.getClassLoader();
+				Class.forName( "ome.zarr.zarrjava.ZarrJavaPyramidBackend", false, loader );
+				Class.forName( "dev.zarr.zarrjava.core.Array", false, loader );
+				return true;
+			}
+			catch ( ClassNotFoundException | LinkageError e )
+			{
+				logger.info( "zarr-java is not installed ({}), reading OME-Zarr with N5 instead. "
+						+ "Enable the OME-Zarr update site to use zarr-java.", e.getMessage() );
+				return false;
+			}
 		}
 	}
 }
