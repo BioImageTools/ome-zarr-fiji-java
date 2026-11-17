@@ -21,7 +21,6 @@
     * For reference: Release script https://github.com/scijava/scijava-scripts/blob/main/release-version.sh
     * [ ] Clone https://github.com/scijava/scijava-scripts repo
     * [ ] Ensure that one of the git remotes has the name "origin"
-    * [ ] Close IntelliJ, if open
     * [ ] Run sh /path/to/release-version.sh from the project root directory
     * [ ] Confirm version number
     * [ ] The release script pushes to master on github.com
@@ -33,6 +32,8 @@
         * https://maven.scijava.org/service/rest/repository/browse/releases/ome/zarr/ome-zarr-zarrjava/
         * Snapshots of the main branch land in the snapshots repo instead, e.g.
           https://maven.scijava.org/service/rest/repository/browse/snapshots/ome/zarr/ome-zarr-fiji/
+    * [ ] Bump the parent version in `ome-zarr-coverage-report/pom.xml` to the new snapshot version, commit and push
+    * [ ] Delete the `pom.xml.releaseBackup` and module `LICENSE.txt` files the release script leaves behind
 * [ ] Download the created artifacts from
   maven.scijava.org
     * The build releases five artifacts (plus the `ome-zarr-java` POM):
