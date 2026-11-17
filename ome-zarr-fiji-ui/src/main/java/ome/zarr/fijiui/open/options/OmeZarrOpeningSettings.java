@@ -198,20 +198,18 @@ public class OmeZarrOpeningSettings
 	}
 
 	/**
-	 * Creates and returns an {@link OmeZarr} for {@code uri}, configured by these settings:
-	 * <ul>
-	 *     <li>it reads with {@link #getBackend()}, using {@link #getAwsProfile()} for {@code s3:} URIs</li>
-	 *     <li>{@link OmeZarr#showInImageJ()} opens the largest level no wider than {@link #getPreferredMaxWidth()}</li>
-	 * </ul>
-	 * {@link #getOpenerName()} is not used. Which opener gets the {@link OmeZarr} is up to the caller.
+	 * Creates an {@link OmeZarr} for {@code uri} that will read with the configured backend and AWS profile.
+	 * It also carries the configured preferred width, which picks the resolution level when the caller later calls
+	 * {@link OmeZarr#showInImageJ()} or {@link OmeZarr#readPyramidalDataset()}. The configured opener is ignored:
+	 * the caller decides what to do with the resulting {@link OmeZarr}.
 	 * <p>
-	 * Shows no dialog, so scripts can use it. Interactive callers tell the user about a missing backend, see
-	 * {@link #isConfiguredBackendAvailable()}.
+	 * Shows no dialog, so it is safe for unattended scripts. Interactive callers should check
+	 * {@link #isConfiguredBackendAvailable()} and tell the user about a fallback backend themselves.
 	 *
 	 * @param uri the OME-Zarr location to read
 	 * @param context the SciJava context used for display and services
 	 * @param errorHandler receives a user-facing message when opening fails
-	 * @return an {@link OmeZarr} for {@code uri} using these settings
+	 * @return a new {@link OmeZarr}, not yet read
 	 */
 	public OmeZarr createOmeZarr( final URI uri, final Context context, final Consumer< String > errorHandler )
 	{
