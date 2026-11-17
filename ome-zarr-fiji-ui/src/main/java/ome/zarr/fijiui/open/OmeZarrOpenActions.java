@@ -121,8 +121,7 @@ public class OmeZarrOpenActions
 	}
 
 	/**
-	 * Tells the user, once per session, that the configured backend is not installed. The dialog is modal, so it
-	 * belongs to this interactive route and not to {@link OmeZarrOpeningSettings#createOmeZarr}, which scripts use.
+	 * Tells the user, once per session, that the configured backend is not installed.
 	 */
 	private static void showBackendFallbackNoticeOnce( final Context context, final String fallback )
 	{
