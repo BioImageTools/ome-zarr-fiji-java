@@ -272,6 +272,27 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- Compares each module against its latest release and fails on binary incompatibility. -->
+			<plugin>
+				<groupId>com.github.siom79.japicmp</groupId>
+				<artifactId>japicmp-maven-plugin</artifactId>
+				<version>0.23.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>cmp</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<parameter>
+						<oldVersionPattern>\d+\.\d+\.\d+</oldVersionPattern>
+						<breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+						<ignoreMissingClasses>true</ignoreMissingClasses>
+						<ignoreMissingOldVersion>true</ignoreMissingOldVersion>
+					</parameter>
+				</configuration>
+			</plugin>
 		</plugins>
 		<pluginManagement>
 			<plugins>
