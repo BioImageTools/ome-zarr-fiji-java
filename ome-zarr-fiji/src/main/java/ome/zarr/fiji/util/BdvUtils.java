@@ -139,6 +139,19 @@ public class BdvUtils
 	}
 
 	/**
+	 * Same as {@link #registerBdvWindow(PyramidalBdv, Window, PyramidalService)}. Kept for jars compiled against
+	 * 0.10.3 or earlier (BigVolumeBrowser 0.2.1), which link this signature.
+	 *
+	 * @deprecated Will be removed with the 0.11 release. Use {@link PyramidalBdv#registerViewer}.
+	 */
+	@Deprecated
+	public static void registerBdvWindow( final ome.zarr.fiji.PyramidalBdv< ? > pyramidalBdv, final Window window,
+			final PyramidalService pyramidalService )
+	{
+		registerBdvWindow( ( PyramidalBdv< ? > ) pyramidalBdv, window, pyramidalService );
+	}
+
+	/**
 	 * Increments the reference count for the given {@code pyramidal} and, if {@code pyramidalService} is non-null,
 	 * registers {@code window} with it for focus tracking, unconditionally. Undoes both when the window closes.
 	 *
