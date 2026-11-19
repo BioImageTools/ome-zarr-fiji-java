@@ -43,7 +43,8 @@ A convenience layer for using **OME-Zarr** in Fiji/ImageJ. Open a dataset the wa
 in, paste a URI, use the menu, or call it from a script. Support local and remote (https/s3) stores, as well as zipped
 OME-Zarr archives (`.ozx`, read by the default zarr-java [reader backend](#reader-backend)).
 
-If the dropped / pasted / linked target is not recognized as a **OME-Zarr v0.3 - v0.5** resource, it does nothing.
+If the dropped / pasted / linked target is not recognized as a **OME-Zarr v0.3 - v0.6** resource, it does nothing.
+OME-Zarr v0.6 images are read by the zarr-java [reader backend](#reader-backend) only; v0.6 scenes are not supported yet.
 
 # Features
 

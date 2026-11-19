@@ -32,7 +32,10 @@ import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+
+import javax.swing.SwingUtilities;
 
 import org.scijava.Context;
 
@@ -83,12 +86,43 @@ public class BdvUtils
 	 * {@link PyramidalBdv#registerViewer}. {@link #bdvHandleOf} finds its handle.<br>
 	 * Only a new window is moved to the timepoint the OMERO metadata names. When adding, the
 	 * viewer's timepoint is left alone, so the images already shown do not jump.
+	 * <p>
+	 * Runs on the EDT, waiting for it when called from another thread: a new BDV window builds
+	 * an HTML help dialog, and Swing's HTML style sheets are shared and not thread-safe, so
+	 * building it off the EDT while the EDT renders HTML elsewhere fails with a
+	 * {@code NullPointerException} in {@code StyleSheet.getRule}.
 	 *
 	 * @param pyramidalBdv the input {@link PyramidalBdv} to be displayed in BDV
 	 * @param bdvHandle the BDV to add it to, or {@code null} to open a new window
 	 * @return the {@code BdvHandle} of the window showing the pyramidal
 	 */
 	public static BdvHandle show( final PyramidalBdv< ? > pyramidalBdv, final BdvHandle bdvHandle )
+	{
+		if ( SwingUtilities.isEventDispatchThread() )
+			return showOnEdt( pyramidalBdv, bdvHandle );
+		final BdvHandle[] shownIn = new BdvHandle[ 1 ];
+		try
+		{
+			SwingUtilities.invokeAndWait( () -> shownIn[ 0 ] = showOnEdt( pyramidalBdv, bdvHandle ) );
+		}
+		catch ( InterruptedException e )
+		{
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException( "Interrupted while opening BigDataViewer", e );
+		}
+		catch ( InvocationTargetException e )
+		{
+			final Throwable cause = e.getCause();
+			if ( cause instanceof RuntimeException )
+				throw ( RuntimeException ) cause;
+			if ( cause instanceof Error )
+				throw ( Error ) cause;
+			throw new IllegalStateException( cause );
+		}
+		return shownIn[ 0 ];
+	}
+
+	private static BdvHandle showOnEdt( final PyramidalBdv< ? > pyramidalBdv, final BdvHandle bdvHandle )
 	{
 		final PyramidContents< ? > pyramidContents = pyramidalBdv.getPyramidContents();
 		final BdvOptions options = bdvHandle == null
