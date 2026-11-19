@@ -60,10 +60,12 @@ import javax.swing.SwingUtilities;
 import bdv.BigDataViewer;
 import bdv.cache.SharedQueue;
 import bdv.img.cache.VolatileCachedCellImg;
+import bdv.tools.transformation.TransformedSource;
 import bdv.util.RandomAccessibleIntervalMipmapSource4D;
 import bdv.util.volatiles.VolatileView;
 import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.AbstractViewerPanel;
+import bdv.viewer.Source;
 import bdv.viewer.SourceAndConverter;
 import bdv.viewer.ViewerStateChange;
 import mpicbg.spim.data.sequence.FinalVoxelDimensions;
@@ -362,8 +364,8 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 	}
 
 	/**
-	 * Whether the current source of {@code viewer} shows this pyramidal's image data, i.e., wraps
-	 * one of its spim sources. A viewer may pair them with converters of its own.
+	 * Whether the current source of {@code viewer} shows this pyramidal's image data, i.e., is one
+	 * of its spim sources or wraps one in {@link TransformedSource}s.
 	 * Checked per viewer, since one pyramidal may be shown in several.
 	 */
 	private boolean isCurrentSource( final AbstractViewerPanel viewer )
@@ -371,10 +373,18 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		final SourceAndConverter< ? > current = viewer.state().getCurrentSource();
 		if ( current == null )
 			return false;
+		final Source< ? > spimSource = unwrap( current.getSpimSource() );
 		for ( final SourceAndConverter< ? > source : sources )
-			if ( source.getSpimSource() == current.getSpimSource() )
+			if ( source.getSpimSource() == spimSource )
 				return true;
 		return false;
+	}
+
+	private static Source< ? > unwrap( final Source< ? > source )
+	{
+		return source instanceof TransformedSource
+				? unwrap( ( ( TransformedSource< ? > ) source ).getWrappedSource() )
+				: source;
 	}
 
 	/**
