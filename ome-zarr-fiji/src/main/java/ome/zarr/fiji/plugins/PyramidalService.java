@@ -98,7 +98,7 @@ public class PyramidalService extends AbstractService implements SciJavaService
 
 	private Consumer< Component > activeViewerListener;
 
-	private ImageListener imageCloseListener;
+	private ImageListener imageListener;
 
 	@Override
 	public void initialize()
@@ -106,7 +106,7 @@ public class PyramidalService extends AbstractService implements SciJavaService
 		activePyramidal.set( null );
 		activeViewerListener = this::onActiveViewerChanged;
 		activeViewerService.addListener( activeViewerListener );
-		imageCloseListener = new ImageListener()
+		imageListener = new ImageListener()
 		{
 			@Override
 			public void imageOpened( final ImagePlus imp )
@@ -122,7 +122,7 @@ public class PyramidalService extends AbstractService implements SciJavaService
 				notifyImageClosed( imagePlus );
 			}
 		};
-		ImagePlus.addImageListener( imageCloseListener );
+		ImagePlus.addImageListener( imageListener );
 	}
 
 	@Override
@@ -134,10 +134,10 @@ public class PyramidalService extends AbstractService implements SciJavaService
 			activeViewerListener = null;
 		}
 
-		if ( imageCloseListener != null )
+		if ( imageListener != null )
 		{
-			ImagePlus.removeImageListener( imageCloseListener );
-			imageCloseListener = null;
+			ImagePlus.removeImageListener( imageListener );
+			imageListener = null;
 		}
 		bdvWindows.clear();
 		ijImages.clear();
