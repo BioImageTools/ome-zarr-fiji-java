@@ -96,6 +96,8 @@
 		<license.organizationName>SciJava</license.organizationName>
 		<license.copyrightOwners>SciJava developers</license.copyrightOwners>
 		<awaitility.version>4.3.0</awaitility.version>
+		<!-- LabkitExtension (issue #171) is unreleased: install stefanhahmann/labkit-ui, branch labkit-extension, locally and build with -Denforcer.skip. -->
+		<labkit-ui.version>0.5.0-SNAPSHOT</labkit-ui.version>
 	</properties>
 
 	<dependencies>
