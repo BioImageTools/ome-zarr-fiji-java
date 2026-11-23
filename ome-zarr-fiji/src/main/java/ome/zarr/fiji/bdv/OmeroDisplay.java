@@ -154,17 +154,16 @@ public final class OmeroDisplay
 
 	/**
 	 * The display color of an OMERO channel: its {@code color}, an {@code RRGGBB}
-	 * hex string, made fully opaque. A channel without a color — or no channel at
-	 * all — is white.
+	 * hex string, made fully opaque. A channel without a valid color — or no
+	 * channel at all — is white.
 	 *
 	 * @param omeroChannel the channel, may be {@code null}
 	 * @return the color to give the channel's display source
 	 */
 	private static ARGBType channelColor( final Omero.Channel omeroChannel )
 	{
-		final Color color = omeroChannel == null || omeroChannel.color() == null
-				? Color.white
-				: Color.decode( "#" + omeroChannel.color() );
+		final Color omeroColor = omeroChannel == null ? null : omeroChannel.awtColor();
+		final Color color = omeroColor == null ? Color.white : omeroColor;
 		final int opaque = 255;
 		return new ARGBType( ARGBType.rgba( color.getRed(), color.getGreen(), color.getBlue(), opaque ) );
 	}
