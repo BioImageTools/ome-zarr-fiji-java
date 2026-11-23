@@ -154,6 +154,7 @@ public interface PyramidBackendTestBase
 			assertEquals( 2, contents.numDimensions() );
 			assertEquals( "0", contents.name(), "Without a multiscales name, the array node name is used" );
 			assertNull( contents.omero() );
+			assertTrue( contents.omeroChannels().isEmpty(), "Without OMERO metadata there are no OMERO channels" );
 			assertTrue( contents.hasPlaceholderCalibration(),
 					"An array read from its own axis names has no real scale or unit, and must say so" );
 
@@ -246,6 +247,7 @@ public interface PyramidBackendTestBase
 			Omero omero = contents.omero();
 			assertNotNull( omero, "OMERO metadata is inherited from the parent group" );
 			assertEquals( 3, omero.channels().size() );
+			assertEquals( 3, contents.omeroChannels().size(), "As many OMERO channels as image channels" );
 			assertEquals( "lynEGFP", omero.channels().get( 0 ).label() );
 			assertEquals( "00FF00", omero.channels().get( 0 ).color() );
 		}

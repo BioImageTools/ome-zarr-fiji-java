@@ -44,6 +44,7 @@ import bdv.viewer.ConverterSetupBounds;
 import bdv.viewer.ConverterSetups;
 import bdv.viewer.SourceAndConverter;
 import bdv.viewer.ViewerState;
+import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.Omero;
 
 /**
@@ -73,7 +74,9 @@ public final class OmeroDisplay
 	 * @param omero the dataset's OMERO metadata, may be {@code null}
 	 * @param numChannels the number of display sources to be configured
 	 * @return the channels to apply, empty if they cannot be applied
+	 * @deprecated Will be removed with the 0.12 release. Use {@link PyramidContents#omeroChannels()}.
 	 */
+	@Deprecated
 	public static List< Omero.Channel > channels( final Omero omero, final int numChannels )
 	{
 		if ( omero == null || omero.channels() == null || omero.channels().isEmpty() )
@@ -94,7 +97,7 @@ public final class OmeroDisplay
 	 * Shows or hides each source according to the metadata.
 	 *
 	 * @param omeroChannels the list of OMERO channels to apply, one per source and in source order, as
-	 *   returned by {@link #channels}
+	 *   returned by {@link PyramidContents#omeroChannels()}
 	 * @param sources the viewer's sources, one per channel and in channel order
 	 * @param converterSetups the viewer's converter setups to look {@code sources} up in
 	 * @param state the viewer state that decides which sources are visible

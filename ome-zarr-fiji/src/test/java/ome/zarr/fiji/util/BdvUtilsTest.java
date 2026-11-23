@@ -42,12 +42,10 @@ import org.scijava.Context;
 
 import bdv.util.BdvHandle;
 import ome.zarr.ZarrTestUtils;
-import ome.zarr.fiji.bdv.OmeroDisplay;
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.imglib2.metadata.Omero;
 import ome.zarr.n5.N5PyramidBackend;
 
 class BdvUtilsTest
@@ -85,19 +83,5 @@ class BdvUtilsTest
 	void showInOneWindowOpensNoWindowForNothing()
 	{
 		assertNull( BdvUtils.showInOneWindow( Collections.emptyList(), null ) );
-	}
-
-	/** Omero channels are applied only when there are as many of them as there are sources. */
-	@Test
-	void testOmeroChannelCountMismatch()
-	{
-		final Omero.Channel channel = new Omero.Channel( true, 1, null, null, false, null, null );
-		final Omero omero = new Omero( 0, null, null, Arrays.asList( channel, channel, channel ) );
-		final int numChannels = omero.channels().size();
-		assertEquals( numChannels, OmeroDisplay.channels( omero, numChannels ).size(), "as many channels as sources" );
-		assertTrue( OmeroDisplay.channels( omero, numChannels + 1 ).isEmpty(), "fewer channels than sources" );
-		assertTrue( OmeroDisplay.channels( omero, numChannels - 1 ).isEmpty(), "more channels than sources" );
-		// empty, never null, so callers test isEmpty() and never dereference null
-		assertTrue( OmeroDisplay.channels( null, numChannels ).isEmpty(), "no omero metadata at all" );
 	}
 }

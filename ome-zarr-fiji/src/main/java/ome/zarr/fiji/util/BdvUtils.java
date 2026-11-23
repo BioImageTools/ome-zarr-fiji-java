@@ -41,7 +41,6 @@ import ome.zarr.fiji.bdv.OmeroDisplay;
 import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.plugins.ActiveViewerService;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.imglib2.metadata.Omero;
 
 public class BdvUtils
 {
@@ -94,8 +93,7 @@ public class BdvUtils
 
 		if ( bdvHandle == null )
 			OmeroDisplay.setTimepoint( pyramidContents.omero(), shownIn.getViewerPanel().state() );
-		final List< Omero.Channel > omeroChannels = OmeroDisplay.channels( pyramidContents.omero(), pyramidalBdv.asSources().size() );
-		OmeroDisplay.apply( omeroChannels, pyramidalBdv.asSources(), shownIn.getConverterSetups(), shownIn.getViewerPanel().state() );
+		OmeroDisplay.apply( pyramidContents.omeroChannels(), pyramidalBdv.asSources(), shownIn.getConverterSetups(), shownIn.getViewerPanel().state() );
 
 		pyramidalBdv.registerViewer( shownIn.getViewerPanel() );
 		return shownIn;
