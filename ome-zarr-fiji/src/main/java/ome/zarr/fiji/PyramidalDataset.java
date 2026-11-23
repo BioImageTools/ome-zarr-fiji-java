@@ -47,6 +47,7 @@ import net.imglib2.type.numeric.RealType;
 
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.metadata.Omero;
 
 /**
  * A {@code net.imagej.Dataset} that can be viewed
@@ -144,6 +145,28 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( selectedAxes.get( i ).name, Axes.unknown() );
 			imgPlus.setAxis( new DefaultLinearAxis( axisType, selectedAxes.get( i ).unit, selectedAxes.get( i ).scale ), i );
 		}
+		setDisplayRanges( imgPlus, contents.omeroChannels() );
 		return imgPlus;
+	}
+
+	/**
+	 * Gives each channel the display range of its OMERO window. ImageJ only computes
+	 * one (auto-contrast) for a channel without it, and ImageJ 1 takes it over too.
+	 * A window without a range, e.g. one whose {@code start}/{@code end} are missing,
+	 * is skipped.
+	 *
+	 * @param channels as returned by {@link PyramidContents#omeroChannels()}
+	 */
+	private static void setDisplayRanges( final ImgPlus< ? > imgPlus, final List< Omero.Channel > channels )
+	{
+		for ( int c = 0; c < channels.size(); c++ )
+		{
+			final Omero.Channel.Window window = channels.get( c ) == null ? null : channels.get( c ).window();
+			if ( window != null && window.end() > window.start() )
+			{
+				imgPlus.setChannelMinimum( c, window.start() );
+				imgPlus.setChannelMaximum( c, window.end() );
+			}
+		}
 	}
 }

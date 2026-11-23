@@ -51,7 +51,7 @@ import ome.zarr.imglib2.util.CellPrefetcher;
  * 0 % for most of it and then jumps, and contrast looks like the slow part.
  * Loaded beforehand, all three reads come from the cache.
  * <p>
- * Auto-contrast is skipped for a dataset with a display range. The serial readers
+ * Auto-contrast is skipped for a dataset with OMERO windows. The serial readers
  * would then download the plane on their own, several times slower.
  */
 public final class FirstPlanePrefetcher
