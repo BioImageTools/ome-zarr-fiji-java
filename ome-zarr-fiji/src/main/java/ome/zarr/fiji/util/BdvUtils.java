@@ -81,6 +81,8 @@ public class BdvUtils
 	 * Displays the given pyramidal in a new BigDataViewer (BDV) window, or adds it to the open one of
 	 * {@code bdvHandle}, applies its OMERO channel properties and registers the viewer via
 	 * {@link PyramidalBdv#registerViewer}. {@link #bdvHandleOf} finds its handle.<br>
+	 * Registers the pyramidal's {@link PyramidalBdv#getCacheControl() queue} with the window, so that
+	 * BDV drops the requests of a view the user has panned away from.<br>
 	 * Only a new window is moved to the timepoint the OMERO metadata names. When adding, the
 	 * viewer's timepoint is left alone, so the images already shown do not jump.
 	 *
@@ -96,6 +98,7 @@ public class BdvUtils
 				: BdvOptions.options().addTo( bdvHandle );
 		final BdvHandle shownIn = BdvFunctions.show( pyramidalBdv.asSources(), pyramidContents.numTimepoints(), options ).getBdvHandle();
 		shownIn.getViewerPanel().putClientProperty( BDV_HANDLE_KEY, shownIn );
+		shownIn.getCacheControls().addCacheControl( pyramidalBdv.getCacheControl() );
 
 		if ( bdvHandle == null )
 			OmeroDisplay.setTimepoint( pyramidContents.omero(), shownIn.getViewerPanel().state() );
