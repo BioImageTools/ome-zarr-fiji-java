@@ -71,12 +71,7 @@ public class ZarrUtils
 	private static final String NO_METADATA_FOUND_AT =
 			"No Zarr metadata (zarr.json, .zgroup, .zarray or .zattrs) found at: ";
 
-	/**
-	 * Prevents instantiation. {@code protected} only so that the deprecated
-	 * {@link ome.zarr.imglib2.ZarrUtils} can extend this class; make it
-	 * {@code private} again when that one is removed.
-	 */
-	protected ZarrUtils()
+	private ZarrUtils()
 	{
 		// prevent instantiation
 	}
