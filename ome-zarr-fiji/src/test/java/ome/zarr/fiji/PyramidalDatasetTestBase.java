@@ -37,6 +37,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import ij.ImagePlus;
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
+import net.imagej.display.DatasetView;
+import net.imagej.display.ImageDisplayService;
+import net.imglib2.display.ColorTable;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -141,6 +144,59 @@ public interface PyramidalDatasetTestBase
 			// order of dimensions for imagePlus: width, height, channels, slices, frames
 			assertArrayEquals( new int[] { 32, 32, 3, 8, 4 }, imagePlus.getDimensions() );
 		}
+	}
+
+	/**
+	 * The OMERO window of each channel becomes its display range in the ImageJ2
+	 * view, so no auto-contrast runs, and its OMERO color the top of its lookup
+	 * table. A dataset without OMERO metadata leaves both to ImageJ: no range is set
+	 * beforehand, and the channels get the default red, green and blue.
+	 */
+	@Test
+	default void omeroWindowsAndColorsReachTheDatasetView() throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			final PyramidalDataset withOmero = new PyramidalDataset( context,
+					read( "ome/zarr/testdata/5d_testing/5d_dataset_v5.ome.zarr", context ), 0 );
+			final DatasetView omeroView = view( context, withOmero );
+			assertRange( omeroView, 0, 3, 246 );
+			assertRange( omeroView, 1, 6, 133 );
+			assertRange( omeroView, 2, 3, 246 );
+			// 16 z-planes lie before the channel axis, so this also checks which table belongs to which channel
+			assertEquals( 0x00FF00, topColor( omeroView, 0 ) );
+			assertEquals( 0xFF0000, topColor( omeroView, 1 ) );
+			assertEquals( 0x00FF00, topColor( omeroView, 2 ) );
+
+			final PyramidalDataset withoutOmero = new PyramidalDataset( context,
+					read( "ome/zarr/testdata/4d_testing/xyzc/4d_dataset_v5.ome.zarr", context ), 0 );
+			assertTrue( Double.isNaN( withoutOmero.getImgPlus().getChannelMinimum( 0 ) ), "no range before auto-contrast" );
+			final DatasetView plainView = view( context, withoutOmero );
+			assertEquals( 0xFF0000, topColor( plainView, 0 ) );
+			assertEquals( 0x00FF00, topColor( plainView, 1 ) );
+			assertEquals( 0x0000FF, topColor( plainView, 2 ) );
+		}
+	}
+
+	static DatasetView view( final Context context, final Dataset dataset )
+	{
+		final DatasetView view = context.service( ImageDisplayService.class ).createDatasetView( dataset );
+		view.rebuild();
+		return view;
+	}
+
+	static void assertRange( final DatasetView view, final int channel, final double min, final double max )
+	{
+		assertEquals( min, view.getChannelMin( channel ), "display range minimum of channel " + channel );
+		assertEquals( max, view.getChannelMax( channel ), "display range maximum of channel " + channel );
+	}
+
+	/** The RRGGBB value at the top of the lookup table of {@code channel}. */
+	static int topColor( final DatasetView view, final int channel )
+	{
+		final ColorTable table = view.getColorTables().get( channel );
+		final int top = table.getLength() - 1;
+		return table.get( ColorTable.RED, top ) << 16 | table.get( ColorTable.GREEN, top ) << 8 | table.get( ColorTable.BLUE, top );
 	}
 
 	/**

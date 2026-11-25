@@ -28,6 +28,7 @@
  */
 package ome.zarr.fiji;
 
+import java.awt.Color;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -42,11 +43,13 @@ import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
 import net.imagej.axis.DefaultLinearAxis;
+import net.imglib2.display.ColorTable8;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.metadata.Omero;
 
 /**
  * A {@code net.imagej.Dataset} that can be viewed
@@ -144,6 +147,66 @@ public class PyramidalDataset extends DefaultDataset implements Pyramidal
 			final AxisType axisType = AXIS_TYPE_MAP.getOrDefault( selectedAxes.get( i ).name, Axes.unknown() );
 			imgPlus.setAxis( new DefaultLinearAxis( axisType, selectedAxes.get( i ).unit, selectedAxes.get( i ).scale ), i );
 		}
+		setDisplayRanges( imgPlus, contents.omeroChannels() );
+		setColorTables( imgPlus, contents.omeroChannels() );
 		return imgPlus;
+	}
+
+	/**
+	 * Gives each channel the display range of its OMERO window. ImageJ only computes
+	 * one (auto-contrast) for a channel without it, and ImageJ 1 takes it over too.
+	 * A window without a range, e.g. one whose {@code start}/{@code end} are missing,
+	 * is skipped.
+	 *
+	 * @param channels as returned by {@link PyramidContents#omeroChannels()}
+	 */
+	private static void setDisplayRanges( final ImgPlus< ? > imgPlus, final List< Omero.Channel > channels )
+	{
+		for ( int c = 0; c < channels.size(); c++ )
+		{
+			final Omero.Channel.Window window = channels.get( c ) == null ? null : channels.get( c ).window();
+			if ( window != null && window.end() > window.start() )
+			{
+				imgPlus.setChannelMinimum( c, window.start() );
+				imgPlus.setChannelMaximum( c, window.end() );
+			}
+		}
+	}
+
+	/**
+	 * Colors each channel with a lookup table from black to its OMERO color.
+	 * A channel without a color, or with one that is not an {@code RRGGBB} hex string,
+	 * keeps ImageJ's default.
+	 *
+	 * @param channels as returned by {@link PyramidContents#omeroChannels()}
+	 */
+	private static void setColorTables( final ImgPlus< ? > imgPlus, final List< Omero.Channel > channels )
+	{
+		if ( channels.isEmpty() )
+			return;
+		// ImageJ reads the table of a channel at the index of the channel's first plane.
+		int planesPerChannel = 1;
+		for ( int d = 2; d < imgPlus.dimensionIndex( Axes.CHANNEL ); d++ )
+			planesPerChannel *= ( int ) imgPlus.dimension( d );
+		imgPlus.initializeColorTables( ( channels.size() - 1 ) * planesPerChannel + 1 );
+		for ( int channelIndex = 0; channelIndex < channels.size(); channelIndex++ )
+		{
+			final Color color = channels.get( channelIndex ) == null ? null : channels.get( channelIndex ).awtColor();
+			if ( color != null )
+				imgPlus.setColorTable( colorTable( color ), channelIndex * planesPerChannel );
+		}
+	}
+
+	/** A lookup table from black to {@code color}. */
+	private static ColorTable8 colorTable( final Color color )
+	{
+		final byte[][] values = new byte[ 3 ][ 256 ];
+		for ( int i = 0; i < 256; i++ )
+		{
+			values[ 0 ][ i ] = ( byte ) ( color.getRed() * i / 255 );
+			values[ 1 ][ i ] = ( byte ) ( color.getGreen() * i / 255 );
+			values[ 2 ][ i ] = ( byte ) ( color.getBlue() * i / 255 );
+		}
+		return new ColorTable8( values );
 	}
 }

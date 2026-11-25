@@ -44,6 +44,7 @@ import bdv.viewer.ConverterSetupBounds;
 import bdv.viewer.ConverterSetups;
 import bdv.viewer.SourceAndConverter;
 import bdv.viewer.ViewerState;
+import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.Omero;
 
 /**
@@ -73,7 +74,9 @@ public final class OmeroDisplay
 	 * @param omero the dataset's OMERO metadata, may be {@code null}
 	 * @param numChannels the number of display sources to be configured
 	 * @return the channels to apply, empty if they cannot be applied
+	 * @deprecated Will be removed with the 0.12 release. Use {@link PyramidContents#omeroChannels()}.
 	 */
+	@Deprecated
 	public static List< Omero.Channel > channels( final Omero omero, final int numChannels )
 	{
 		if ( omero == null || omero.channels() == null || omero.channels().isEmpty() )
@@ -94,7 +97,7 @@ public final class OmeroDisplay
 	 * Shows or hides each source according to the metadata.
 	 *
 	 * @param omeroChannels the list of OMERO channels to apply, one per source and in source order, as
-	 *   returned by {@link #channels}
+	 *   returned by {@link PyramidContents#omeroChannels()}
 	 * @param sources the viewer's sources, one per channel and in channel order
 	 * @param converterSetups the viewer's converter setups to look {@code sources} up in
 	 * @param state the viewer state that decides which sources are visible
@@ -151,17 +154,16 @@ public final class OmeroDisplay
 
 	/**
 	 * The display color of an OMERO channel: its {@code color}, an {@code RRGGBB}
-	 * hex string, made fully opaque. A channel without a color — or no channel at
-	 * all — is white.
+	 * hex string, made fully opaque. A channel without a valid color — or no
+	 * channel at all — is white.
 	 *
 	 * @param omeroChannel the channel, may be {@code null}
 	 * @return the color to give the channel's display source
 	 */
 	private static ARGBType channelColor( final Omero.Channel omeroChannel )
 	{
-		final Color color = omeroChannel == null || omeroChannel.color() == null
-				? Color.white
-				: Color.decode( "#" + omeroChannel.color() );
+		final Color omeroColor = omeroChannel == null ? null : omeroChannel.awtColor();
+		final Color color = omeroColor == null ? Color.white : omeroColor;
 		final int opaque = 255;
 		return new ARGBType( ARGBType.rgba( color.getRed(), color.getGreen(), color.getBlue(), opaque ) );
 	}

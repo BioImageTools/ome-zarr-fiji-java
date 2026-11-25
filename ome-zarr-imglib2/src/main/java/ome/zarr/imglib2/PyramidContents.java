@@ -184,6 +184,27 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	}
 
 	/**
+	 * The OMERO channels, one per image channel and in channel order.
+	 * <p>
+	 * Empty if there is no OMERO metadata, or if it lists a different number of channels than
+	 * {@link #numChannels()}, which is logged as a warning. Callers therefore test
+	 * {@link List#isEmpty()}, not for {@code null}.
+	 */
+	public List< Omero.Channel > omeroChannels()
+	{
+		if ( omero == null || omero.channels() == null || omero.channels().isEmpty() )
+			return Collections.emptyList();
+		if ( omero.channels().size() != numChannels() )
+		{
+			logger.warn(
+					"The number of channels in the Omero metadata ({}) does not match the number of channels in the dataset ({}). Channel properties will not be applied.",
+					omero.channels().size(), numChannels() );
+			return Collections.emptyList();
+		}
+		return omero.channels();
+	}
+
+	/**
 	 * Number of resolution levels in the pyramid.
 	 */
 	public int numResolutionLevels()
@@ -316,16 +337,10 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 */
 	public String[] channelLabels()
 	{
-		final int numChannels = numChannels();
-		final boolean omeroValid = omero != null && omero.channels() != null && omero.channels().size() == numChannels;
-		if ( omeroValid )
-			logger.trace( "Creating with OMERO metadata: {}", omero );
-		else
-			logger.trace( "Creating without OMERO metadata (not consistent or not available)" );
-
-		final String[] labels = new String[ numChannels ];
-		for ( int i = 0; i < numChannels; i++ )
-			labels[ i ] = omeroValid ? omero.channels().get( i ).label() : name;
+		final List< Omero.Channel > omeroChannels = omeroChannels();
+		final String[] labels = new String[ numChannels() ];
+		for ( int i = 0; i < labels.length; i++ )
+			labels[ i ] = omeroChannels.isEmpty() ? name : omeroChannels.get( i ).label();
 		return labels;
 	}
 

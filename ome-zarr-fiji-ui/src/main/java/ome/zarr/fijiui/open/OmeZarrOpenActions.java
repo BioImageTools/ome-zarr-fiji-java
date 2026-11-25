@@ -44,6 +44,8 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.swing.SwingUtilities;
+
 import ij.IJ;
 import ome.zarr.fiji.open.OmeZarrOpener;
 import ome.zarr.fiji.open.OmeZarrOpenerService;
@@ -89,6 +91,12 @@ public class OmeZarrOpenActions
 	 */
 	public static void openWithSettings( final URI inputUri, final Context context )
 	{
+		if ( SwingUtilities.isEventDispatchThread() )
+		{
+			// needed to avoid Fiji freezing on slow network connections and to show the chunk loading progress bar for paste shortcut and toolbar button
+			new Thread( () -> openWithSettings( inputUri, context ), "OME-Zarr open" ).start();
+			return;
+		}
 		final PrefService prefService = context.getService( PrefService.class );
 		final OmeZarrOpeningSettings settings = OmeZarrOpeningSettings.loadSettingsFromPreferences( prefService );
 		if ( !settings.isConfiguredBackendAvailable() )

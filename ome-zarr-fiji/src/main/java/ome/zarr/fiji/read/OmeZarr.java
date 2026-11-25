@@ -403,6 +403,7 @@ public class OmeZarr
 	private PyramidalDataset showAsDataset( final PyramidContents< ? > contents, final int resolutionLevel )
 	{
 		final PyramidalDataset dataset = new PyramidalDataset( context, contents, resolutionLevel );
+		FirstPlanePrefetcher.run( dataset );
 		context.getService( UIService.class ).show( dataset );
 		context.getService( ActiveViewerService.class ).setActiveViewer( null );
 		context.getService( PyramidalService.class ).setActivePyramidal( dataset );

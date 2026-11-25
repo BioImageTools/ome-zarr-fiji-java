@@ -158,7 +158,7 @@ public class LabkitOpener implements OmeZarrOpener
 			final List< SourceAndConverter< T > > sources = pyramidal.asSources();
 			final BdvStackSource< T > stackSource = BdvFunctions.show( sources, pyramidal.getPyramidContents().numTimepoints(), options );
 			handle = stackSource.getBdvHandle();
-			OmeroDisplay.apply( OmeroDisplay.channels( pyramidal.getPyramidContents().omero(), sources.size() ), sources,
+			OmeroDisplay.apply( pyramidal.getPyramidContents().omeroChannels(), sources,
 					handle.getConverterSetups(), handle.getViewerPanel().state() );
 			return stackSource;
 		}

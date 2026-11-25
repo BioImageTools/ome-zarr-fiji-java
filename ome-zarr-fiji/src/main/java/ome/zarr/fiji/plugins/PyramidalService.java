@@ -43,12 +43,14 @@ import java.util.stream.Collectors;
 import javax.swing.SwingUtilities;
 import net.imagej.Dataset;
 import net.imagej.patcher.LegacyInjector;
+import net.imglib2.img.display.imagej.ImageJVirtualStack;
 import org.scijava.convert.ConvertService;
 import org.scijava.object.ObjectService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
 import org.scijava.service.SciJavaService;
+import org.scijava.thread.ThreadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ome.zarr.fiji.Pyramidal;
@@ -88,6 +90,10 @@ public class PyramidalService extends AbstractService implements SciJavaService
 	@Parameter
 	private ActiveViewerService activeViewerService;
 
+	@SuppressWarnings( "unused" )
+	@Parameter( required = false )
+	private ThreadService threadService;
+
 	/** Registered BDV windows, each with the dataset owning its current source. */
 	private final Map< Window, Pyramidal > bdvWindows = new ConcurrentHashMap<>();
 
@@ -98,7 +104,7 @@ public class PyramidalService extends AbstractService implements SciJavaService
 
 	private Consumer< Component > activeViewerListener;
 
-	private ImageListener imageCloseListener;
+	private ImageListener imageListener;
 
 	@Override
 	public void initialize()
@@ -106,11 +112,13 @@ public class PyramidalService extends AbstractService implements SciJavaService
 		activePyramidal.set( null );
 		activeViewerListener = this::onActiveViewerChanged;
 		activeViewerService.addListener( activeViewerListener );
-		imageCloseListener = new ImageListener()
+		imageListener = new ImageListener()
 		{
 			@Override
-			public void imageOpened( final ImagePlus imp )
-			{ /* not needed */ }
+			public void imageOpened( final ImagePlus imagePlus )
+			{
+				loadSlicesInParallel( imagePlus );
+			}
 
 			@Override
 			public void imageUpdated( final ImagePlus imp )
@@ -122,7 +130,7 @@ public class PyramidalService extends AbstractService implements SciJavaService
 				notifyImageClosed( imagePlus );
 			}
 		};
-		ImagePlus.addImageListener( imageCloseListener );
+		ImagePlus.addImageListener( imageListener );
 	}
 
 	@Override
@@ -134,10 +142,10 @@ public class PyramidalService extends AbstractService implements SciJavaService
 			activeViewerListener = null;
 		}
 
-		if ( imageCloseListener != null )
+		if ( imageListener != null )
 		{
-			ImagePlus.removeImageListener( imageCloseListener );
-			imageCloseListener = null;
+			ImagePlus.removeImageListener( imageListener );
+			imageListener = null;
 		}
 		bdvWindows.clear();
 		ijImages.clear();
@@ -228,6 +236,18 @@ public class PyramidalService extends AbstractService implements SciJavaService
 		}
 		activePyramidal.set( active );
 		logger.trace( "Active pyramidal resolved from IJ window: {}", activePyramidal.get() );
+	}
+
+	/**
+	 * Lets the virtual stack of an ImageJ window on a {@link Pyramidal} load each plane with several
+	 * threads. imagej-legacy creates it without an executor, so a slice change loads one chunk after another, which is slower
+	 */
+	private void loadSlicesInParallel( final ImagePlus imagePlus )
+	{
+		if ( threadService == null || convertService == null || !( imagePlus.getStack() instanceof ImageJVirtualStack ) )
+			return;
+		if ( convertService.convert( imagePlus, Dataset.class ) instanceof Pyramidal )
+			( ( ImageJVirtualStack< ? > ) imagePlus.getStack() ).setExecutorService( threadService.getExecutorService() );
 	}
 
 	/** Removes {@code imagePlus} from tracked IJ images and clears the active pyramidal if it belonged to that image. */

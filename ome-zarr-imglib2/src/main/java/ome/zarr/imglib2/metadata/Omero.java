@@ -28,6 +28,7 @@
  */
 package ome.zarr.imglib2.metadata;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -149,6 +150,21 @@ public final class Omero
 		public String color()
 		{
 			return color;
+		}
+
+		/** {@link #color()} as a {@link Color}, or {@code null} if it is missing or not an {@code RRGGBB} hex string. */
+		public Color awtColor()
+		{
+			if ( color == null )
+				return null;
+			try
+			{
+				return Color.decode( "#" + color );
+			}
+			catch ( final NumberFormatException e )
+			{
+				return null;
+			}
 		}
 
 		public String family()

@@ -31,6 +31,7 @@ package ome.zarr.fijiui.plugin.command.tools;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.scijava.ItemIO;
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
@@ -38,7 +39,6 @@ import org.scijava.log.LogService;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.ui.UIService;
 
 import ome.zarr.fiji.Pyramidal;
 import ome.zarr.fiji.PyramidalDataset;
@@ -53,9 +53,6 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 	private LogService logService;
 
 	@Parameter
-	private UIService uiService;
-
-	@Parameter
 	private PyramidalService pyramidalService;
 
 	@Parameter
@@ -68,6 +65,10 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 
 	@Parameter( label = "Resolution Level" )
 	private String resolutionLevel;
+
+	@SuppressWarnings( "all" )
+	@Parameter( type = ItemIO.OUTPUT )
+	private PyramidalDataset levelDataset;
 
 	@Override
 	public void initialize()
@@ -108,7 +109,6 @@ public class OpenResolutionLevelCommand extends DynamicCommand
 		}
 		// one choice per level, in level order (see initialize), so the index is the 0-based level
 		final int level = getInfo().getMutableInput( "resolutionLevel", String.class ).getChoices().indexOf( resolutionLevel );
-		final PyramidalDataset levelDataset = new PyramidalDataset( pyramidal.getContext(), pyramidal.getPyramidContents(), level );
-		uiService.show( levelDataset );
+		levelDataset = new PyramidalDataset( pyramidal.getContext(), pyramidal.getPyramidContents(), level );
 	}
 }
