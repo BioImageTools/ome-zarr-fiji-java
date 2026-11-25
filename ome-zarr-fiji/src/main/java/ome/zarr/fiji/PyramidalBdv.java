@@ -36,7 +36,7 @@ import org.scijava.Context;
 import ome.zarr.imglib2.PyramidContents;
 
 /**
- * @deprecated Will be removed with the 0.11 release. Use {@link ome.zarr.fiji.bdv.PyramidalBdv}, which
+ * @deprecated Will be removed with the 0.12 release. Use {@link ome.zarr.fiji.bdv.PyramidalBdv}, which
  *   this class only extends. Instances this plugin creates are of that class, so a cast to this one fails.
  */
 @Deprecated
