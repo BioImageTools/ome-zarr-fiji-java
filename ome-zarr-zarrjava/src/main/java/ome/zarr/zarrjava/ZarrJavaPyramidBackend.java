@@ -94,7 +94,7 @@ import ome.zarr.imglib2.metadata.Omero;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the zarr-java library.
- * Supports OME-Zarr v0.4 (Zarr v2) and v0.5 (Zarr v3).
+ * Supports OME-Zarr v0.4 (Zarr v2), v0.5 and v0.6 (Zarr v3).
  */
 public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 {
@@ -171,6 +171,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		}
 
 		final AffineTransform3D[] transforms = createTransforms( entry, numResolutionLevels, level0Scales );
+		concatenateMultiscaleTransform( transforms, multiscaleImage, inputUri );
 
 		final Omero omero = convertOmero( multiscaleImage.getOmeroMetadata() );
 
@@ -446,8 +447,9 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		final double[] axisScales = levelScales != null ? levelScales : level0Scales;
 		final AxisCalibration[] axes = createAxisCalibrations( entry.axes, axisScales );
 
-		final AffineTransform3D transform =
-				createTransforms( entry, entry.datasets.size(), level0Scales )[ levelIndex ];
+		final AffineTransform3D[] transforms = createTransforms( entry, entry.datasets.size(), level0Scales );
+		concatenateMultiscaleTransform( transforms, parent, arrayUri );
+		final AffineTransform3D transform = transforms[ levelIndex ];
 		final Omero omero = convertOmero( parent.getOmeroMetadata() );
 		final String name = entry.name != null ? entry.name : defaultName( arrayUri );
 
@@ -585,6 +587,20 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 			tr[ level ] = t;
 		}
 		return tr;
+	}
+
+	/**
+	 * Appends the multiscales-level transformation of an OME-Zarr v0.6 image (e.g.
+	 * a rotation into "world") to every level transform; no-op for other versions.
+	 */
+	private static void concatenateMultiscaleTransform( final AffineTransform3D[] transforms,
+			final MultiscaleImage image, final URI location )
+	{
+		final AffineTransform3D multiscaleTransform = MultiscaleTransformV06.read( image, location );
+		if ( multiscaleTransform == null )
+			return;
+		for ( final AffineTransform3D t : transforms )
+			t.preConcatenate( multiscaleTransform );
 	}
 
 	private static double[] computeLevelScale( final MultiscalesEntry entry, final int level,

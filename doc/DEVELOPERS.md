@@ -26,7 +26,7 @@ Everything below is the state of **0.9.0**.
 graph TD
     UI["ome-zarr-fiji-ui: the batteries-included Fiji plugin"]
     N5["ome-zarr-n5: N5-universe backend, OME-NGFF v0.3 - v0.5"]
-    ZJ["ome-zarr-zarrjava: zarr-java backend (default), v0.4 - v0.5, .ozx"]
+    ZJ["ome-zarr-zarrjava: zarr-java backend (default), v0.4 - v0.6, .ozx"]
     FIJI["ome-zarr-fiji: ImageJ + BigDataViewer, no UI sugar"]
     CORE["ome-zarr-imglib2: backend-agnostic core"]
     UI --> N5
@@ -43,7 +43,7 @@ graph TD
 |---------------------|------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
 | `ome-zarr-imglib2`  | `ome.zarr.imglib2` `.metadata` `.exceptions` `.s3` `.util` | Backend-agnostic core: data model, OME-NGFF metadata, Zarr detection. No Fiji, no backend library.                                                                              | imglib2, imglib2-cache, imglib2-realtransform, gson                                  |
 | `ome-zarr-n5`       | `ome.zarr.n5`                                              | N5-universe backed reader, OME-Zarr v0.3 – v0.5.                                                                                                                                | `ome-zarr-imglib2`, the N5 stack                                                     |
-| `ome-zarr-zarrjava` | `ome.zarr.zarrjava`                                        | zarr-java backed reader (the default), Zarr v2/v3 i.e. OME-Zarr v0.4 + v0.5. The only backend that reads `.ozx` archives.                                                       | `ome-zarr-imglib2`, `dev.zarr:zarr-java`                                             |
+| `ome-zarr-zarrjava` | `ome.zarr.zarrjava`                                        | zarr-java backed reader (the default), Zarr v2/v3 i.e. OME-Zarr v0.4 – v0.6. The only backend that reads `.ozx` archives.                                                       | `ome-zarr-imglib2`, `dev.zarr:zarr-java`                                             |
 | `ome-zarr-fiji`     | `ome.zarr.fiji` `.read` `.open` `.plugins` `.util`         | Opens a pyramid in ImageJ or BigDataViewer, tracks the active window, and defines the `OmeZarrOpener` extension point. No dialogs, no backend dependency — pick one at runtime. | `ome-zarr-imglib2`, bigdataviewer-core, spim_data, imagej-common, ij, scijava-common |
 | `ome-zarr-fiji-ui`  | `ome.zarr.fijiui` `.open` `.plugin` `.dialog` `.util`      | The shipped plugin: `IOPlugin`, clipboard, Swing dialogs, SciJava commands, persisted settings, the eight built-in openers.                                                       | the four above, scijava-common, script-editor, n5-viewer_fiji, labkit-ui (provided)                        |
 
