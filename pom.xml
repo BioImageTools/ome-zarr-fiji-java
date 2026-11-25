@@ -290,6 +290,24 @@
 						<breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
 						<ignoreMissingClasses>true</ignoreMissingClasses>
 						<ignoreMissingOldVersion>true</ignoreMissingOldVersion>
+						<!-- Deliberate 0.11 removals of API deprecated in 0.10.x. Drop these once 0.11 is released. -->
+						<excludes>
+							<exclude>ome.zarr.imglib2.ZarrUtils</exclude>
+							<exclude>ome.zarr.imglib2.util.ZarrUtils#ZarrUtils()</exclude>
+							<exclude>ome.zarr.imglib2.PyramidContents#omero</exclude>
+							<exclude>ome.zarr.imglib2.metadata.Omero$Channel#window</exclude>
+							<exclude>ome.zarr.imglib2.metadata.Omero$Channel$Window#start</exclude>
+							<exclude>ome.zarr.imglib2.metadata.Omero$Channel$Window#end</exclude>
+							<exclude>ome.zarr.imglib2.metadata.Omero$Channel$Window#min</exclude>
+							<exclude>ome.zarr.imglib2.metadata.Omero$Channel$Window#max</exclude>
+							<exclude>ome.zarr.fiji.read.OmeZarr#OmeZarr(java.net.URI,org.scijava.Context,ome.zarr.imglib2.PyramidBackend,java.lang.Integer)</exclude>
+							<exclude>ome.zarr.fiji.util.BdvUtils#registerViewer(ome.zarr.fiji.bdv.PyramidalBdv,bdv.viewer.AbstractViewerPanel,ome.zarr.fiji.plugins.PyramidalService)</exclude>
+							<exclude>ome.zarr.fiji.util.BdvUtils#registerBdvWindow(ome.zarr.fiji.PyramidalBdv,java.awt.Window,ome.zarr.fiji.plugins.PyramidalService)</exclude>
+							<exclude>ome.zarr.fiji.util.BdvUtils#registerBdvWindow(ome.zarr.fiji.bdv.PyramidalBdv,java.awt.Window,ome.zarr.fiji.plugins.PyramidalService)</exclude>
+							<exclude>ome.zarr.fiji.util.BdvUtils#setChannelProperties(java.util.List,java.util.List,bdv.viewer.ConverterSetups,bdv.viewer.ViewerState)</exclude>
+							<exclude>ome.zarr.fiji.util.BdvUtils#omeroChannels(ome.zarr.imglib2.metadata.Omero,int)</exclude>
+							<exclude>ome.zarr.fiji.util.BdvUtils#setTimepoint(ome.zarr.imglib2.metadata.Omero,bdv.viewer.ViewerState)</exclude>
+						</excludes>
 					</parameter>
 				</configuration>
 			</plugin>

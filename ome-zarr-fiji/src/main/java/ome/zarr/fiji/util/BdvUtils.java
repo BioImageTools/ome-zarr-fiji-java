@@ -29,9 +29,6 @@
 package ome.zarr.fiji.util;
 
 import java.awt.Component;
-import java.awt.Window;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.List;
 
 import org.scijava.Context;
@@ -39,15 +36,10 @@ import org.scijava.Context;
 import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
-import bdv.viewer.AbstractViewerPanel;
-import bdv.viewer.ConverterSetups;
-import bdv.viewer.SourceAndConverter;
 import bdv.viewer.ViewerPanel;
-import bdv.viewer.ViewerState;
 import ome.zarr.fiji.bdv.OmeroDisplay;
 import ome.zarr.fiji.bdv.PyramidalBdv;
 import ome.zarr.fiji.plugins.ActiveViewerService;
-import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.metadata.Omero;
 
@@ -125,99 +117,5 @@ public class BdvUtils
 	public static BdvHandle bdvHandleOf( final Component viewer )
 	{
 		return viewer instanceof ViewerPanel ? ( BdvHandle ) ( ( ViewerPanel ) viewer ).getClientProperty( BDV_HANDLE_KEY ) : null;
-	}
-
-	/**
-	 * @param pyramidalBdv the {@link PyramidalBdv} the window displays
-	 * @param viewer the viewer showing {@code pyramidalBdv}, whose top-level window is tracked.
-	 * @param pyramidalService ignored, {@link PyramidalBdv#registerViewer} looks the service up in
-	 *   the pyramidal's context
-	 * @deprecated Will be removed with the 0.11 release. Use {@link PyramidalBdv#registerViewer}.
-	 */
-	@Deprecated
-	public static void registerViewer( final PyramidalBdv< ? > pyramidalBdv, final AbstractViewerPanel viewer,
-			final PyramidalService pyramidalService )
-	{
-		pyramidalBdv.registerViewer( viewer );
-	}
-
-	/**
-	 * Same as {@link #registerBdvWindow(PyramidalBdv, Window, PyramidalService)}. Kept for jars compiled against
-	 * 0.10.3 or earlier (BigVolumeBrowser 0.2.1), which link this signature.
-	 *
-	 * @deprecated Will be removed with the 0.11 release. Use {@link PyramidalBdv#registerViewer}.
-	 */
-	@Deprecated
-	public static void registerBdvWindow( final ome.zarr.fiji.PyramidalBdv< ? > pyramidalBdv, final Window window,
-			final PyramidalService pyramidalService )
-	{
-		registerBdvWindow( ( PyramidalBdv< ? > ) pyramidalBdv, window, pyramidalService );
-	}
-
-	/**
-	 * Increments the reference count for the given {@code pyramidal} and, if {@code pyramidalService} is non-null,
-	 * registers {@code window} with it for focus tracking, unconditionally. Undoes both when the window closes.
-	 *
-	 * @param pyramidalBdv the {@link PyramidalBdv} the window displays
-	 * @param window the top-level window to track
-	 * @param pyramidalService the service to register with, or {@code null} to only reference-count
-	 * @deprecated Will be removed with the 0.11 release. Use {@link PyramidalBdv#registerViewer}, which
-	 *   also follows the viewer's current source.
-	 */
-	@Deprecated
-	public static void registerBdvWindow( final PyramidalBdv< ? > pyramidalBdv, final Window window,
-			final PyramidalService pyramidalService )
-	{
-		pyramidalBdv.incrementReferences();
-		if ( pyramidalService != null )
-			pyramidalService.registerBdvWindow( window, pyramidalBdv );
-		window.addWindowListener( new WindowAdapter()
-		{
-			@Override
-			public void windowClosed( final WindowEvent e )
-			{
-				if ( pyramidalService != null )
-					pyramidalService.unregisterBdvWindow( window );
-				pyramidalBdv.decrementReferences();
-			}
-		} );
-	}
-
-	/**
-	 * @param omeroChannels the list of OMERO channels to apply, one per source and in source order
-	 * @param sources the viewer's sources, one per channel and in channel order
-	 * @param converterSetups the viewer's converter setups to look {@code sources} up in
-	 * @param state the viewer state that decides which sources are visible
-	 * @deprecated Will be removed with the 0.11 release. Use {@link OmeroDisplay#apply}.
-	 */
-	@Deprecated
-	public static void setChannelProperties( final List< Omero.Channel > omeroChannels,
-			final List< ? extends SourceAndConverter< ? > > sources,
-			final ConverterSetups converterSetups, final ViewerState state )
-	{
-		OmeroDisplay.apply( omeroChannels, sources, converterSetups, state );
-	}
-
-	/**
-	 * @param omero the dataset's OMERO metadata, may be {@code null}
-	 * @param numChannels the number of display sources to be configured
-	 * @return the channels to apply, empty if they cannot be applied
-	 * @deprecated Will be removed with the 0.11 release. Use {@link OmeroDisplay#channels}.
-	 */
-	@Deprecated
-	public static List< Omero.Channel > omeroChannels( final Omero omero, final int numChannels )
-	{
-		return OmeroDisplay.channels( omero, numChannels );
-	}
-
-	/**
-	 * @param omero the dataset's OMERO metadata, may be {@code null}
-	 * @param state the viewer state to move
-	 * @deprecated Will be removed with the 0.11 release. Use {@link OmeroDisplay#setTimepoint}.
-	 */
-	@Deprecated
-	public static void setTimepoint( final Omero omero, final ViewerState state )
-	{
-		OmeroDisplay.setTimepoint( omero, state );
 	}
 }
