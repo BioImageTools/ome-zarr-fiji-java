@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +98,12 @@ import ome.zarr.imglib2.metadata.Omero;
 public class N5PyramidBackend extends AbstractPyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	/** The group below an image that holds its label images. */
+	private static final String LABELS_GROUP = "labels";
+
+	/** The attribute of that group listing the label image names. */
+	private static final String LABELS_KEY = "labels";
 
 	/**
 	 * Reads free-form label property values, keeping integral numbers as
@@ -438,6 +445,22 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 		final JsonElement base = reader.getAttribute( path, "", JsonElement.class );
 		final boolean underOme = base != null && base.isJsonObject() && base.getAsJsonObject().has( "ome" );
 		return reader.getAttribute( path, underOme ? "ome/" + key : key, JsonElement.class );
+	}
+
+	@Override
+	protected List< String > readLabelImageNames( final URI imageUri )
+	{
+		try (N5Reader reader = openReader( imageUri ))
+		{
+			if ( !reader.exists( LABELS_GROUP ) )
+				return Collections.emptyList();
+			final String[] names = new Gson().fromJson( readOmeAttribute( reader, LABELS_GROUP, LABELS_KEY ), String[].class );
+			return names == null ? Collections.emptyList() : Arrays.asList( names );
+		}
+		catch ( N5Exception e )
+		{
+			throw new StoreAccessException( imageUri.toString(), e );
+		}
 	}
 
 	// ---------------------------------------------------------------------

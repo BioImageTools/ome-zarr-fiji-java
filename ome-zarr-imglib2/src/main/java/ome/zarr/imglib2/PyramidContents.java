@@ -29,6 +29,7 @@
 package ome.zarr.imglib2;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -96,6 +97,8 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	private final ImageLabel labelMetadata;
 
+	private final List< String > labelImageNames;
+
 	private final boolean hasPlaceholderCalibration;
 
 	private PyramidContents( final Builder< T > b )
@@ -111,6 +114,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 			axesPerLevel[ level ] = b.axesPerLevel[ level ].clone();
 		this.omero = b.omero;
 		this.labelMetadata = b.labelMetadata;
+		this.labelImageNames = Collections.emptyList();
 		this.hasPlaceholderCalibration = b.hasPlaceholderCalibration;
 
 		if ( transforms.length != cachedCellImgs.length || axesPerLevel.length != cachedCellImgs.length )
@@ -121,6 +125,28 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		if ( axesPerLevel[ 0 ].length != numDimensions )
 			throw new IllegalArgumentException( "Full-resolution axis count (" + axesPerLevel[ 0 ].length
 					+ ") does not match the number of image dimensions (" + numDimensions + ")." );
+	}
+
+	private PyramidContents( final PyramidContents< T > other, final List< String > labelImageNames )
+	{
+		this.name = other.name;
+		this.type = other.type;
+		this.transforms = other.transforms;
+		this.cachedCellImgs = other.cachedCellImgs;
+		this.axesPerLevel = other.axesPerLevel;
+		this.omero = other.omero;
+		this.labelMetadata = other.labelMetadata;
+		this.hasPlaceholderCalibration = other.hasPlaceholderCalibration;
+		this.labelImageNames = Collections.unmodifiableList( new ArrayList<>( labelImageNames ) );
+	}
+
+	/**
+	 * A copy with the given label image names. Package-private:
+	 * {@link AbstractPyramidBackend#read} discovers them for every backend.
+	 */
+	PyramidContents< T > withLabelImageNames( final List< String > labelImageNames )
+	{
+		return new PyramidContents<>( this, labelImageNames );
 	}
 
 	/** Dataset name. */
@@ -196,6 +222,21 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	public ImageLabel labelMetadata()
 	{
 		return labelMetadata;
+	}
+
+	/**
+	 * Names of the label images of this image, as listed by its {@code labels/}
+	 * group, unmodifiable. Each one is a multiscale image at
+	 * {@code labels/<name>} below this image, read like any other image.
+	 * <p>
+	 * Empty if the image has no labels, if it is itself a label image (one with
+	 * {@link #labelMetadata()}), if it was read as a single resolution level, and
+	 * for zipped archives ({@code .ozx}), whose label images cannot be addressed
+	 * yet.
+	 */
+	public List< String > labelImageNames()
+	{
+		return labelImageNames;
 	}
 
 	/**
@@ -487,6 +528,18 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	public String toString()
 	{
 		final StringBuilder sb = new StringBuilder();
+		appendHeader( sb );
+		for ( int level = 0; level < numResolutionLevels(); level++ )
+			appendLevel( sb, level );
+		return sb.toString();
+	}
+
+	/**
+	 * What holds for the whole pyramid: name, pixel type, level count, which
+	 * optional metadata is present and the axis order.
+	 */
+	private void appendHeader( final StringBuilder sb )
+	{
 		sb.append( "PyramidContents \"" ).append( name ).append( "\"" )
 				.append( " (" ).append( type.getClass().getSimpleName() ).append( ")" )
 				.append( ", " ).append( numResolutionLevels() ).append( " resolution level" )
@@ -497,6 +550,8 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 			sb.append( " [OMERO metadata present]" );
 		if ( labelMetadata != null )
 			sb.append( " [image-label metadata present]" );
+		if ( !labelImageNames.isEmpty() )
+			sb.append( " [label images: " ).append( String.join( ", ", labelImageNames ) ).append( "]" );
 		sb.append( "\n" );
 
 		sb.append( "  internal axes order: " );
@@ -505,26 +560,26 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 			sb.append( axes.name ).append( ", " );
 		}
 		sb.append( "\n" );
+	}
 
-		for ( int level = 0; level < numResolutionLevels(); level++ )
+	/** Size and calibration of each axis at {@code level}, followed by its transform. */
+	private void appendLevel( final StringBuilder sb, final int level )
+	{
+		final Img< T > img = asImg( level );
+		final AxisCalibration[] axes = axesPerLevel[ level ];
+		sb.append( "  level " ).append( level ).append( ": " );
+		for ( int d = 0; d < axes.length; d++ )
 		{
-			final Img< T > img = asImg( level );
-			final AxisCalibration[] axes = axesPerLevel[ level ];
-			sb.append( "  level " ).append( level ).append( ": " );
-			for ( int d = 0; d < axes.length; d++ )
-			{
-				if ( d > 0 )
-					sb.append( "  " );
-				sb.append( axes[ d ].name ).append( "=" ).append( img.dimension( d ) );
-				if ( !axes[ d ].unit.isEmpty() )
-					sb.append( " [" ).append( axes[ d ].scale ).append( " " ).append( axes[ d ].unit ).append( "]" );
-				else
-					sb.append( " [scale=" ).append( axes[ d ].scale ).append( "]" );
-			}
-			sb.append( "\n           " );
-			sb.append( transforms[ level ] ).append( "\n" );
+			if ( d > 0 )
+				sb.append( "  " );
+			sb.append( axes[ d ].name ).append( "=" ).append( img.dimension( d ) );
+			if ( !axes[ d ].unit.isEmpty() )
+				sb.append( " [" ).append( axes[ d ].scale ).append( " " ).append( axes[ d ].unit ).append( "]" );
+			else
+				sb.append( " [scale=" ).append( axes[ d ].scale ).append( "]" );
 		}
-		return sb.toString();
+		sb.append( "\n           " );
+		sb.append( transforms[ level ] ).append( "\n" );
 	}
 
 	public static < T extends NativeType< T > & RealType< T > > Builder< T > builder()

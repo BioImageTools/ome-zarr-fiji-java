@@ -190,6 +190,19 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 				.build();
 	}
 
+	@Override
+	protected List< String > readLabelImageNames( final URI imageUri )
+	{
+		try
+		{
+			return openMultiscaleImage( imageUri ).getLabels();
+		}
+		catch ( IOException | ZarrException e )
+		{
+			throw new StoreAccessException( imageUri.toString(), e );
+		}
+	}
+
 	/**
 	 * zarr-java has {@code getImageLabel()} only on its OME-Zarr 0.5 and 0.6
 	 * classes, not on the {@link MultiscaleImage} interface, so OME-Zarr 0.4
