@@ -44,6 +44,7 @@ import dev.zarr.zarrjava.core.Group;
 import dev.zarr.conventions.ome.MultiscaleImage;
 import dev.zarr.conventions.ome.metadata.Axis;
 import dev.zarr.conventions.ome.metadata.Dataset;
+import dev.zarr.conventions.ome.metadata.ImageLabel;
 import dev.zarr.conventions.ome.metadata.MultiscalesEntry;
 import dev.zarr.conventions.ome.metadata.OmeroChannel;
 import dev.zarr.conventions.ome.metadata.OmeroMetadata;
@@ -91,6 +92,9 @@ import ome.zarr.imglib2.PyramidContents;
 import ome.zarr.imglib2.util.ZarrUtils;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
+import ome.zarr.imglib2.metadata.ImageLabel.Color;
+import ome.zarr.imglib2.metadata.ImageLabel.Property;
+import ome.zarr.imglib2.metadata.ImageLabel.Source;
 
 /**
  * {@link PyramidBackend} that reads OME-Zarr images with the zarr-java library.
@@ -173,6 +177,7 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 		final AffineTransform3D[] transforms = createTransforms( entry, numResolutionLevels, level0Scales );
 
 		final Omero omero = convertOmero( multiscaleImage.getOmeroMetadata() );
+		final ome.zarr.imglib2.metadata.ImageLabel labelMetadata = convertImageLabel( imageLabelOf( multiscaleImage ) );
 
 		return PyramidContents.< T >builder()
 				.name( name )
@@ -181,7 +186,44 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 				.cachedCellImgs( cachedCellImgs )
 				.axesPerLevel( axesPerLevel )
 				.omero( omero )
+				.labelMetadata( labelMetadata )
 				.build();
+	}
+
+	/**
+	 * zarr-java has {@code getImageLabel()} only on its OME-Zarr 0.5 and 0.6
+	 * classes, not on the {@link MultiscaleImage} interface, so OME-Zarr 0.4
+	 * label images are read without it.
+	 */
+	private static ImageLabel imageLabelOf( final MultiscaleImage image )
+	{
+		if ( image instanceof dev.zarr.conventions.ome.v0_5.MultiscaleImage )
+			return ( ( dev.zarr.conventions.ome.v0_5.MultiscaleImage ) image ).getImageLabel();
+		if ( image instanceof dev.zarr.conventions.ome.v0_6.MultiscaleImage )
+			return ( ( dev.zarr.conventions.ome.v0_6.MultiscaleImage ) image ).getImageLabel();
+		return null;
+	}
+
+	private static ome.zarr.imglib2.metadata.ImageLabel convertImageLabel( final ImageLabel source )
+	{
+		if ( source == null )
+			return null;
+		List< Color > colors = null;
+		if ( source.colors != null )
+		{
+			colors = new ArrayList<>( source.colors.size() );
+			for ( final ImageLabel.Color color : source.colors )
+				colors.add( new Color( color.labelValue, color.rgba == null ? null : color.rgba.stream().mapToInt( Integer::intValue ).toArray() ) );
+		}
+		List< Property > properties = null;
+		if ( source.properties != null )
+		{
+			properties = new ArrayList<>( source.properties.size() );
+			for ( final ImageLabel.Property property : source.properties )
+				properties.add( new Property( property.labelValue, property.getAdditionalProperties() ) );
+		}
+		final Source imageSource = source.source == null ? null : new Source( source.source.image );
+		return new ome.zarr.imglib2.metadata.ImageLabel( colors, properties, imageSource, source.version );
 	}
 
 	private static Omero convertOmero( final OmeroMetadata source )

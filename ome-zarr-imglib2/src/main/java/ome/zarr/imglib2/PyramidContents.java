@@ -44,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.metadata.ImageLabel;
 import ome.zarr.imglib2.metadata.Omero;
 import ome.zarr.imglib2.util.ImageSizes;
 
@@ -93,6 +94,8 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 	private final Omero omero;
 
+	private final ImageLabel labelMetadata;
+
 	private final boolean hasPlaceholderCalibration;
 
 	private PyramidContents( final Builder< T > b )
@@ -107,6 +110,7 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		for ( int level = 0; level < axesPerLevel.length; level++ )
 			axesPerLevel[ level ] = b.axesPerLevel[ level ].clone();
 		this.omero = b.omero;
+		this.labelMetadata = b.labelMetadata;
 		this.hasPlaceholderCalibration = b.hasPlaceholderCalibration;
 
 		if ( transforms.length != cachedCellImgs.length || axesPerLevel.length != cachedCellImgs.length )
@@ -181,6 +185,17 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	public Omero omero()
 	{
 		return omero;
+	}
+
+	/**
+	 * The {@code image-label} metadata of a label image (colors, per-label
+	 * properties, source image), or {@code null} if unavailable. {@code null}
+	 * does not mean the image is not a label image: the specification only
+	 * recommends this metadata.
+	 */
+	public ImageLabel labelMetadata()
+	{
+		return labelMetadata;
 	}
 
 	/**
@@ -480,6 +495,8 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 			sb.append( " [placeholder calibration]" );
 		if ( omero != null )
 			sb.append( " [OMERO metadata present]" );
+		if ( labelMetadata != null )
+			sb.append( " [image-label metadata present]" );
 		sb.append( "\n" );
 
 		sb.append( "  internal axes order: " );
@@ -584,6 +601,8 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 
 		private Omero omero;
 
+		private ImageLabel labelMetadata;
+
 		private boolean hasPlaceholderCalibration;
 
 		public Builder< T > name( final String name )
@@ -619,6 +638,12 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 		public Builder< T > omero( final Omero o )
 		{
 			this.omero = o;
+			return this;
+		}
+
+		public Builder< T > labelMetadata( final ImageLabel l )
+		{
+			this.labelMetadata = l;
 			return this;
 		}
 
