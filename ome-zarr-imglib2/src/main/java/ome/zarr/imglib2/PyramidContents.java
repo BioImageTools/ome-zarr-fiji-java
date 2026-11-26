@@ -127,9 +127,9 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 					+ ") does not match the number of image dimensions (" + numDimensions + ")." );
 	}
 
-	private PyramidContents( final PyramidContents< T > other, final List< String > labelImageNames )
+	private PyramidContents( final PyramidContents< T > other, final String name, final List< String > labelImageNames )
 	{
-		this.name = other.name;
+		this.name = name;
 		this.type = other.type;
 		this.transforms = other.transforms;
 		this.cachedCellImgs = other.cachedCellImgs;
@@ -146,7 +146,20 @@ public final class PyramidContents< T extends NativeType< T > & RealType< T > >
 	 */
 	PyramidContents< T > withLabelImageNames( final List< String > labelImageNames )
 	{
-		return new PyramidContents<>( this, labelImageNames );
+		return new PyramidContents<>( this, name, labelImageNames );
+	}
+
+	/**
+	 * A copy with another {@link #name()}, sharing the pixel data. E.g. a label image
+	 * read on its own carries the name of its multiscales metadata, while its parent
+	 * image lists it under the name it is known by there.
+	 *
+	 * @param name the new name
+	 * @return the copy
+	 */
+	public PyramidContents< T > withName( final String name )
+	{
+		return new PyramidContents<>( this, name, labelImageNames );
 	}
 
 	/** Dataset name. */

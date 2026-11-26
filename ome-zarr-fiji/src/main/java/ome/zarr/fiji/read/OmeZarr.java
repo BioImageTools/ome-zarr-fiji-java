@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -43,6 +44,7 @@ import com.google.gson.JsonSyntaxException;
 
 import bdv.cache.SharedQueue;
 import bdv.util.BdvHandle;
+import bdv.viewer.SourceAndConverter;
 import ij.IJ;
 import ij.gui.YesNoCancelDialog;
 import ome.zarr.imglib2.PyramidBackend;
@@ -59,6 +61,7 @@ import ome.zarr.fiji.plugins.PyramidalService;
 import ome.zarr.fiji.read.exceptions.NonExistingResolutionLevelException;
 import ome.zarr.fiji.util.BdvUtils;
 import ome.zarr.imglib2.exceptions.ReaderLibraryUnavailableException;
+import ome.zarr.imglib2.util.ZarrUtils;
 import ome.zarr.imglib2.s3.exceptions.S3SupportUnavailableException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
@@ -478,10 +481,52 @@ public class OmeZarr
 						return null;
 					final PyramidalBdv< ? > pyramidal = new PyramidalBdv<>( context, pyramidContents, sharedQueue );
 					final BdvHandle result = BdvUtils.show( pyramidal, bdvHandle );
+					addLabelImages( pyramidal, result );
 					context.getService( ActiveViewerService.class ).setActiveViewer( result.getViewerPanel() );
 					logger.info( "{} pyramidal in BigDataViewer: {}", bdvHandle == null ? "Opened" : "Added", inputUri );
 					return result;
 				} );
+	}
+
+	/**
+	 * Adds the label images of {@code image} to {@code bdvHandle}, one inactive source
+	 * each, named as in the image's {@code labels} list and loaded through the image's
+	 * queue. A label image that cannot be read is logged and left out, since the
+	 * image itself is already shown.
+	 */
+	private void addLabelImages( final PyramidalBdv< ? > image, final BdvHandle bdvHandle )
+	{
+		for ( final String name : image.getPyramidContents().labelImageNames() )
+		{
+			final URI labelUri = labelImageUri( name );
+			try
+			{
+				final PyramidContents< ? > labelContents = backend.read( labelUri ).withName( name );
+				final PyramidalBdv< ? > labels = image.onSameQueue( labelContents );
+				BdvUtils.show( labels, bdvHandle );
+				for ( final SourceAndConverter< ? > source : labels.asSources() )
+					bdvHandle.getViewerPanel().state().setSourceActive( source, false );
+				logger.info( "Added label image to BigDataViewer: {}", labelUri );
+			}
+			catch ( RuntimeException e )
+			{
+				logger.warn( "Could not open the label image {}: {}", labelUri, e.getMessage() );
+			}
+		}
+	}
+
+	private URI labelImageUri( final String name )
+	{
+		try
+		{
+			// encodes characters a URI path cannot hold, e.g. spaces
+			final String encodedName = new URI( null, null, name, null ).getRawPath();
+			return URI.create( ZarrUtils.stripTrailingSlash( inputUri ) + "/labels/" + encodedName );
+		}
+		catch ( URISyntaxException e )
+		{
+			throw new IllegalArgumentException( "Not a valid label image name: " + name, e );
+		}
 	}
 
 	/**

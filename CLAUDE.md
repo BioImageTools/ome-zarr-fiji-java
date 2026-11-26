@@ -202,6 +202,17 @@ images cannot be addressed yet. The two accessors are deliberately not named aft
 `image-label`), because those two names were too easy to mix up. zarr-java exposes `image-label` only for OME-Zarr
 0.5 and later, so with that backend 0.4 label images have no `labelMetadata()`.
 
+`OmeZarr.showInBdv` adds the listed label images to the image's window, inactive, named as in the `labels` list
+(`PyramidContents.withName`). Their colors come from the metadata only, via `LabelConverter`: a uniform or odd palette
+is shown as written (this repo does not curate metadata), and only label values without any color get one from
+`GlasbeyOnDarkLut`. That palette is copied from Fiji's `luts/glasbey_on_dark.lut`, because neither Fiji nor SciJava
+offers it as an API (TrackMate and Mastodon copy theirs too), and `LUTService` only finds the file inside a Fiji
+installation. A golden-ratio hue sequence was tried first and dropped: its colors were technically distinct but often
+looked the same. BDV's color control is therefore disabled, and its display range filters label values instead. The label images
+load through the image's queue via `PyramidalBdv.onSameQueue`, so the queue itself is never handed out: since #113
+`PyramidalBdv` exposes only its `CacheControl` side, because a caller holding the `SharedQueue` could shut down or
+flood a queue the pyramidal owns.
+
 **A too-old reader library is reported, not thrown at the console.** A Fiji-Stable installation whose N5 stack predates
 this plugin fails inside the backend with a `NoClassDefFoundError` (e.g. on `OmeNgffMetadataParser`), which is useless
 to a user. `read` therefore catches it and rethrows `ReaderLibraryUnavailableException` (extends `StoreAccessException`,

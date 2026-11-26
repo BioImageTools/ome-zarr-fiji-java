@@ -56,6 +56,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
 
@@ -150,6 +151,20 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		return sharedQueue;
 	}
 
+	/**
+	 * A pyramidal for {@code contents} that loads through the same queue as this one, e.g. the
+	 * label images of this image. It does not own the queue: if this one does, it shuts it down
+	 * once no BigDataViewer window shows this anymore, so show both in the same window.
+	 *
+	 * @param <S> pixel type of {@code contents}
+	 * @param contents the image to show
+	 * @return the new pyramidal
+	 */
+	public < S extends NativeType< S > & RealType< S > > PyramidalBdv< S > onSameQueue( final PyramidContents< S > contents )
+	{
+		return new PyramidalBdv<>( getContext(), contents, sharedQueue );
+	}
+
 	@Override
 	public PyramidContents< T > getPyramidContents()
 	{
@@ -208,6 +223,16 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 
 		final V volatileType = volatileImgs[ 0 ].getType();
 
+		// A label image, i.e. one with label metadata, gets a LabelConverter, any other image
+		// BigDataViewer's grey-value converter.
+		final boolean isLabelImage = contents.labelMetadata() != null;
+		final Supplier< Converter< T, ARGBType > > converter = isLabelImage
+				? () -> new LabelConverter<>( contents.labelMetadata(), type.getMinValue(), type.getMaxValue() )
+				: () -> BigDataViewer.createConverterToARGB( type );
+		final Supplier< Converter< V, ARGBType > > volatileConverter = isLabelImage
+				? () -> new LabelConverter<>( contents.labelMetadata(), type.getMinValue(), type.getMaxValue() )
+				: () -> BigDataViewer.createConverterToARGB( volatileType );
+
 		final RandomAccessibleInterval< T >[][] levelToChannels = new RandomAccessibleInterval[ nLevels ][];
 		Arrays.setAll( levelToChannels, level -> splitInputStackIntoSourceStacks( contents, contents.asImg( level ) ) );
 
@@ -228,7 +253,7 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 					mipmapVolatileImgs, volatileType, mipmapTransforms, voxelDimensions, channelLabel, true );
 			final RandomAccessibleIntervalMipmapSource4D< T > source4D = new RandomAccessibleIntervalMipmapSource4D<>(
 					mipmapImgs, type, mipmapTransforms, voxelDimensions, channelLabel, true );
-			final SourceAndConverter< T > sourceAndConverter = createSourceAndConverter( source4D, source4DVolatile );
+			final SourceAndConverter< T > sourceAndConverter = createSourceAndConverter( source4D, source4DVolatile, converter, volatileConverter );
 			sources.add( sourceAndConverter );
 			BigDataViewer.createConverterSetup( sourceAndConverter, channelNumber );
 		}
@@ -305,15 +330,19 @@ public class PyramidalBdv< T extends NativeType< T > & RealType< T > > extends A
 		return null;
 	}
 
+	/**
+	 * @param converter supplies a new converter for {@code source4D}
+	 * @param volatileConverter supplies a new converter for {@code source4DVolatile}
+	 */
 	private static < T extends NativeType< T > & RealType< T >, V extends Volatile< T > & NativeType< V > & RealType< V > >
 			SourceAndConverter< T > createSourceAndConverter( final RandomAccessibleIntervalMipmapSource4D< T > source4D,
-					final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile )
+					final RandomAccessibleIntervalMipmapSource4D< V > source4DVolatile,
+					final Supplier< Converter< T, ARGBType > > converter,
+					final Supplier< Converter< V, ARGBType > > volatileConverter )
 	{
-		final Converter< V, ARGBType > converterVolatile = BigDataViewer.createConverterToARGB( source4DVolatile.getType() );
-		final Converter< T, ARGBType > converter = BigDataViewer.createConverterToARGB( source4D.getType() );
 		final SourceAndConverter< V > sourceAndConverterVolatile =
-				BigDataViewer.wrapWithTransformedSource( new SourceAndConverter<>( source4DVolatile, converterVolatile ) );
-		return new SourceAndConverter<>( source4D, converter, sourceAndConverterVolatile );
+				BigDataViewer.wrapWithTransformedSource( new SourceAndConverter<>( source4DVolatile, volatileConverter.get() ) );
+		return new SourceAndConverter<>( source4D, converter.get(), sourceAndConverterVolatile );
 	}
 
 	/**
