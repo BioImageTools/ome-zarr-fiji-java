@@ -41,6 +41,7 @@ import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Array;
 import dev.zarr.zarrjava.core.Attributes;
 import dev.zarr.zarrjava.core.Group;
+import dev.zarr.zarrjava.core.Node;
 import dev.zarr.conventions.ome.MultiscaleImage;
 import dev.zarr.conventions.ome.metadata.Axis;
 import dev.zarr.conventions.ome.metadata.Dataset;
@@ -520,15 +521,18 @@ public class ZarrJavaPyramidBackend extends AbstractPyramidBackend
 	{
 		if ( arrayUri == null )
 			throw new IllegalArgumentException( NO_LOCATION_MESSAGE );
-		final Array arr;
+		final Node node;
 		try
 		{
-			arr = Array.open( resolveHandle( arrayUri ) );
+			node = Node.open( resolveHandle( arrayUri ) );
 		}
 		catch ( ZarrException | IOException | RuntimeException e )
 		{
 			throw new NotAMultiscaleImageException( arrayUri.toString(), e );
 		}
+		if ( !( node instanceof Array ) ) // a group, e.g. labels/
+			throw new NotAMultiscaleImageException( arrayUri.toString() );
+		final Array arr = ( Array ) node;
 		final String[] names = dimensionNames( arr );
 		if ( names.length == 0 )
 			return null;
