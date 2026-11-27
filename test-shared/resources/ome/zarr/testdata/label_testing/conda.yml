@@ -1,0 +1,10 @@
+name: ome-zarr-test
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - zarr
+  - ome-zarr
+  - pillow
+  - pip

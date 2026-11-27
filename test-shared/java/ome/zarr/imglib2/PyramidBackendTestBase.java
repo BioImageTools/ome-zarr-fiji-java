@@ -50,13 +50,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.scijava.Context;
 
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import ome.zarr.ZarrTestUtils;
 import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.SingleArrayAxesUnknownException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.metadata.ImageLabel;
 import ome.zarr.imglib2.metadata.Omero;
 import ome.zarr.imglib2.util.ImageSizes;
 
@@ -135,8 +139,62 @@ public interface PyramidBackendTestBase
 		);
 	}
 
+	/** An image with one label image, see {@code label_testing/create_label_colors.py}. */
+	String LABEL_DATASET = "ome/zarr/testdata/label_testing/label_colors.ome.zarr";
+
 	PyramidContents< ? > read( String resource, Context context )
 			throws URISyntaxException;
+
+	/**
+	 * An image lists its label images by name, and a label image's
+	 * {@code image-label} metadata is read into {@link ImageLabel}, with numbers
+	 * of the same type for every backend.
+	 */
+	@Test
+	default void testImageLabel() throws URISyntaxException
+	{
+		try (Context context = new Context())
+		{
+			PyramidContents< ? > image = this.read( LABEL_DATASET, context );
+			assertNull( image.labelMetadata() );
+			assertEquals( Collections.singletonList( "labels" ), image.labelImageNames() );
+
+			PyramidContents< ? > labelImage = this.read( LABEL_DATASET + "/labels/labels", context );
+			assertEquals( Collections.emptyList(), labelImage.labelImageNames() );
+			ImageLabel labelMetadata = labelImage.labelMetadata();
+			assertNotNull( labelMetadata );
+			assertEquals( "0.5", labelMetadata.version() );
+			assertEquals( "../../", labelMetadata.source().image() );
+
+			List< ImageLabel.Color > colors = labelMetadata.colors();
+			assertNotNull( colors );
+			assertEquals( 10, colors.size(), "the grey and red columns and their titles, not the LUT column or its title" );
+			assertEquals( 1, colors.get( 0 ).labelValue() );
+			assertArrayEquals( new int[] { 128, 128, 128, 128 }, colors.get( 0 ).rgba() );
+			assertEquals( 6, colors.get( 5 ).labelValue() );
+			assertArrayEquals( new int[] { 192, 0, 0, 255 }, colors.get( 5 ).rgba() );
+
+			List< ImageLabel.Property > properties = labelMetadata.properties();
+			assertNotNull( properties );
+			assertEquals( 15, properties.size(), "every spot and every title" );
+			ImageLabel.Property spot = properties.get( 4 );
+			assertEquals( 5, spot.labelValue() );
+			Map< String, Object > spotValues = new LinkedHashMap<>();
+			spotValues.put( "title", false );
+			spotValues.put( "column", 2L );
+			spotValues.put( "row", 1L );
+			spotValues.put( "area", 197L );
+			spotValues.put( "mean intensity", 97.16 );
+			assertEquals( spotValues, spot.values() );
+			ImageLabel.Property title = properties.get( 14 );
+			assertEquals( 17, title.labelValue() );
+			Map< String, Object > titleValues = new LinkedHashMap<>();
+			titleValues.put( "title", true );
+			titleValues.put( "column", 3L );
+			titleValues.put( "text", "no colors LUT" );
+			assertEquals( titleValues, title.values() );
+		}
+	}
 
 	/**
 	 * A Zarr v3 array without a multiscales parent reads as an uncalibrated

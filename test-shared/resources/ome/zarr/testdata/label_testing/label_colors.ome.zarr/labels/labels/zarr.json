@@ -1,0 +1,264 @@
+{
+  "attributes": {
+    "ome": {
+      "version": "0.5",
+      "multiscales": [
+        {
+          "datasets": [
+            {
+              "path": "s0",
+              "coordinateTransformations": [
+                {
+                  "type": "scale",
+                  "scale": [
+                    1.0,
+                    1.0
+                  ]
+                }
+              ]
+            },
+            {
+              "path": "s1",
+              "coordinateTransformations": [
+                {
+                  "type": "scale",
+                  "scale": [
+                    2.0,
+                    2.0
+                  ]
+                }
+              ]
+            }
+          ],
+          "name": "labels",
+          "axes": [
+            {
+              "name": "y",
+              "type": "space"
+            },
+            {
+              "name": "x",
+              "type": "space"
+            }
+          ]
+        }
+      ],
+      "image-label": {
+        "source": {
+          "image": "../../"
+        },
+        "colors": [
+          {
+            "label-value": 1,
+            "rgba": [
+              128,
+              128,
+              128,
+              128
+            ]
+          },
+          {
+            "label-value": 2,
+            "rgba": [
+              128,
+              128,
+              128,
+              128
+            ]
+          },
+          {
+            "label-value": 3,
+            "rgba": [
+              128,
+              128,
+              128,
+              128
+            ]
+          },
+          {
+            "label-value": 4,
+            "rgba": [
+              128,
+              128,
+              128,
+              128
+            ]
+          },
+          {
+            "label-value": 5,
+            "rgba": [
+              255,
+              0,
+              0,
+              255
+            ]
+          },
+          {
+            "label-value": 6,
+            "rgba": [
+              192,
+              0,
+              0,
+              255
+            ]
+          },
+          {
+            "label-value": 7,
+            "rgba": [
+              128,
+              0,
+              0,
+              255
+            ]
+          },
+          {
+            "label-value": 8,
+            "rgba": [
+              64,
+              0,
+              0,
+              255
+            ]
+          },
+          {
+            "label-value": 13,
+            "rgba": [
+              128,
+              128,
+              128,
+              128
+            ]
+          },
+          {
+            "label-value": 14,
+            "rgba": [
+              255,
+              0,
+              0,
+              255
+            ]
+          }
+        ],
+        "properties": [
+          {
+            "label-value": 1,
+            "title": false,
+            "column": 1,
+            "row": 1,
+            "area": 197,
+            "mean intensity": 97.16
+          },
+          {
+            "label-value": 2,
+            "title": false,
+            "column": 1,
+            "row": 2,
+            "area": 197,
+            "mean intensity": 97.17
+          },
+          {
+            "label-value": 3,
+            "title": false,
+            "column": 1,
+            "row": 3,
+            "area": 197,
+            "mean intensity": 97.17
+          },
+          {
+            "label-value": 4,
+            "title": false,
+            "column": 1,
+            "row": 4,
+            "area": 197,
+            "mean intensity": 97.16
+          },
+          {
+            "label-value": 5,
+            "title": false,
+            "column": 2,
+            "row": 1,
+            "area": 197,
+            "mean intensity": 97.16
+          },
+          {
+            "label-value": 6,
+            "title": false,
+            "column": 2,
+            "row": 2,
+            "area": 197,
+            "mean intensity": 97.17
+          },
+          {
+            "label-value": 7,
+            "title": false,
+            "column": 2,
+            "row": 3,
+            "area": 197,
+            "mean intensity": 97.17
+          },
+          {
+            "label-value": 8,
+            "title": false,
+            "column": 2,
+            "row": 4,
+            "area": 197,
+            "mean intensity": 97.16
+          },
+          {
+            "label-value": 9,
+            "title": false,
+            "column": 3,
+            "row": 1,
+            "area": 197,
+            "mean intensity": 97.16
+          },
+          {
+            "label-value": 10,
+            "title": false,
+            "column": 3,
+            "row": 2,
+            "area": 197,
+            "mean intensity": 97.17
+          },
+          {
+            "label-value": 11,
+            "title": false,
+            "column": 3,
+            "row": 3,
+            "area": 197,
+            "mean intensity": 97.17
+          },
+          {
+            "label-value": 12,
+            "title": false,
+            "column": 3,
+            "row": 4,
+            "area": 197,
+            "mean intensity": 97.16
+          },
+          {
+            "label-value": 13,
+            "title": true,
+            "column": 1,
+            "text": "all same grey"
+          },
+          {
+            "label-value": 14,
+            "title": true,
+            "column": 2,
+            "text": "different colors red"
+          },
+          {
+            "label-value": 17,
+            "title": true,
+            "column": 3,
+            "text": "no colors LUT"
+          }
+        ],
+        "version": "0.5"
+      }
+    }
+  },
+  "zarr_format": 3,
+  "node_type": "group"
+}

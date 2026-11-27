@@ -30,6 +30,8 @@ package ome.zarr.imglib2;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -59,7 +61,9 @@ import ome.zarr.imglib2.util.ZarrUtils;
  *   <li>{@link #readMultiscale} – read the node as a multiscales group;</li>
  *   <li>{@link #tryReadLevelFromParent} – read it as one level of its parent
  *       multiscales group;</li>
- *   <li>{@link #tryReadArrayNodeOnly} – read it from its own metadata alone.</li>
+ *   <li>{@link #tryReadArrayNodeOnly} – read it from its own metadata alone;</li>
+ *   <li>{@link #readLabelImageNames} – list the label images of a multiscales
+ *       group, which {@link #read} adds to its result.</li>
  * </ul>
  * The two {@code try*} hooks return {@code null} to mean "not applicable, try
  * the next thing" rather than throwing, so that declining is cheap and cannot be
@@ -105,7 +109,8 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	 * <p>
 	 * Reads {@code inputUri} as a multiscales group via
 	 * {@link #readMultiscale}, falling back to {@link #readSingleArray} when that
-	 * reports the node carries no multiscales metadata.
+	 * reports the node carries no multiscales metadata. A multiscales group also
+	 * gets its {@link PyramidContents#labelImageNames()}.
 	 */
 	@Override
 	public final < T extends NativeType< T > & RealType< T > > PyramidContents< T > read( final URI inputUri )
@@ -129,9 +134,10 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 	private < T extends NativeType< T > & RealType< T > > PyramidContents< T > readMultiscaleOrSingleArray(
 			final URI inputUri )
 	{
+		final PyramidContents< T > contents;
 		try
 		{
-			return readMultiscale( inputUri );
+			contents = readMultiscale( inputUri );
 		}
 		catch ( NotAMultiscaleImageException e )
 		{
@@ -139,7 +145,38 @@ public abstract class AbstractPyramidBackend implements PyramidBackend
 			// multiscales group. Read it as a one-level pyramid instead.
 			return readSingleArray( inputUri );
 		}
+		return contents.withLabelImageNames( labelImageNamesOf( inputUri, contents ) );
 	}
+
+	/**
+	 * Skips the lookup for a label image (no labels of its own) and for an
+	 * archive (its label images cannot be addressed yet). A failing lookup is
+	 * logged and yields no names, since labels must not keep the image from
+	 * opening.
+	 */
+	private List< String > labelImageNamesOf( final URI imageUri, final PyramidContents< ? > contents )
+	{
+		if ( contents.labelMetadata() != null || ZarrUtils.isOzxArchive( imageUri ) )
+			return Collections.emptyList();
+		try
+		{
+			return readLabelImageNames( imageUri );
+		}
+		catch ( RuntimeException e )
+		{
+			logger.warn( "Could not list the label images of {}: {}", imageUri, e.getMessage() );
+			return Collections.emptyList();
+		}
+	}
+
+	/**
+	 * Lists the label images of the multiscales group at {@code imageUri}, as
+	 * named by the {@code labels} key of its {@code labels/} group.
+	 *
+	 * @param imageUri location of the multiscales group
+	 * @return the names, or an empty list if there is no {@code labels/} group
+	 */
+	protected abstract List< String > readLabelImageNames( URI imageUri );
 
 	/**
 	 * Reads the multiscales group at {@code inputUri} as a pyramid with one level

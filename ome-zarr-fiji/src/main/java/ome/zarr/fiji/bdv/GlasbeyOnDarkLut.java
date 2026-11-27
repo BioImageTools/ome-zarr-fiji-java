@@ -1,0 +1,92 @@
+/*-
+ * #%L
+ * OME-Zarr extras for Fiji
+ * %%
+ * Copyright (C) 2022 - 2026 SciJava developers
+ * %%
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ * #L%
+ */
+package ome.zarr.fiji.bdv;
+
+/**
+ * The "Glasbey on dark" palette: 255 colors that are as distinct from each
+ * other as possible and stay visible on a black background.
+ * <p>
+ * The values are those of Fiji's {@code luts/glasbey_on_dark.lut}, generated
+ * with the Glasbey generator (https://github.com/taketwo/glasbey) after Glasbey
+ * et al. (2007), Color Research &amp; Application 32(4):304-309. Neither Fiji nor
+ * SciJava offers the palette as an API, so it is copied here, as TrackMate and
+ * Mastodon do with theirs.
+ */
+final class GlasbeyOnDarkLut
+{
+	/** Entry 0 is the black base the palette was generated against, never returned. */
+	private static final int[] RGB = {
+			0x000000, 0xffff00, 0xff19ff, 0x009393, 0x9c4000, 0x5800c7, 0xf1ebff, 0x144b00,
+			0x00bc01, 0xff9f62, 0x9190ff, 0x5d003f, 0x00ffd6, 0xff005f, 0x786477, 0x004960,
+			0x8c884a, 0x52cfff, 0xcf98ba, 0x9d00b1, 0xbfd398, 0x006bd2, 0xa3335b, 0x58462b,
+			0x6bff66, 0x9cabae, 0x008441, 0x5c1000, 0x00008f, 0xf05100, 0xcdaa00, 0xb67264,
+			0x4cbe8d, 0x943cff, 0x523664, 0x49655d, 0x6e84a5, 0xaf69c0, 0xd0b8ff, 0xffd3be,
+			0xd4ffed, 0xff7b89, 0x606200, 0xde009d, 0x009ff9, 0xc57801, 0x0001ff, 0xc5011d,
+			0xbea388, 0x625a9d, 0xff90ff, 0xa0cd00, 0xffd761, 0x6b3b49, 0x659000, 0x7c837d,
+			0xffffc3, 0x95d7d6, 0x12708d, 0xffc3ef, 0xc36692, 0x8c001e, 0x8ab15d, 0x87623b,
+			0xb7d1f5, 0xa399c1, 0x10bdc1, 0xff66c2, 0x303976, 0x4d5263, 0xcdc0c9, 0x5e3fff,
+			0xc587ff, 0xc300ff, 0x005039, 0x8b036e, 0xd0fc88, 0x7fe59f, 0x974e88, 0x6e009f,
+			0x82aad1, 0x64966d, 0x9e8491, 0xcc4c57, 0x42007c, 0xffacb4, 0x8877be, 0x905659,
+			0x6d3400, 0x5d744a, 0x00f6ff, 0x6074ff, 0x540062, 0x00a953, 0x894faf, 0xdbb66b,
+			0xc5d5cb, 0x1090b8, 0xe67955, 0x41552d, 0x2a6a00, 0x686057, 0xffa504, 0x02dc5f,
+			0x97b797, 0x936d00, 0xf7001d, 0xc332be, 0x025594, 0xc05d27, 0x007d66, 0x9c9500,
+			0xf87d00, 0xfffcf3, 0x69a59a, 0xb8f500, 0x84382d, 0xd6908d, 0xd10062, 0xc5f1ff,
+			0xded603, 0xa3b4ff, 0x5a7c82, 0x691a2a, 0xba9649, 0x724f00, 0x00d8bd, 0x78357e,
+			0x9d856d, 0xd77cce, 0xfe5551, 0x006064, 0xee5589, 0x17b0da, 0xbbffc0, 0x7e00dc,
+			0xff96d0, 0x494100, 0xd85aff, 0xb02187, 0xa36eff, 0x4047b1, 0x3100ba, 0xbac456,
+			0x0e6737, 0x556988, 0x890044, 0x009e7d, 0x7dae00, 0xd1c4a8, 0x8c8f9c, 0x9ee06e,
+			0x56494e, 0x9afff5, 0xb0a2a8, 0xab3e33, 0x6799a9, 0x92749c, 0x6a507c, 0x4d83cc,
+			0xb3b6cf, 0xa01900, 0x8f9a7b, 0xaa7540, 0x5b3b91, 0x5be300, 0xcd9cdf, 0xebb195,
+			0x008c01, 0xcc3902, 0xefda9d, 0xafb075, 0x8a6f6d, 0x9c6881, 0x612a55, 0xa7e5c8,
+			0x81bac7, 0xfedbe8, 0x787b13, 0x63686f, 0x655e33, 0xd955b7, 0xc88b62, 0x7361d6,
+			0x495046, 0xe37ea6, 0xdecbee, 0x843964, 0xd56e79, 0x9e03e0, 0xaf003a, 0x754c3d,
+			0x597f6d, 0x8be5ff, 0x7d2100, 0x7b7559, 0x8593cc, 0xb386b8, 0x74a4fe, 0x7ec1af,
+			0xa25b03, 0x1a46ff, 0xff00ca, 0xd7ecc7, 0xfff873, 0x736c91, 0x00ff96, 0x72c978,
+			0x507c28, 0xa0583c, 0x445180, 0xced5e1, 0xc2417e, 0x395053, 0xe1953a, 0xf0b2ff,
+			0xb09eee, 0xff0094, 0x74974a, 0xd6abaf, 0x652b1d, 0xfd9685, 0x00d7e8, 0xf3be00,
+			0xa457dd, 0x09787b, 0x365b70, 0xb0586c, 0x6672b0, 0xd8de78, 0xbf8195, 0xb0b2a6,
+			0x7fbeff, 0x730075, 0x003c9e, 0xe5dcd6, 0x6443c3, 0x71c841, 0x4a00fa, 0x00dc9d,
+			0xebf9fe, 0xaab102, 0xc7aece, 0x834a1d, 0xff68ed, 0x00b59e, 0x744d67, 0xab8306,
+			0xda5a41, 0xadc5cb, 0x405500, 0xffc284, 0xdc1b44, 0xa883d1, 0x7d7983, 0x116552
+	};
+
+	private GlasbeyOnDarkLut()
+	{
+		// static helper
+	}
+
+	/**
+	 * @param label a label value, other than {@code 0}
+	 * @return an opaque ARGB color for it, repeating every 255 label values
+	 */
+	static int argb( final long label )
+	{
+		return 0xff000000 | RGB[ 1 + ( int ) Math.floorMod( label - 1, RGB.length - 1L ) ];
+	}
+}

@@ -57,11 +57,18 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.ToNumberPolicy;
+import com.google.gson.reflect.TypeToken;
 
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
@@ -80,6 +87,7 @@ import ome.zarr.imglib2.exceptions.NotAMultiscaleImageException;
 import ome.zarr.imglib2.exceptions.StoreAccessException;
 import ome.zarr.imglib2.exceptions.ZipArchiveUnsupportedException;
 import ome.zarr.imglib2.metadata.AxisCalibration;
+import ome.zarr.imglib2.metadata.ImageLabel;
 import ome.zarr.imglib2.metadata.Omero;
 
 /**
@@ -90,6 +98,34 @@ import ome.zarr.imglib2.metadata.Omero;
 public class N5PyramidBackend extends AbstractPyramidBackend
 {
 	private static final Logger logger = LoggerFactory.getLogger( MethodHandles.lookup().lookupClass() );
+
+	/** The group below an image that holds its label images. */
+	private static final String LABELS_GROUP = "labels";
+
+	/** The attribute of that group listing the label image names. */
+	private static final String LABELS_KEY = "labels";
+
+	/**
+	 * Reads free-form label property values, keeping integral numbers as
+	 * {@code Long} rather than Gson's default {@code Double}.
+	 */
+	private static final Gson PROPERTY_VALUES_GSON = new GsonBuilder()
+			.setObjectToNumberStrategy( ToNumberPolicy.LONG_OR_DOUBLE )
+			.create();
+
+	/**
+	 * Maps a per-label property object, whose keys besides {@code label-value}
+	 * are free-form, onto {@link ImageLabel.Property}.
+	 */
+	private static final Gson IMAGE_LABEL_GSON = new GsonBuilder()
+			.registerTypeAdapter( ImageLabel.Property.class, ( JsonDeserializer< ImageLabel.Property > ) ( json, type, context ) -> {
+				final JsonObject object = json.getAsJsonObject().deepCopy();
+				final int labelValue = object.remove( "label-value" ).getAsInt();
+				final Map< String, Object > values = PROPERTY_VALUES_GSON
+						.fromJson( object, new TypeToken< Map< String, Object > >() {}.getType() );
+				return new ImageLabel.Property( labelValue, values );
+			} )
+			.create();
 
 	/** Display name of this backend, used in user-facing messages. */
 	private static final String NAME = "N5";
@@ -151,6 +187,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 		}
 		final Multiscale multiscale = buildMultiscale( metadata, 0 );
 		final Omero omero = readOmeroMetadata( reader, treeNode );
+		final ImageLabel labelMetadata = readImageLabel( reader, treeNode );
 
 		final SpatialMetadataGroup< ? > spatialMetadata = Cast.unchecked( metadata );
 		final AffineTransform3D[] transforms = spatialMetadata.spatialTransforms3d();
@@ -179,6 +216,7 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 				.cachedCellImgs( cachedCellImgs )
 				.axesPerLevel( axesPerLevel )
 				.omero( omero )
+				.labelMetadata( labelMetadata )
 				.build();
 	}
 
@@ -377,10 +415,52 @@ public class N5PyramidBackend extends AbstractPyramidBackend
 
 	private static Omero readOmeroMetadata( final N5Reader reader, final N5TreeNode node )
 	{
-		final JsonElement base = reader.getAttribute( node.getPath(), "", JsonElement.class );
-		final String omeroKey = ( base != null && base.isJsonObject() && base.getAsJsonObject().has( "ome" ) )
-				? "ome/omero" : "omero";
-		return new Gson().fromJson( reader.getAttribute( node.getPath(), omeroKey, JsonElement.class ), Omero.class );
+		return new Gson().fromJson( readOmeAttribute( reader, node.getPath(), "omero" ), Omero.class );
+	}
+
+	/**
+	 * Reads the {@code image-label} metadata, or returns {@code null} if it is
+	 * absent or malformed: it only adds display hints, so it must not keep the
+	 * image from opening.
+	 */
+	private static ImageLabel readImageLabel( final N5Reader reader, final N5TreeNode node )
+	{
+		try
+		{
+			return IMAGE_LABEL_GSON.fromJson( readOmeAttribute( reader, node.getPath(), "image-label" ), ImageLabel.class );
+		}
+		catch ( RuntimeException e )
+		{
+			logger.warn( "Ignoring unreadable image-label metadata: {}", e.getMessage() );
+			return null;
+		}
+	}
+
+	/**
+	 * An OME attribute of the group at {@code path}: under {@code ome} since
+	 * OME-Zarr 0.5, at the top level before.
+	 */
+	private static JsonElement readOmeAttribute( final N5Reader reader, final String path, final String key )
+	{
+		final JsonElement base = reader.getAttribute( path, "", JsonElement.class );
+		final boolean underOme = base != null && base.isJsonObject() && base.getAsJsonObject().has( "ome" );
+		return reader.getAttribute( path, underOme ? "ome/" + key : key, JsonElement.class );
+	}
+
+	@Override
+	protected List< String > readLabelImageNames( final URI imageUri )
+	{
+		try (N5Reader reader = openReader( imageUri ))
+		{
+			if ( !reader.exists( LABELS_GROUP ) )
+				return Collections.emptyList();
+			final String[] names = new Gson().fromJson( readOmeAttribute( reader, LABELS_GROUP, LABELS_KEY ), String[].class );
+			return names == null ? Collections.emptyList() : Arrays.asList( names );
+		}
+		catch ( N5Exception e )
+		{
+			throw new StoreAccessException( imageUri.toString(), e );
+		}
 	}
 
 	// ---------------------------------------------------------------------

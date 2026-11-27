@@ -181,7 +181,7 @@ abandoned `add-link-handler` branch and issue #68 / PR #101 for that dead end.
 `PyramidBackend` has one real method (`<T> PyramidContents<T> read(URI)`) plus a `getName()` default that backends
 override with their library's display name (`"N5"`, `"zarr-java"`) for user-facing messages. `AbstractPyramidBackend`
 implements `read` as a template method – try the multiscales group, fall back to a single array (parent multiscales
-group first, then the array's own `dimension_names`) – and leaves three `protected abstract` hooks for the
+group first, then the array's own `dimension_names`) – and leaves `protected abstract` hooks for the
 reader-specific steps: `readMultiscale`, `tryReadLevelFromParent` and `tryReadArrayNodeOnly` (the two `try*` hooks
 return `null` for "not applicable, try the next"; the last one throws `NotAMultiscaleImageException` when there is no
 array at all, so a missing location is never reported as unknown axes). `read` and `readSingleArray` are `final`, so
@@ -190,6 +190,28 @@ out copies or unmodifiable views, but the lazily loaded `CachedCellImg`s are sha
 whole dataset — this matters because `OmeZarr` caches one instance for every opener, third-party ones included. Each
 backend also exposes a static `readPyramid(URI)` convenience entry point for outside API users — not named `read`,
 because Java forbids a static method hiding an inherited instance method.
+
+**Label images (issue #205)** are discovered in `read`, not by a public backend method: after `readMultiscale` the
+template calls a fourth hook, `readLabelImageNames`, and adds the names to the result
+(`PyramidContents.labelImageNames()`), the way `omero` travels with it. It costs one metadata request per open (a 404
+when there is no `labels/` group), and a failure is logged rather than thrown, since labels must not keep the image
+from opening. Only names are read, not the label images themselves: each one is a full multiscale image of its own,
+read with `read( uri/labels/<name> )` when a caller wants it. The lookup is skipped for a label image (one with
+`labelMetadata()`, the spec's `image-label`, so no probe for `labels/0/labels`) and for `.ozx` archives, whose label
+images cannot be addressed yet. The two accessors are deliberately not named after the spec keys (`labels`,
+`image-label`), because those two names were too easy to mix up. zarr-java exposes `image-label` only for OME-Zarr
+0.5 and later, so with that backend 0.4 label images have no `labelMetadata()`.
+
+`OmeZarr.showInBdv` adds the listed label images to the image's window, inactive, named as in the `labels` list
+(`PyramidContents.withName`). Their colors come from the metadata only, via `LabelConverter`: a uniform or odd palette
+is shown as written (this repo does not curate metadata), and only label values without any color get one from
+`GlasbeyOnDarkLut`. That palette is copied from Fiji's `luts/glasbey_on_dark.lut`, because neither Fiji nor SciJava
+offers it as an API (TrackMate and Mastodon copy theirs too), and `LUTService` only finds the file inside a Fiji
+installation. A golden-ratio hue sequence was tried first and dropped: its colors were technically distinct but often
+looked the same. BDV's color control is therefore disabled, and its display range filters label values instead. The label images
+load through the image's queue via `PyramidalBdv.onSameQueue`, so the queue itself is never handed out: since #113
+`PyramidalBdv` exposes only its `CacheControl` side, because a caller holding the `SharedQueue` could shut down or
+flood a queue the pyramidal owns.
 
 **A too-old reader library is reported, not thrown at the console.** A Fiji-Stable installation whose N5 stack predates
 this plugin fails inside the backend with a `NoClassDefFoundError` (e.g. on `OmeNgffMetadataParser`), which is useless
