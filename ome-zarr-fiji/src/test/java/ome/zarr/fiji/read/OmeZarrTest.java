@@ -31,6 +31,7 @@ package ome.zarr.fiji.read;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -58,6 +59,7 @@ import bdv.cache.CacheControl;
 import bdv.util.BdvHandle;
 import bdv.viewer.BasicViewerState;
 import bdv.viewer.DisplayMode;
+import bdv.viewer.SourceAndConverter;
 import bdv.viewer.ViewerState;
 import bdv.viewer.render.MultiResolutionRenderer;
 import bdv.viewer.render.RenderTarget;
@@ -89,6 +91,8 @@ import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 class OmeZarrTest
 {
 	private static final String DATASET = "ome/zarr/testdata/5d_testing/5d_dataset_v4.ome.zarr";
+
+	private static final String LABEL_DATASET = "ome/zarr/testdata/label_testing/label_colors.ome.zarr";
 
 	static Stream< PyramidBackend > backends()
 	{
@@ -432,6 +436,54 @@ class OmeZarrTest
 
 			bdvHandle.close();
 			SwingUtilities.invokeAndWait( () -> context.getService( DisplayService.class ).getActiveDisplay().close() );
+		}
+	}
+
+	/**
+	 * The label image of an image is added to its BigDataViewer window, inactive,
+	 * and shows the colors of its {@code image-label} metadata. In
+	 * {@code label_colors.ome.zarr} (see {@code create_label_colors.py}) the first
+	 * column of spots shares one grey at half alpha, the second has four reds, and
+	 * the third has no colors, so those come from the Glasbey on dark palette. The
+	 * title above each column is one more label, colored like its column.
+	 */
+	@ParameterizedTest
+	@MethodSource( "backends" )
+	void showInBdvColorsLabelImageFromItsMetadata( PyramidBackend backend ) throws Exception
+	{
+		final int[] columnsX = { 24, 64, 104 };
+		final int[] rowsY = { 46, 68, 90, 112 };
+		final int[][] expectedRgb = {
+				{ 0x404040, 0x404040, 0x404040, 0x404040 }, // [128,128,128,128], premultiplied by its alpha
+				{ 0xff0000, 0xc00000, 0x800000, 0x400000 },
+				{ 0xff9f62, 0x9190ff, 0x5d003f, 0x00ffd6 } }; // Glasbey on dark, entries 9 to 12
+		Path path = ZarrTestUtils.resourcePath( LABEL_DATASET );
+		try (Context context = new Context())
+		{
+			BdvHandle bdvHandle = new OmeZarr( path.toUri(), context, backend ).showInBdv();
+			ViewerState state = new BasicViewerState( bdvHandle.getViewerPanel().state().snapshot() );
+			assertEquals( 2, state.getSources().size(), "the image and its label image" );
+			assertEquals( "raw", state.getSources().get( 0 ).getSpimSource().getName() );
+			SourceAndConverter< ? > labels = state.getSources().get( 1 );
+			assertEquals( "labels", labels.getSpimSource().getName(), "named as in the labels list" );
+			assertFalse( state.isSourceActive( labels ), "the label image starts inactive" );
+
+			state.setDisplayMode( DisplayMode.SINGLE );
+			state.setCurrentSource( labels );
+			state.setViewerTransform( new AffineTransform3D() );
+			BufferedImage frame = render( state, 128, 128 );
+
+			for ( int column = 0; column < columnsX.length; column++ )
+				for ( int row = 0; row < rowsY.length; row++ )
+					assertEquals( Integer.toHexString( expectedRgb[ column ][ row ] ),
+							Integer.toHexString( frame.getRGB( columnsX[ column ], rowsY[ row ] ) & 0xffffff ),
+							"spot in column " + ( column + 1 ) + ", row " + ( row + 1 ) );
+			assertEquals( "404040", Integer.toHexString( frame.getRGB( 21, 3 ) & 0xffffff ), "title of column 1 (label 13)" );
+			assertEquals( "ff0000", Integer.toHexString( frame.getRGB( 40, 3 ) & 0xffffff ), "title of column 2 (label 14)" );
+			assertEquals( "52cfff", Integer.toHexString( frame.getRGB( 98, 5 ) & 0xffffff ), "title of column 3 (label 17)" );
+			assertEquals( 0, frame.getRGB( 0, 0 ) & 0xffffff, "the background (label 0) is transparent" );
+
+			bdvHandle.close();
 		}
 	}
 
